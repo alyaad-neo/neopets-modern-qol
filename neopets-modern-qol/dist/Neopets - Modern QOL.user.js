@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.0.0
+// @version      5.0.3
 // @description  Modern Interface patches plus the accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -373,7 +373,7 @@ html[data-np-modern-interface] {
   #nppPetInfo .nppChip.gF { color: #ffa6d2; }
   #nppPetInfo .nppChip.gM { color: #8cc4ff; }
 
-  #nppTools .nppSearch button img, #nppBellBtn img { width: var(--npp-ic) !important; height: var(--npp-ic) !important; object-fit: contain !important; filter: var(--npp-ico-shadow) !important; }
+  #nppTools .nppSearch button img, #nppBellBtn img { width: calc(var(--npp-ic) * .85) !important; height: calc(var(--npp-ic) * .85) !important; object-fit: contain !important; filter: var(--npp-ico-shadow) !important; }
   #btnOverlay .col [data-npp-nested] { display: none !important; }
   #btnOverlay .col.left { gap: 6px !important; row-gap: 6px !important; }
   #btnOverlay .col.left > * { margin-top: 0 !important; margin-bottom: 0 !important; }
@@ -422,18 +422,18 @@ html[data-np-modern-interface] {
   #npNp.nppFolded, #npActivePet.nppFolded, #nppDaily.nppFolded { height: 36px !important; min-height: 36px !important; padding: 0 !important; overflow: hidden !important; }
   #nppNotifDrawer .nppGrpHead { margin-top: 2px; }
 
-  #nppTools { position: fixed; left: 239px; bottom: 16px; transform: translateX(-50%); z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: var(--npp-ig, 10px); transition: opacity .25s ease; }
-  #nppTools .nppSep { width: calc(var(--npp-ic, 44px) * .8); height: 2px; margin: 4px 0 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85) 22%, rgba(255,255,255,.85) 78%, transparent); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.5)); }
+  #nppTools { position: fixed; right: 14px; top: var(--npp-tools-top, 27px); transform: translateY(-50%); z-index: 2010; display: flex; flex-direction: row; align-items: center; gap: var(--npp-ig, 10px); transition: opacity .25s ease; }
+  #nppTools .nppSep { display: none; }
   #nppTools .nppSearch { position: relative; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); margin: 0; transition: width .25s ease, height .25s ease; }
   #nppTools .nppSearch button { position: absolute; z-index: 2; left: 0; top: 0; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; cursor: pointer; transition: width .25s ease, height .25s ease; }
   #nppTools .nppSearch button img, #nppBellBtn img { display: block; transition: transform .2s cubic-bezier(.3, 1.4, .5, 1), width .25s ease, height .25s ease; }
-  #nppTools .nppSearch:hover button img, #nppTools .nppSearch:focus-within button img, #nppBellBtn:hover img { transform: scale(1.1); }
+  #nppBellBtn:hover img { transform: scale(1.1); }
   #nppTools .nppSearch.noimg::before, #nppTools .nppSearch button.noimg::before { content: "⌕"; font-size: 24px; color: #fff; }
-  #nppTools .nppSearch input { position: absolute; z-index: 1; left: 0; top: 50%; transform: translateY(-50%); box-sizing: border-box; width: var(--npp-ic, 44px); height: calc(var(--npp-ic, 44px) * .8); padding: 0 16px 0 calc(var(--npp-ic, 44px) + 2px); border: 1px solid transparent; border-radius: 999px; background: transparent; color: #fff; font: 400 17px 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); outline: 0; cursor: pointer; transition: width .42s cubic-bezier(.22, 1, .36, 1), background .25s, border-color .25s, box-shadow .25s; }
-  #nppTools .nppSearch:hover input, #nppTools .nppSearch:focus-within input { width: 252px; cursor: text; border-color: var(--npp-card-line); background: var(--npp-drawer-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(0,0,0,.10); }
+  #nppTools .nppSearch input { position: absolute; z-index: 1; right: 0; top: 50%; transform: translateY(-50%); box-sizing: border-box; width: var(--npp-ic, 44px); height: calc(var(--npp-ic, 44px) * .8); padding: 0 calc(var(--npp-ic, 44px) + 6px) 0 16px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #fff; font: 400 17px 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); outline: 0; cursor: pointer; transition: width .42s cubic-bezier(.22, 1, .36, 1), background .25s, border-color .25s, box-shadow .25s; }
+  #nppTools .nppSearch.nppOpen input { width: 252px; cursor: text; border-color: var(--npp-card-line); background: var(--npp-drawer-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(0,0,0,.10); }
   #nppTools .nppSearch input:focus { border-color: var(--np-accent, #fff); }
   #nppTools .nppSearch input::placeholder { color: rgba(255,255,255,.75); opacity: 0; transition: opacity .12s; }
-  #nppTools .nppSearch:hover input::placeholder, #nppTools .nppSearch:focus-within input::placeholder { opacity: 1; transition: opacity .3s .2s; }
+  #nppTools .nppSearch.nppOpen input::placeholder { opacity: 1; transition: opacity .3s .2s; }
   #nppBellBtn { position: relative; transition: width .25s ease, height .25s ease; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; cursor: pointer; }
   #nppBellBtn .nppBellSvg { display: none; width: 60%; height: 60%; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
   #nppBellBtn.noimg .nppBellSvg { display: block; }
@@ -453,7 +453,7 @@ html[data-np-modern-interface] {
 
   #nppBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
   #nppNst { display: inline-block; padding: 0; font-size: 20px !important; color: #fff !important; background: none !important; border: 0 !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  #nppNotifDrawer { position: fixed; overflow: hidden; bottom: 16px; left: calc(239px + var(--npp-ic, 44px) / 2 + 20px); z-index: 1002; box-sizing: border-box; width: 356px; max-height: min(540px, calc(100vh - 92px)); display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--npp-card-line); border-radius: 14px; background: var(--npLeftBarSolid, #3a3350);  box-shadow: 0 4px 14px rgba(0,0,0,.10); color: #fff; opacity: 0; transform: translateX(-14px) scale(.97); transform-origin: left bottom; pointer-events: none; transition: opacity .2s ease, transform .3s cubic-bezier(.22, 1, .36, 1); }
+  #nppNotifDrawer { position: fixed; overflow: hidden; top: calc(var(--npp-header-h, 54px) + 10px); right: 14px; bottom: auto; left: auto; z-index: 2099; box-sizing: border-box; width: 356px; max-height: min(540px, calc(100vh - var(--npp-header-h, 54px) - 32px)); display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--npp-card-line); border-radius: 14px; background: var(--npLeftBarSolid, #3a3350);  box-shadow: 0 4px 14px rgba(0,0,0,.10); color: #fff; opacity: 0; transform: translateY(-10px) scale(.97); transform-origin: right top; pointer-events: none; transition: opacity .2s ease, transform .3s cubic-bezier(.22, 1, .36, 1); }
   #nppNotifDrawer.open { opacity: 1; transform: none; pointer-events: auto; }
   #nppNotifDrawer .nppNHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 4px 10px; }
   #nppNotifDrawer .nppNTitle { font: 400 21px/1 'CafeteriaBlack', Georgia, serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
@@ -616,7 +616,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const SHADOW_CSS = `
 @font-face { font-family: 'CafeteriaBlack'; src: url('https://images.neopets.com/js/fonts/cafeteria-black.otf') format('opentype'); font-display: swap; }
 .bar { position: relative; }
-.npp-clock { position: absolute; top: 50%; right: 18px; transform: translateY(-50%); z-index: 2; font: 400 20px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; pointer-events: none; white-space: nowrap; }
+.npp-clock { position: absolute; top: 50%; right: calc(14px + var(--npp-ic, 44px) * 2 + var(--npp-ig, 10px) + 12px); transform: translateY(-50%); z-index: 2; font: 400 20px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; pointer-events: none; white-space: nowrap; transition: opacity .15s ease; }
+:host(.npp-search-open) .npp-clock { opacity: 0; }
 .inner { grid-template-columns: 1fr !important; padding: 0 18px 0 var(--np-col-width, 240px) !important; }
 .left { grid-column: 1 !important; justify-content: center !important; gap: 2px !important; }
 #menu-premium { max-height: calc(100vh - 100px); overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
@@ -1469,6 +1470,16 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       '<button type="button" id="nppBellBtn" aria-label="Notifications" title="Notifications" aria-expanded="false"><img alt=""><svg class="nppBellSvg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.2 16.5h15.6L18 12.5V9a6 6 0 0 0-6-6zM9.8 19.5a2.4 2.4 0 0 0 4.4 0"/></svg><i class="nppTick"></i></button>';
     document.body.appendChild(tools);
     const sImg = $('.nppSearch img', tools), bImg = $('#nppBellBtn img', tools), bell = $('#nppBellBtn', tools), form = $('.nppSearch', tools), input = $('input', form);
+    const host = $('#npx-host');
+    const place = () => {
+      if (!host) return;
+      const r = host.getBoundingClientRect();
+      if (!r.height) return;
+      rs.setProperty('--npp-tools-top', Math.round(r.top + r.height / 2) + 'px');
+      rs.setProperty('--npp-header-h', Math.round(r.height) + 'px');
+    };
+    place();
+    if (host) { new ResizeObserver(place).observe(host); window.addEventListener('resize', place); }
 
     const measure = () => {
       const live = [...col.children].filter(k => !k.hasAttribute('data-npp-nested') && k.getBoundingClientRect().width > 8);
@@ -1497,7 +1508,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     let lastIcSize = '';
     const remeasure = () => { measure(); };
     const A0 = () => W.__npSideBtns;
-    new ResizeObserver(() => rs.setProperty('--npp-tools-h', tools.offsetHeight + 'px')).observe(tools);
+    rs.setProperty('--npp-tools-h', '0px');
     new MutationObserver(remeasure).observe(col, { childList: true });
 
     const BELL_NAMES = ['notifications', 'notification', 'bell', 'alerts', 'alert'];
@@ -1528,9 +1539,28 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     paintIcons();
     setInterval(() => { paintIcons(); try { const A = A0(), cur = String(A && A.getIconSize ? A.getIconSize() : ''); if (cur !== lastIcSize) { if (lastIcSize) remeasure(); lastIcSize = cur; } } catch {} }, 2000);
 
-    form.addEventListener('submit', (e) => { if (!input.value.trim()) { e.preventDefault(); input.focus(); } });
-    $('button', form).addEventListener('click', (e) => { if (!input.value.trim()) { e.preventDefault(); input.focus(); } });
-    bell.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); const d = $('#nppNotifDrawer'); setNotifOpen(!(d && d.classList.contains('open'))); });
+    const setSearch = (open) => {
+      form.classList.toggle('nppOpen', open);
+      if (host) host.classList.toggle('npp-search-open', open);
+      if (open) input.focus();
+    };
+    const closeSearch = () => setSearch(false);
+    input.addEventListener('focus', () => setSearch(true));
+    form.addEventListener('submit', (e) => { if (!input.value.trim()) { e.preventDefault(); setSearch(true); } });
+    $('button', form).addEventListener('click', (e) => {
+      if (input.value.trim()) return;
+      e.preventDefault();
+      if (form.classList.contains('nppOpen')) { closeSearch(); input.blur(); }
+      else setSearch(true);
+    });
+    document.addEventListener('pointerdown', (e) => {
+      if (form.classList.contains('nppOpen') && !e.target.closest('#nppTools .nppSearch')) closeSearch();
+    }, true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !form.classList.contains('nppOpen')) return;
+      closeSearch(); input.blur();
+    });
+    bell.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeSearch(); const d = $('#nppNotifDrawer'); setNotifOpen(!(d && d.classList.contains('open'))); });
   }
 
   const NEST_KEY = 'npp_nest_v1';

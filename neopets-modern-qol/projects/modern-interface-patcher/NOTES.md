@@ -20,31 +20,31 @@ Runtime patches for the third-party "Neopets - Modern Interface" script. Restyle
 
 | Feature | File | Search for (function names, CSS classes, button text) |
 | --- | --- | --- |
-| Background colour picker | lines 832-902 | `injectPicker`, `#nppColors`, `data-preset`, `data-k`, `data-acc` |
-| DTI shuffle & keyword search | lines 903-948 | `discoverBgs`, `kwSearch`, `#nppShuffle`, `#nppDiscBar`, `dtiPage` |
+| Background colour picker | lines 834-923 | `injectPicker`, `#nppColors`, `data-preset`, `data-k`, `data-acc` |
+| DTI shuffle & keyword search | lines 924-1169 | `discoverBgs`, `kwSearch`, `#nppShuffle`, `#nppDiscBar`, `dtiPage` |
 | Header bar style (blur/tint/solid/none) | lines 587-612 | `applyBarStyle`, `data-npp-bar`, `BAR_CSS` |
-| Accent colour contrast | lines 554-585, 800-831 | `applyAccentContrast`, `applyNavContrast`, `--npp-accent-fg` |
-| Logo toggle (black/white) | line 586 | `applyLogo`, `--npp-logo-filter`, `nppLogoDot` |
-| Shadow DOM header patching | lines 1169-1355 | `patchShadow`, `SHADOW_CSS`, `#menu-premium` |
-| Premium dropdown menu | lines 1356-1455 | `setupPremium`, `PREMIUM_ITEMS`, `nativePremium` |
-| Shortcut icons & search | lines 1456-1546 | `setupTools`, `#nppTools`, `#nppBellBtn`, `nppSearch` |
-| Icon nesting (right-click group) | lines 1547-1694 | `setupNest`, `#nppNestPop`, `#nppNestMenu`, `NEST_KEY` |
-| Shortcut icon editor | lines 1695-1752 | `patchEditor`, `EDITOR_CSS`, `decorateEditorNest` |
-| Notification drawer | lines 1753-1874 | `wireNotif`, `#nppNotifDrawer`, `#nppBellBtn`, `resolveMail` |
-| Header clock + notification footer | lines 1875-1913 | `setupClock`, `.npp-clock`, `buildFooter`, `#nppNotifDrawer` |
-| Account list helpers (kept for picker + guard) | lines 1914-1934 | `noteAccount`, `allAccts`, `readAccts` |
-| Pet card overlay | lines 1935-2039 | `petUI`, `#nppPetInfo`, `#npPetDockBtn`, `renderPetInfo` |
-| Daily notices fold | lines 2041-2060 | `setupDailyFold`, `.nppFold`, `FOLD_KEY` |
-| Scroll-to-top button | lines 2061-2082 | `setupScrollTop`, `#nppTop` |
-| Watch list (Shop dropdown) | lines 2083-2114 | `openWatch`, `#nppWatch`, `WATCH_KEY` |
-| Shop price highlight (10k/25k) | lines 2115-2148 | `highlightShopPrices`, `.nppBigPrice` |
-| Keyboard shortcuts (Alt+1-5) | lines 2149-2179 | `setupKeys`, `MENUS`, `closeAllPanels` |
-| Bank balance + NC display | lines 2180-2204 | `setupBank`, `abbrNum`, `updateNc`, `np-bank-drawer` |
-| Global event listeners | lines 2205-2279 | `globalListeners`, `document.addEventListener` |
-| Account guard (swap detection) | lines 2280-2326 | `accountGuard`, `ACCT_KEYS`, `swapTheme` |
-| Auth screen UI stripping | lines 2327-2385 | `stripUi`, `isAuth`, `npp-auth` |
-| NC Mall CSS overrides | lines 544-550 | `NC_CSS`, `--np-col-width: 0` |
-| Main boot / initialization | lines 2386-2457 | `boot`, `__nppCore`, `data-np-modern-interface` |
+| Accent colour contrast | lines 553-585, 801-833 | `applyAccentContrast`, `applyNavContrast`, `--npp-accent-fg` |
+| Logo toggle (black/white) | line 585 | `applyLogo`, `--npp-logo-filter`, `nppLogoDot` |
+| Shadow DOM header patching | lines 1170-1356 | `patchShadow`, `SHADOW_CSS`, `#menu-premium` |
+| Premium dropdown menu | lines 1357-1456 | `setupPremium`, `PREMIUM_ITEMS`, `nativePremium` |
+| Shortcut icons & search | lines 1457-1576 | `setupTools`, `#nppTools`, `#nppBellBtn`, `nppSearch`, `nppOpen` |
+| Icon nesting (right-click group) | lines 1577-1724 | `setupNest`, `#nppNestPop`, `#nppNestMenu`, `NEST_KEY` |
+| Shortcut icon editor | lines 1725-1782 | `patchEditor`, `EDITOR_CSS`, `decorateEditorNest` |
+| Notification drawer | lines 1783-1904 | `wireNotif`, `#nppNotifDrawer`, `#nppBellBtn`, `resolveMail` |
+| Header clock + notification footer | lines 1905-1944 | `setupClock`, `.npp-clock`, `npp-search-open`, `buildFooter` |
+| Account list helpers (kept for picker + guard) | lines 1946-2021 | `noteAccount`, `allAccts`, `readAccts` |
+| Pet card overlay | lines 2022-2072 | `petUI`, `#nppPetInfo`, `#npPetDockBtn`, `renderPetInfo` |
+| Daily notices fold | lines 2073-2091 | `setupDailyFold`, `.nppFold`, `FOLD_KEY` |
+| Scroll-to-top button | lines 2092-2113 | `setupScrollTop`, `#nppTop` |
+| Watch list (Shop dropdown) | lines 2114-2145 | `openWatch`, `#nppWatch`, `WATCH_KEY` |
+| Shop price highlight (10k/25k) | lines 2146-2179 | `highlightShopPrices`, `.nppBigPrice` |
+| Keyboard shortcuts (Alt+1-5) | lines 2180-2210 | `setupKeys`, `MENUS`, `closeAllPanels` |
+| Bank balance + NC display | lines 2211-2235 | `setupBank`, `abbrNum`, `updateNc`, `np-bank-drawer` |
+| Global event listeners | lines 2236-2310 | `globalListeners`, `document.addEventListener` |
+| Account guard (swap detection) | lines 2311-2357 | `accountGuard`, `ACCT_KEYS`, `swapTheme` |
+| Auth screen UI stripping | lines 2358-2416 | `stripUi`, `isAuth`, `npp-auth` |
+| NC Mall CSS overrides | lines 544-549 | `NC_CSS`, `--np-col-width: 0` |
+| Main boot / initialization | lines 2417-2488 | `boot`, `__nppCore`, `data-np-modern-interface` |
 
 ## Depends on
 
@@ -64,7 +64,9 @@ Runtime patches for the third-party "Neopets - Modern Interface" script. Restyle
 ## Lessons learned
 
 - Account drawer, user card/avatar, and recent/pinned pages have been removed from this patcher and now live in `account-drawer` and `page-pins-qol`. The account-list helpers (`noteAccount`, `allAccts`) stay because the theme picker (share-on-all-accounts) and `accountGuard` still call them.
-- The clock lives in the shadow header (`.bar`), right-aligned; it uses `--npp-nav-fg` / `--npp-nav-shadow` from `applyNavContrast()` so it matches the nav links (black on light headers, white on dark).
+- The clock lives in the shadow header (`.bar`) and uses `--npp-nav-fg` / `--npp-nav-shadow` from `applyNavContrast()` so it matches the nav links (black on light headers, white on dark).
+- `#nppTools` (search + bell) is fixed at the header's top-right: search first, bell farthest right. The clock sits to their left using `--npp-ic` / `--npp-ig`; `#npx-host` gets `.npp-search-open` (and `SHADOW_CSS` hides `.npp-clock`) while the search field is open. Search opens on click only, never on hover.
+- The vendor top bar `#npx-host` is z-index 2000 and is appended to `<html>` after `<body>`, so it paints over equal-z-index body elements. `#nppTools` needs `z-index: 2010` to sit on top of the bar; at 2000 it disappears behind it.
 - `#npNp` and `#npActivePet` can no longer be folded: `setupFold()` was removed. The daily-notices fold (`setupDailyFold`) still exists.
 - The DTI background shuffle uses the Neopets Item Search GraphQL API (`impress-2020.openneo.net`). It filters out event-themed backgrounds (Altador Cup, Advent, Birthday) by default.
 - Account state is synced between www.neopets.com and ncmall.neopets.com via `GM_setValue('npp_sync')`. On NC Mall, a 1-year localStorage backoff prevents repeated 403s.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.0.0
+// @version      5.0.3
 // @description  Modern Interface patches plus the accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
