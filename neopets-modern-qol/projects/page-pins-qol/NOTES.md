@@ -18,7 +18,7 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 | Feature | File | Search for (function names, CSS classes, button text) |
 | --- | --- | --- |
-| CSS styles | lines 53–83 | `#nppRecent`, `#nppPinned`, `.rList`, `.rPin`, `#nppStandaloneRecent` |
+| CSS styles | lines 53–85 | `#nppRecent`, `#nppPinned`, `.rList`, `.rPin`, `#nppStandaloneRecent` |
 | Constants | lines 42–48 | `RECENT_KEY`, `PIN_KEY_OLD`, `BOARD_NAMES_KEY`, `RECENT_MAX` (15), `PIN_SVG`, `PIN_ICON` |
 | Storage helpers | lines 91–102 | `readAccts`, `pinKey`, `migratePins`, `loadPins` (per-account) |
 | Label logic | lines 105–146 | `boardNames`, `boardName`, `labelFromUrl`, `headingLabel`, `pageLabel`, `recentLabel` |
@@ -44,4 +44,5 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 ## Lessons learned
 
-<!-- Add notes here as they come up. -->
+- `#nppPinned` has its own gold tint, border and inset left bar so it reads differently from `#nppRecent`.
+- The patcher's footer clock moved to the header, so `#nppBottom` no longer exists; the cards just append to `#nppFoot`.

@@ -24,13 +24,13 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 | Avatar cache | lines 175 | `readProf` |
 | NeoPass sync | lines 178–206 | `parseNeoPass`, `neoPassFetch`, `syncNeoPass` |
 | Swap session | lines 209–234 | `swapAccount`, `clearNotifCaches` |
-| Drawer build/wire | lines 244–399 | `buildDrawer`, `wireDrawer`, `nppAcctRow`, `nppAcctStar`, `nppAcctX` |
-| Modern mode mount | lines 402–461 | `mountModern`, `#npUser`, `#nppAcctTab`, `#nppAvatar`, `#npLogoutBtn`, `#npSwapBtn` |
-| Standalone mode mount | lines 463–490 | `mountStandalone`, `#nppStandaloneAcct`, `#nppStandaloneAcctToggle` |
-| Avatar updater | lines 492–516 | `updateAvatar`, `#nppAvatar`, `nppAvInit` |
-| Profile fetch & cache | lines 519–569 | `pickProfImgs`, `profFromFrame`, `refreshProfile`, `maybeRefreshProfile` |
-| Settings watcher | lines 570–583 | `watchSettingsForAvatar`, `markProfDirty` |
-| Boot | lines 586–595 | `mount`, `npp:main`, `npp:drawer` |
+| Drawer build/wire | lines 244–400 | `buildDrawer`, `wireDrawer`, `nppAcctRow`, `nppAcctStar`, `nppAcctX` |
+| Modern mode mount | lines 403–462 | `mountModern`, `#npUser`, `#nppAcctTab`, `#nppAvatar`, `#npLogoutBtn`, `#npSwapBtn` |
+| Standalone mode mount | lines 464–491 | `mountStandalone`, `#nppStandaloneAcct`, `#nppStandaloneAcctToggle` |
+| Avatar updater | lines 493–517 | `updateAvatar`, `#nppAvatar`, `nppAvInit` |
+| Profile fetch & cache | lines 520–570 | `pickProfImgs`, `profFromFrame`, `refreshProfile`, `maybeRefreshProfile` |
+| Settings watcher | lines 571–584 | `watchSettingsForAvatar`, `markProfDirty` |
+| Boot | lines 587–601 | `mount`, `detectMode`, `npp:main`, `npp:drawer` |
 
 ## Depends on
 
@@ -41,8 +41,8 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 
 ## Don't touch
 
-- The CSS is duplicated so standalone mode works without the core. When the core is installed, its copies of the same selectors win (higher specificity).
-- `MODE` detection (line 237–240): checks for `#npUser` to decide modern vs standalone.
+- The CSS is self-contained so standalone and modern modes look the same. The patcher no longer carries copies of these selectors.
+- `MODE` (line 237) is decided by `detectMode()` at mount time, not at script load: `#npUser` appears after document-start. The boot MutationObserver upgrades a standalone mount to modern if the card appears later.
 - `swapAccount` opens a new window to logout.phtml — never auto-logs in.
 - Profile fetch uses a hidden iframe fallback when the direct fetch fails (403 or CORS).
 

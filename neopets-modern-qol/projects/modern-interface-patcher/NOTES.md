@@ -4,7 +4,7 @@ Keep this file short. It is the map the agent reads before the agent reads befor
 
 ## What it does
 
-Runtime patches for the third-party "Neopets - Modern Interface" script. Restyles the header (HUD), sidebar, user card, pet card, background picker, accounts drawer, notifications, and shortcut icons. Handles multi-account switching, theme sync, and bank/NC balance display.
+Runtime patches for the third-party "Neopets - Modern Interface" script. Restyles the header (HUD), sidebar, user card, pet card, background picker, notifications, and shortcut icons. Handles theme sync and bank/NC balance display. The accounts drawer and recent/pinned pages now live in their own projects. This project is bundled with those two by `bundle.js`.
 
 ## Type
 
@@ -20,52 +20,57 @@ Runtime patches for the third-party "Neopets - Modern Interface" script. Restyle
 
 | Feature | File | Search for (function names, CSS classes, button text) |
 | --- | --- | --- |
-| Background colour picker | lines 930-999 | `injectPicker`, `#nppColors`, `data-preset`, `data-k`, `data-acc` |
-| DTI shuffle & keyword search | lines 1001-1254 | `discoverBgs`, `kwSearch`, `#nppShuffle`, `#nppDiscBar`, `dtiPage` |
-| Header bar style (blur/tint/solid/none) | lines 686-709 | `applyBarStyle`, `data-npp-bar`, `BAR_CSS` |
-| Accent colour contrast | lines 652-663, 897-907 | `applyAccentContrast`, `applyNavContrast`, `--npp-accent-fg` |
-| Logo toggle (black/white) | line 684 | `applyLogo`, `--npp-logo-filter`, `nppLogoDot` |
-| Shadow DOM header patching | lines 1267-1366 | `patchShadow`, `SHADOW_CSS`, `#menu-premium` |
-| Premium dropdown menu | lines 1368-1536 | `setupPremium`, `PREMIUM_ITEMS`, `nativePremium` |
-| Shortcut icons & search | lines 1538-1628 | `setupTools`, `#nppTools`, `#nppBellBtn`, `nppSearch` |
-| Icon nesting (right-click group) | lines 1630-1791 | `setupNest`, `#nppNestPop`, `#nppNestMenu`, `NEST_KEY` |
-| Shortcut icon editor | lines 1793-1846 | `patchEditor`, `EDITOR_CSS`, `decorateEditorNest` |
-| Notification drawer | lines 1848-1972 | `wireNotif`, `#nppNotifDrawer`, `#nppBellBtn`, `resolveMail` |
-| Bottom footer (clock + notif) | lines 1973-1994 | `buildFooter`, `#nppFoot`, `#nppNst`, `#nppBottom` |
-| Account swap & drawer | lines 1996-2200 | `setupAcctDrawer`, `#nppAcctDrawer`, `#nppAcctTab`, `syncNeoPass` |
-| User card (logout button, avatar) | lines 2202-2313 | `setupLogout`, `#nppAvatar`, `#npLogoutBtn`, `updateAvatar` |
-| Pet card overlay | lines 2315-2418 | `petUI`, `#nppPetInfo`, `#npPetDockBtn`, `renderPetInfo` |
-| Fold buttons (collapse cards) | lines 2420-2459 | `setupFold`, `setupDailyFold`, `.nppFold` |
-| Scroll-to-top button | lines 2460-2470 | `setupScrollTop`, `#nppTop` |
-| Watch list (Shop dropdown) | lines 2472-2511 | `openWatch`, `#nppWatch`, `WATCH_KEY` |
-| Shop price highlight (10k/25k) | lines 2513-2532 | `highlightShopPrices`, `.nppBigPrice` |
-| Recent / pinned page cards | lines 2534-2695 | `setupRecent`, `#nppRecent`, `#nppPinned`, `RECENT_KEY` |
-| Keyboard shortcuts (Alt+1-5) | lines 2697-2721 | `setupKeys`, `MENUS`, `closeAllPanels` |
-| Bank balance + NC display | lines 2723-2764 | `setupBank`, `abbrNum`, `updateNc`, `np-bank-drawer` |
-| Global event listeners | lines 2766-2815 | `globalListeners`, `document.addEventListener` |
-| Account guard (swap detection) | lines 2817-2884 | `accountGuard`, `ACCT_KEYS`, `swapTheme` |
-| Auth screen UI stripping | lines 2886-2913 | `stripUi`, `isAuth`, `npp-auth` |
-| NC Mall CSS overrides | lines 643-649 | `NC_CSS`, `--np-col-width: 0` |
-| Main boot / initialization | lines 2948-3028 | `boot`, `__nppCore`, `data-np-modern-interface` |
+| Background colour picker | lines 832-902 | `injectPicker`, `#nppColors`, `data-preset`, `data-k`, `data-acc` |
+| DTI shuffle & keyword search | lines 903-948 | `discoverBgs`, `kwSearch`, `#nppShuffle`, `#nppDiscBar`, `dtiPage` |
+| Header bar style (blur/tint/solid/none) | lines 587-612 | `applyBarStyle`, `data-npp-bar`, `BAR_CSS` |
+| Accent colour contrast | lines 554-585, 800-831 | `applyAccentContrast`, `applyNavContrast`, `--npp-accent-fg` |
+| Logo toggle (black/white) | line 586 | `applyLogo`, `--npp-logo-filter`, `nppLogoDot` |
+| Shadow DOM header patching | lines 1169-1355 | `patchShadow`, `SHADOW_CSS`, `#menu-premium` |
+| Premium dropdown menu | lines 1356-1455 | `setupPremium`, `PREMIUM_ITEMS`, `nativePremium` |
+| Shortcut icons & search | lines 1456-1546 | `setupTools`, `#nppTools`, `#nppBellBtn`, `nppSearch` |
+| Icon nesting (right-click group) | lines 1547-1694 | `setupNest`, `#nppNestPop`, `#nppNestMenu`, `NEST_KEY` |
+| Shortcut icon editor | lines 1695-1752 | `patchEditor`, `EDITOR_CSS`, `decorateEditorNest` |
+| Notification drawer | lines 1753-1874 | `wireNotif`, `#nppNotifDrawer`, `#nppBellBtn`, `resolveMail` |
+| Header clock + notification footer | lines 1875-1913 | `setupClock`, `.npp-clock`, `buildFooter`, `#nppNotifDrawer` |
+| Account list helpers (kept for picker + guard) | lines 1914-1934 | `noteAccount`, `allAccts`, `readAccts` |
+| Pet card overlay | lines 1935-2039 | `petUI`, `#nppPetInfo`, `#npPetDockBtn`, `renderPetInfo` |
+| Daily notices fold | lines 2041-2060 | `setupDailyFold`, `.nppFold`, `FOLD_KEY` |
+| Scroll-to-top button | lines 2061-2082 | `setupScrollTop`, `#nppTop` |
+| Watch list (Shop dropdown) | lines 2083-2114 | `openWatch`, `#nppWatch`, `WATCH_KEY` |
+| Shop price highlight (10k/25k) | lines 2115-2148 | `highlightShopPrices`, `.nppBigPrice` |
+| Keyboard shortcuts (Alt+1-5) | lines 2149-2179 | `setupKeys`, `MENUS`, `closeAllPanels` |
+| Bank balance + NC display | lines 2180-2204 | `setupBank`, `abbrNum`, `updateNc`, `np-bank-drawer` |
+| Global event listeners | lines 2205-2279 | `globalListeners`, `document.addEventListener` |
+| Account guard (swap detection) | lines 2280-2326 | `accountGuard`, `ACCT_KEYS`, `swapTheme` |
+| Auth screen UI stripping | lines 2327-2385 | `stripUi`, `isAuth`, `npp-auth` |
+| NC Mall CSS overrides | lines 544-550 | `NC_CSS`, `--np-col-width: 0` |
+| Main boot / initialization | lines 2386-2457 | `boot`, `__nppCore`, `data-np-modern-interface` |
 
 ## Depends on
 
 - **Vendor script:** "Neopets - Modern Interface" (installed separately, adds `data-np-modern-interface` to `<html>`)
 - **GM functions:** `GM_getValue`, `GM_setValue`, `GM_xmlhttpRequest`
-- **GM connections:** `impress-2020.openneo.net`, `impress.openneo.net`, `account.neopets.com`
-- **localStorage keys:** `npqol_*`, `npp_*`, `npp_theme_*`, `npp_acct_*`, `npp_prof_*`
-- **Other scripts:** `page-pins-qol` (shares `npp_recent_pins_v1`), `pet-trading-qol` (shares `npqol_qr_data`)
+- **GM connections:** `impress-2020.openneo.net`, `impress.openneo.net`
+- **localStorage keys:** `npqol_*`, `npp_*`, `npp_theme_*`, `npp_acct_*`
+- **Other scripts:** `pet-trading-qol` (shares `npqol_qr_data`)
 
 ## Don't touch
 
 - The `data-np-modern-interface` attribute check — it waits for the Modern Interface script to claim the page.
 - `unsafeWindow` usage for `W.__npApplyAccent`, `W.__npApplyBtnTheme`, `W.__npSideBtns`, `W.appInsightsUserName` — these are internal APIs from the Modern Interface script.
-- Account guard swap detection (lines 2842-2882) — complex but must stay; it saves/restores per-account state.
+- Account guard swap detection (lines 2305-2325) — complex but must stay; it saves/restores per-account state.
 - Auth screen exclusions — the `isAuth` check prevents the patcher from running on login/logout pages.
 
 ## Lessons learned
 
-- The patcher is heavily stripped. Many features (account drawer, pet card, recent/pinned pages, fold buttons, scroll-top, watch list, shop prices, notifications, keyboard shortcuts, bank/NC display, user card, etc.) have been or will be moved to their own projects. Search for `npp_` prefixed localStorage keys to find which features are still live vs. which have been migrated.
+- Account drawer, user card/avatar, and recent/pinned pages have been removed from this patcher and now live in `account-drawer` and `page-pins-qol`. The account-list helpers (`noteAccount`, `allAccts`) stay because the theme picker (share-on-all-accounts) and `accountGuard` still call them.
+- The clock lives in the shadow header (`.bar`), right-aligned; it uses `--npp-nav-fg` / `--npp-nav-shadow` from `applyNavContrast()` so it matches the nav links (black on light headers, white on dark).
+- `#npNp` and `#npActivePet` can no longer be folded: `setupFold()` was removed. The daily-notices fold (`setupDailyFold`) still exists.
 - The DTI background shuffle uses the Neopets Item Search GraphQL API (`impress-2020.openneo.net`). It filters out event-themed backgrounds (Altador Cup, Advent, Birthday) by default.
 - Account state is synced between www.neopets.com and ncmall.neopets.com via `GM_setValue('npp_sync')`. On NC Mall, a 1-year localStorage backoff prevents repeated 403s.
 - The patcher injects CSS into the Modern Interface script's shadow DOM (`#npx-host`). The shadow DOM uses its own class names (`.btn`, `.menu`, `.menuHead`, `.npp-search`, etc.) that differ from the main-page styles.
+- The final upload is a bundle of this project plus `account-drawer` and `page-pins-qol`: `node bundle.js` writes `dist/Neopets - Modern QOL.user.js`. After any source change, bump `projects/_bundle/00-header.js` `@version` and rebuild; never edit `dist/`.
+- Keep each source as its own IIFE in the bundle. Merging them would collide on repeated names (`MODE`, `curUser`, `readAccts`, `$`, `LSget`, `esc`).
+- The bundle keeps this project's `@name` / `@namespace`, so Tampermonkey updates the existing patcher entry and preserves GM storage/theme. The combined header must keep `@connect account.neopets.com` for the account drawer.
+- Page-pins runs under the bundle's sandbox grants (standalone it is `@grant none`); it uses `unsafeWindow`, so verify recent/pinned data after bundle changes.
+- Account drawer `MODE` is detected at mount, not at document-start; `#npUser` does not exist yet then. The boot observer upgrades standalone -> modern. Do not revert to a top-level `MODE` constant.

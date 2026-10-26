@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.0.0
+// @version      1.0.2
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -120,7 +120,7 @@
 #nppAcctDrawer .nppAcctStandaloneFoot { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
 #nppAcctDrawer .nppAcctStandaloneFoot a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.28); color: #fff !important; text-decoration: none !important; font: 400 14px/1 'CafeteriaBlack', Georgia, serif; }
 #nppAcctDrawer .nppAcctStandaloneFoot a:hover { background: rgba(255,255,255,.18); }
-#nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout { background: var(--np-accent, #ff8a1f); color: var(--npp-accent-fg, #1a1330) !important; border-color: transparent; }
+#nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout { background: var(--np-accent, #ff8a1f); color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); border-color: transparent; }
 #nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout:hover { filter: brightness(1.07); }
 #nppAcctDrawer .nppAcctStandaloneFoot svg { width: 13px; height: 13px; flex: none; }
 
@@ -130,14 +130,14 @@
 #nppStandaloneAcctToggle:hover { background: #f3f4f6; }
 #nppStandaloneAcctToggle svg { width: 18px; height: 18px; }
 
-#nppAvatar { position: relative; text-decoration: none !important; cursor: pointer; width: 48px; height: 48px; border-radius: 50%; background: center / cover no-repeat rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 2px 8px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font: 400 24px/1 'CafeteriaBlack', Georgia, serif; color: #fff; transition: border-color .15s, transform .15s; }
+#nppAvatar { grid-column: 1; grid-row: 1 / span 2; position: relative; text-decoration: none !important; cursor: pointer; width: 48px; height: 48px; border-radius: 50%; background: center / cover no-repeat rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 2px 8px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font: 400 24px/1 'CafeteriaBlack', Georgia, serif; color: #fff; transition: border-color .15s, transform .15s; }
 #nppAvatar:hover { border-color: #fff; transform: scale(1.06); }
 #nppAvatar .nppAvInit { pointer-events: none; }
 #nppAcctBtns { position: absolute; left: 50%; bottom: -13px; transform: translateX(-50%); z-index: 3; display: flex; flex-wrap: nowrap; gap: 0; width: max-content; height: 26px; border-radius: 999px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 3px 10px rgba(0,0,0,.3); }
 #npLogoutBtn, #npSwapBtn { box-sizing: border-box; display: flex !important; align-items: center; justify-content: center; gap: 6px; width: auto; height: 26px; padding: 0 12px !important; border: 0 !important; border-radius: 0 !important; font: 400 14px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-decoration: none !important; white-space: nowrap; }
 #npLogoutBtn svg, #npSwapBtn svg { width: 13px; height: 13px; flex: none; }
 #npLogoutBtn span, #npSwapBtn span { display: inline !important; font: inherit !important; letter-spacing: inherit; }
-#npLogoutBtn { background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #ff8a1f) 80%, #fff) 0%, var(--np-accent, #ff8a1f) 50%, color-mix(in srgb, var(--np-accent, #ff8a1f) 86%, #000) 100%) !important; color: var(--npp-accent-fg, #1a1330) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+#npLogoutBtn { background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #ff8a1f) 80%, #fff) 0%, var(--np-accent, #ff8a1f) 50%, color-mix(in srgb, var(--np-accent, #ff8a1f) 86%, #000) 100%) !important; color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
 #npSwapBtn { background: linear-gradient(180deg, #52525e 0%, #3b3b46 50%, #2b2b34 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
 #npLogoutBtn:hover { filter: brightness(1.07); }
 #npSwapBtn:hover { background: linear-gradient(180deg, #5f5f6c 0%, #494956 50%, #373742 100%) !important; }
@@ -234,10 +234,11 @@
   }
 
   /* ───────────────────────────────── drawer ───────────────────────────────── */
-  const MODE = (() => {
-    if (document.getElementById('npUser')) return 'modern';          // main script present (with or without the core)
-    return 'standalone';
-  })();
+  let MODE = 'standalone';
+  const detectMode = () => {
+    MODE = document.getElementById('npUser') ? 'modern' : 'standalone';   // main script present (with or without the core)
+    return MODE;
+  };
 
   let drawerEl = null, tabEl = null, open = false, acctTabRefresh = null;
 
@@ -584,6 +585,7 @@
 
   /* ───────────────────────────────── boot ───────────────────────────────── */
   function mount() {
+    detectMode();
     if (MODE === 'modern') mountModern();
     else mountStandalone();
   }
@@ -591,6 +593,12 @@
 
   // If the main script arrives later (e.g. on a client-side navigation), re-mount in modern mode.
   new MutationObserver(() => {
-    if (MODE === 'modern' && !$('#nppAcctTab') && $('#npUser')) mountModern();
+    if ($('#nppAcctTab') || !document.getElementById('npUser')) return;
+    const floating = document.getElementById('nppStandaloneAcct');
+    const oldDrawer = floating ? drawerEl : null;
+    MODE = 'modern';
+    if (!mountModern()) return;
+    if (oldDrawer) oldDrawer.remove();
+    if (floating) floating.remove();
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();

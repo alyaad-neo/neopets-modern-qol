@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.0.0
+// @version      4.0.2
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -19,7 +19,6 @@
 // @grant        GM_xmlhttpRequest
 // @connect      impress-2020.openneo.net
 // @connect      impress.openneo.net
-// @connect      account.neopets.com
 // ==/UserScript==
 
 (function () {
@@ -77,13 +76,10 @@
   const EYE = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.3-4.5 6.5-4.5S14.5 8 14.5 8s-2.3 4.5-6.5 4.5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>';
   const PENCIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2.5l2.5 2.5L5.5 13H3v-2.5z"/></svg>';
   const SHUFFLE = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h2.2c3 0 4 7 7.1 7H14M2 11.5h2.2c1 0 1.8-.6 2.5-1.4M9.3 5.9c.6-.8 1.2-1.4 2.2-1.4H14M12 2.5l2 2-2 2M12 9.5l2 2-2 2"/></svg>';
-  const USERS_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5.4" r="2.3"/><path d="M1.8 13.6c0-2.3 1.9-4.2 4.2-4.2s4.2 1.9 4.2 4.2"/><path d="M10.2 3.5a2.1 2.1 0 0 1 0 3.9M11.4 9.6c1.7.4 2.9 1.8 2.9 4"/></svg>';
-  const LOGOUT_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.2 2.5H3.8a1.3 1.3 0 0 0-1.3 1.3v8.4a1.3 1.3 0 0 0 1.3 1.3h2.4M10 5.2L13 8l-3 2.8M13 8H6.4"/></svg>';
   const SWAP = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13"/></svg>';
   const STATS_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 13V8.5M8 13V3M13 13V6"/></svg>';
   const MAIL_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="#ffd54a" stroke="#6b4a12" stroke-width="1.5"/><path d="M3.5 7l8.5 6.2L20.5 7" fill="none" stroke="#6b4a12" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
   const BELL_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.2 16.5h15.6L18 12.5V9a6 6 0 0 0-6-6zM9.8 19.5a2.4 2.4 0 0 0 4.4 0" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>');
-  const PIN_SVG = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.8 1.5 14.5 6.2l-1.4 1.4-.7-.7L9.5 9.7v3.1l-1.4 1.4-2.5-2.5-3.6 3.6-.7-.7 3.6-3.6-2.5-2.5L3.4 8.7h3.1L10.5 4l-.7-.7z"/></svg>';
 
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
   let handleEl = null, tabEl = null, panelEl = null, dockOpen = false;
@@ -116,7 +112,7 @@ html[data-np-modern-interface] {
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
   .qrOverlay a, .qrPetName, .bankSettingsHead h3, #npUserTitle, #npBank .title,
-  #npLogoutBtn, #npSwapBtn, #nppNotifHead span, #nppNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+  #nppNotifHead span, #nppNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
   div#boardTopic { border: 0 !important; }
@@ -185,9 +181,6 @@ html[data-np-modern-interface] {
 
   #nppFoot { position: fixed; left: 0; bottom: 0; width: var(--np-col-width); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
   #npUserTitle { font-size: 26px !important; }
-
-  #npLogoutBtn, #npSwapBtn { padding: 3px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 20px; background: rgba(0,0,0,.22); color: rgba(255,255,255,.7) !important; font-size: 14px; text-decoration: none !important; white-space: nowrap; transition: color .15s, background .15s; }
-  #npLogoutBtn:hover, #npSwapBtn:hover { color: #fff !important; background: rgba(0,0,0,.45); }
 
   #btnOverlay[data-mode="single"] .col.left { left: 239px !important; top: auto !important; bottom: calc(16px + var(--npp-tools-h, 0px) + var(--npp-ig, 10px)) !important; transform: translate(-50%, var(--np-side-col-shift, 0px)) !important; }
   #btnOverlay .col.right { position: fixed !important; left: calc(var(--np-col-width) - 24px) !important; top: auto !important; bottom: 16px !important; transform: translateY(var(--np-side-col-shift, 0px)) !important; }
@@ -292,7 +285,7 @@ html[data-np-modern-interface] {
   #npBgSidebar .npBgThumb { width: 48px; height: 48px; }
   #npBgSidebar #npBgFooter { padding: 12px 14px; gap: 10px; }
 
-  #npUser, #npNp, #npActivePet, #nppDaily, #nppRecent, #nppPinned {
+  #npUser, #npNp, #npActivePet, #nppDaily {
     background: var(--npp-card) !important;
     border: 1px solid var(--npp-card-line) !important;
     -webkit-backdrop-filter: blur(10px) !important;
@@ -308,27 +301,11 @@ html[data-np-modern-interface] {
 
   #npUserTitle { color: #fff !important; font-size: 28px !important; text-shadow: 0 2px 6px rgba(0,0,0,.7) !important; }
   #npUser .meta .k { opacity: .85 !important; }
-  #nppAcctBtns { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; }
   #npUserGear, #npUserRefresh, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta, #npUser .spinner { display: none !important; }
   #npUser { min-height: 0 !important; padding: 12px 12px 24px !important; margin-bottom: 8px; }
   #npUser .rightSide { display: grid !important; grid-template-columns: 48px minmax(0, 1fr); column-gap: 11px; row-gap: 5px; align-items: center; width: 100%; }
-  #nppAvatar { grid-column: 1; grid-row: 1 / span 2; width: 48px; height: 48px; border-radius: 50%; background: center / cover no-repeat rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 2px 8px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font: 400 24px/1 'CafeteriaBlack', Georgia, serif; color: #fff; }
   #npUser .name { grid-column: 2; grid-row: 1; min-width: 0; max-width: 100%; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
   #npUserTitle { font-size: 24px !important; }
-  #nppAcctBtns { grid-column: 2; grid-row: 2; justify-content: flex-start; }
-  #npSwapBtn.busy svg { animation: nppSpin .8s linear infinite; }
-  #nppAcctBtns { position: absolute; left: 50%; bottom: -13px; transform: translateX(-50%); z-index: 3; display: flex; flex-wrap: nowrap; gap: 0 !important; width: max-content; height: 26px; border-radius: 999px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 3px 10px rgba(0,0,0,.3); }
-  #nppAvatar { grid-row: 1; }
-  #nppAvatar { position: relative; text-decoration: none !important; cursor: pointer; transition: border-color .15s, transform .15s; }
-  #nppAvatar:hover { border-color: #fff; transform: scale(1.06); }
-  #nppAvatar .nppAvInit { pointer-events: none; }
-  #npLogoutBtn, #npSwapBtn { box-sizing: border-box; display: flex !important; align-items: center; justify-content: center; gap: 6px; width: auto; height: 26px; padding: 0 12px !important; border: 0 !important; border-radius: 0 !important; font: 400 14px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-decoration: none !important; text-shadow: none; white-space: nowrap; box-shadow: none; transition: background .15s, filter .15s; }
-  #npLogoutBtn svg, #npSwapBtn svg { width: 13px; height: 13px; flex: none; }
-  #npLogoutBtn span, #npSwapBtn span { display: inline !important; font: inherit !important; letter-spacing: inherit; text-shadow: inherit; }
-  #npLogoutBtn { background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #fff) 80%, #fff) 0%, var(--np-accent, #fff) 50%, color-mix(in srgb, var(--np-accent, #fff) 86%, #000) 100%) !important; color: var(--npp-accent-fg, #1a1330) !important; text-shadow: var(--npp-accent-fg-shadow, none); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
-  #npSwapBtn { background: linear-gradient(180deg, #52525e 0%, #3b3b46 50%, #2b2b34 100%) !important; color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
-  #npLogoutBtn:hover { filter: brightness(1.07); }
-  #npSwapBtn:hover { background: linear-gradient(180deg, #5f5f6c 0%, #494956 50%, #373742 100%) !important; }
 
   #npNp .np-amount, #npNp .np-nc { font-size: 16px !important; font-weight: 800 !important; color: #fff !important; background: rgba(255,255,255,.08); }
   #npNp .np-amount:hover, #npNp .np-nc:hover { background: rgba(255,255,255,.2) !important; }
@@ -441,22 +418,6 @@ html[data-np-modern-interface] {
   #npNp.nppFolded, #npActivePet.nppFolded, #nppDaily.nppFolded { height: 36px !important; min-height: 36px !important; padding: 0 !important; overflow: hidden !important; }
   #nppNotifDrawer .nppGrpHead { margin-top: 2px; }
 
-  #nppRecent, #nppPinned { display: flex; flex-direction: column; gap: 6px; padding: 10px 11px; box-sizing: border-box; width: 100%; flex: 0 0 auto; position: relative; z-index: 1; }
-  #nppRecent .rHead, #nppPinned .rHead { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); padding: 0 2px 2px; }
-  #nppRecent .rList, #nppPinned .rList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 106px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; padding-right: 3px; }
-  #nppRecent .rList li, #nppPinned .rList li { min-width: 0; position: relative; }
-  #nppRecent .rList a, #nppPinned .rList a { padding-right: 30px !important; }
-  #nppRecent .rPin, #nppPinned .rPin { position: absolute; top: 50%; right: 5px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
-  #nppRecent .rList li:hover .rPin, #nppRecent .rPin:focus, #nppRecent li.isPinned .rPin, #nppPinned .rList li:hover .rPin, #nppPinned .rPin:focus, #nppPinned li.isPinned .rPin { opacity: 1; }
-  #nppRecent li.isPinned .rPin, #nppPinned li.isPinned .rPin { color: #ffd166; }
-  #nppRecent .rPin:hover, #nppPinned .rPin:hover { background: rgba(255,255,255,.14); color: #fff; }
-  #nppRecent .rPin svg, #nppPinned .rPin svg { width: 13px; height: 13px; }
-  #nppRecent .rList a, #nppPinned .rList a { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 9px; background: rgba(255,255,255,.07); color: #fff !important; text-decoration: none !important; min-width: 0; }
-  #nppRecent .rList a:hover, #nppPinned .rList a:hover { background: rgba(255,255,255,.16); }
-  #nppRecent .rList b, #nppPinned .rList b { font: 600 12px/1.25 'Outfit', system-ui, sans-serif; white-space: normal; overflow-wrap: anywhere; }
-  #nppRecent .rEmpty, #nppPinned .rEmpty { font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.6); padding: 4px 2px; }
-  #nppPinned[hidden] { display: none !important; }
-
   #nppTools { position: fixed; left: 239px; bottom: 16px; transform: translateX(-50%); z-index: 1001; display: flex; flex-direction: column; align-items: center; gap: var(--npp-ig, 10px); transition: opacity .25s ease; }
   #nppTools .nppSep { width: calc(var(--npp-ic, 44px) * .8); height: 2px; margin: 4px 0 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85) 22%, rgba(255,255,255,.85) 78%, transparent); filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.5)); }
   #nppTools .nppSearch { position: relative; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); margin: 0; transition: width .25s ease, height .25s ease; }
@@ -482,69 +443,9 @@ html[data-np-modern-interface] {
   .nppN.busy { opacity: .6; pointer-events: none; }
   &.npp-wait #nppTools { opacity: 0 !important; pointer-events: none; }
 
-  #nppAcctTab { position: absolute; top: 8px; right: 8px; z-index: 3; width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; transition: background .15s, transform .15s, color .15s; }
-  #nppAcctTab svg { width: 14px; height: 14px; display: block; }
-  #nppAcctTab:hover, #nppAcctTab.on { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1330); border-color: transparent; }
-  #nppAcctTab.on { transform: scale(1.06); }
-  #nppAcctTab.attn::after { content: ""; position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #2fd873; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 1px 3px rgba(0,0,0,.35); }
-  #nppAcctDrawer { position: fixed; left: 244px; top: 70px; z-index: 1002; box-sizing: border-box; width: 252px; height: min(500px, calc(100vh - 100px)); display: flex; flex-direction: column; padding: 12px; overflow: hidden; border: 1px solid var(--npp-card-line); border-radius: 14px; background: var(--npLeftBarSolid, #3a3350);  box-shadow: 0 4px 14px rgba(0,0,0,.10); color: #fff; opacity: 0; transform: translateX(-18px) scale(.97); transform-origin: left top; pointer-events: none; transition: opacity .22s ease, transform .32s cubic-bezier(.22, 1, .36, 1); }
-  #nppAcctDrawer::before, #nppNotifDrawer::before { content: ""; position: absolute; inset: -24px; z-index: 0; background: var(--npp-drawer-layers), var(--npLeftBarImg, none) center / cover no-repeat; filter: blur(14px) saturate(1.1); pointer-events: none; }
-  #nppAcctDrawer::after, #nppNotifDrawer::after { content: ""; position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 4 / 3; z-index: 0; background: var(--npp-drawer-layers), var(--npLeftBarImg, none) center / cover no-repeat; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); pointer-events: none; }
-  #nppAcctDrawer > *, #nppNotifDrawer > * { position: relative; z-index: 1; }
-  #nppAcctDrawer.open { opacity: 1; transform: none; pointer-events: auto; }
-  #nppAcctDrawer .nppAcctHead { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; }
-  #nppAcctDrawer .nppAcctHeadL { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  #nppAcctDrawer .nppAcctTitle { font: 400 21px/1 'CafeteriaBlack', Georgia, serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppAcctDrawer .nppAcctSwap { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 13px; border-radius: 999px; background: linear-gradient(180deg, #52525e 0%, #3b3b46 50%, #2b2b34 100%); color: #fff !important; text-decoration: none !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 0 0 1px rgba(0,0,0,.25), 0 3px 8px rgba(0,0,0,.25); transition: filter .15s, transform .15s; }
-  #nppAcctDrawer .nppAcctSwap svg { width: 13px; height: 13px; flex: none; }
-  #nppAcctDrawer .nppAcctSwap span { font: 400 14px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppAcctDrawer .nppAcctSwap:hover { filter: brightness(1.18); transform: translateY(-1px); }
-  #nppAcctDrawer .nppAcctSwap.busy { opacity: .75; pointer-events: none; }
-  #nppAcctDrawer .nppAcctCount { padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.14); font: normal 700 11px/1.4 'Outfit', system-ui, sans-serif; }
-  #nppAcctDrawer .nppAcctHint { margin: 0 2px 10px; padding: 8px 10px; border: 1px solid rgba(255,209,102,.35); border-radius: 10px; background: rgba(255,209,102,.13); color: #ffe7a8; font: 500 11.5px/1.35 'Outfit', system-ui, sans-serif; }
-  #nppAcctDrawer .nppAcctHint:empty { display: none; }
-  #nppAcctDrawer .nppAcctBody { flex: 1 1 auto; min-height: 0; padding-right: 6px; overflow-x: hidden; overflow-y: scroll; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.42) rgba(255,255,255,.07); }
-  #nppAcctDrawer .nppAcctSec + .nppAcctSec { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
-  #nppAcctDrawer .nppAcctSecHead { display: flex; align-items: center; gap: 8px; padding: 0 4px 6px; }
-  #nppAcctDrawer .nppAcctSecHead span { font: 700 11px/1 'Outfit', system-ui, sans-serif !important; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.78); text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppAcctDrawer .nppAcctSecHead em { padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.12); font: normal 700 10px/1.4 'Outfit', system-ui, sans-serif; }
-  #nppAcctDrawer .nppAcctSecHead em:empty { display: none; }
-  #nppAcctDrawer .nppAcctList { display: flex; flex-direction: column; gap: 4px; }
-  #nppAcctDrawer .nppAcctRow { display: flex; align-items: center; gap: 2px; padding: 3px 0 3px 3px; border-radius: 14px; transition: background .18s; }
-  #nppAcctDrawer .nppAcctRow:hover { background: linear-gradient(90deg, var(--np-accent-hover, rgba(255,255,255,.14)), var(--np-accent-soft, rgba(255,255,255,.04))), rgba(255,255,255,.06); }
-  #nppAcctDrawer .nppAcctRow.me { box-shadow: inset 0 0 0 1px var(--np-accent-line, rgba(255,255,255,.35)); }
-  #nppAcctDrawer .nppAcctLink { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 3px 4px; border-radius: 12px; color: #fff !important; text-decoration: none !important; }
-  #nppAcctDrawer .nppAcctAv { flex: none; width: 34px; height: 34px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.16) center / cover no-repeat; font: normal 400 16px/1 'CafeteriaBlack', Georgia, serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppAcctDrawer .nppAcctTxt { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; }
-  #nppAcctDrawer .nppAcctTxt b, #nppAcctDrawer .nppAcctTxt small { text-align: left; }
-  #nppAcctDrawer .nppAcctTxt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px/1.2 'Outfit', system-ui, sans-serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppAcctDrawer .nppAcctTxt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 11px/1.2 'Outfit', system-ui, sans-serif !important; color: rgba(255,255,255,.68); }
-  #nppAcctDrawer .nppAcctStar { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: rgba(255,255,255,.55); font-size: 17px; line-height: 1; cursor: pointer; transition: color .15s, background .15s; }
-  #nppAcctDrawer .nppAcctStar:hover { color: #ffd166; background: rgba(255,255,255,.1); }
-  #nppAcctDrawer .nppAcctRow.main .nppAcctStar { color: #ffd166; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppAcctDrawer .nppAcctX { flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.3); color: rgba(255,255,255,.85); font-size: 15px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s; }
-  #nppAcctDrawer .nppAcctRow:hover .nppAcctX { opacity: 1; }
-  #nppAcctDrawer .nppAcctX:hover { background: #e0535f; color: #fff; }
-  #nppAcctDrawer .nppAcctNote { margin-top: 8px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); font: 500 11.5px/1.4 'Outfit', system-ui, sans-serif; }
-  #nppAcctDrawer .nppAcctNote:empty { display: none; }
-  #nppAcctDrawer .nppAcctEmpty { padding: 8px; font: 500 12px/1.4 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.7); }
-  #nppAcctDrawer .nppAcctSync { display: block; width: 100%; margin-top: 8px; height: 32px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; font: 600 12.5px 'Outfit', system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
-  #nppAcctDrawer .nppAcctSync:hover:not(:disabled) { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1330); border-color: transparent; text-shadow: var(--npp-accent-fg-shadow, none); }
-  #nppAcctDrawer .nppAcctSync.busy { opacity: .7; cursor: progress; animation: nppPulse 1s ease-in-out infinite; }
-  #nppAcctDrawer .nppAcctSec[hidden], #nppAcctDrawer .nppAcctAdd[hidden], #nppAcctDrawer .nppAcctAddBtn[hidden] { display: none !important; }
-  #nppAcctDrawer .nppAcctAddWrap { margin-top: 10px; }
-  #nppAcctDrawer .nppAcctAddBtn { height: 26px; padding: 0 12px; border: 1px dashed rgba(255,255,255,.34); border-radius: 999px; background: transparent; color: rgba(255,255,255,.85); font: 600 12px 'Outfit', system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
-  #nppAcctDrawer .nppAcctAddBtn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.6); color: #fff; }
-  #nppAcctDrawer .nppAcctAdd { display: flex; align-items: center; gap: 5px; animation: nppRowIn .22s ease both; }
-  #nppAcctDrawer .nppAcctAdd input { flex: 1; min-width: 0; height: 28px; padding: 0 12px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; font: 500 12.5px 'Outfit', system-ui, sans-serif; outline: 0; }
-  #nppAcctDrawer .nppAcctAdd input::placeholder { color: rgba(255,255,255,.6); }
-  #nppAcctDrawer .nppAcctAdd input:focus { border-color: var(--np-accent, #fff); background: rgba(255,255,255,.16); }
-  #nppAcctDrawer .nppAcctAddOk { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1330); font: 700 12px 'Outfit', system-ui, sans-serif; text-shadow: var(--npp-accent-fg-shadow, none); cursor: pointer; transition: filter .15s; }
-  #nppAcctDrawer .nppAcctAddOk:hover { filter: brightness(1.07); }
-  #nppAcctDrawer .nppAcctAddCancel { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); font-size: 15px; line-height: 1; cursor: pointer; transition: background .15s; }
-  #nppAcctDrawer .nppAcctAddCancel:hover { background: rgba(255,255,255,.24); }
-  #nppAcctDrawer .nppAcctMsg { text-align: center; padding: 6px 6px 0; font: 500 11px/1.35 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.7); }
-  #nppAcctDrawer .nppAcctMsg:empty { display: none; }
+  #nppNotifDrawer::before { content: ""; position: absolute; inset: -24px; z-index: 0; background: var(--npp-drawer-layers), var(--npLeftBarImg, none) center / cover no-repeat; filter: blur(14px) saturate(1.1); pointer-events: none; }
+  #nppNotifDrawer::after { content: ""; position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 4 / 3; z-index: 0; background: var(--npp-drawer-layers), var(--npLeftBarImg, none) center / cover no-repeat; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); pointer-events: none; }
+  #nppNotifDrawer > * { position: relative; z-index: 1; }
 
   #nppBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
   #nppNst { display: inline-block; padding: 0; font-size: 20px !important; color: #fff !important; background: none !important; border: 0 !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -600,7 +501,7 @@ html[data-np-modern-interface] {
   &.npp-popup::before { display: none !important; }
   &.npp-popup #npx-host, &.npp-popup #npHud, &.npp-popup #npLeftBar, &.npp-popup #btnOverlay,
   &.npp-popup #npxSideBtnHost, &.npp-popup #npBgHandle, &.npp-popup #npBgSidebar, &.npp-popup #nppFoot,
-  &.npp-popup #qrDockWrap, &.npp-popup #npxScrollTrack, &.npp-popup #nppAcctDrawer, &.npp-popup #nppNotifDrawer { display: none !important; }
+  &.npp-popup #qrDockWrap, &.npp-popup #npxScrollTrack, &.npp-popup #nppNotifDrawer { display: none !important; }
   &.npp-popup body { background: #fff !important; }
   &.npp-popup body :where(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) {
     width: auto !important; max-width: none !important; min-height: 0 !important; margin: 0 !important; padding: 8px !important; border: 0 !important; border-radius: 0 !important;
@@ -711,6 +612,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const SHADOW_CSS = `
 @font-face { font-family: 'CafeteriaBlack'; src: url('https://images.neopets.com/js/fonts/cafeteria-black.otf') format('opentype'); font-display: swap; }
 .bar { position: relative; }
+.npp-clock { position: absolute; top: 50%; right: 18px; transform: translateY(-50%); z-index: 2; font: 400 20px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; pointer-events: none; white-space: nowrap; }
 .inner { grid-template-columns: 1fr !important; padding: 0 18px 0 var(--np-col-width, 240px) !important; }
 .left { grid-column: 1 !important; justify-content: center !important; gap: 2px !important; }
 #menu-premium { max-height: calc(100vh - 100px); overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
@@ -1974,7 +1876,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if ($('#nppFoot') || !document.body || isNc) return;
     const f = document.createElement('div');
     f.id = 'nppFoot';
-    f.innerHTML = `<div id="nppBottom"><span id="nppNst">--:--:--</span></div>`;
     document.body.appendChild(f);
     const dr = document.createElement('div');
     dr.id = 'nppNotifDrawer';
@@ -1986,14 +1887,32 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, true);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dr.classList.contains('open')) setNotifOpen(false); });
     document.addEventListener('npp:drawer', (e) => { if (e.detail !== 'notif') setNotifOpen(false); });
-    const fmt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/Los_Angeles' });
-    const nst = $('#nppNst');
-    const tick = () => { nst.textContent = fmt.format(new Date()).replace(/\s?(AM|PM)/i, (m, p) => ' ' + p.toLowerCase()) + ' NST'; };
-    tick(); setInterval(tick, 1000);
     new ResizeObserver(() => rs.setProperty('--np-hud-bottom', (f.offsetHeight + 12) + 'px')).observe(f);
   }
 
-  /* ═══════════════════════════════ Accounts & swap ═══════════════════════════════ */
+  let clockTimer = null;
+  function setupClock() {
+    if (isNc || isPopup) return;
+    const sr = shadow();
+    if (!sr) return;
+    const bar = sr.querySelector('.bar');
+    if (!bar) return;
+    let nst = bar.querySelector('.npp-clock');
+    if (!nst) {
+      nst = document.createElement('div');
+      nst.id = 'nppNst'; nst.className = 'npp-clock'; nst.textContent = '--:--:--';
+      bar.appendChild(nst);
+    }
+    if (nst.dataset.ready === '1') return;
+    nst.dataset.ready = '1';
+    if (clockTimer) clearInterval(clockTimer);
+    const fmt = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: 'America/Los_Angeles' });
+    const tick = () => { nst.textContent = fmt.format(new Date()).replace(/\s?(AM|PM)/i, (m, p) => ' ' + p.toLowerCase()) + ' NST'; };
+    tick();
+    clockTimer = setInterval(tick, 1000);
+  }
+
+  /* ═══════════════════════════════ Account list helpers ═══════════════════════════════ */
   const ACCTS_KEY = 'npp_accounts';
   const validName = (n) => /^[A-Za-z0-9_]{3,20}$/.test(n);
   const readAccts = () => { try { const a = JSON.parse(LSget(ACCTS_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
@@ -2011,307 +1930,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     return out;
   }
   const MAN_KEY = 'npp_accounts_manual';
-  const NP_KEY = 'npp_neopass_accts';
-  const readNP = () => { try { const a = JSON.parse(LSget(NP_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const readManual = () => { try { const a = JSON.parse(LSget(MAN_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
-  const writeManual = (a) => LSset(MAN_KEY, JSON.stringify(a));
   const autoAccts = () => { const a = readAccts().slice(); [curUser(), ...seenAccounts()].forEach(n => { if (validName(n) && !a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
-  function parseNeoPass(html) {
-    const t = String(html || '').replace(/\\"/g, '"');
-    const i = t.indexOf('"linkage":[');
-    if (i < 0) return null;
-    const j = t.indexOf('"invalid_linkage"', i);
-    const seg = t.slice(i, j > i ? j : i + 4000);
-    const out = [], re = /"user_identifier":"([A-Za-z0-9_]{3,20})","extra":\{"main":(true|false)/g;
-    let m;
-    while ((m = re.exec(seg))) if (!out.some(o => o.name.toLowerCase() === m[1].toLowerCase())) out.push({ name: m[1], main: m[2] === 'true' });
-    return out.length ? out : null;
-  }
-  function neoPassFetch() {
-    return new Promise((resolve, reject) => {
-      if (typeof GM_xmlhttpRequest !== 'function') { reject(new Error('GM_xmlhttpRequest unavailable')); return; }
-      GM_xmlhttpRequest({ method: 'GET', url: 'https://account.neopets.com/', timeout: 20000, headers: { Accept: 'text/html' },
-        onload: (r) => resolve(r.responseText || ''), onerror: () => reject(new Error('network')), ontimeout: () => reject(new Error('timeout')) });
-    });
-  }
-  async function syncNeoPass() {
-    const list = parseNeoPass(await neoPassFetch());
-    if (!list) throw new Error('no account list found — sign in to NeoPass (account.neopets.com) in this browser and try again');
-    list.forEach(a => noteAccount(a.name));
-    LSset(NP_KEY, JSON.stringify(list.map(a => a.name)));
-    const main = list.find(a => a.main);
-    if (main) LSset(MAIN_KEY, main.name);
-    writeManual(readManual().filter(n => !list.some(a => a.name.toLowerCase() === n.toLowerCase())));
-    LSset('npp_neopass_ts', String(Date.now()));
-    return { list, main };
-  }
   const allAccts = () => { const a = autoAccts(); readManual().forEach(n => { if (!a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
-  let acctTabRefresh = null;
-
-  const SWAP_URL = 'https://account.neopets.com/classic/login';
-  let swapBusy = false;
-  function swapAccount(onBusy, onDone) {
-    if (swapBusy) return;
-    swapBusy = true;
-    clearNotifCaches();
-    if (onBusy) onBusy();
-    let w = null; try { w = window.open('about:blank', '_blank'); } catch {}
-    const go = () => {
-      if (w && !w.closed) { try { w.location.href = SWAP_URL; } catch { window.open(SWAP_URL, '_blank'); } }
-      else if (!window.open(SWAP_URL, '_blank')) location.assign(SWAP_URL);
-      swapBusy = false; if (onDone) onDone();
-    };
-    try {
-      Promise.race([
-        fetch('https://www.neopets.com/logout.phtml', { credentials: 'include', cache: 'no-store', redirect: 'manual' }),
-        new Promise(r => setTimeout(r, 2500)),
-      ]).catch(() => {}).then(go);
-    } catch { go(); }
-  }
-
-  function setupAcctDrawer() {
-    const card = $('#npUser');
-    if (!card || $('#nppAcctTab') || isNc) return;
-    if (LSget('npp_accts_v2') !== '1') {
-      const seen = new Set([curUser(), ...seenAccounts()].map(x => x.toLowerCase()));
-      const old = readAccts();
-      writeManual(old.filter(n => !seen.has(n.toLowerCase())));
-      writeAccts(old.filter(n => seen.has(n.toLowerCase())));
-      LSset('npp_accts_v2', '1');
-    }
-    const tab = document.createElement('button');
-    tab.id = 'nppAcctTab'; tab.type = 'button'; tab.title = 'Your accounts'; tab.setAttribute('aria-label', 'Your accounts');
-    tab.innerHTML = USERS_ICON;
-    card.appendChild(tab);
-    const drawer = document.createElement('div');
-    drawer.id = 'nppAcctDrawer';
-    drawer.innerHTML =
-      '<div class="nppAcctHead"><div class="nppAcctHeadL"><span class="nppAcctTitle">Accounts</span></div><a class="nppAcctSwap" href="' + SWAP_URL + '" target="_blank" rel="noopener" title="Swap account: log out and go straight to the login page">' + USERS_ICON + '<span>Swap</span></a></div>' +
-      '<div class="nppAcctHint"></div>' +
-      '<div class="nppAcctBody">' +
-        '<section class="nppAcctSec"><div class="nppAcctSecHead"><span>NeoPass</span><em class="nppCntNp"></em></div><div class="nppAcctList" data-list="np"></div><div class="nppAcctNote" data-note="np"></div><button type="button" class="nppAcctSync">Sync from NeoPass</button><div class="nppAcctMsg" data-msg="np"></div></section>' +
-        '<section class="nppAcctSec" data-sec="ex" hidden><div class="nppAcctSecHead"><span>Additional accounts</span><em class="nppCntEx"></em></div><div class="nppAcctList" data-list="ex"></div></section>' +
-        '<div class="nppAcctAddWrap"><button type="button" class="nppAcctAddBtn">+ Add account</button><form class="nppAcctAdd" autocomplete="off" hidden><input type="text" placeholder="Account name…" aria-label="Account name" spellcheck="false"><button type="submit" class="nppAcctAddOk">Add</button><button type="button" class="nppAcctAddCancel" aria-label="Cancel" title="Cancel">×</button></form><div class="nppAcctMsg" data-msg="ex"></div></div>' +
-      '</div>';
-    document.body.appendChild(drawer);
-    const q = (sel) => $(sel, drawer);
-    const input = q('input'), hint = q('.nppAcctHint');
-    const listNp = q('[data-list="np"]'), listEx = q('[data-list="ex"]'), noteNp = q('[data-note="np"]'), secEx = q('[data-sec="ex"]'), addBtn = q('.nppAcctAddBtn'), addForm = q('.nppAcctAdd'), msgNp = q('[data-msg="np"]'), msgEx = q('[data-msg="ex"]');
-    let open = false;
-
-    acctTabRefresh = () => tab.classList.toggle('attn', !mainAcct() && allAccts().length > 1);
-    const render = () => {
-      noteAccount(curUser()); seenAccounts().forEach(noteAccount);
-      const me = curUser().toLowerCase(), main = mainAcct().toLowerCase();
-      const autoSet = new Set(autoAccts().map(n => n.toLowerCase()));
-      const all = allAccts(), npNames = readNP().filter(n => all.some(x => x.toLowerCase() === n.toLowerCase()));
-      const npSet = new Set(npNames.map(n => n.toLowerCase()));
-      const extra = all.filter(n => !npSet.has(n.toLowerCase()));
-      const row = (n) => {
-        const mine = n.toLowerCase() === me, isMain = n.toLowerCase() === main, removable = !autoSet.has(n.toLowerCase()) && !npSet.has(n.toLowerCase());
-        const pr = readProf(n), av = pr && pr.avatar ? pr.avatar.replace(/["'\\\n\r()]/g, '') : '';
-        const sub = mine ? (isMain ? 'You · Main account' : 'You') : (isMain ? 'Main account' : 'View profile');
-        return `<div class="nppAcctRow${mine ? ' me' : ''}${isMain ? ' main' : ''}"><a class="nppAcctLink" href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(n)}" target="_blank" rel="noopener" title="View ${esc(n)}'s profile"><span class="nppAcctAv"${av ? ` style="background-image:url('${esc(av)}')"` : ''}>${av ? '' : esc(n.charAt(0).toUpperCase())}</span><span class="nppAcctTxt"><b>${esc(n)}</b><small>${esc(sub)}</small></span></a>${removable ? `<button type="button" class="nppAcctX" data-n="${esc(n)}" title="Remove (added by hand)" aria-label="Remove ${esc(n)}">×</button>` : ''}<button type="button" class="nppAcctStar" data-n="${esc(n)}" title="${isMain ? 'Main account (click to unset)' : 'Make this my main account'}" aria-label="${isMain ? 'Unset main account' : 'Make main account'}">${isMain ? '★' : '☆'}</button></div>`;
-      };
-      q('.nppCntNp').textContent = npNames.length || '';
-      q('.nppCntEx').textContent = extra.length || '';
-      hint.textContent = (!main && all.length > 1) ? 'Sync from NeoPass to find your main account, or pick it with the ☆.' : '';
-      listNp.innerHTML = npNames.map(row).join('');
-      listEx.innerHTML = extra.map(row).join('');
-      const synced = !!LSget('npp_neopass_ts');
-      noteNp.textContent = npNames.length === 0
-        ? (synced ? 'Press “Sync from NeoPass” again to fill this list.' : 'Not synced yet. Use “Sync from NeoPass” to list every account connected to your NeoPass.')
-        : (npNames.length === 1 && synced) ? 'This is the only account connected to your NeoPass.' : '';
-      secEx.hidden = extra.length === 0;
-      acctTabRefresh();
-    };
-    const closeAdd = () => { addForm.hidden = true; addBtn.hidden = false; input.value = ''; };
-    addBtn.addEventListener('click', () => { addBtn.hidden = true; addForm.hidden = false; msgEx.textContent = ''; input.focus(); });
-    $('.nppAcctAddCancel', drawer).addEventListener('click', () => { closeAdd(); msgEx.textContent = ''; });
-    input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeAdd(); } });
-    let autoErr = '';
-    const place = () => { const r = card.getBoundingClientRect(); drawer.style.top = Math.max(64, r.top) + 'px'; };
-    const setOpen = (o) => {
-      open = !!o;
-      if (open) { document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); render(); place(); msgNp.textContent = autoErr; msgEx.textContent = ''; }
-      drawer.classList.toggle('open', open); tab.classList.toggle('on', open);
-    };
-    tab.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); });
-    document.addEventListener('pointerdown', (e) => { if (open && !e.target.closest('#nppAcctDrawer, #nppAcctTab')) setOpen(false); }, true);
-    document.addEventListener('keydown', (e) => { if (open && e.key === 'Escape') setOpen(false); });
-    document.addEventListener('npp:drawer', (e) => { if (open && e.detail !== 'accts') setOpen(false); });
-    window.addEventListener('resize', () => { if (open) place(); });
-
-    const swapLink = q('.nppAcctSwap');
-    swapLink.addEventListener('click', (e) => {
-      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-      e.preventDefault();
-      swapAccount(() => { swapLink.lastElementChild.textContent = 'Swapping…'; swapLink.classList.add('busy'); }, () => { swapLink.lastElementChild.textContent = 'Swap'; swapLink.classList.remove('busy'); });
-    });
-    const syncBtn = q('.nppAcctSync');
-    syncBtn.addEventListener('click', async (e) => {
-      e.preventDefault(); e.stopPropagation();
-      if (syncBtn.disabled) return;
-      syncBtn.disabled = true; syncBtn.classList.add('busy'); syncBtn.textContent = 'Syncing…';
-      try {
-        const { list, main } = await syncNeoPass();
-        render(); document.dispatchEvent(new CustomEvent('npp:main'));
-        msgNp.textContent = `Synced ${list.length} account${list.length === 1 ? '' : 's'}${main ? ' · main: ' + main.name : ''}.`;
-      } catch (err) { msgNp.textContent = 'Couldn’t sync: ' + (err && err.message || 'error'); }
-      finally { syncBtn.disabled = false; syncBtn.classList.remove('busy'); syncBtn.textContent = 'Sync from NeoPass'; }
-    });
-    drawer.addEventListener('click', (e) => {
-      const st = e.target.closest('.nppAcctStar');
-      if (st) {
-        const n = st.dataset.n;
-        LSset(MAIN_KEY, mainAcct().toLowerCase() === n.toLowerCase() ? '' : n);
-        render(); document.dispatchEvent(new CustomEvent('npp:main'));
-        return;
-      }
-      const x = e.target.closest('.nppAcctX');
-      if (!x || !x.dataset.n) return;
-      writeManual(readManual().filter(n => n.toLowerCase() !== x.dataset.n.toLowerCase()));
-      render();
-    });
-    q('.nppAcctAdd').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const names = input.value.split(/[\s,;]+/).filter(Boolean);
-      if (!names.length) return;
-      const bad = names.filter(n => !validName(n));
-      let added = 0;
-      names.forEach(n => {
-        if (!validName(n) || allAccts().some(x => x.toLowerCase() === n.toLowerCase())) return;
-        const m = readManual(); m.push(n); writeManual(m); added++;
-      });
-      input.value = bad.join(' ');
-      msgEx.textContent = bad.length ? 'Names use letters, numbers and _ (3–20 characters): ' + bad.join(', ') : (added ? `Added ${added}.` : 'Already in the list.');
-      if (added && !bad.length) closeAdd();
-      render();
-    });
-    acctTabRefresh();
-
-    const AUTO_KEY = 'npp_np_auto_ts';
-    if (!readNP().length && Date.now() - (parseInt(LSget(AUTO_KEY), 10) || 0) > 24 * 3600e3) {
-      LSset(AUTO_KEY, String(Date.now()));
-      syncNeoPass()
-        .then(() => { autoErr = ''; render(); document.dispatchEvent(new CustomEvent('npp:main')); if (open) msgNp.textContent = ''; })
-        .catch(() => { autoErr = 'Couldn’t sync automatically. Sign in to NeoPass in this browser, then press Sync.'; if (open) msgNp.textContent = autoErr; });
-    }
-  }
-
-  /* ═══════════════════════════════ User card / logout / avatar ═══════════════════════════════ */
-  function setupLogout() {
-    const side = $('#npUser .rightSide');
-    if (!side || $('#npLogoutBtn')) return;
-    const wrap = document.createElement('div');
-    wrap.id = 'nppAcctBtns';
-    const a = document.createElement('a');
-    a.id = 'npLogoutBtn'; a.href = 'https://www.neopets.com/logout.phtml'; a.innerHTML = LOGOUT_ICON + '<span>Log Out</span>';
-
-    const sw = document.createElement('a');
-    sw.id = 'npSwapBtn'; sw.href = SWAP_URL; sw.target = '_blank'; sw.rel = 'noopener'; sw.title = 'Swap account: log out and go straight to the login page';
-    sw.innerHTML = USERS_ICON + '<span>Swap</span>';
-    sw.addEventListener('click', (e) => {
-      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-      e.preventDefault();
-      swapAccount(() => { sw.lastElementChild.textContent = 'Swapping…'; sw.classList.add('busy'); }, () => { sw.lastElementChild.textContent = 'Swap'; sw.classList.remove('busy'); });
-    });
-    wrap.append(a, sw);
-    side.appendChild(wrap);
-    if (!$('#nppAvatar')) { const av = document.createElement('a'); av.id = 'nppAvatar'; av.href = 'https://www.neopets.com/settings/neoboards'; av.title = 'Neoboard settings'; av.innerHTML = '<span class="nppAvInit"></span>'; side.prepend(av); }
-    updateAvatar();
-  }
-
-  const PROF_KEY = (u) => 'npp_prof_v1:' + u;
-  const readProf = (u) => { try { return JSON.parse(LSget(PROF_KEY(u)) || 'null'); } catch { return null; } };
-  const absUrl = (src) => { try { return new URL(src, 'https://www.neopets.com/').href; } catch { return ''; } };
-  function pickProfImgs(doc) {
-    const srcs = [...doc.querySelectorAll('img')].map(i => i.getAttribute('src') || '');
-    const find = (re) => { const x = srcs.find(v => re.test(v)); return x ? absUrl(x) : ''; };
-    return { avatar: find(/\/neoboards\/avatars\//i) };
-  }
-  function profFromFrame(user) {
-    return new Promise((resolve) => {
-      const f = document.createElement('iframe');
-      f.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:900px;border:0;visibility:hidden';
-      let done = false;
-      const finish = (v) => { if (done) return; done = true; try { f.remove(); } catch {} resolve(v); };
-      f.onload = () => setTimeout(() => { try { finish(pickProfImgs(f.contentDocument)); } catch { finish({ avatar: '' }); } }, 1500);
-      f.onerror = () => finish({ avatar: '' });
-      setTimeout(() => finish({ avatar: '' }), 12000);
-      f.src = '/userlookup.phtml?user=' + encodeURIComponent(user);
-      document.documentElement.appendChild(f);
-    });
-  }
-  const DIRTY_KEY = 'npp_prof_dirty';
-  function markProfDirty(first) {
-    try { if (JSON.parse(LSget(DIRTY_KEY) || 'null')) return; } catch {}
-    LSset(DIRTY_KEY, JSON.stringify({ t: Date.now() - (first ? 3000 : 0), n: first ? 2 : 0 }));
-  }
-  function profDirtyDue() { try { const d = JSON.parse(LSget(DIRTY_KEY) || 'null'); return d && Date.now() - d.t >= 3000 ? d : null; } catch { return null; } }
-  function watchSettings() {
-    if (isNc || !path.startsWith('/settings')) return;
-    markProfDirty(true);
-    document.addEventListener('submit', () => markProfDirty(false), true);
-    document.addEventListener('click', (e) => {
-      const el = e.target.closest && e.target.closest('button, input[type="submit"], input[type="button"], a, label, img');
-      if (!el) return;
-      const txt = String(el.value || el.textContent || el.alt || el.title || '').toLowerCase();
-      if (/save|update|change|select|choose|confirm|apply|submit|avatar/.test(txt) || (el.matches && el.matches('img[src*="/neoboards/avatars/"]'))) markProfDirty(false);
-    }, true);
-  }
-  let profBusy = false;
-  async function refreshProfile(user) {
-    profBusy = true;
-    const old = readProf(user) || { avatar: '' };
-    try {
-      let res = { avatar: '' };
-      const r = await fetch('/userlookup.phtml?user=' + encodeURIComponent(user), { credentials: 'include', cache: 'no-store' });
-      if (r.status === 403) { LSset('npqol_403_backoff_until_v1', String(Date.now() + 10 * 60 * 1000)); throw new Error('403'); }
-      if (r.ok) res = pickProfImgs(new DOMParser().parseFromString(await r.text(), 'text/html'));
-      if (!res.avatar && Date.now() - (parseInt(LSget('npp_prof_frame_ts'), 10) || 0) > 24 * 3600e3) { LSset('npp_prof_frame_ts', String(Date.now())); res = await profFromFrame(user); }
-      LSset(PROF_KEY(user), JSON.stringify({ avatar: res.avatar || old.avatar, ts: Date.now() }));
-    } catch {
-      LSset(PROF_KEY(user), JSON.stringify({ avatar: old.avatar, ts: Date.now() }));
-    } finally { profBusy = false; }
-  }
-  function updateAvatar() {
-    const link = $('#npUserLink'), nameEl = $('#npUserTitle');
-    if (link && nameEl) { const nm = nameEl.textContent.trim(); if (nm && nm !== '—' && link.title !== nm) link.title = nm; }
-    const av = $('#nppAvatar');
-    if (!av) return;
-    const user = String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
-    const prof = user ? readProf(user) : null;
-
-    if (user && !isNc && !profBusy && document.visibilityState === 'visible' && Date.now() >= (parseInt(LSget('npqol_403_backoff_until_v1'), 10) || 0)) {
-      const age = prof ? Date.now() - (prof.ts || 0) : Infinity;
-      const dirty = profDirtyDue();
-      if (age > (prof && prof.avatar ? 24 * 3600e3 : 6 * 3600e3) || dirty) {
-        if (dirty) { if (dirty.n >= 2) LSdel(DIRTY_KEY); else LSset(DIRTY_KEY, JSON.stringify({ t: Date.now(), n: dirty.n + 1 })); }
-        refreshProfile(user);
-      }
-    }
-
-    let url = (prof && prof.avatar) || '';
-    if (!url) {
-      try {
-        const el = document.getElementById('navPetMenuIcon__2020');
-        const m = el && (getComputedStyle(el).backgroundImage || '').match(/url\(["']?([^"')]+)["']?\)/);
-        if (m) url = m[1];
-      } catch {}
-    }
-    if (!url) {
-      try { const lg = JSON.parse(LSget('npqol_active_pet_img_v1') || 'null'); if (lg && /\/cp\//.test(lg.url || '')) url = lg.url.replace(/\/9\.png/, '/1.png'); } catch {}
-    }
-    if (url.startsWith('//')) url = 'https:' + url;
-    const init = $('.nppAvInit', av);
-    if (url) {
-      if (av.dataset.u !== url) { av.dataset.u = url; av.style.backgroundImage = `url("${url.replace(/["\\\n\r]/g, '')}")`; if (init) init.textContent = ''; }
-    } else if (init && !init.textContent) {
-      init.textContent = (user || '?').charAt(0).toUpperCase();
-    }
-  }
-
   /* ═══════════════════════════════ Pet card ═══════════════════════════════ */
   let petSig = null;
   function renderPetInfo() {
@@ -2417,27 +2038,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, true);
   }
 
-  /* ═══════════════════════════════ Fold buttons, scroll-top ═══════════════════════════════ */
+  /* ═══════════════════════════════ Daily notices fold, scroll-top ═══════════════════════════════ */
   const FOLD_KEY = 'npp_fold_v1';
-  function setupFold() {
-    if (isNc || isPopup) return;
-    let st = {}; try { st = JSON.parse(LSget(FOLD_KEY) || '{}') || {}; } catch {}
-    [['#npNp', 'np'], ['#npActivePet', 'pet']].forEach(([sel, key]) => {
-      const card = $(sel);
-      if (!card || card.querySelector(':scope > .nppFold')) return;
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'nppFold'; b.title = 'Collapse / expand'; b.setAttribute('aria-label', 'Collapse or expand');
-      b.innerHTML = CHEV;
-      const apply = () => {
-        const f = !!st[key];
-        card.classList.toggle('nppFolded', f);
-        b.classList.toggle('up', f);
-      };
-      b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); st[key] = !st[key]; LSset(FOLD_KEY, JSON.stringify(st)); apply(); });
-      card.prepend(b);
-      apply();
-    });
-  }
   function setupDailyFold() {
     if (isNc || isPopup) return;
     let st = {}; try { st = JSON.parse(LSget(FOLD_KEY) || '{}') || {}; } catch {}
@@ -2529,169 +2131,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       span.textContent = n.nodeValue.trim();
       n.parentNode.replaceChild(span, n);
     });
-  }
-
-  /* ═══════════════════════════════ Recent / pinned cards ═══════════════════════════════ */
-  const RECENT_KEY = 'npp_recent_v3';
-  const GENERIC_NB = /^(neoboards?|reply to this topic|post a reply|quick reply|neopets|home)$/i;
-  const BOARD_NAMES_KEY = 'npp_board_names_v1';
-  function boardNames() { try { return JSON.parse(LSget(BOARD_NAMES_KEY) || '{}') || {}; } catch { return {}; } }
-  function boardName(id) { return boardNames()[String(id)] || ''; }
-  function saveBoardNames() {
-    const sel = document.querySelector('select[name="board_id"]');
-    if (!sel) return;
-    const map = boardNames();
-    [...sel.options].forEach(o => { const t = (o.textContent || '').trim(); if (o.value && t) map[o.value] = t; });
-    LSset(BOARD_NAMES_KEY, JSON.stringify(map));
-  }
-  function labelFromUrl(href) {
-    let u; try { u = new URL(href, 'https://www.neopets.com/'); } catch { return ''; }
-    const q = u.searchParams, path = u.pathname.toLowerCase();
-    if (/userlookup/.test(path) && q.get('user')) return 'User lookup: ' + q.get('user');
-    if (/petlookup/.test(path) && q.get('pet')) return 'Pet lookup: ' + q.get('pet');
-    if (/topic/.test(path) && q.get('topic')) return 'Neoboard topic ' + q.get('topic');
-    if (/neoboard/.test(path) && q.get('board')) return boardName(q.get('board')) || 'Neoboard board ' + q.get('board');
-    return '';
-  }
-  function headingLabel() {
-    if (!/neoboard/i.test(location.pathname)) return '';
-    const UI = '#npHud, #nppFoot, #npLeftBar, #btnOverlay, #npBgSidebar, #npx-host, #nppRecent, #npTools, #nppNotifDrawer, #nppAcctDrawer, #npxSideBtnHost';
-    for (const el of document.querySelectorAll('.topicTitle h1, .topicTitle, #boardTopic h1, #boardTopic h2, #boardTopic h3')) {
-      if (el.closest(UI)) continue;
-      const x = (el.textContent || '').replace(/\s+/g, ' ').replace(/^topic:\s*/i, '').trim();
-      if (x.length >= 3 && x.length <= 160 && !GENERIC_NB.test(x) && !/hold on/i.test(x)) return x;
-    }
-    return '';
-  }
-  function pageLabel() {
-    const fromUrl = labelFromUrl(location.href);
-    const h = headingLabel();
-    if (h) return h;
-    if (/neoboard/i.test(location.pathname) && fromUrl) return fromUrl;
-    if (fromUrl && /userlookup|petlookup/i.test(location.pathname)) return fromUrl;
-    let t = (document.title || '').replace(/\s*[|\-–—]\s*Neopets.*$/i, '').trim();
-    if (/^hold on/i.test(t)) t = '';
-    return t || fromUrl;
-  }
-  function recentLabel(href, t) {
-    const fu = labelFromUrl(href), generic = !t || /^(hold on|neoboards?|neoboard (board|topic) \d)/i.test(t);
-    return (/userlookup|petlookup/i.test(href) && fu) || (!generic ? t : fu) || t || href;
-  }
-  function recordVisit() {
-    if (isNc || isPopup || isAuth) return;
-    saveBoardNames();
-    {
-      const u0 = location.href, t0 = recentLabel(u0, pageLabel());
-      let pins = loadPins(), hit = false;
-      pins = pins.map(p => {
-        if (p.u === u0 || pinKeyOf(p) === t0.toLowerCase()) { hit = true; return { u: u0, t: t0, k: t0.toLowerCase() }; }
-        return p;
-      });
-      const k = pinKey();
-      if (hit && k) LSset(k, JSON.stringify(pins));
-    }
-    const title = pageLabel();
-    if (!title) return;
-    if (!labelFromUrl(location.href) && /^neopets\b/i.test(title)) return;
-    let rec = []; try { rec = JSON.parse(LSget(RECENT_KEY) || '[]') || []; } catch {}
-    const u = location.href;
-    const p = (location.pathname + location.search).slice(0, 70);
-    const key = recentLabel(u, title).toLowerCase();
-    rec = [{ u, t: title.slice(0, 160), p }, ...rec.filter(r => r && r.u !== u && recentLabel(r.u, r.t).toLowerCase() !== key)].slice(0, 15);
-    LSset(RECENT_KEY, JSON.stringify(rec));
-  }
-  const PIN_KEY_OLD = 'npp_recent_pins_v1';
-  const pinKey = () => { const u = (curUser() || '').toLowerCase(); return u ? 'npp_recent_pins_v1:' + u : null; };
-  function migratePins() {
-    const k = pinKey();
-    if (!k || LSget(k) || !LSget(PIN_KEY_OLD)) return;
-    LSset(k, LSget(PIN_KEY_OLD));
-    LSdel(PIN_KEY_OLD);
-  }
-  function loadPins() { const k = pinKey(); if (!k) return []; migratePins(); try { const a = JSON.parse(LSget(k) || '[]'); return Array.isArray(a) ? a.filter(x => x && x.u) : []; } catch { return []; } }
-  const pinKeyOf = (p) => (p.k || recentLabel(p.u, p.t)).toLowerCase();
-  const pinMatches = (p, item) => p.u === item.u || pinKeyOf(p) === item.k;
-  function togglePin(item) {
-    if (!item) return;
-    let pins = loadPins();
-    if (pins.some(p => pinMatches(p, item))) pins = pins.filter(p => !pinMatches(p, item));
-    else pins.push({ u: item.u, t: item.label, k: item.k });
-    const k = pinKey(); if (!k) return;
-    LSset(k, JSON.stringify(pins));
-    refreshRecentCards();
-  }
-  function makeCard(id, head) {
-    const card = document.createElement('div');
-    card.id = id; card.className = 'npCard';
-    card.innerHTML = `<div class="rHead">${head}</div><ul class="rList"></ul>`;
-    ['auxclick', 'contextmenu', 'pointerdown'].forEach(ev => card.addEventListener(ev, (e) => e.stopPropagation()));
-    card.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const b = e.target.closest && e.target.closest('.rPin');
-      if (!b || !card._items) return;
-      e.preventDefault();
-      togglePin(card._items[+b.dataset.i]);
-    });
-    return card;
-  }
-  function setupRecent() {
-    if (isNc || isPopup) return;
-    const foot = $('#nppFoot');
-    if (!foot) return;
-    let pinned = $('#nppPinned'), card = $('#nppRecent');
-    if (!card) card = makeCard('nppRecent', 'Recently visited');
-    if (!pinned) pinned = makeCard('nppPinned', 'Pinned');
-    const clock = $('#nppBottom', foot);
-    if (card.parentNode !== foot || card.nextElementSibling !== (clock || null) || pinned.parentNode !== foot || pinned.nextElementSibling !== card) {
-      foot.insertBefore(card, clock || null);
-      foot.insertBefore(pinned, card);
-    }
-    const acct = (curUser() || '').toLowerCase();
-    if (card.dataset.u !== location.href || card.dataset.acct !== acct) { card.dataset.u = location.href; card.dataset.acct = acct; refreshRecentCards(); }
-  }
-  function refreshRecentCards() {
-    const pinned = $('#nppPinned'), card = $('#nppRecent');
-    if (pinned) paintPinned(pinned);
-    if (card) paintRecent(card);
-  }
-  function rowsHtml(list, pinKeys, empty) {
-    return list.length
-      ? list.map((x, i) => {
-        const pinned = pinKeys.has(x.k);
-        return `<li class="${pinned ? 'isPinned' : ''}"><a href="${esc(x.u)}"><b>${esc(x.label)}</b></a><button type="button" class="rPin" data-i="${i}" title="${pinned ? 'Unpin' : 'Pin to keep this page'}" aria-label="${pinned ? 'Unpin' : 'Pin'}">${PIN_SVG}</button></li>`;
-      }).join('')
-      : `<li class="rEmpty">${empty}</li>`;
-  }
-  function setList(card, html) {
-    const ul = card.querySelector('.rList');
-    if (ul.dataset.html !== html) { ul.dataset.html = html; ul.innerHTML = html; }
-  }
-  function pinItems() {
-    const abs = (u) => { try { return new URL(u, 'https://www.neopets.com/').href; } catch { return u; } };
-    return loadPins().map(r => { const href = abs(r.u), label = recentLabel(href, r.t); return { u: href, label, k: pinKeyOf({ ...r, u: href, t: r.t }) }; });
-  }
-  function paintPinned(card) {
-    const pins = pinItems();
-    const keys = new Set(pins.map(x => x.k));
-    card._items = pins;
-    card.hidden = pins.length === 0;
-    setList(card, rowsHtml(pins, keys, ''));
-  }
-  function paintRecent(card) {
-    let rec = []; try { rec = JSON.parse(LSget(RECENT_KEY) || '[]') || []; } catch {}
-    const abs = (u) => { try { return new URL(u, 'https://www.neopets.com/').href; } catch { return u; } };
-    const item = (r) => { const href = abs(r.u), label = recentLabel(href, r.t); return { u: href, label, k: label.toLowerCase() }; };
-    const generic = (x) => !labelFromUrl(x.u) && /^neopets\b/i.test(x.label);
-    const pins = pinItems();
-    const pinKeys = new Set(pins.map(x => x.k));
-    const cur = abs(location.href), seen = new Set();
-    const hist = rec.map(item).filter(x => {
-      if (x.u === cur || pins.some(p => pinMatches(p, x)) || generic(x) || seen.has(x.k)) return false;
-      seen.add(x.k); return true;
-    }).slice(0, 15);
-    card._items = hist;
-    setList(card, rowsHtml(hist, pinKeys, 'No pages yet.'));
-    card.dataset.painted = '1';
   }
 
   /* ═══════════════════════════════ Keys, keyboard shortcuts ═══════════════════════════════ */
@@ -2890,7 +2329,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     root.classList.add('npp-auth');
     const st = document.getElementById('npp-auth-css') || document.createElement('style');
     st.id = 'npp-auth-css';
-    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npHudResizer, html.npp-auth #npxFrameResizeR, html.npp-auth #npxFrameResizeB, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppAcctDrawer, html.npp-auth #nppNotifDrawer, html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
+    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npHudResizer, html.npp-auth #npxFrameResizeR, html.npp-auth #npxFrameResizeB, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppNotifDrawer, html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
     if (!st.isConnected) (document.head || root).appendChild(st);
     document.querySelectorAll('style').forEach(el => {
       const t = el.textContent || '';
@@ -2980,7 +2419,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     ensureDefaults();
     applyBarStyle(LSget('npqol_topbar_bg_v1'));
     applyLogo();
-    watchSettings();
     if (isNc) root.classList.remove('np-recolor-site'); else root.classList.toggle('np-recolor-site', LSget('npqol_recolor_site_v1') === '1');
     try { if (!rs.getPropertyValue('--np-accent-l60') && typeof W.__npApplyAccent === 'function') W.__npApplyAccent((typeof W.__npGetAccent === 'function' && W.__npGetAccent()) || '#ffffff'); } catch {}
     applyAccentContrast();
@@ -2993,21 +2431,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     patchShadow();
     globalListeners();
     setupKeys();
-    [1500, 4000, 8000].forEach(ms => setTimeout(recordVisit, ms));
-    if (/neoboard/i.test(path) && !isPopup) {
-      let done = false;
-      const mo = new MutationObserver(() => { if (!done && headingLabel()) { done = true; recordVisit(); mo.disconnect(); } });
-      const watch = () => { if (document.body) mo.observe(document.body, { childList: true, subtree: true, characterData: true }); else setTimeout(watch, 100); };
-      watch();
-      setTimeout(() => mo.disconnect(), 60000);
-    }
     let n = 0;
     const iv = setInterval(() => {
-      patchShadow(); fixNcNavLinks(); highlightShopPrices(); setupFold(); setupDailyFold(); setupScrollTop(); setupRecent(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupNest(); decorateEditorNest(); wireNotif(); syncPetImg(); setupLogout(); setupAcctDrawer(); setupBank(); petUI(); wireSidebar();
-      if (root.classList.contains('npp-wait') && (($('#nppAcctBtns') && $('#nppFoot') && $('#nppTools') && $('#npNp') && $('#npNp').dataset.acc && acctChecked && (petSettled || n > 10)) || n > 14)) root.classList.remove('npp-wait');
+      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupNest(); decorateEditorNest(); wireNotif(); syncPetImg(); setupBank(); petUI(); wireSidebar();
+      if (root.classList.contains('npp-wait') && (($('#nppFoot') && $('#nppTools') && $('#npNp') && $('#npNp').dataset.acc && acctChecked && (petSettled || n > 10)) || n > 14)) root.classList.remove('npp-wait');
       if (++n > 100) clearInterval(iv);
     }, 200);
-    setInterval(() => { if (staleTab()) return; renderPetInfo(); fixPetImg(); updateNc(); updateAvatar(); if (acctTabRefresh) acctTabRefresh(); }, 1500);
+    setInterval(() => { if (staleTab()) return; renderPetInfo(); fixPetImg(); updateNc(); }, 1500);
   }
 
   W.__nppCore = { LSget, LSset, LSdel, curUser, mainAcct, paintAll, applyAccentContrast, applySearchContrast, applyLogo, applyBarStyle };

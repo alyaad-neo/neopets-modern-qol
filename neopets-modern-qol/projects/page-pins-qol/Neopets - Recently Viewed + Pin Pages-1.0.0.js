@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.0
+// @version      1.0.1
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -66,6 +66,8 @@
 #nppRecent .rList b, #nppPinned .rList b { font: 600 12px/1.25 'Outfit', system-ui, sans-serif; white-space: normal; overflow-wrap: anywhere; }
 #nppRecent .rEmpty, #nppPinned .rEmpty { font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.6); padding: 4px 2px; }
 #nppPinned[hidden] { display: none !important; }
+#nppPinned { background: rgba(255,209,102,.07); border: 1px solid rgba(255,209,102,.22); border-radius: 12px; box-shadow: inset 3px 0 0 #ffd166; }
+#nppPinned .rHead { color: #ffd166; }
 
 /* Fallback footer (modern interface without core) */
 #nppRecentFoot { position: fixed; left: 0; bottom: 0; width: var(--np-col-width, 240px); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }

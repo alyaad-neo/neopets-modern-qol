@@ -13,11 +13,14 @@ Read this whole file before every task. Follow it exactly.
 ```
 AGENTS.md            this file
 build.js             combines split projects into one file
+bundle.js            builds the final combined upload from three projects
 projects/<name>/     one folder per script project
   NOTES.md           the map of that project. READ IT FIRST.
   <name>.user.js     single-file project: the script itself
   src/               split project: the source files you edit
   dist/              split project: build output. NEVER edit by hand.
+projects/_bundle/    final combined header + NOTES (build-only)
+dist/                final combined upload. NEVER edit by hand.
 projects/_template/  blank NOTES.md for new projects
 vendor/              other people's scripts. READ ONLY. NEVER EDIT.
 ```
@@ -77,6 +80,10 @@ vendor/              other people's scripts. READ ONLY. NEVER EDIT.
 - Neopets pages sometimes add content after the page loads. If the script already uses a pattern for this (for example a MutationObserver or a wait/retry helper), reuse that same pattern.
 - Follow the style already in the file: same quote style, same indentation, same naming.
 
+## Final bundle
+
+`modern-interface-patcher`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the three projects; never edit the bundle output. After any change to one of the three, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the three separate scripts must be disabled.
+
 ## Splitting a project
 
 Only when Aly asks. Work in the stages she asks for. Stop after each stage.
@@ -109,6 +116,7 @@ Rules:
 
 These are the folders in `projects/`. Each project's NOTES.md has the details. If NOTES.md is missing or empty, ask Aly what the script does before making big changes.
 
+- `_bundle` - build-only: final combined header and NOTES. Not a feature project.
 - `account-drawer`
 - `modern-interface-patcher` — Aly's PATCHER that restyles the third-party "Neopets - Modern Interface" script at runtime. Edit ONLY the patcher. The main Modern Interface script lives in `vendor/` for reference: read it to find class names and element IDs, NEVER edit it.
 - `neoboards-qol`
