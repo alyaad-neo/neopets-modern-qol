@@ -43,11 +43,11 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 ## All Pets (passive, zero network)
 
 - "All Pets" button in the drawer opens a full-screen overlay (#nppAP): tabs All/UFT/Permanent/Maybe/Untagged, account chips, search, sort, copy name, status + note per pet, "Copy trade list" (`Name - Colour Species (account)`).
-- Data: no requests. `apCollect` reads the patcher's `localStorage npqol_qr_data` (tolerant walk for objects with name + species/colour/level) and the `.qrPet` dock DOM, on load (2.5s, 9s), every 30s, and on open. Only the logged-in account is collected; others show "Log in to this account once".
-- Storage (GM): `npp_allpets_v1` = {account: {t, pets:[{name,img,species,color,level,active}]}}; `npp_allpets_tags_v1` = {lowercasePetName: {s:"uft"|"perm"|"maybe", n:note}}.
+- Data: no requests. `apCollect` reads the patcher's `localStorage nq_qr_data` (tolerant walk for objects with name + species/colour/level) and the `.qrPet` dock DOM, on load (2.5s, 9s), every 30s, and on open. Only the logged-in account is collected; others show "Log in to this account once".
+- Storage (GM): `nq_allpets_v1` = {account: {t, pets:[{name,img,species,color,level,active}]}}; `nq_allpets_tags_v1` = {lowercasePetName: {s:"uft"|"perm"|"maybe", n:note}}.
 - pet-trading-qol keeps its tradelist in GM storage (per-script), so UFT cannot be pre-filled from it.
 - Swap Active clicks the dock's own Make Active link (`#qrDock .qrOverlay a`); other accounts use `swapAccount`. No auto-chaining.
-- Unverified: exact npqol_qr_data shape beyond `data.active` (other pets come from the dock DOM).
+- Unverified: exact nq_qr_data shape beyond `data.active` (other pets come from the dock DOM).
 
 
 ## Don't touch
@@ -75,12 +75,12 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 - 1.3.13: All Pets name tone via GM blob fetch (default light); CafeteriaBlack !important on card name/info and h2 (30px).
 
 ## 1.3.16-1.3.17
-- Lesson (pets lost after logout/swap): apDedupe moved pets to the newest-collected account, so one stale npqol_qr_data save erased the real owner. Now apDedupe only dedupes inside an account; apRender alone picks the newest owner for display. apCollect also skips saves where half or more of the pets belong to another account (unless the home carousel confirms them).
-- All Pets data and tags are mirrored to localStorage (npp_allpets_v1_bak, npp_allpets_tags_v1_bak) and merged back on read (newer t per account wins), so a reinstall or second script copy does not lose them. Footer "Delete data" button (data-act=wipe, confirm) clears both copies.
+- Lesson (pets lost after logout/swap): apDedupe moved pets to the newest-collected account, so one stale nq_qr_data save erased the real owner. Now apDedupe only dedupes inside an account; apRender alone picks the newest owner for display. apCollect also skips saves where half or more of the pets belong to another account (unless the home carousel confirms them).
+- All Pets data and tags are mirrored to localStorage (nq_allpets_v1_bak, nq_allpets_tags_v1_bak) and merged back on read (newer t per account wins), so a reinstall or second script copy does not lose them. Footer "Delete data" button (data-act=wipe, confirm) clears both copies.
 
 ## 1.3.18
 - All Pets: trash icon on each card overlay (data-act=delpet) deletes that pet name from every account entry + its orphaned tag. Accounts popup rows (.apAcRow) have delete (acdel, not the logged-in account) and block (acblock) buttons. Shared removal code is removeAccount(nm) (also used by the drawer X).
-- Block list: localStorage npp_ap_block_v1 (lowercase). Blocked accounts are never collected (apCollect), listed (apOrdered) or auto-added (autoAccts/noteAccount). Footer shows Blocked: pills; click one to unblock. apBlocked/apSetBlock are function declarations because autoAccts/noteAccount (earlier in the file) call them.
+- Block list: localStorage nq_ap_block_v1 (lowercase). Blocked accounts are never collected (apCollect), listed (apOrdered) or auto-added (autoAccts/noteAccount). Footer shows Blocked: pills; click one to unblock. apBlocked/apSetBlock are function declarations because autoAccts/noteAccount (earlier in the file) call them.
 
 ## 1.3.19
 - All Pets trade pick mode: toolbar "Pick pets" (.apPickBtn, data-act=pick) switches to the UFT tab and adds data-pick checkboxes on UFT cards; apState.picked; the copy button (apTradeLbl) then copies only picked pets. Edit mode turns pick mode off.

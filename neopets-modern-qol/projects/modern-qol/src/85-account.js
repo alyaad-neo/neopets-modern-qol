@@ -22,7 +22,7 @@
       if (a.dataset.busy) return;
       a.dataset.busy = '1'; a.textContent = 'Switching…';
       try { await fetch(a.href, { credentials: 'include', cache: 'no-store' }); } catch {}
-      ['npqol_qr_data', 'npqol_qr_data_lastFetch', 'npqol_active_pet_img_v1'].forEach(LSdel);
+      ['nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1'].forEach(LSdel);
       location.reload();
     }, true);
 
@@ -40,16 +40,16 @@
     }, true);
   }
 
-  const ACCT_KEYS = ['npqol_bank_state_v2', 'npqol_bank_daily_v1', 'npqol_bank_history_v1', 'npqol_bank_pin_v1',
-    'npqol_np_last', 'npqol_qr_data', 'npqol_qr_data_lastFetch', 'npqol_active_pet_img_v1', 'npqol_user_stub', 'npqol_hud_username', 'npp_cd_v1', 'npp_cd_seen_v1', 'npp_ack_v1', 'npp_nc_last'];
-  const THEME_KEYS = ['npqol_accent_v1', 'npp_color_main', 'npp_color_left', 'npp_color_head', 'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npp_logo_white', 'npqol_topbar_bg_v1'];
-  const themeShared = () => LSget('npp_theme_shared') !== '0';
+  const ACCT_KEYS = ['nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1',
+    'nq_np_last', 'nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1', 'nq_user_stub', 'nq_hud_username', 'nq_cd_v1', 'nq_cd_seen_v1', 'nq_ack_v1', 'nq_nc_last'];
+  const THEME_KEYS = ['nq_accent_v1', 'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_logo_white', 'nq_topbar_bg_v1'];
+  const themeShared = () => LSget('nq_theme_shared') !== '0';
   const readTheme = () => { const t = {}; THEME_KEYS.forEach(k => { const v = LSget(k); if (v) t[k] = v; }); return t; };
   const writeTheme = (t) => THEME_KEYS.forEach(k => (t && t[k]) ? LSset(k, t[k]) : LSdel(k));
   function swapTheme(owner, u) {
     if (themeShared()) return;
-    if (owner) LSset('npp_theme_' + owner, JSON.stringify(readTheme()));
-    try { const t = JSON.parse(LSget('npp_theme_' + u) || 'null'); if (t) writeTheme(t); } catch {}
+    if (owner) LSset('nq_theme_' + owner, JSON.stringify(readTheme()));
+    try { const t = JSON.parse(LSget('nq_theme_' + u) || 'null'); if (t) writeTheme(t); } catch {}
   }
   let petSyncUntil = 0;
   let acctChecked = false;
@@ -60,9 +60,9 @@
     const np = $('#npNp');
     if ($('#nppFoot') && $('#nppTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('npp-wait');
   };
-  const cachedAtStart = LSget('npqol_hud_username');
+  const cachedAtStart = LSget('nq_hud_username');
   let tabUser = '';
-  const staleTab = () => { const o = LSget('npp_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
+  const staleTab = () => { const o = LSget('nq_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
   function accountGuard() {
     let tries = 0;
     const iv = setInterval(() => {
@@ -71,40 +71,40 @@
       if (!u) { if (++tries > 100) { clearInterval(iv); acctChecked = true; unwait(); } return; }
       clearInterval(iv);
       tabUser = u;
-      const owner = LSget('npp_owner') || cachedAtStart;
+      const owner = LSget('nq_owner') || cachedAtStart;
       noteAccount(u); noteAccount(owner);
       if (owner === u) {
-        LSset('npp_owner', u);
+        LSset('nq_owner', u);
         try {
-          if (sessionStorage.getItem('npp_theme_check') === u) {
-            sessionStorage.removeItem('npp_theme_check');
-            const t = !themeShared() && JSON.parse(LSget('npp_theme_' + u) || 'null');
+          if (sessionStorage.getItem('nq_theme_check') === u) {
+            sessionStorage.removeItem('nq_theme_check');
+            const t = !themeShared() && JSON.parse(LSget('nq_theme_' + u) || 'null');
             if (t && THEME_KEYS.some(k => (LSget(k) || '') !== (t[k] || ''))) { writeTheme(t); location.reload(); return; }
           }
         } catch {}
         try {
-          if (sessionStorage.getItem('npp_swapped') === u) {
-            sessionStorage.removeItem('npp_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false;
+          if (sessionStorage.getItem('nq_swapped') === u) {
+            sessionStorage.removeItem('nq_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false;
             const sync = setInterval(() => { syncPetImg(); if (petSettled || Date.now() > petSyncUntil) { clearInterval(sync); unwait(); } }, 200);
           }
         } catch {}
         acctChecked = true; unwait();
         return;
       }
-      try { sessionStorage.setItem('npp_swapped', u); } catch {}
+      try { sessionStorage.setItem('nq_swapped', u); } catch {}
       if (owner) {
         const snap = {};
         ACCT_KEYS.forEach(k => { const v = LSget(k); if (v) snap[k] = v; });
-        LSset('npp_acct_' + owner, JSON.stringify(snap));
+        LSset('nq_acct_' + owner, JSON.stringify(snap));
       }
       swapTheme(owner, u);
-      try { sessionStorage.setItem('npp_theme_check', u); } catch {}
+      try { sessionStorage.setItem('nq_theme_check', u); } catch {}
       ACCT_KEYS.forEach(LSdel);
       try {
-        const saved = JSON.parse(LSget('npp_acct_' + u) || 'null');
+        const saved = JSON.parse(LSget('nq_acct_' + u) || 'null');
         if (saved) Object.keys(saved).forEach(k => LSset(k, saved[k]));
       } catch {}
-      LSset('npp_owner', u);
+      LSset('nq_owner', u);
       if (owner) location.reload(); else { acctChecked = true; unwait(); }
     }, 100);
   }

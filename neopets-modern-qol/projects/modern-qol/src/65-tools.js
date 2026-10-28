@@ -84,7 +84,7 @@
 
   }
 
-  const NEST_KEY = 'npp_nest_v1';
+  const NEST_KEY = 'nq_nest_v1';
   const readNest = () => { try { const o = JSON.parse(LSget(NEST_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } };
   const writeNest = (o) => LSset(NEST_KEY, JSON.stringify(o));
   const bgUrlOf = (el) => { try { const m = /url\(["']?([^"')]+)["']?\)/.exec(getComputedStyle(el).backgroundImage || ''); return m ? m[1] : ''; } catch { return ''; } };

@@ -1,9 +1,9 @@
   function ensureDefaults() {
-    if (LSget('npp_defaults_v3')) return;
+    if (LSget('nq_defaults_v3')) return;
     const put = (k, v) => { if (LSget(k)) return false; LSset(k, v); return true; };
-    const t = put('npqol_btn_theme_v1', 'premium'), a = put('npqol_accent_v1', NP_ORANGE);
-    put('npqol_topbar_bg_v1', 'blur');
-    LSset('npp_defaults_v3', '1');
+    const t = put('nq_btn_theme_v1', 'premium'), a = put('nq_accent_v1', NP_ORANGE);
+    put('nq_topbar_bg_v1', 'blur');
+    LSset('nq_defaults_v3', '1');
     if (t) NQ.applyBtnTheme('premium');
     if (a) NQ.applyAccent(NP_ORANGE);
   }
@@ -11,8 +11,8 @@
     if (!isNc) return;
     const A = NQ.sideBtns;
     try {
-      NQ.applyAccent(LSget('npqol_accent_v1') || NP_ORANGE);
-      const t = LSget('npqol_btn_theme_v1');
+      NQ.applyAccent(LSget('nq_accent_v1') || NP_ORANGE);
+      const t = LSget('nq_btn_theme_v1');
       if (t) NQ.applyBtnTheme(t);
       const clean = (u) => String(u).replace(/["\\\n\r]/g, '');
       const mi = LSget(K.mainImg), li = LSget(K.leftImg);
@@ -26,7 +26,7 @@
     } catch {}
   }
 
-  const ICONS_KEY = 'npp_side_icons_v1';
+  const ICONS_KEY = 'nq_side_icons_v1';
   const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
   let hudMo = null;
   let hudWait = null;
@@ -147,7 +147,7 @@
 
   if (!isAuth && !isNc && !isPopup) {
     root.classList.add('npp-pre');
-    try { if (LSget('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
+    try { if (LSget('nq_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
     const pre = document.createElement('style');
     pre.id = 'npp-pre-css';
     pre.textContent = 'html.npp-pre #npHud, html.npp-pre #nppFoot, html.npp-pre #btnOverlay, html.npp-pre #npLeftBar, html.npp-pre #qrDockWrap { opacity: 0 !important; pointer-events: none !important; } html.npp-pre #npActivePet img { max-width: 100% !important; max-height: 170px !important; object-fit: contain !important; } #npHud, #nppFoot, #btnOverlay { transition: opacity .3s ease; } @media (prefers-reduced-motion: reduce) { #npHud, #nppFoot, #btnOverlay { transition: none !important; } }';
@@ -185,14 +185,14 @@
       }
     }
 
-    ['npqol_frame_size_v1', 'npqol_col_width_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_side_layout_v1',
-      'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1'].forEach(LSdel);
-    try { Object.keys(localStorage).filter(k => k.startsWith('npqol_hud_userlookup:')).forEach(LSdel); } catch {}
+    ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1'].forEach(LSdel);
+    try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
-    applyBarStyle(LSget('npqol_topbar_bg_v1'));
+    applyBarStyle(LSget('nq_topbar_bg_v1'));
     applyLogo();
-    if (isNc) root.classList.remove('np-recolor-site'); else root.classList.toggle('np-recolor-site', LSget('npqol_recolor_site_v1') === '1');
+    if (isNc) root.classList.remove('np-recolor-site'); else root.classList.toggle('np-recolor-site', LSget('nq_recolor_site_v1') === '1');
     try { if (!rs.getPropertyValue('--np-accent-l60') ) NQ.applyAccent(NQ.getAccent() || '#ffffff'); } catch {}
     applyAccentContrast();
     NQ.onAccent((hex) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(hex); applySearchContrast(); });
@@ -216,7 +216,7 @@
     if (NQ.dailies && NQ.dailies.onCard) NQ.dailies.onCard(setupDailyFold);
     const petInfo = () => { if (!staleTab()) renderPetInfo(); };
     if (NQ.onQrData) NQ.onQrData(petInfo);
-    window.addEventListener('storage', (e) => { if (e.key === 'npqol_qr_data') petInfo(); });
+    window.addEventListener('storage', (e) => { if (e.key === 'nq_qr_data') petInfo(); });
   }
 
   if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {

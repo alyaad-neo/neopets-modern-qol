@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.6
+// @version      1.0.7
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -39,15 +39,15 @@
   if (isAuth) return;
 
   /* ───────────────────────────────── constants ───────────────────────────────── */
-  const RECENT_KEY = 'npp_recent_v3';
-  const PIN_KEY_OLD = 'npp_recent_pins_v1';
-  const BOARD_NAMES_KEY = 'npp_board_names_v1';
+  const RECENT_KEY = 'nq_recent_v3';
+  const PIN_KEY_OLD = 'nq_recent_pins_v1';
+  const BOARD_NAMES_KEY = 'nq_board_names_v1';
   const RECENT_MAX = 10;
   const GENERIC_NB = /^(neoboards?|reply to this topic|post a reply|quick reply|neopets|home)$/i;
   const PIN_SVG = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.8 1.5 14.5 6.2l-1.4 1.4-.7-.7L9.5 9.7v3.1l-1.4 1.4-2.5-2.5-3.6 3.6-.7-.7 3.6-3.6-2.5-2.5L3.4 8.7h3.1L10.5 4l-.7-.7z"/></svg>';
   const PIN_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2h6l-1 4 2 2v1H4V8l2-2-1-4zM8 9v5"/></svg>';
 
-  const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+  const curUser = () => String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
 
   /* ───────────────────────────────── CSS ───────────────────────────────── */
   const RECENT_CSS = `
@@ -106,10 +106,10 @@
   (document.head || root).appendChild(styleEl);
 
   /* ───────────────────────────────── storage ───────────────────────────────── */
-  const readAccts = () => { try { const a = JSON.parse(LSget('npp_accounts') || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
+  const readAccts = () => { try { const a = JSON.parse(LSget('nq_accounts') || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
 
   // Pins are per-account; the key is derived from the current user.
-  const pinKey = () => { const u = (curUser() || '').toLowerCase(); return u ? 'npp_recent_pins_v1:' + u : null; };
+  const pinKey = () => { const u = (curUser() || '').toLowerCase(); return u ? 'nq_recent_pins_v1:' + u : null; };
   // One-time migration from the pre-account-key shared list.
   function migratePins() {
     const k = pinKey();

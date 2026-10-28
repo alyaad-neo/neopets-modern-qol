@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.3
+// @version      5.0.4
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -113,7 +113,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
         (p === '/games/game.phtml' && location.search)) return true;
     if (!NP_RUN_ON_PHONES && npIsPhone()){
       let forced = false;
-      try { forced = LSget('npqol_mobile_v1') === 'on'; } catch {}
+      try { forced = LSget('nq_mobile_v1') === 'on'; } catch {}
       if (!forced) return true;
     }
     return false;
@@ -123,8 +123,8 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     NQ.base = true;
   }
 
-  const NP_BACKOFF_KEY = 'npqol_403_backoff_until_v1';
-  const NP_STRIKE_KEY  = 'npqol_403_strikes_v1';
+  const NP_BACKOFF_KEY = 'nq_403_backoff_until_v1';
+  const NP_STRIKE_KEY  = 'nq_403_strikes_v1';
   const NP_BACKOFF_STEPS_MIN = [10, 30, 60, 120];
   const np403BackoffActive = () => {
     try { return Date.now() < (+LSget(NP_BACKOFF_KEY) || 0); } catch { return false; }
@@ -157,29 +157,29 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     document.addEventListener('visibilitychange', onVis);
   };
 
-  const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1',
-    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_icon_size_v1',
-    'npqol_topbar_custom_v1', 'npqol_bank_btn_settings_v1',
-    'npp_color_main', 'npp_color_left', 'npp_color_head', 'npp_defaults_v3'];
-  const DATA_KEYS = ['npqol_hud_username', 'npqol_np_last', 'npqol_bank_state_v2', 'npqol_bank_daily_v1', 'npqol_bank_history_v1',
-    'npqol_qr_data', 'npqol_active_pet_img_v1', 'npqol_user_stub'];
+  const SYNC_KEYS = ['nq_accent_v1', 'nq_btn_theme_v1', 'nq_topbar_bg_v1', 'nq_recolor_site_v1',
+    'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_side_btns_v2', 'nq_side_icon_size_v1',
+    'nq_topbar_custom_v1', 'nq_bank_btn_settings_v1',
+    'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_defaults_v3'];
+  const DATA_KEYS = ['nq_hud_username', 'nq_np_last', 'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1',
+    'nq_qr_data', 'nq_active_pet_img_v1', 'nq_user_stub'];
   const isNc = location.hostname.toLowerCase() === 'ncmall.neopets.com';
   if (typeof GM_getValue === 'function' && typeof GM_setValue === 'function') {
     if (isNc) {
-      try { const snap = JSON.parse(GM_getValue('npp_sync', '{}') || '{}'); Object.keys(snap).forEach(k => LSset(k, snap[k])); } catch {}
-      LSset('npqol_403_backoff_until_v1', String(Date.now() + 365 * 24 * 3600 * 1000));
-      LSset('npqol_recolor_site_v1', '0');
+      try { const snap = JSON.parse(GM_getValue('nq_sync', '{}') || '{}'); Object.keys(snap).forEach(k => LSset(k, snap[k])); } catch {}
+      LSset('nq_403_backoff_until_v1', String(Date.now() + 365 * 24 * 3600 * 1000));
+      LSset('nq_recolor_site_v1', '0');
     } else if (/^(www\.)?neopets\.com$/i.test(location.hostname)) {
       const save = () => {
         const o = {};
         SYNC_KEYS.concat(DATA_KEYS).forEach(k => { const v = LSget(k); if (v) o[k] = v; });
-        try { GM_setValue('npp_sync', JSON.stringify(o)); } catch {}
+        try { GM_setValue('nq_sync', JSON.stringify(o)); } catch {}
       };
       save(); setInterval(save, 8000); window.addEventListener('pagehide', save);
     }
   }
 
-  const K = { mainImg: 'npqol_bg_main_v3', leftImg: 'npqol_bg_left_v3', main: 'npp_color_main', left: 'npp_color_left', head: 'npp_color_head' };
+  const K = { mainImg: 'nq_bg_main_v3', leftImg: 'nq_bg_left_v3', main: 'nq_color_main', left: 'nq_color_left', head: 'nq_color_head' };
   const NP_ORANGE = '#ff8a1f';
   const DEF = { main: '#ffffff', left: '#2a292e', head: NP_ORANGE };
   const HEAD_ALPHA = 'ed';
@@ -593,7 +593,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       spec.startsWith('basicsvg:')
     );
   }
-  const TOPBAR_CUSTOM_LS = 'npqol_topbar_custom_v1';
+  const TOPBAR_CUSTOM_LS = 'nq_topbar_custom_v1';
   function loadAllCustom(){
     try {
       const raw = LSget(TOPBAR_CUSTOM_LS);
@@ -656,7 +656,7 @@ function startLayout() {
       { id:'valentines',        label:'Valentines',         pattern:'https://images.neopets.com/themes/h5/valentines/images/{icon}-icon.svg' },
     ];
     const FALLBACK_PATTERN = 'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg';
-    const LS_KEY = 'npqol_btn_theme_v1';
+    const LS_KEY = 'nq_btn_theme_v1';
     const DEFAULT = 'constellations';
 
     NQ.btnThemesData = { BTN_THEMES, FALLBACK_PATTERN, LS_KEY, DEFAULT };
@@ -722,7 +722,7 @@ function startLayout() {
   })();
 
   (function exposeAccent(){
-    const LS_KEY = 'npqol_accent_v1';
+    const LS_KEY = 'nq_accent_v1';
     const DEFAULT_HEX = '#dcb8ff';
 
     function hexToRgb(hex){
@@ -1393,7 +1393,7 @@ function startLayout() {
 if (NQ.base) startLayout();
 
 // ---------- src/25-hud.js ----------
-  const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
+  const ACTIVE_IMG_LS = 'nq_active_pet_img_v1';
   function readLastGoodPetImg(){
     try { return JSON.parse(LSget(ACTIVE_IMG_LS) || 'null'); }
     catch { return null; }
@@ -1404,7 +1404,7 @@ if (NQ.base) startLayout();
   }
   function _cacheRawPetImage(url){
     try {
-      const cacheKey = 'npqol_pp_png:' + url;
+      const cacheKey = 'nq_pp_png:' + url;
       if (LSget(cacheKey)) return;
       const probe = new Image();
       probe.crossOrigin = 'anonymous';
@@ -1429,7 +1429,7 @@ if (NQ.base) startLayout();
       if (homeRaw){
         const home = JSON.parse(homeRaw);
         if (home && home.data && Date.now() - (home.ts||0) < 7*24*3600*1000){
-          const qr = JSON.parse(LSget('npqol_qr_data') || 'null');
+          const qr = JSON.parse(LSget('nq_qr_data') || 'null');
           const name = qr?.data?.active?.name;
           if (name && home.data[name] && home.data[name].sci){
             return { name, sci: home.data[name].sci, mood: home.data[name].mood || '1' };
@@ -1438,7 +1438,7 @@ if (NQ.base) startLayout();
       }
     } catch {}
     try {
-      const qrRaw = LSget('npqol_qr_data');
+      const qrRaw = LSget('nq_qr_data');
       if (qrRaw){
         const qr = JSON.parse(qrRaw);
         const name = qr?.data?.active?.name;
@@ -1466,7 +1466,7 @@ if (NQ.base) startLayout();
   }
   let _earlyActivePetImg = null;
   const BANK_PIN = "";
-  const BANK_PIN_LS = 'npqol_bank_pin_v1';
+  const BANK_PIN_LS = 'nq_bank_pin_v1';
   function getBankPin(){
     try {
       const stored = (LSget(BANK_PIN_LS) || '').replace(/[^\d]/g, '').slice(0, 4);
@@ -2044,9 +2044,9 @@ function startHud() {
   if (document.getElementById('npHud')) return;
 
   try {
-    const qr = JSON.parse(LSget('npqol_qr_data') || 'null');
+    const qr = JSON.parse(LSget('nq_qr_data') || 'null');
     if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
-      LSdel('npqol_qr_data_lastFetch');
+      LSdel('nq_qr_data_lastFetch');
     }
   } catch {}
 
@@ -2058,7 +2058,7 @@ function startHud() {
         ? `https://pets.neopets.com/cp/${sci}/${mood}/9.png`
         : `https://pets.neopets.com/cpn/${encodeURIComponent(name)}/1/4.png`;
       if (sci) saveLastGoodPetImg(name, url);
-      const cacheKey = 'npqol_pp_png:' + url;
+      const cacheKey = 'nq_pp_png:' + url;
 
       const cached = LSget(cacheKey);
       const initialSrc = cached || url;
@@ -2083,7 +2083,7 @@ function startHud() {
       link.rel = 'preload'; link.as = 'image'; link.href = url; link.crossOrigin = 'anonymous';
       (document.head || document.documentElement).appendChild(link);
 
-      const qrSnap = JSON.parse(LSget('npqol_qr_data') || 'null');
+      const qrSnap = JSON.parse(LSget('nq_qr_data') || 'null');
       const a = qrSnap?.data?.active || {};
       [a.petpet, a.petpetpet].filter(Boolean).forEach(src => {
         const l = document.createElement('link');
@@ -2165,7 +2165,7 @@ function startHud() {
   }
 
   (function userModule(){
-    const USERNAME_KEY = 'npqol_hud_username';
+    const USERNAME_KEY = 'nq_hud_username';
     const st = { username:null };
 
     const titleEl = () => cardUser.querySelector('#npUserTitle');
@@ -2235,9 +2235,9 @@ function startHud() {
   })();
 
   (function bankModule(){
-    const STORE = 'npqol_bank_state_v2';
-    const SETTINGS_LS = 'npqol_bank_btn_settings_v1';
-    const DAILY_LS    = 'npqol_bank_daily_v1';
+    const STORE = 'nq_bank_state_v2';
+    const SETTINGS_LS = 'nq_bank_btn_settings_v1';
+    const DAILY_LS    = 'nq_bank_daily_v1';
     const FORM_TTL = 5*60*1000;
     const load = () => { try { return JSON.parse(LSget(STORE) || 'null') || {}; } catch { return {}; } };
     const save = (s) => { LSset(STORE, JSON.stringify(s || {})); };
@@ -2286,7 +2286,7 @@ function startHud() {
     function saveSettings(s){ LSset(SETTINGS_LS, JSON.stringify(s||{})); }
     let settings = loadSettings();
 
-    const HISTORY_LS = 'npqol_bank_history_v1';
+    const HISTORY_LS = 'nq_bank_history_v1';
     const HISTORY_MAX = 180;
     function loadHistory(){
       try {
@@ -2528,7 +2528,7 @@ function startHud() {
       let raw = '';
       const el = $('#npanchor');
       if (el) raw = el.textContent;
-      if (!raw){ try { raw = LSget('npqol_np_last') || ''; } catch {} }
+      if (!raw){ try { raw = LSget('nq_np_last') || ''; } catch {} }
       const n = parseInt(String(raw).replace(/[^\d]/g,''), 10);
       return Number.isFinite(n) ? n : 0;
     }
@@ -2536,7 +2536,7 @@ function startHud() {
       if (!j) return;
       const np = (j.new_neopoints != null) ? numComma(j.new_neopoints) : null;
       const bal = (j.final_balance != null) ? j.final_balance : j.new_balance;
-      if (np != null){ const el = $('#npanchor'); if (el) el.textContent = np; LSset('npqol_np_last', np); }
+      if (np != null){ const el = $('#npanchor'); if (el) el.textContent = np; LSset('nq_np_last', np); }
       if (bal != null){
         state.bank_balance = numComma(bal);
         noteBalance(bal);
@@ -2909,7 +2909,7 @@ function startHud() {
   (function qrModule(){
     const FETCH_URL = 'https://www.neopets.com/quickref.phtml';
     const COOLDOWN = 5 * 60 * 1000, PETS_MAX = 20;
-    const LS_DATA = 'npqol_qr_data';
+    const LS_DATA = 'nq_qr_data';
     const BLOCK_RE = /(customi[sz]e|view abilities|equip)/i;
     const state = { data:null, loading:false, closeT:0, wantOpen:false, imagesLoaded:false };
     const cpn = (n) => `https://pets.neopets.com/cpn/${encodeURIComponent(n)}/1/4.png`;
@@ -3072,20 +3072,20 @@ function startHud() {
       }
     }
 
-    const PP_VER_KEY = 'npqol_pp_ver';
+    const PP_VER_KEY = 'nq_pp_ver';
     try {
       if (LSget(PP_VER_KEY) !== '2'){
         const kill = [];
         for (let i = 0; i < localStorage.length; i++){
           const k = localStorage.key(i);
-          if (k && k.startsWith('npqol_pp_png')) kill.push(k);
+          if (k && k.startsWith('nq_pp_png')) kill.push(k);
         }
         kill.forEach(k => { LSdel(k); });
         LSset(PP_VER_KEY, '2');
       }
     } catch {}
 
-    const PP_INDEX_KEY = 'npqol_pp_png_index';
+    const PP_INDEX_KEY = 'nq_pp_png_index';
     const PP_MAX = 30;
     function ppIndexRead(){
       try { const r = LSget(PP_INDEX_KEY); return r ? (JSON.parse(r) || []) : []; }
@@ -3107,7 +3107,7 @@ function startHud() {
 
     function cleanImg(url, imgEl){
       if (!url || !imgEl) return;
-      const KEY = 'npqol_pp_png:' + url;
+      const KEY = 'nq_pp_png:' + url;
       let cached = null; try { cached = LSget(KEY); } catch {}
       if (cached){ imgEl.src = cached; return; }
       const probe = new Image();
@@ -3328,7 +3328,7 @@ function startHud() {
   })();
 
   (function npModule(){
-    const LS_KEY = 'npqol_np_last';
+    const LS_KEY = 'nq_np_last';
     const SELECTORS = ['#npanchor', '.navsub-np-meter__2020 #npanchor', '.navsub-np-meter__2020 .np-text__2020', 'span.np-text__2020'];
     const st = { last:null, anchor:null, watch:null, obs:null, fastTimer:0, fastUntil:0, lastManual:0 };
     const valEl = () => cardNp.querySelector('.npVal');
@@ -3403,7 +3403,7 @@ function startHud() {
     const SHARED = NQ.btnThemesData;
     const BTN_THEMES = SHARED.BTN_THEMES || [];
     const FALLBACK_PATTERN = SHARED.FALLBACK_PATTERN || 'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg';
-    const LS_BTN_THEME = SHARED.LS_KEY || 'npqol_btn_theme_v1';
+    const LS_BTN_THEME = SHARED.LS_KEY || 'nq_btn_theme_v1';
     const DEFAULT_THEME = SHARED.DEFAULT || 'constellations';
 
     const getTheme = () => {
@@ -3486,7 +3486,7 @@ function startHud() {
     const DEFAULT_CFG = {
       left: ['customise', 'stylingchamber', 'settings', 'inventory', 'quickstock', 'sdb', 'shopwizard'],
     };
-    const LS_BTNS_KEY = 'npqol_side_btns_v2';
+    const LS_BTNS_KEY = 'nq_side_btns_v2';
 
     function resolveItem(entry){
       if (typeof entry === 'string'){
@@ -3512,7 +3512,7 @@ function startHud() {
       LSset(LS_BTNS_KEY, JSON.stringify({ left: cfg.left }));
     }
 
-    const ICON_SIZE_LS = 'npqol_side_icon_size_v1';
+    const ICON_SIZE_LS = 'nq_side_icon_size_v1';
     const ICON_SIZE_MIN = 36, ICON_SIZE_MAX = 84, ICON_SIZE_STEP = 6, ICON_SIZE_DEFAULT = 60;
     function getIconSize(){
       try {
@@ -3900,10 +3900,10 @@ if (NQ.base) startHud();
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
   const LS = {
-    mainBgId:  'npqol_bg_main_v3',
-    leftBarBg: 'npqol_bg_left_v3',
-    recolor:   'npqol_recolor_site_v1',
-    topbarBg:  'npqol_topbar_bg_v1',
+    mainBgId:  'nq_bg_main_v3',
+    leftBarBg: 'nq_bg_left_v3',
+    recolor:   'nq_recolor_site_v1',
+    topbarBg:  'nq_topbar_bg_v1',
   };
   const BG_COLOR = '#000';
   const UI_Z = 2147483000;
@@ -3934,7 +3934,7 @@ function startBackgrounds() {
   if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
 
-  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { LSdel(k); });
+  ['nq_dti_bgs_v6', 'nq_bg_favs_v1', 'nq_bg_hidden_v1', 'nq_inv_menubar_v1'].forEach(k => { LSdel(k); });
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 
@@ -5269,7 +5269,7 @@ html[data-np-modern-interface] {
   const BAR_STYLES = ['none', 'tint', 'blur', 'solid'];
   function applyAccentContrast(hexIn) {
     let hex = hexIn || '';
-    try { if (!hex) hex = NQ.getAccent() || LSget('npqol_accent_v1'); } catch {}
+    try { if (!hex) hex = NQ.getAccent() || LSget('nq_accent_v1'); } catch {}
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
     if (!m) { rs.setProperty('--npp-accent-fg', '#1a1330'); rs.setProperty('--npp-accent-fg-shadow', 'none'); return; }
     const n = parseInt(m[1], 16);
@@ -5283,8 +5283,8 @@ html[data-np-modern-interface] {
     const style = root.dataset.nppBar || 'blur';
     let hex = '';
     try {
-      if (style === 'none') hex = NQ.getAccent() || LSget('npqol_accent_v1');
-      else hex = LSget('npp_color_head') || DEF.head;
+      if (style === 'none') hex = NQ.getAccent() || LSget('nq_accent_v1');
+      else hex = LSget('nq_color_head') || DEF.head;
     } catch {}
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
     let white = true;
@@ -5299,7 +5299,7 @@ html[data-np-modern-interface] {
     rs.setProperty('--npp-search-ts-auto', white ? '0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)' : 'none');
     rs.setProperty('--npp-search-icon-filter', white ? 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' : 'none');
   }
-  function applyLogo() { rs.setProperty('--npp-logo-filter', LSget('npp_logo_white') === '1' ? 'brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.35))' : 'none'); }
+  function applyLogo() { rs.setProperty('--npp-logo-filter', LSget('nq_logo_white') === '1' ? 'brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.35))' : 'none'); }
   const applyBarStyle = (v) => { root.dataset.nppBar = BAR_STYLES.includes(v) ? v : 'blur'; applySearchContrast(); try { applyNavContrast(); } catch {} };
   const BAR_CSS = `
 html[data-np-modern-interface][data-npp-bar="none"] {
@@ -5505,7 +5505,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (pendingImg.main) LSset(K.mainImg, pendingImg.main);
     if (pendingImg.left) LSset(K.leftImg, pendingImg.left);
     if (accentPick) {
-      LSset('npqol_accent_v1', accentPick);
+      LSset('nq_accent_v1', accentPick);
       try { ownAccent = true; NQ.applyAccent(accentPick); } catch {} finally { ownAccent = false; }
       applyAccentContrast(accentPick); applySearchContrast();
     }
@@ -5531,7 +5531,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       + '<div class="nppRow nppLogoRow"><i class="nppLogoDot"></i><span>Logo</span><div class="nppSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>'
       + '<div class="nppRow nppLogoRow nppSideRow"><i class="nppLogoDot"></i><span>Sidebar style</span><div class="nppSeg"><button type="button" data-side="0">Dark</button><button type="button" data-side="1">Light</button></div></div>';
     anchor.before(row);
-    const curAccent = () => { let a = ''; try { a = NQ.getAccent() || LSget('npqol_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
+    const curAccent = () => { let a = ''; try { a = NQ.getAccent() || LSget('nq_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
     const setAccent = (hex) => {
       if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
       try { ownAccent = true; NQ.applyAccent(hex); } catch {} finally { ownAccent = false; }
@@ -5543,7 +5543,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const ai = row.querySelector('input[data-acc]'); if (ai) ai.value = curAccent();
       const sh = row.querySelector('input[data-share]'); if (sh) sh.checked = themeShared();
       row.querySelectorAll('input[data-k]').forEach(i => { i.value = draft[i.dataset.k] || DEF[i.dataset.k]; });
-      const lw = LSget('npp_logo_white') === '1' ? '1' : '0';
+      const lw = LSget('nq_logo_white') === '1' ? '1' : '0';
       row.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === lw));
       const lr = row.querySelector('.nppLogoRow'); if (lr) lr.dataset.logo = lw;
       const sl = document.documentElement.classList.contains('npp-side-light') ? '1' : '0';
@@ -5553,17 +5553,17 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const sb = e.target.closest && e.target.closest('[data-side]'); if (!sb) return;
       const on = sb.dataset.side === '1';
       document.documentElement.classList.toggle('npp-side-light', on);
-      LSset('npp_side_light', on ? '1' : '0'); sync();
+      LSset('nq_side_light', on ? '1' : '0'); sync();
     });
     row._sync = sync;
     sync();
     row.addEventListener('change', (e) => {
       if (!(e.target.dataset && e.target.dataset.share !== undefined)) return;
-      LSset('npp_theme_shared', e.target.checked ? '1' : '0');
+      LSset('nq_theme_shared', e.target.checked ? '1' : '0');
       if (!e.target.checked) {
         const base = JSON.stringify(readTheme());
-        try { allAccts().forEach(n => { if (!LSget('npp_theme_' + n)) LSset('npp_theme_' + n, base); }); } catch {}
-        try { const u = curUser(); if (u) LSset('npp_theme_' + u, base); } catch {}
+        try { allAccts().forEach(n => { if (!LSget('nq_theme_' + n)) LSset('nq_theme_' + n, base); }); } catch {}
+        try { const u = curUser(); if (u) LSset('nq_theme_' + u, base); } catch {}
       }
     });
     row.addEventListener('input', (e) => {
@@ -5586,7 +5586,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
       if (e.target.closest && e.target.closest('[data-accreset]')) { setAccent(NP_ORANGE); return; }
       const lg = e.target.dataset && e.target.dataset.logo;
-      if (lg !== undefined) { LSset('npp_logo_white', lg === '1' ? '1' : '0'); applyLogo(); sync(); return; }
+      if (lg !== undefined) { LSset('nq_logo_white', lg === '1' ? '1' : '0'); applyLogo(); sync(); return; }
       const k = e.target.dataset && e.target.dataset.r;
       if (!k) return;
       draft[k] = null;
@@ -5616,7 +5616,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   });
   const BG_SKIP = [/altador cup/i, /advent/i, /birthday|anniversar|\b\d+[- ]?years?\b/i];
   async function discoverBgs() {
-    let end = parseInt(LSget('npp_disc_end'), 10) || 0;
+    let end = parseInt(LSget('nq_disc_end'), 10) || 0;
     const seenOff = new Set(), seenId = new Set(), got = [];
     for (let attempt = 0; attempt < 10 && got.length < 24; attempt++) {
       const slots = Math.max(1, Math.floor((end ? end : 2400) / 30));
@@ -5624,7 +5624,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       while (seenOff.has(off) && g++ < 12) off = Math.floor(Math.random() * slots) * 30;
       seenOff.add(off);
       const items = await dtiPage(off);
-      if (items.length < 30) { end = off + items.length; LSset('npp_disc_end', String(end)); }
+      if (items.length < 30) { end = off + items.length; LSset('nq_disc_end', String(end)); }
       items.forEach((it) => {
         const layers = ((it.appearanceOn || {}).layers) || [];
         const layer = layers.find(l => ((l.zone || {}).label || '').toLowerCase().includes('background')) || layers[0];
@@ -5772,7 +5772,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const open = sb.style.transform.includes('translateX(0');
       if (open && !wasOpen) {
         draft = saved(); clearImg = { main: false, left: false }; saving = false; pendingImg = { main: null, left: null };
-        accentPick = null; accentBase = LSget('npqol_accent_v1');
+        accentPick = null; accentBase = LSget('nq_accent_v1');
         const r = $('#nppColors'); if (r && r._sync) r._sync();
         if (bgList && !bgList.children.length) runShuffle();
       } else if (!open && wasOpen) {
@@ -5950,8 +5950,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     ['Petpet Lab Ray', 'https://www.neopets.com/petpetlab.phtml'],
   ];
   const FOOD_CLUB = ['Food Club', 'https://www.neopets.com/pirates/foodclub.phtml'], STOCK_MARKET = ['Stock Market', 'https://www.neopets.com/stockmarket.phtml?type=portfolio'];
-  const MAIN_KEY = 'npp_main_account';
-  const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+  const MAIN_KEY = 'nq_main_account';
+  const curUser = () => String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
   const mainAcct = () => LSget(MAIN_KEY);
   const onMainAcct = () => { const m = mainAcct().toLowerCase(); let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {} return !m || u.toLowerCase() === m; };
 
@@ -6163,7 +6163,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
   }
 
-  const NEST_KEY = 'npp_nest_v1';
+  const NEST_KEY = 'nq_nest_v1';
   const readNest = () => { try { const o = JSON.parse(LSget(NEST_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } };
   const writeNest = (o) => LSset(NEST_KEY, JSON.stringify(o));
   const bgUrlOf = (el) => { try { const m = /url\(["']?([^"')]+)["']?\)/.exec(getComputedStyle(el).backgroundImage || ''); return m ? m[1] : ''; } catch { return ''; } };
@@ -6462,7 +6462,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
 
 // ---------- src/75-pet.js ----------
-  const ACCTS_KEY = 'npp_accounts';
+  const ACCTS_KEY = 'nq_accounts';
   const validName = (n) => /^[A-Za-z0-9_]{3,20}$/.test(n);
   const readAccts = () => { try { const a = JSON.parse(LSget(ACCTS_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const writeAccts = (a) => LSset(ACCTS_KEY, JSON.stringify(a));
@@ -6475,10 +6475,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
   function seenAccounts() {
     const out = [];
-    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('npp_acct_')) out.push(k.slice(9)); } } catch {}
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('nq_acct_')) out.push(k.slice(8)); } } catch {}
     return out;
   }
-  const MAN_KEY = 'npp_accounts_manual';
+  const MAN_KEY = 'nq_accounts_manual';
   const readManual = () => { try { const a = JSON.parse(LSget(MAN_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const autoAccts = () => { const a = readAccts().slice(); [curUser(), ...seenAccounts()].forEach(n => { if (validName(n) && !a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
   const allAccts = () => { const a = autoAccts(); readManual().forEach(n => { if (!a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
@@ -6488,7 +6488,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!card) return;
     let box = $('#nppPetInfo');
     if (!box) { box = document.createElement('div'); box.id = 'nppPetInfo'; card.appendChild(box); petSig = null; }
-    const raw = LSget('npqol_qr_data');
+    const raw = LSget('nq_qr_data');
     if (raw === petSig) return;
     petSig = raw;
     let a = null;
@@ -6502,7 +6502,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const ageShort = !Number.isFinite(ageN) ? a.age : (ageUnit === 'days' && ageN >= 1000) ? (() => { const k = Math.floor(ageN / 100) / 10; return (k % 1 ? k.toFixed(1) : k) + 'K days'; })() : ageN + ' ' + ageUnit;
     const chips = [a.level && ['', 'Lv ' + a.level, 'Level ' + a.level], a.age && ['', ageShort, a.age]].filter(Boolean);
     const rows = [['Health', a.health], ['Strength', a.strength], ['Defence', a.defence], ['Move', a.move], ['Intelligence', a.intelligence]].filter(r => r[1]);
-    box.innerHTML = `<div class="nppTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nppCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nppLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nppStatsBtn${LSget('npp_stats_open') === '0' ? '' : ' on'}" title="Stats" aria-label="Stats" aria-pressed="${LSget('npp_stats_open') === '0' ? 'false' : 'true'}">${STATS_ICON}</button>` : ''}</div><div class="nppChips">${chips.map(c => `<span class="nppChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nppStats${LSget('npp_stats_open') === '0' ? '' : ' open'}"><div class="nppStatsBody"><div class="nppDetails">${rows.map(r => `<div class="nppStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
+    box.innerHTML = `<div class="nppTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nppCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nppLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nppStatsBtn${LSget('nq_stats_open') === '0' ? '' : ' on'}" title="Stats" aria-label="Stats" aria-pressed="${LSget('nq_stats_open') === '0' ? 'false' : 'true'}">${STATS_ICON}</button>` : ''}</div><div class="nppChips">${chips.map(c => `<span class="nppChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nppStats${LSget('nq_stats_open') === '0' ? '' : ' open'}"><div class="nppStatsBody"><div class="nppDetails">${rows.map(r => `<div class="nppStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
   }
   const PET_IMG_STYLE = 'object-position:50% 50%!important;object-fit:cover!important;width:calc(100% + 2 * var(--pn-pad, 12px))!important;height:auto!important;aspect-ratio:1/1!important;max-width:none!important;max-height:none!important;transform:none!important;background:#fff!important;border-radius:var(--pn-r, 16px) var(--pn-r, 16px) 0 0!important;opacity:1!important;display:block!important;margin:calc(-1 * var(--pn-pad, 12px)) calc(-1 * var(--pn-pad, 12px)) 0!important;box-shadow:none!important';
   function syncPetImg() {
@@ -6518,7 +6518,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const sz = (/\/(\d+)\.png/.exec(cur) || [])[1] || '9';
     const big = hu.replace(/\/\d+\.png(\?.*)?$/, '/' + sz + '.png');
     img.src = big;
-    try { const o = JSON.parse(LSget('npqol_active_pet_img_v1') || 'null') || {}; o.url = big; LSset('npqol_active_pet_img_v1', JSON.stringify(o)); } catch {}
+    try { const o = JSON.parse(LSget('nq_active_pet_img_v1') || 'null') || {}; o.url = big; LSset('nq_active_pet_img_v1', JSON.stringify(o)); } catch {}
     petSettled = true;
   }
   function fixPetImg() {
@@ -6541,7 +6541,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     } catch { cb(null); }
   }
   const nppToneCache = new Map();
-  const NPP_TONE_KEY = 'npp_pet_tone_v1';
+  const NPP_TONE_KEY = 'nq_pet_tone_v1';
   function nppToneRead() { try { const o = JSON.parse(LSget(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function nppToneSave(src, dark) {
     try {
@@ -6620,7 +6620,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         const wrap = $('#nppPetInfo .nppStats'), open = !(wrap && wrap.classList.contains('open'));
         if (wrap) wrap.classList.toggle('open', open);
         sbtn.classList.toggle('on', open); sbtn.setAttribute('aria-pressed', open ? 'true' : 'false');
-        LSset('npp_stats_open', open ? '1' : '0');
+        LSset('nq_stats_open', open ? '1' : '0');
         return;
       }
       const copy = e.target.closest('.nppCopy');
@@ -6654,7 +6654,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
 
 // ---------- src/80-page-tweaks.js ----------
-  const FOLD_KEY = 'npp_fold_v1';
+  const FOLD_KEY = 'nq_fold_v1';
   function setupDailyFold() {
     if (isNc || isPopup) return;
     let st = {}; try { st = JSON.parse(LSget(FOLD_KEY) || '{}') || {}; } catch {}
@@ -6750,8 +6750,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const el = $('#npNp .ncVal');
     if (!el) return;
     const live = (($('#ncanchor') || {}).textContent || '').trim();
-    if (live) LSset('npp_nc_last', live);
-    const v = live || LSget('npp_nc_last');
+    if (live) LSset('nq_nc_last', live);
+    const v = live || LSget('nq_nc_last');
     if (v && el.dataset.raw !== v) { el.dataset.raw = v; el.textContent = v; }
   }
   function setupBank() {
@@ -6800,7 +6800,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (a.dataset.busy) return;
       a.dataset.busy = '1'; a.textContent = 'Switching…';
       try { await fetch(a.href, { credentials: 'include', cache: 'no-store' }); } catch {}
-      ['npqol_qr_data', 'npqol_qr_data_lastFetch', 'npqol_active_pet_img_v1'].forEach(LSdel);
+      ['nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1'].forEach(LSdel);
       location.reload();
     }, true);
 
@@ -6818,16 +6818,16 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, true);
   }
 
-  const ACCT_KEYS = ['npqol_bank_state_v2', 'npqol_bank_daily_v1', 'npqol_bank_history_v1', 'npqol_bank_pin_v1',
-    'npqol_np_last', 'npqol_qr_data', 'npqol_qr_data_lastFetch', 'npqol_active_pet_img_v1', 'npqol_user_stub', 'npqol_hud_username', 'npp_cd_v1', 'npp_cd_seen_v1', 'npp_ack_v1', 'npp_nc_last'];
-  const THEME_KEYS = ['npqol_accent_v1', 'npp_color_main', 'npp_color_left', 'npp_color_head', 'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npp_logo_white', 'npqol_topbar_bg_v1'];
-  const themeShared = () => LSget('npp_theme_shared') !== '0';
+  const ACCT_KEYS = ['nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1',
+    'nq_np_last', 'nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1', 'nq_user_stub', 'nq_hud_username', 'nq_cd_v1', 'nq_cd_seen_v1', 'nq_ack_v1', 'nq_nc_last'];
+  const THEME_KEYS = ['nq_accent_v1', 'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_logo_white', 'nq_topbar_bg_v1'];
+  const themeShared = () => LSget('nq_theme_shared') !== '0';
   const readTheme = () => { const t = {}; THEME_KEYS.forEach(k => { const v = LSget(k); if (v) t[k] = v; }); return t; };
   const writeTheme = (t) => THEME_KEYS.forEach(k => (t && t[k]) ? LSset(k, t[k]) : LSdel(k));
   function swapTheme(owner, u) {
     if (themeShared()) return;
-    if (owner) LSset('npp_theme_' + owner, JSON.stringify(readTheme()));
-    try { const t = JSON.parse(LSget('npp_theme_' + u) || 'null'); if (t) writeTheme(t); } catch {}
+    if (owner) LSset('nq_theme_' + owner, JSON.stringify(readTheme()));
+    try { const t = JSON.parse(LSget('nq_theme_' + u) || 'null'); if (t) writeTheme(t); } catch {}
   }
   let petSyncUntil = 0;
   let acctChecked = false;
@@ -6838,9 +6838,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const np = $('#npNp');
     if ($('#nppFoot') && $('#nppTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('npp-wait');
   };
-  const cachedAtStart = LSget('npqol_hud_username');
+  const cachedAtStart = LSget('nq_hud_username');
   let tabUser = '';
-  const staleTab = () => { const o = LSget('npp_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
+  const staleTab = () => { const o = LSget('nq_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
   function accountGuard() {
     let tries = 0;
     const iv = setInterval(() => {
@@ -6849,40 +6849,40 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (!u) { if (++tries > 100) { clearInterval(iv); acctChecked = true; unwait(); } return; }
       clearInterval(iv);
       tabUser = u;
-      const owner = LSget('npp_owner') || cachedAtStart;
+      const owner = LSget('nq_owner') || cachedAtStart;
       noteAccount(u); noteAccount(owner);
       if (owner === u) {
-        LSset('npp_owner', u);
+        LSset('nq_owner', u);
         try {
-          if (sessionStorage.getItem('npp_theme_check') === u) {
-            sessionStorage.removeItem('npp_theme_check');
-            const t = !themeShared() && JSON.parse(LSget('npp_theme_' + u) || 'null');
+          if (sessionStorage.getItem('nq_theme_check') === u) {
+            sessionStorage.removeItem('nq_theme_check');
+            const t = !themeShared() && JSON.parse(LSget('nq_theme_' + u) || 'null');
             if (t && THEME_KEYS.some(k => (LSget(k) || '') !== (t[k] || ''))) { writeTheme(t); location.reload(); return; }
           }
         } catch {}
         try {
-          if (sessionStorage.getItem('npp_swapped') === u) {
-            sessionStorage.removeItem('npp_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false;
+          if (sessionStorage.getItem('nq_swapped') === u) {
+            sessionStorage.removeItem('nq_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false;
             const sync = setInterval(() => { syncPetImg(); if (petSettled || Date.now() > petSyncUntil) { clearInterval(sync); unwait(); } }, 200);
           }
         } catch {}
         acctChecked = true; unwait();
         return;
       }
-      try { sessionStorage.setItem('npp_swapped', u); } catch {}
+      try { sessionStorage.setItem('nq_swapped', u); } catch {}
       if (owner) {
         const snap = {};
         ACCT_KEYS.forEach(k => { const v = LSget(k); if (v) snap[k] = v; });
-        LSset('npp_acct_' + owner, JSON.stringify(snap));
+        LSset('nq_acct_' + owner, JSON.stringify(snap));
       }
       swapTheme(owner, u);
-      try { sessionStorage.setItem('npp_theme_check', u); } catch {}
+      try { sessionStorage.setItem('nq_theme_check', u); } catch {}
       ACCT_KEYS.forEach(LSdel);
       try {
-        const saved = JSON.parse(LSget('npp_acct_' + u) || 'null');
+        const saved = JSON.parse(LSget('nq_acct_' + u) || 'null');
         if (saved) Object.keys(saved).forEach(k => LSset(k, saved[k]));
       } catch {}
-      LSset('npp_owner', u);
+      LSset('nq_owner', u);
       if (owner) location.reload(); else { acctChecked = true; unwait(); }
     }, 100);
   }
@@ -6919,11 +6919,11 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
 // ---------- src/90-main.js ----------
   function ensureDefaults() {
-    if (LSget('npp_defaults_v3')) return;
+    if (LSget('nq_defaults_v3')) return;
     const put = (k, v) => { if (LSget(k)) return false; LSset(k, v); return true; };
-    const t = put('npqol_btn_theme_v1', 'premium'), a = put('npqol_accent_v1', NP_ORANGE);
-    put('npqol_topbar_bg_v1', 'blur');
-    LSset('npp_defaults_v3', '1');
+    const t = put('nq_btn_theme_v1', 'premium'), a = put('nq_accent_v1', NP_ORANGE);
+    put('nq_topbar_bg_v1', 'blur');
+    LSset('nq_defaults_v3', '1');
     if (t) NQ.applyBtnTheme('premium');
     if (a) NQ.applyAccent(NP_ORANGE);
   }
@@ -6931,8 +6931,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!isNc) return;
     const A = NQ.sideBtns;
     try {
-      NQ.applyAccent(LSget('npqol_accent_v1') || NP_ORANGE);
-      const t = LSget('npqol_btn_theme_v1');
+      NQ.applyAccent(LSget('nq_accent_v1') || NP_ORANGE);
+      const t = LSget('nq_btn_theme_v1');
       if (t) NQ.applyBtnTheme(t);
       const clean = (u) => String(u).replace(/["\\\n\r]/g, '');
       const mi = LSget(K.mainImg), li = LSget(K.leftImg);
@@ -6946,7 +6946,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     } catch {}
   }
 
-  const ICONS_KEY = 'npp_side_icons_v1';
+  const ICONS_KEY = 'nq_side_icons_v1';
   const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
   let hudMo = null;
   let hudWait = null;
@@ -7067,7 +7067,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
   if (!isAuth && !isNc && !isPopup) {
     root.classList.add('npp-pre');
-    try { if (LSget('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
+    try { if (LSget('nq_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
     const pre = document.createElement('style');
     pre.id = 'npp-pre-css';
     pre.textContent = 'html.npp-pre #npHud, html.npp-pre #nppFoot, html.npp-pre #btnOverlay, html.npp-pre #npLeftBar, html.npp-pre #qrDockWrap { opacity: 0 !important; pointer-events: none !important; } html.npp-pre #npActivePet img { max-width: 100% !important; max-height: 170px !important; object-fit: contain !important; } #npHud, #nppFoot, #btnOverlay { transition: opacity .3s ease; } @media (prefers-reduced-motion: reduce) { #npHud, #nppFoot, #btnOverlay { transition: none !important; } }';
@@ -7105,14 +7105,14 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
     }
 
-    ['npqol_frame_size_v1', 'npqol_col_width_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_side_layout_v1',
-      'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1'].forEach(LSdel);
-    try { Object.keys(localStorage).filter(k => k.startsWith('npqol_hud_userlookup:')).forEach(LSdel); } catch {}
+    ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1'].forEach(LSdel);
+    try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
-    applyBarStyle(LSget('npqol_topbar_bg_v1'));
+    applyBarStyle(LSget('nq_topbar_bg_v1'));
     applyLogo();
-    if (isNc) root.classList.remove('np-recolor-site'); else root.classList.toggle('np-recolor-site', LSget('npqol_recolor_site_v1') === '1');
+    if (isNc) root.classList.remove('np-recolor-site'); else root.classList.toggle('np-recolor-site', LSget('nq_recolor_site_v1') === '1');
     try { if (!rs.getPropertyValue('--np-accent-l60') ) NQ.applyAccent(NQ.getAccent() || '#ffffff'); } catch {}
     applyAccentContrast();
     NQ.onAccent((hex) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(hex); applySearchContrast(); });
@@ -7136,7 +7136,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (NQ.dailies && NQ.dailies.onCard) NQ.dailies.onCard(setupDailyFold);
     const petInfo = () => { if (!staleTab()) renderPetInfo(); };
     if (NQ.onQrData) NQ.onQrData(petInfo);
-    window.addEventListener('storage', (e) => { if (e.key === 'npqol_qr_data') petInfo(); });
+    window.addEventListener('storage', (e) => { if (e.key === 'nq_qr_data') petInfo(); });
   }
 
   if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {

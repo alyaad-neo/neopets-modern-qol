@@ -20,6 +20,7 @@ Combines `modern-qol`, `dailies-qol`, `account-drawer`, and `page-pins-qol` into
 
 ## Order
 
+0. `const NQ = {}` and `10-migrate.js`: one-time copy of every old `npqol_*`/`npp_*` localStorage key (and GM keys `npp_sync`, `npp_nc_cd`, `npp_allpets_v1`, `npp_allpets_tags_v1`) to `nq_*`, flagged by `nq_migrated`. Old keys are kept so an older bundle still works. All projects use `nq_*` keys only.
 1. `modern-qol` (sets `NQ.base`, defines `NQ.boot`)
 2. `dailies-qol`, then `NQ.boot()` (so `NQ.dailies` exists when modern-qol boots)
 3. `account-drawer`

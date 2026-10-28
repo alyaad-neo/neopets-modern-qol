@@ -129,7 +129,7 @@
       const open = sb.style.transform.includes('translateX(0');
       if (open && !wasOpen) {
         draft = saved(); clearImg = { main: false, left: false }; saving = false; pendingImg = { main: null, left: null };
-        accentPick = null; accentBase = LSget('npqol_accent_v1');
+        accentPick = null; accentBase = LSget('nq_accent_v1');
         const r = $('#nppColors'); if (r && r._sync) r._sync();
         if (bgList && !bgList.children.length) runShuffle();
       } else if (!open && wasOpen) {

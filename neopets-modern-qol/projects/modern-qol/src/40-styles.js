@@ -697,7 +697,7 @@ html[data-np-modern-interface] {
   const BAR_STYLES = ['none', 'tint', 'blur', 'solid'];
   function applyAccentContrast(hexIn) {
     let hex = hexIn || '';
-    try { if (!hex) hex = NQ.getAccent() || LSget('npqol_accent_v1'); } catch {}
+    try { if (!hex) hex = NQ.getAccent() || LSget('nq_accent_v1'); } catch {}
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
     if (!m) { rs.setProperty('--npp-accent-fg', '#1a1330'); rs.setProperty('--npp-accent-fg-shadow', 'none'); return; }
     const n = parseInt(m[1], 16);
@@ -711,8 +711,8 @@ html[data-np-modern-interface] {
     const style = root.dataset.nppBar || 'blur';
     let hex = '';
     try {
-      if (style === 'none') hex = NQ.getAccent() || LSget('npqol_accent_v1');
-      else hex = LSget('npp_color_head') || DEF.head;
+      if (style === 'none') hex = NQ.getAccent() || LSget('nq_accent_v1');
+      else hex = LSget('nq_color_head') || DEF.head;
     } catch {}
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
     let white = true;
@@ -727,7 +727,7 @@ html[data-np-modern-interface] {
     rs.setProperty('--npp-search-ts-auto', white ? '0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)' : 'none');
     rs.setProperty('--npp-search-icon-filter', white ? 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' : 'none');
   }
-  function applyLogo() { rs.setProperty('--npp-logo-filter', LSget('npp_logo_white') === '1' ? 'brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.35))' : 'none'); }
+  function applyLogo() { rs.setProperty('--npp-logo-filter', LSget('nq_logo_white') === '1' ? 'brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.35))' : 'none'); }
   const applyBarStyle = (v) => { root.dataset.nppBar = BAR_STYLES.includes(v) ? v : 'blur'; applySearchContrast(); try { applyNavContrast(); } catch {} };
   const BAR_CSS = `
 html[data-np-modern-interface][data-npp-bar="none"] {

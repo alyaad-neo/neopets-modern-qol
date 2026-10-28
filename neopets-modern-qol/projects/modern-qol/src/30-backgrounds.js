@@ -1,10 +1,10 @@
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
   const LS = {
-    mainBgId:  'npqol_bg_main_v3',
-    leftBarBg: 'npqol_bg_left_v3',
-    recolor:   'npqol_recolor_site_v1',
-    topbarBg:  'npqol_topbar_bg_v1',
+    mainBgId:  'nq_bg_main_v3',
+    leftBarBg: 'nq_bg_left_v3',
+    recolor:   'nq_recolor_site_v1',
+    topbarBg:  'nq_topbar_bg_v1',
   };
   const BG_COLOR = '#000';
   const UI_Z = 2147483000;
@@ -35,7 +35,7 @@ function startBackgrounds() {
   if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
 
-  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { LSdel(k); });
+  ['nq_dti_bgs_v6', 'nq_bg_favs_v1', 'nq_bg_hidden_v1', 'nq_inv_menubar_v1'].forEach(k => { LSdel(k); });
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 

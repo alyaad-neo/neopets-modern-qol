@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.21
+// @version      1.3.22
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -47,15 +47,15 @@
   const USERS_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5.4" r="2.3"/><path d="M1.8 13.6c0-2.3 1.9-4.2 4.2-4.2s4.2 1.9 4.2 4.2"/><path d="M10.2 3.5a2.1 2.1 0 0 1 0 3.9M11.4 9.6c1.7.4 2.9 1.8 2.9 4"/></svg>';
   const LOGOUT_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.2 2.5H3.8a1.3 1.3 0 0 0-1.3 1.3v8.4a1.3 1.3 0 0 0 1.3 1.3h2.4M10 5.2L13 8l-3 2.8M13 8H6.4"/></svg>';
   const SWAP_URL = 'https://account.neopets.com/classic/login';
-  const MAIN_KEY = 'npp_main_account';
-  const ACCTS_KEY = 'npp_accounts';
-  const MAN_KEY = 'npp_accounts_manual';
-  const NP_KEY = 'npp_neopass_accts';
-  const PROF_KEY = (u) => 'npp_prof_v1:' + u;
-  const DIRTY_KEY = 'npp_prof_dirty';
+  const MAIN_KEY = 'nq_main_account';
+  const ACCTS_KEY = 'nq_accounts';
+  const MAN_KEY = 'nq_accounts_manual';
+  const NP_KEY = 'nq_neopass_accts';
+  const PROF_KEY = (u) => 'nq_prof_v1:' + u;
+  const DIRTY_KEY = 'nq_prof_dirty';
 
   const validName = (n) => /^[A-Za-z0-9_]{3,20}$/.test(n);
-  const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+  const curUser = () => String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
   const mainAcct = () => LSget(MAIN_KEY);
 
   /* ───────────────────────────────── CSS ───────────────────────────────── */
@@ -233,7 +233,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
   }
   function seenAccounts() {
     const out = [];
-    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('npp_acct_')) out.push(k.slice(9)); } } catch {}
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('nq_acct_')) out.push(k.slice(8)); } } catch {}
     return out;
   }
   const readNP = () => { try { const a = JSON.parse(LSget(NP_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
@@ -272,7 +272,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
     const main = list.find(a => a.main);
     if (main) LSset(MAIN_KEY, main.name);
     writeManual(readManual().filter(n => !list.some(a => a.name.toLowerCase() === n.toLowerCase())));
-    LSset('npp_neopass_ts', String(Date.now()));
+    LSset('nq_neopass_ts', String(Date.now()));
     return { list, main };
   }
 
@@ -299,10 +299,10 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
 
   /* ───────────────────────────────── All Pets ─────────────────────────────────
      Passive and offline: ZERO extra network requests. Pets of the logged-in account are read from data the
-     Modern Interface patcher already stores (localStorage npqol_qr_data) and from its pet dock (.qrPet),
+     Modern Interface patcher already stores (localStorage nq_qr_data) and from its pet dock (.qrPet),
      then cached per account in GM storage. Other accounts appear after you log in to them once. */
-  const AP_KEY = 'npp_allpets_v1';
-  const AP_TAGS = 'npp_allpets_tags_v1';
+  const AP_KEY = 'nq_allpets_v1';
+  const AP_TAGS = 'nq_allpets_tags_v1';
   const gmGet = (k, d) => { try { const v = typeof GM_getValue === 'function' ? GM_getValue(k, null) : JSON.parse(LSget(k) || 'null'); return v && typeof v === 'object' ? v : d; } catch { return d; } };
   const gmSet = (k, v) => { try { if (typeof GM_setValue === 'function') GM_setValue(k, v); else LSset(k, JSON.stringify(v)); } catch {} if (k === AP_KEY || k === AP_TAGS) LSset(k + '_bak', JSON.stringify(v)); };
   // GM storage belongs to one installed script (lost on reinstall, not shared with a second copy), so All Pets data is
@@ -348,7 +348,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
     };
     let activeName = '';
     try {
-      const d = JSON.parse(LSget('npqol_qr_data') || 'null');
+      const d = JSON.parse(LSget('nq_qr_data') || 'null');
       const data = d && d.data;
       if (data && data.active && data.active.name) activeName = String(data.active.name);
       const walk = (v, depth) => {
@@ -384,7 +384,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
     });
     // Live sources beat the Quick Ref cache (the core restores a per-account snapshot on swap, which can be stale):
     // a just-clicked "Make Active" link (kept 10 min), then the home carousel, which marks the real active pet.
-    try { const pa = JSON.parse(LSget('npp_ap_newactive') || 'null'); if (pa && pa.u === me.toLowerCase() && Date.now() - pa.t < 10 * 60e3 && byName.has(String(pa.n).toLowerCase())) activeName = pa.n; } catch {}
+    try { const pa = JSON.parse(LSget('nq_ap_newactive') || 'null'); if (pa && pa.u === me.toLowerCase() && Date.now() - pa.t < 10 * 60e3 && byName.has(String(pa.n).toLowerCase())) activeName = pa.n; } catch {}
     const homeActive = document.querySelector('.hp-carousel-pet[data-active="true"][data-name]');
     if (homeActive && byName.has(homeActive.dataset.name.toLowerCase())) activeName = homeActive.dataset.name;
     if (activeName) put({ name: activeName, active: true });
@@ -426,15 +426,15 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
 
   // Blocked accounts (localStorage, lowercase names): never collected, listed or auto-added. Unblock from the All Pets footer.
   // Function declarations (hoisted): the account list code above calls apBlocked().
-  function apBlocked() { try { const a = JSON.parse(LSget('npp_ap_block_v1') || '[]'); return new Set(Array.isArray(a) ? a.map(x => String(x).toLowerCase()) : []); } catch { return new Set(); } }
-  function apSetBlock(n, on) { const s = apBlocked(); on ? s.add(n.toLowerCase()) : s.delete(n.toLowerCase()); LSset('npp_ap_block_v1', JSON.stringify([...s])); }
+  function apBlocked() { try { const a = JSON.parse(LSget('nq_ap_block_v1') || '[]'); return new Set(Array.isArray(a) ? a.map(x => String(x).toLowerCase()) : []); } catch { return new Set(); } }
+  function apSetBlock(n, on) { const s = apBlocked(); on ? s.add(n.toLowerCase()) : s.delete(n.toLowerCase()); LSset('nq_ap_block_v1', JSON.stringify([...s])); }
   // Remove an account from this computer: drawer lists, NeoPass, seen/profile caches, main, its All Pets data and orphaned tags.
   function removeAccount(nm) {
     const low = nm.toLowerCase(), ne = (n) => String(n).toLowerCase() !== low;
     writeManual(readManual().filter(ne));
     writeAccts(readAccts().filter(ne));
     try { LSset(NP_KEY, JSON.stringify(readNP().filter(ne))); } catch {}
-    seenAccounts().filter(n => !ne(n)).forEach(n => { try { localStorage.removeItem('npp_acct_' + n); localStorage.removeItem(PROF_KEY(n)); } catch {} });
+    seenAccounts().filter(n => !ne(n)).forEach(n => { try { localStorage.removeItem('nq_acct_' + n); localStorage.removeItem(PROF_KEY(n)); } catch {} });
     if (mainAcct().toLowerCase() === low) LSset(MAIN_KEY, '');
     const pc = apRead(), gone = [];
     Object.keys(pc).filter(k => !ne(k)).forEach(k => { ((pc[k] && pc[k].pets) || []).forEach(p => gone.push(String(p.name).toLowerCase())); delete pc[k]; });
@@ -457,7 +457,7 @@ function npLoadBlob(src, cb) {
     GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
   } catch { cb(null); }
 }
-  const NPP_TONE_KEY = 'npp_pet_tone_v1';
+  const NPP_TONE_KEY = 'nq_pet_tone_v1';
   function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function nppToneSave(src, dark) {
     try {
@@ -758,8 +758,8 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     if (pb) { pb.classList.toggle('on', apState.pick); pb.setAttribute('aria-pressed', String(apState.pick)); $('span', pb).textContent = apState.pick ? 'Done picking' : 'Pick pets'; }
     if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
   }
-  try { const pr = JSON.parse(LSget('npp_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; } } catch {}
-  const apSavePrefs = () => { try { LSset('npp_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group })); } catch {} };
+  try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; } } catch {}
+  const apSavePrefs = () => { try { LSset('nq_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group })); } catch {} };
   const fmtAgo = (t) => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   const apToast = (m) => { if (!apEl) return; const t = $('.apToast', apEl); t.textContent = m; t.classList.add('on'); clearTimeout(apToastT); apToastT = setTimeout(() => t.classList.remove('on'), 1800); };
   const apStatus = (m) => { if (apEl) $('.apStatus', apEl).textContent = m || ''; };
@@ -959,7 +959,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
   // Passive collection: local reads only (no network). Runs shortly after load and when the data changes.
   // Login / account swap: a new user in this tab gets extra passes while the page's pet data loads.
-  const apNewUser = () => { const u = curUser().toLowerCase(); let was = ''; try { was = sessionStorage.getItem('npp_ap_user') || ''; sessionStorage.setItem('npp_ap_user', u); } catch {} return !!u && u !== was; };
+  const apNewUser = () => { const u = curUser().toLowerCase(); let was = ''; try { was = sessionStorage.getItem('nq_ap_user') || ''; sessionStorage.setItem('nq_ap_user', u); } catch {} return !!u && u !== was; };
   try { const dc = apRead(); if (apDedupe(dc)) gmSet(AP_KEY, dc); } catch {}   // one-time cleanup of stored duplicates
   // Only on login/swap (a new user in this tab), not on a timer.
   // Home page: read once when the pet carousel (colour/species/level) has loaded.
@@ -969,7 +969,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
   // Logout: save the current account's pets right before the logout link navigates away.
   document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('a[href*="logout"]')) apCollect(); }, true);
   // Remember a "Make Active" click for this account so the tag updates before Quick Ref refreshes.
-  document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href*="new_active_pet="]'); const m = a && a.href.match(/new_active_pet=([A-Za-z0-9_]+)/); if (m) LSset('npp_ap_newactive', JSON.stringify({ u: curUser().toLowerCase(), n: m[1], t: Date.now() })); }, true);
+  document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href*="new_active_pet="]'); const m = a && a.href.match(/new_active_pet=([A-Za-z0-9_]+)/); if (m) LSset('nq_ap_newactive', JSON.stringify({ u: curUser().toLowerCase(), n: m[1], t: Date.now() })); }, true);
 
   /* ───────────────────────────────── drawer ───────────────────────────────── */
   let MODE = 'standalone';
@@ -1028,7 +1028,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       hint.textContent = (!main && all.length > 1) ? 'Sync from NeoPass to find your main account, or pick it with the ☆.' : '';
       listNp.innerHTML = npNames.map(row).join('');
       listEx.innerHTML = extra.map(row).join('');
-      const synced = !!LSget('npp_neopass_ts');
+      const synced = !!LSget('nq_neopass_ts');
       noteNp.textContent = npNames.length === 0
         ? (synced ? 'Press “Sync from NeoPass” again to fill this list.' : 'Not synced yet. Use “Sync from NeoPass” to list every account connected to your NeoPass.')
         : (npNames.length === 1 && synced) ? 'This is the only account connected to your NeoPass.' : '';
@@ -1157,12 +1157,12 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     const side = card.querySelector('.rightSide');
     if (!side) return;
 
-    if (LSget('npp_accts_v2') !== '1') {
+    if (LSget('nq_accts_v2') !== '1') {
       const seen = new Set([curUser(), ...seenAccounts()].map(x => x.toLowerCase()));
       const old = readAccts();
       writeManual(old.filter(n => !seen.has(n.toLowerCase())));
       writeAccts(old.filter(n => seen.has(n.toLowerCase())));
-      LSset('npp_accts_v2', '1');
+      LSset('nq_accts_v2', '1');
     }
 
     // Add the tab button to the user card.
@@ -1246,7 +1246,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
   function updateAvatar() {
     const av = $('#nppAvatar');
     if (!av) return;
-    const user = String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+    const user = String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
     let url = '';
     const prof = user ? readProf(user) : null;
     if (prof && prof.avatar) url = prof.avatar;
@@ -1258,7 +1258,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       } catch {}
     }
     if (!url) {
-      try { const lg = JSON.parse(LSget('npqol_active_pet_img_v1') || 'null'); if (lg && /\/cp\//.test(lg.url || '')) url = lg.url.replace(/\/9\.png/, '/1.png'); } catch {}
+      try { const lg = JSON.parse(LSget('nq_active_pet_img_v1') || 'null'); if (lg && /\/cp\//.test(lg.url || '')) url = lg.url.replace(/\/9\.png/, '/1.png'); } catch {}
     }
     if (url.startsWith('//')) url = 'https:' + url;
     const init = av.querySelector('.nppAvInit');
@@ -1288,7 +1288,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     try {
       let res = { avatar: '' };
       const r = await fetch('/userlookup.phtml?user=' + encodeURIComponent(user), { credentials: 'include', cache: 'no-store' });
-      if (r.status === 403) { LSset('npqol_403_backoff_until_v1', String(Date.now() + 10 * 60 * 1000)); throw new Error('403'); }
+      if (r.status === 403) { LSset('nq_403_backoff_until_v1', String(Date.now() + 10 * 60 * 1000)); throw new Error('403'); }
       if (r.ok) res = pickProfImgs(new DOMParser().parseFromString(await r.text(), 'text/html'));
       LSset(PROF_KEY(user), JSON.stringify({ avatar: res.avatar || old.avatar, ts: Date.now() }));
     } catch {
@@ -1296,9 +1296,9 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     } finally { profBusy = false; }
   }
   function maybeRefreshProfile() {
-    const user = String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+    const user = String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
     if (!user || profBusy || document.visibilityState !== 'visible') return;
-    if (Date.now() < (parseInt(LSget('npqol_403_backoff_until_v1'), 10) || 0)) return;
+    if (Date.now() < (parseInt(LSget('nq_403_backoff_until_v1'), 10) || 0)) return;
     const prof = readProf(user);
     const age = prof ? Date.now() - (prof.ts || 0) : Infinity;
     const dirty = profDirtyDue();
@@ -1321,7 +1321,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
   watchSettingsForAvatar();
   setInterval(maybeRefreshProfile, 30000);        // cheap check every 30s
   setTimeout(maybeRefreshProfile, 3000);
-  ['npp_np_auto_ts', 'npp_prof_frame_ts'].forEach(LSdel);
+  ['nq_np_auto_ts', 'nq_prof_frame_ts'].forEach(LSdel);
 
   /* ───────────────────────────────── boot ───────────────────────────────── */
   function mount() {

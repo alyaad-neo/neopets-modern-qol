@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.8
+// @version      1.0.9
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -51,7 +51,7 @@
   const SNOWFLAKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M3.5 7l17 10M3.5 17l17-10M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5M2.5 10.5l3.6.8-1 3.5M21.5 10.5l-3.6.8 1 3.5"/></svg>';
   const HOLE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>';
 
-  const CD_KEY = 'npp_cd_v1', SEEN_KEY = 'npp_cd_seen_v1', ACK_KEY = 'npp_ack_v1', ACK_MS = 30 * 60 * 1000;
+  const CD_KEY = 'nq_cd_v1', SEEN_KEY = 'nq_cd_seen_v1', ACK_KEY = 'nq_ack_v1', ACK_MS = 30 * 60 * 1000;
   const cdLoad = () => { try { return JSON.parse(LSget(CD_KEY) || '{}') || {}; } catch { return {}; } };
   const seenLoad = () => { try { const a = JSON.parse(LSget(SEEN_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
   const cdSet = (name, ts, approx) => {
@@ -101,8 +101,8 @@
   }
 
   /* ─── JellyNeo windows: Symol Hole, Tarla's Toolbar ─── */
-  const SYM_KEY = 'npp_symol_v1', SYM_TRY = 'npp_symol_try', SYM_ST = 'npp_symol_status';
-  const TARLA_KEY = 'npp_tarla_v1';
+  const SYM_KEY = 'nq_symol_v1', SYM_TRY = 'nq_symol_try', SYM_ST = 'nq_symol_status';
+  const TARLA_KEY = 'nq_tarla_v1';
   const symolLoad = () => { try { const o = JSON.parse(LSget(SYM_KEY) || 'null'); return o && o.d === nstParts(Date.now()).d && o.len > 0 ? o : null; } catch { return null; } };
   const tarlaLoad = () => { try { const o = JSON.parse(LSget(TARLA_KEY) || 'null'); return o && o.d === nstParts(Date.now()).d && o.len > 0 ? o : null; } catch { return null; } };
   function parseAlertWindow(html, labelRe) {
@@ -143,19 +143,19 @@
   }
 
   /* ─── Qasalan Expellibox (NC Mall) ─── */
-  const NC_CD_KEY = 'npp_nc_cd';
-  const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+  const NC_CD_KEY = 'nq_nc_cd';
+  const curUser = () => String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
   // Dailies only run on the main account (starred in the accounts drawer). No main set: run anyway.
   // The page sets appInsightsUserName late, so whenUser() polls for it (like the core's accountGuard).
   let acctUser = '';
-  const onMain = () => { const m = LSget('npp_main_account').toLowerCase(); return !m || (!!acctUser && acctUser.toLowerCase() === m); };
+  const onMain = () => { const m = LSget('nq_main_account').toLowerCase(); return !m || (!!acctUser && acctUser.toLowerCase() === m); };
   function whenUser(cb) {
     // The Expellibox result page is bare text and never sets appInsightsUserName: don't wait 10s for it.
-    if (/^\/games\/giveaway(\/|$)/i.test(location.pathname)) { acctUser = LSget('npqol_hud_username'); cb(); return; }
+    if (/^\/games\/giveaway(\/|$)/i.test(location.pathname)) { acctUser = LSget('nq_hud_username'); cb(); return; }
     let tries = 0;
     const iv = setInterval(() => {
       let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {}
-      if (u || ++tries > 100) { clearInterval(iv); acctUser = u || LSget('npqol_hud_username'); cb(); }
+      if (u || ++tries > 100) { clearInterval(iv); acctUser = u || LSget('nq_hud_username'); cb(); }
     }, 100);
   }
   document.addEventListener('npp:main', () => { if (!onMain()) ['nppDaily', 'nppDailiesRoot'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); });

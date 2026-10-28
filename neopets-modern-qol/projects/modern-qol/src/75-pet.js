@@ -1,4 +1,4 @@
-  const ACCTS_KEY = 'npp_accounts';
+  const ACCTS_KEY = 'nq_accounts';
   const validName = (n) => /^[A-Za-z0-9_]{3,20}$/.test(n);
   const readAccts = () => { try { const a = JSON.parse(LSget(ACCTS_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const writeAccts = (a) => LSset(ACCTS_KEY, JSON.stringify(a));
@@ -11,10 +11,10 @@
   }
   function seenAccounts() {
     const out = [];
-    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('npp_acct_')) out.push(k.slice(9)); } } catch {}
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('nq_acct_')) out.push(k.slice(8)); } } catch {}
     return out;
   }
-  const MAN_KEY = 'npp_accounts_manual';
+  const MAN_KEY = 'nq_accounts_manual';
   const readManual = () => { try { const a = JSON.parse(LSget(MAN_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const autoAccts = () => { const a = readAccts().slice(); [curUser(), ...seenAccounts()].forEach(n => { if (validName(n) && !a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
   const allAccts = () => { const a = autoAccts(); readManual().forEach(n => { if (!a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
@@ -24,7 +24,7 @@
     if (!card) return;
     let box = $('#nppPetInfo');
     if (!box) { box = document.createElement('div'); box.id = 'nppPetInfo'; card.appendChild(box); petSig = null; }
-    const raw = LSget('npqol_qr_data');
+    const raw = LSget('nq_qr_data');
     if (raw === petSig) return;
     petSig = raw;
     let a = null;
@@ -38,7 +38,7 @@
     const ageShort = !Number.isFinite(ageN) ? a.age : (ageUnit === 'days' && ageN >= 1000) ? (() => { const k = Math.floor(ageN / 100) / 10; return (k % 1 ? k.toFixed(1) : k) + 'K days'; })() : ageN + ' ' + ageUnit;
     const chips = [a.level && ['', 'Lv ' + a.level, 'Level ' + a.level], a.age && ['', ageShort, a.age]].filter(Boolean);
     const rows = [['Health', a.health], ['Strength', a.strength], ['Defence', a.defence], ['Move', a.move], ['Intelligence', a.intelligence]].filter(r => r[1]);
-    box.innerHTML = `<div class="nppTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nppCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nppLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nppStatsBtn${LSget('npp_stats_open') === '0' ? '' : ' on'}" title="Stats" aria-label="Stats" aria-pressed="${LSget('npp_stats_open') === '0' ? 'false' : 'true'}">${STATS_ICON}</button>` : ''}</div><div class="nppChips">${chips.map(c => `<span class="nppChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nppStats${LSget('npp_stats_open') === '0' ? '' : ' open'}"><div class="nppStatsBody"><div class="nppDetails">${rows.map(r => `<div class="nppStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
+    box.innerHTML = `<div class="nppTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nppCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nppLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nppStatsBtn${LSget('nq_stats_open') === '0' ? '' : ' on'}" title="Stats" aria-label="Stats" aria-pressed="${LSget('nq_stats_open') === '0' ? 'false' : 'true'}">${STATS_ICON}</button>` : ''}</div><div class="nppChips">${chips.map(c => `<span class="nppChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nppStats${LSget('nq_stats_open') === '0' ? '' : ' open'}"><div class="nppStatsBody"><div class="nppDetails">${rows.map(r => `<div class="nppStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
   }
   const PET_IMG_STYLE = 'object-position:50% 50%!important;object-fit:cover!important;width:calc(100% + 2 * var(--pn-pad, 12px))!important;height:auto!important;aspect-ratio:1/1!important;max-width:none!important;max-height:none!important;transform:none!important;background:#fff!important;border-radius:var(--pn-r, 16px) var(--pn-r, 16px) 0 0!important;opacity:1!important;display:block!important;margin:calc(-1 * var(--pn-pad, 12px)) calc(-1 * var(--pn-pad, 12px)) 0!important;box-shadow:none!important';
   function syncPetImg() {
@@ -54,7 +54,7 @@
     const sz = (/\/(\d+)\.png/.exec(cur) || [])[1] || '9';
     const big = hu.replace(/\/\d+\.png(\?.*)?$/, '/' + sz + '.png');
     img.src = big;
-    try { const o = JSON.parse(LSget('npqol_active_pet_img_v1') || 'null') || {}; o.url = big; LSset('npqol_active_pet_img_v1', JSON.stringify(o)); } catch {}
+    try { const o = JSON.parse(LSget('nq_active_pet_img_v1') || 'null') || {}; o.url = big; LSset('nq_active_pet_img_v1', JSON.stringify(o)); } catch {}
     petSettled = true;
   }
   function fixPetImg() {
@@ -77,7 +77,7 @@
     } catch { cb(null); }
   }
   const nppToneCache = new Map();
-  const NPP_TONE_KEY = 'npp_pet_tone_v1';
+  const NPP_TONE_KEY = 'nq_pet_tone_v1';
   function nppToneRead() { try { const o = JSON.parse(LSget(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function nppToneSave(src, dark) {
     try {
@@ -156,7 +156,7 @@
         const wrap = $('#nppPetInfo .nppStats'), open = !(wrap && wrap.classList.contains('open'));
         if (wrap) wrap.classList.toggle('open', open);
         sbtn.classList.toggle('on', open); sbtn.setAttribute('aria-pressed', open ? 'true' : 'false');
-        LSset('npp_stats_open', open ? '1' : '0');
+        LSset('nq_stats_open', open ? '1' : '0');
         return;
       }
       const copy = e.target.closest('.nppCopy');

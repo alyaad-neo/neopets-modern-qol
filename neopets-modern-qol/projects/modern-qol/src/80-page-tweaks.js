@@ -1,4 +1,4 @@
-  const FOLD_KEY = 'npp_fold_v1';
+  const FOLD_KEY = 'nq_fold_v1';
   function setupDailyFold() {
     if (isNc || isPopup) return;
     let st = {}; try { st = JSON.parse(LSget(FOLD_KEY) || '{}') || {}; } catch {}
@@ -94,8 +94,8 @@
     const el = $('#npNp .ncVal');
     if (!el) return;
     const live = (($('#ncanchor') || {}).textContent || '').trim();
-    if (live) LSset('npp_nc_last', live);
-    const v = live || LSget('npp_nc_last');
+    if (live) LSset('nq_nc_last', live);
+    const v = live || LSget('nq_nc_last');
     if (v && el.dataset.raw !== v) { el.dataset.raw = v; el.textContent = v; }
   }
   function setupBank() {

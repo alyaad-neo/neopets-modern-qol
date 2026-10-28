@@ -380,7 +380,7 @@
       spec.startsWith('basicsvg:')
     );
   }
-  const TOPBAR_CUSTOM_LS = 'npqol_topbar_custom_v1';
+  const TOPBAR_CUSTOM_LS = 'nq_topbar_custom_v1';
   function loadAllCustom(){
     try {
       const raw = LSget(TOPBAR_CUSTOM_LS);
@@ -443,7 +443,7 @@ function startLayout() {
       { id:'valentines',        label:'Valentines',         pattern:'https://images.neopets.com/themes/h5/valentines/images/{icon}-icon.svg' },
     ];
     const FALLBACK_PATTERN = 'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg';
-    const LS_KEY = 'npqol_btn_theme_v1';
+    const LS_KEY = 'nq_btn_theme_v1';
     const DEFAULT = 'constellations';
 
     NQ.btnThemesData = { BTN_THEMES, FALLBACK_PATTERN, LS_KEY, DEFAULT };
@@ -509,7 +509,7 @@ function startLayout() {
   })();
 
   (function exposeAccent(){
-    const LS_KEY = 'npqol_accent_v1';
+    const LS_KEY = 'nq_accent_v1';
     const DEFAULT_HEX = '#dcb8ff';
 
     function hexToRgb(hex){

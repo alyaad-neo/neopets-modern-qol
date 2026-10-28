@@ -30,7 +30,7 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 ## Depends on
 
-- `localStorage` keys: `npp_recent_v3` (history), `npp_recent_pins_v1:<user>` (per-account pins), `npp_board_names_v1` (neoboard labels)
+- `localStorage` keys: `nq_recent_v3` (history), `nq_recent_pins_v1:<user>` (per-account pins), `nq_board_names_v1` (neoboard labels)
 - `unsafeWindow` — exposes `neopetsResetPins` console helper
 - `#nppFoot` (Modern Interface core footer) or `#npLeftBar` sidebar for sidebar mode
 - `npp:main` event from account-drawer to refresh cards on account switch

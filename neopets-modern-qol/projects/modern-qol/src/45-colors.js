@@ -51,7 +51,7 @@
     if (pendingImg.main) LSset(K.mainImg, pendingImg.main);
     if (pendingImg.left) LSset(K.leftImg, pendingImg.left);
     if (accentPick) {
-      LSset('npqol_accent_v1', accentPick);
+      LSset('nq_accent_v1', accentPick);
       try { ownAccent = true; NQ.applyAccent(accentPick); } catch {} finally { ownAccent = false; }
       applyAccentContrast(accentPick); applySearchContrast();
     }
@@ -77,7 +77,7 @@
       + '<div class="nppRow nppLogoRow"><i class="nppLogoDot"></i><span>Logo</span><div class="nppSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>'
       + '<div class="nppRow nppLogoRow nppSideRow"><i class="nppLogoDot"></i><span>Sidebar style</span><div class="nppSeg"><button type="button" data-side="0">Dark</button><button type="button" data-side="1">Light</button></div></div>';
     anchor.before(row);
-    const curAccent = () => { let a = ''; try { a = NQ.getAccent() || LSget('npqol_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
+    const curAccent = () => { let a = ''; try { a = NQ.getAccent() || LSget('nq_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
     const setAccent = (hex) => {
       if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
       try { ownAccent = true; NQ.applyAccent(hex); } catch {} finally { ownAccent = false; }
@@ -89,7 +89,7 @@
       const ai = row.querySelector('input[data-acc]'); if (ai) ai.value = curAccent();
       const sh = row.querySelector('input[data-share]'); if (sh) sh.checked = themeShared();
       row.querySelectorAll('input[data-k]').forEach(i => { i.value = draft[i.dataset.k] || DEF[i.dataset.k]; });
-      const lw = LSget('npp_logo_white') === '1' ? '1' : '0';
+      const lw = LSget('nq_logo_white') === '1' ? '1' : '0';
       row.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === lw));
       const lr = row.querySelector('.nppLogoRow'); if (lr) lr.dataset.logo = lw;
       const sl = document.documentElement.classList.contains('npp-side-light') ? '1' : '0';
@@ -99,17 +99,17 @@
       const sb = e.target.closest && e.target.closest('[data-side]'); if (!sb) return;
       const on = sb.dataset.side === '1';
       document.documentElement.classList.toggle('npp-side-light', on);
-      LSset('npp_side_light', on ? '1' : '0'); sync();
+      LSset('nq_side_light', on ? '1' : '0'); sync();
     });
     row._sync = sync;
     sync();
     row.addEventListener('change', (e) => {
       if (!(e.target.dataset && e.target.dataset.share !== undefined)) return;
-      LSset('npp_theme_shared', e.target.checked ? '1' : '0');
+      LSset('nq_theme_shared', e.target.checked ? '1' : '0');
       if (!e.target.checked) {
         const base = JSON.stringify(readTheme());
-        try { allAccts().forEach(n => { if (!LSget('npp_theme_' + n)) LSset('npp_theme_' + n, base); }); } catch {}
-        try { const u = curUser(); if (u) LSset('npp_theme_' + u, base); } catch {}
+        try { allAccts().forEach(n => { if (!LSget('nq_theme_' + n)) LSset('nq_theme_' + n, base); }); } catch {}
+        try { const u = curUser(); if (u) LSset('nq_theme_' + u, base); } catch {}
       }
     });
     row.addEventListener('input', (e) => {
@@ -132,7 +132,7 @@
       }
       if (e.target.closest && e.target.closest('[data-accreset]')) { setAccent(NP_ORANGE); return; }
       const lg = e.target.dataset && e.target.dataset.logo;
-      if (lg !== undefined) { LSset('npp_logo_white', lg === '1' ? '1' : '0'); applyLogo(); sync(); return; }
+      if (lg !== undefined) { LSset('nq_logo_white', lg === '1' ? '1' : '0'); applyLogo(); sync(); return; }
       const k = e.target.dataset && e.target.dataset.r;
       if (!k) return;
       draft[k] = null;
@@ -162,7 +162,7 @@
   });
   const BG_SKIP = [/altador cup/i, /advent/i, /birthday|anniversar|\b\d+[- ]?years?\b/i];
   async function discoverBgs() {
-    let end = parseInt(LSget('npp_disc_end'), 10) || 0;
+    let end = parseInt(LSget('nq_disc_end'), 10) || 0;
     const seenOff = new Set(), seenId = new Set(), got = [];
     for (let attempt = 0; attempt < 10 && got.length < 24; attempt++) {
       const slots = Math.max(1, Math.floor((end ? end : 2400) / 30));
@@ -170,7 +170,7 @@
       while (seenOff.has(off) && g++ < 12) off = Math.floor(Math.random() * slots) * 30;
       seenOff.add(off);
       const items = await dtiPage(off);
-      if (items.length < 30) { end = off + items.length; LSset('npp_disc_end', String(end)); }
+      if (items.length < 30) { end = off + items.length; LSset('nq_disc_end', String(end)); }
       items.forEach((it) => {
         const layers = ((it.appearanceOn || {}).layers) || [];
         const layer = layers.find(l => ((l.zone || {}).label || '').toLowerCase().includes('background')) || layers[0];

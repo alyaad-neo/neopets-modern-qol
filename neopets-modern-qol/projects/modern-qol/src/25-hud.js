@@ -1,4 +1,4 @@
-  const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
+  const ACTIVE_IMG_LS = 'nq_active_pet_img_v1';
   function readLastGoodPetImg(){
     try { return JSON.parse(LSget(ACTIVE_IMG_LS) || 'null'); }
     catch { return null; }
@@ -9,7 +9,7 @@
   }
   function _cacheRawPetImage(url){
     try {
-      const cacheKey = 'npqol_pp_png:' + url;
+      const cacheKey = 'nq_pp_png:' + url;
       if (LSget(cacheKey)) return;
       const probe = new Image();
       probe.crossOrigin = 'anonymous';
@@ -34,7 +34,7 @@
       if (homeRaw){
         const home = JSON.parse(homeRaw);
         if (home && home.data && Date.now() - (home.ts||0) < 7*24*3600*1000){
-          const qr = JSON.parse(LSget('npqol_qr_data') || 'null');
+          const qr = JSON.parse(LSget('nq_qr_data') || 'null');
           const name = qr?.data?.active?.name;
           if (name && home.data[name] && home.data[name].sci){
             return { name, sci: home.data[name].sci, mood: home.data[name].mood || '1' };
@@ -43,7 +43,7 @@
       }
     } catch {}
     try {
-      const qrRaw = LSget('npqol_qr_data');
+      const qrRaw = LSget('nq_qr_data');
       if (qrRaw){
         const qr = JSON.parse(qrRaw);
         const name = qr?.data?.active?.name;
@@ -71,7 +71,7 @@
   }
   let _earlyActivePetImg = null;
   const BANK_PIN = "";
-  const BANK_PIN_LS = 'npqol_bank_pin_v1';
+  const BANK_PIN_LS = 'nq_bank_pin_v1';
   function getBankPin(){
     try {
       const stored = (LSget(BANK_PIN_LS) || '').replace(/[^\d]/g, '').slice(0, 4);
@@ -649,9 +649,9 @@ function startHud() {
   if (document.getElementById('npHud')) return;
 
   try {
-    const qr = JSON.parse(LSget('npqol_qr_data') || 'null');
+    const qr = JSON.parse(LSget('nq_qr_data') || 'null');
     if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
-      LSdel('npqol_qr_data_lastFetch');
+      LSdel('nq_qr_data_lastFetch');
     }
   } catch {}
 
@@ -663,7 +663,7 @@ function startHud() {
         ? `https://pets.neopets.com/cp/${sci}/${mood}/9.png`
         : `https://pets.neopets.com/cpn/${encodeURIComponent(name)}/1/4.png`;
       if (sci) saveLastGoodPetImg(name, url);
-      const cacheKey = 'npqol_pp_png:' + url;
+      const cacheKey = 'nq_pp_png:' + url;
 
       const cached = LSget(cacheKey);
       const initialSrc = cached || url;
@@ -688,7 +688,7 @@ function startHud() {
       link.rel = 'preload'; link.as = 'image'; link.href = url; link.crossOrigin = 'anonymous';
       (document.head || document.documentElement).appendChild(link);
 
-      const qrSnap = JSON.parse(LSget('npqol_qr_data') || 'null');
+      const qrSnap = JSON.parse(LSget('nq_qr_data') || 'null');
       const a = qrSnap?.data?.active || {};
       [a.petpet, a.petpetpet].filter(Boolean).forEach(src => {
         const l = document.createElement('link');
@@ -770,7 +770,7 @@ function startHud() {
   }
 
   (function userModule(){
-    const USERNAME_KEY = 'npqol_hud_username';
+    const USERNAME_KEY = 'nq_hud_username';
     const st = { username:null };
 
     const titleEl = () => cardUser.querySelector('#npUserTitle');
@@ -840,9 +840,9 @@ function startHud() {
   })();
 
   (function bankModule(){
-    const STORE = 'npqol_bank_state_v2';
-    const SETTINGS_LS = 'npqol_bank_btn_settings_v1';
-    const DAILY_LS    = 'npqol_bank_daily_v1';
+    const STORE = 'nq_bank_state_v2';
+    const SETTINGS_LS = 'nq_bank_btn_settings_v1';
+    const DAILY_LS    = 'nq_bank_daily_v1';
     const FORM_TTL = 5*60*1000;
     const load = () => { try { return JSON.parse(LSget(STORE) || 'null') || {}; } catch { return {}; } };
     const save = (s) => { LSset(STORE, JSON.stringify(s || {})); };
@@ -891,7 +891,7 @@ function startHud() {
     function saveSettings(s){ LSset(SETTINGS_LS, JSON.stringify(s||{})); }
     let settings = loadSettings();
 
-    const HISTORY_LS = 'npqol_bank_history_v1';
+    const HISTORY_LS = 'nq_bank_history_v1';
     const HISTORY_MAX = 180;
     function loadHistory(){
       try {
@@ -1133,7 +1133,7 @@ function startHud() {
       let raw = '';
       const el = $('#npanchor');
       if (el) raw = el.textContent;
-      if (!raw){ try { raw = LSget('npqol_np_last') || ''; } catch {} }
+      if (!raw){ try { raw = LSget('nq_np_last') || ''; } catch {} }
       const n = parseInt(String(raw).replace(/[^\d]/g,''), 10);
       return Number.isFinite(n) ? n : 0;
     }
@@ -1141,7 +1141,7 @@ function startHud() {
       if (!j) return;
       const np = (j.new_neopoints != null) ? numComma(j.new_neopoints) : null;
       const bal = (j.final_balance != null) ? j.final_balance : j.new_balance;
-      if (np != null){ const el = $('#npanchor'); if (el) el.textContent = np; LSset('npqol_np_last', np); }
+      if (np != null){ const el = $('#npanchor'); if (el) el.textContent = np; LSset('nq_np_last', np); }
       if (bal != null){
         state.bank_balance = numComma(bal);
         noteBalance(bal);
@@ -1514,7 +1514,7 @@ function startHud() {
   (function qrModule(){
     const FETCH_URL = 'https://www.neopets.com/quickref.phtml';
     const COOLDOWN = 5 * 60 * 1000, PETS_MAX = 20;
-    const LS_DATA = 'npqol_qr_data';
+    const LS_DATA = 'nq_qr_data';
     const BLOCK_RE = /(customi[sz]e|view abilities|equip)/i;
     const state = { data:null, loading:false, closeT:0, wantOpen:false, imagesLoaded:false };
     const cpn = (n) => `https://pets.neopets.com/cpn/${encodeURIComponent(n)}/1/4.png`;
@@ -1677,20 +1677,20 @@ function startHud() {
       }
     }
 
-    const PP_VER_KEY = 'npqol_pp_ver';
+    const PP_VER_KEY = 'nq_pp_ver';
     try {
       if (LSget(PP_VER_KEY) !== '2'){
         const kill = [];
         for (let i = 0; i < localStorage.length; i++){
           const k = localStorage.key(i);
-          if (k && k.startsWith('npqol_pp_png')) kill.push(k);
+          if (k && k.startsWith('nq_pp_png')) kill.push(k);
         }
         kill.forEach(k => { LSdel(k); });
         LSset(PP_VER_KEY, '2');
       }
     } catch {}
 
-    const PP_INDEX_KEY = 'npqol_pp_png_index';
+    const PP_INDEX_KEY = 'nq_pp_png_index';
     const PP_MAX = 30;
     function ppIndexRead(){
       try { const r = LSget(PP_INDEX_KEY); return r ? (JSON.parse(r) || []) : []; }
@@ -1712,7 +1712,7 @@ function startHud() {
 
     function cleanImg(url, imgEl){
       if (!url || !imgEl) return;
-      const KEY = 'npqol_pp_png:' + url;
+      const KEY = 'nq_pp_png:' + url;
       let cached = null; try { cached = LSget(KEY); } catch {}
       if (cached){ imgEl.src = cached; return; }
       const probe = new Image();
@@ -1933,7 +1933,7 @@ function startHud() {
   })();
 
   (function npModule(){
-    const LS_KEY = 'npqol_np_last';
+    const LS_KEY = 'nq_np_last';
     const SELECTORS = ['#npanchor', '.navsub-np-meter__2020 #npanchor', '.navsub-np-meter__2020 .np-text__2020', 'span.np-text__2020'];
     const st = { last:null, anchor:null, watch:null, obs:null, fastTimer:0, fastUntil:0, lastManual:0 };
     const valEl = () => cardNp.querySelector('.npVal');
@@ -2008,7 +2008,7 @@ function startHud() {
     const SHARED = NQ.btnThemesData;
     const BTN_THEMES = SHARED.BTN_THEMES || [];
     const FALLBACK_PATTERN = SHARED.FALLBACK_PATTERN || 'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg';
-    const LS_BTN_THEME = SHARED.LS_KEY || 'npqol_btn_theme_v1';
+    const LS_BTN_THEME = SHARED.LS_KEY || 'nq_btn_theme_v1';
     const DEFAULT_THEME = SHARED.DEFAULT || 'constellations';
 
     const getTheme = () => {
@@ -2091,7 +2091,7 @@ function startHud() {
     const DEFAULT_CFG = {
       left: ['customise', 'stylingchamber', 'settings', 'inventory', 'quickstock', 'sdb', 'shopwizard'],
     };
-    const LS_BTNS_KEY = 'npqol_side_btns_v2';
+    const LS_BTNS_KEY = 'nq_side_btns_v2';
 
     function resolveItem(entry){
       if (typeof entry === 'string'){
@@ -2117,7 +2117,7 @@ function startHud() {
       LSset(LS_BTNS_KEY, JSON.stringify({ left: cfg.left }));
     }
 
-    const ICON_SIZE_LS = 'npqol_side_icon_size_v1';
+    const ICON_SIZE_LS = 'nq_side_icon_size_v1';
     const ICON_SIZE_MIN = 36, ICON_SIZE_MAX = 84, ICON_SIZE_STEP = 6, ICON_SIZE_DEFAULT = 60;
     function getIconSize(){
       try {

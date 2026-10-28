@@ -53,8 +53,8 @@
     ['Petpet Lab Ray', 'https://www.neopets.com/petpetlab.phtml'],
   ];
   const FOOD_CLUB = ['Food Club', 'https://www.neopets.com/pirates/foodclub.phtml'], STOCK_MARKET = ['Stock Market', 'https://www.neopets.com/stockmarket.phtml?type=portfolio'];
-  const MAIN_KEY = 'npp_main_account';
-  const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+  const MAIN_KEY = 'nq_main_account';
+  const curUser = () => String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
   const mainAcct = () => LSget(MAIN_KEY);
   const onMainAcct = () => { const m = mainAcct().toLowerCase(); let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {} return !m || u.toLowerCase() === m; };
 

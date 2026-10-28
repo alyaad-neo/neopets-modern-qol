@@ -47,7 +47,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 
 ## Depends on
 
-`NQ` (declared by bundle.js). `dailies-qol` provides `NQ.dailies`. Storage keys use `npqol_*`, `npp_*`; GM key `npp_sync`.
+`NQ` (declared by bundle.js). `dailies-qol` provides `NQ.dailies`. Storage keys use `nq_*` (migrated from `npqol_*`/`npp_*` by `projects/_bundle/10-migrate.js`); GM key `nq_sync`.
 
 ## Don't touch
 
