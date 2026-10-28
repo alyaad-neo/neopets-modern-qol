@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.35
+// @version      4.1.36
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -328,7 +328,7 @@ html[data-np-modern-interface] {
 
   #npUserTitle { color: #fff !important; text-shadow: 0 2px 6px rgba(0,0,0,.7) !important; }
   #npUser .meta .k { opacity: .85 !important; }
-  #npUserGear, #npUserRefresh, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta, #npUser .spinner { display: none !important; }
+  #npUserGear, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta { display: none !important; }
   #npUser { min-height: 0 !important; }
   #nppAcctTab { display: none !important; }
   #npUser .rightSide { display: grid !important; width: 100%; }

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.8
+// @version      5.5.9
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1804,9 +1804,6 @@ const NQ = {};
     gap:4px;
   }
   #npUser .meta .sep{ opacity:.40; padding:0 1px; }
-  #npUser .spinner{ position:absolute; top:6px; right:6px; }
-  #npUser.loading{ cursor:progress; }
-  #npUser.loading .spinner{ display:block; }
 
   #npBank{ padding:10px 12px; }
   #npBank .head{
@@ -2312,7 +2309,6 @@ const NQ = {};
   cardUser.id = 'npUser';
   cardUser.innerHTML = `
     <button type="button" class="cardGear" id="npUserGear" title="Profile settings" aria-label="Settings">⚙</button>
-    <button type="button" class="cardRefresh" id="npUserRefresh" title="Refresh profile data" aria-label="Refresh">↻</button>
     <div class="shieldSlot"><img class="shield" id="npUserShield" alt=""></div>
     <div class="rightSide">
       <div class="avatarSlot"><img class="avatar" id="npUserAvatar" alt="Avatar"></div>
@@ -2323,7 +2319,6 @@ const NQ = {};
         <span class="metaSt"><span class="k">Stamps</span><span id="npStCount">—</span></span>
       </div>
     </div>
-    <div class="spinner" aria-hidden="true"><div class="npSpin"></div></div>
   `;
 
   const cardBank = document.createElement('div');
@@ -2465,13 +2460,11 @@ const NQ = {};
   (function userModule(){
     const USERNAME_KEY = 'npqol_hud_username';
     const CACHE_PREFIX = 'npqol_hud_userlookup:';
-    const COOLDOWN = 60000;
-    const st = { username:null, cacheKey:null, lastFetch:0 };
+    const st = { username:null, cacheKey:null };
 
     const sGet = (k, f='') => { try { return String(localStorage.getItem(k) ?? f); } catch { return f; } };
     const sSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
     const cacheRead = (k) => { try { const r = localStorage.getItem(k); return r ? (JSON.parse(r)?.data || null) : null; } catch { return null; } };
-    const cacheWrite = (k, data) => { try { localStorage.setItem(k, JSON.stringify({ data })); } catch {} };
 
     const titleEl = () => cardUser.querySelector('#npUserTitle');
     const linkEl = () => cardUser.querySelector('#npUserLink');
@@ -2615,45 +2608,12 @@ const NQ = {};
       }
     }
     function hydrate(){ if (!st.cacheKey) return; const c = cacheRead(st.cacheKey); if (c) render(c); }
-    function mayFetch(){ const t = now(); if (t - st.lastFetch < COOLDOWN) return false; st.lastFetch = t; return true; }
-    function setLoading(on){ cardUser.classList.toggle('loading', !!on); }
-
-    function parse(html){
-      let avatarUrl = null;
-      const m = html.match(/<img[^>]+src="([^"]+\/neoboards\/avatars\/[^"]+)"[^>]*>/i) || html.match(/<img[^>]+src="([^"]+\/images\/avatars\/[^"]+)"[^>]*>/i);
-      if (m) avatarUrl = m[1];
-      let shieldUrl = null;
-      const sm = html.match(/<img[^>]+src="([^"]+\/images\/shields\/[^"]+\.gif[^"]*)"[^>]*>/i);
-      if (sm) shieldUrl = sm[1];
-      const text = html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-      const rc = (re) => { const mm = re.exec(text); return mm ? Number(mm[1].replace(/,/g,'')) : null; };
-      return { avatarUrl, shieldUrl, avatars: rc(/Avatars\s*:?\s*(\d[\d,]*)/i), stamps: rc(/Stamps\s*:?\s*(\d[\d,]*)/i) };
-    }
-    async function refresh(){
-      if (np403BackoffActive()) return;
-      if (!mayFetch()) return;
-      setLoading(true);
-      try {
-        const u = ensureUsername(); if (!u) return;
-        const r = await fetch(`https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(u)}`, { credentials:'include', cache:'no-store' });
-        npNote403(r);
-        const data = parse(await r.text());
-        if (data){ cacheWrite(st.cacheKey, data); render(data); }
-      } catch {} finally { setLoading(false); }
-    }
 
     cardUser.addEventListener('click', (e) => {
       if (e.target?.closest?.('#npUserLink, button, a, input, select')) return;
       const href = userLinkUrl();
       if (href) window.location.assign(href);
     });
-    const userRefreshBtn = cardUser.querySelector('#npUserRefresh');
-    if (userRefreshBtn){
-      userRefreshBtn.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        refresh();
-      });
-    }
     function userLinkUrl(){
       const a = cardUser.querySelector('#npUserLink');
       return a ? (a.getAttribute('href') || '') : '';
@@ -2701,7 +2661,6 @@ const NQ = {};
     const SETTINGS_LS = 'npqol_bank_btn_settings_v1';
     const DAILY_LS    = 'npqol_bank_daily_v1';
     const FORM_TTL = 5*60*1000;
-    const RECHECK_MS = 5*60*1000;
     const load = () => { try { return JSON.parse(localStorage.getItem(STORE) || 'null') || {}; } catch { return {}; } };
     const save = (s) => { try { localStorage.setItem(STORE, JSON.stringify(s || {})); } catch {} };
     const state = Object.assign({
@@ -3040,8 +2999,8 @@ const NQ = {};
       return out;
     }
     async function fetchBank(){ if (np403BackoffActive()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); npNote403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
-    async function refreshBank(){
-      const p = parseBank(await fetchBank());
+    async function refreshBank(html){
+      const p = parseBank(html || await fetchBank());
       if (p.balance){ state.bank_balance = p.balance; noteBalance(p.balance); }
       state.bank_forms = p.forms || {};
       state.bank_interest = p.interest || null;
@@ -3363,27 +3322,11 @@ const NQ = {};
 
     render();
 
-    npWhenBgAllowed(() => {
-      const stale = !state.bank_updatedAt || (now() - state.bank_updatedAt) > FORM_TTL;
-      const onBankPage = /^\/bank\.phtml/.test(location.pathname);
-      if (!state.bank_balance || crossedDailyReset(state.bank_updatedAt, now()) || stale || onBankPage){
-        refreshBank().catch(() => {});
-      }
-    });
-
-    setInterval(() => {
-      if (busy || document.hidden) return;
-      if (crossedDailyReset(state.bank_updatedAt, now())){
-        refreshBank().catch(() => {});
-      }
-    }, RECHECK_MS);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState !== 'visible' || busy) return;
-      if (crossedDailyReset(state.bank_updatedAt, now())){
-        refreshBank().catch(() => {});
-      }
-    });
+    if (/^\/bank\.phtml/.test(location.pathname)){
+      const fromPage = () => refreshBank(document.documentElement.outerHTML).catch(() => {});
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fromPage, { once:true });
+      else fromPage();
+    }
   })();
 
   (function qrModule(){
@@ -3797,21 +3740,6 @@ const NQ = {};
             link.textContent = 'Make Active';
             link.target = '_self';
             link.rel = 'nofollow';
-            link.addEventListener('click', async (e) => {
-              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-              e.preventDefault();
-              e.stopPropagation();
-              const href = make.href;
-              try {
-                const mkRes = await fetch(href, { credentials: 'include', cache: 'no-store' });
-                npNote403(mkRes);
-                try { localStorage.removeItem(LS_DATA + '_lastFetch'); } catch {}
-                try { await refresh({ force: true }); } catch {}
-                try { setOpen(false); } catch {}
-              } catch {
-                window.location.assign(href);
-              }
-            });
             overlay.appendChild(link);
           }
         }
@@ -6518,7 +6446,7 @@ html[data-np-modern-interface] {
 
   #npUserTitle { color: #fff !important; text-shadow: 0 2px 6px rgba(0,0,0,.7) !important; }
   #npUser .meta .k { opacity: .85 !important; }
-  #npUserGear, #npUserRefresh, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta, #npUser .spinner { display: none !important; }
+  #npUserGear, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta { display: none !important; }
   #npUser { min-height: 0 !important; }
   #nppAcctTab { display: none !important; }
   #npUser .rightSide { display: grid !important; width: 100%; }
@@ -9957,7 +9885,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     $('.nppAcctAddCancel', drawer).addEventListener('click', () => { closeAdd(); msgEx.textContent = ''; });
     input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeAdd(); } });
 
-    let autoErr = '';
     const place = () => {
       if (MODE === 'standalone') { drawer.style.left = 'auto'; drawer.style.right = '20px'; drawer.style.top = 'auto'; drawer.style.bottom = '76px'; drawer.style.width = '280px'; drawer.style.height = 'min(500px, calc(100vh - 120px))'; return; }
       if (!card) return;
@@ -9967,7 +9894,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     };
     const setOpen = (o) => {
       open = !!o;
-      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nppAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = autoErr; msgEx.textContent = ''; }
+      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nppAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = ''; msgEx.textContent = ''; }
       drawer.classList.toggle('open', open);
       if (tabEl) tabEl.classList.toggle('on', open);
     };
@@ -10041,15 +9968,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       if (added && !bad.length) closeAdd();
       render();
     });
-
-    // First-time auto-sync: once per day if nothing has been saved yet.
-    const AUTO_KEY = 'npp_np_auto_ts';
-    if (!readNP().length && Date.now() - (parseInt(LSget(AUTO_KEY), 10) || 0) > 24 * 3600e3) {
-      LSset(AUTO_KEY, String(Date.now()));
-      syncNeoPass()
-        .then(() => { autoErr = ''; render(); document.dispatchEvent(new CustomEvent('npp:main')); if (open) msgNp.textContent = ''; })
-        .catch(() => { autoErr = 'Couldn’t sync automatically. Sign in to NeoPass in this browser, then press Sync.'; if (open) msgNp.textContent = autoErr; });
-    }
 
     acctTabRefresh();
     render();
@@ -10202,19 +10120,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     const find = (re) => { const x = srcs.find(v => re.test(v)); return x ? ABS_URL(x) : ''; };
     return { avatar: find(/\/neoboards\/avatars\//i) };
   }
-  function profFromFrame(user) {
-    return new Promise((resolve) => {
-      const f = document.createElement('iframe');
-      f.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:900px;border:0;visibility:hidden';
-      let done = false;
-      const finish = (v) => { if (done) return; done = true; try { f.remove(); } catch {} resolve(v); };
-      f.onload = () => setTimeout(() => { try { finish(pickProfImgs(f.contentDocument)); } catch { finish({ avatar: '' }); } }, 1500);
-      f.onerror = () => finish({ avatar: '' });
-      setTimeout(() => finish({ avatar: '' }), 12000);
-      f.src = '/userlookup.phtml?user=' + encodeURIComponent(user);
-      document.documentElement.appendChild(f);
-    });
-  }
   function profDirtyDue() { try { const d = JSON.parse(LSget(DIRTY_KEY) || 'null'); return d && Date.now() - d.t >= 3000 ? d : null; } catch { return null; } }
   function markProfDirty(first) {
     try { if (JSON.parse(LSget(DIRTY_KEY) || 'null')) return; } catch {}
@@ -10229,7 +10134,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       const r = await fetch('/userlookup.phtml?user=' + encodeURIComponent(user), { credentials: 'include', cache: 'no-store' });
       if (r.status === 403) { LSset('npqol_403_backoff_until_v1', String(Date.now() + 10 * 60 * 1000)); throw new Error('403'); }
       if (r.ok) res = pickProfImgs(new DOMParser().parseFromString(await r.text(), 'text/html'));
-      if (!res.avatar && Date.now() - (parseInt(LSget('npp_prof_frame_ts'), 10) || 0) > 24 * 3600e3) { LSset('npp_prof_frame_ts', String(Date.now())); res = await profFromFrame(user); }
       LSset(PROF_KEY(user), JSON.stringify({ avatar: res.avatar || old.avatar, ts: Date.now() }));
     } catch {
       LSset(PROF_KEY(user), JSON.stringify({ avatar: old.avatar, ts: Date.now() }));
@@ -10261,6 +10165,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
   watchSettingsForAvatar();
   setInterval(maybeRefreshProfile, 30000);        // cheap check every 30s
   setTimeout(maybeRefreshProfile, 3000);
+  ['npp_np_auto_ts', 'npp_prof_frame_ts'].forEach(LSdel);
 
   /* ───────────────────────────────── boot ───────────────────────────────── */
   function mount() {

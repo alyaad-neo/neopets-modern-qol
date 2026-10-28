@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.8
+// @version      4.2.9
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -1796,9 +1796,6 @@
     gap:4px;
   }
   #npUser .meta .sep{ opacity:.40; padding:0 1px; }
-  #npUser .spinner{ position:absolute; top:6px; right:6px; }
-  #npUser.loading{ cursor:progress; }
-  #npUser.loading .spinner{ display:block; }
 
   #npBank{ padding:10px 12px; }
   #npBank .head{
@@ -2304,7 +2301,6 @@
   cardUser.id = 'npUser';
   cardUser.innerHTML = `
     <button type="button" class="cardGear" id="npUserGear" title="Profile settings" aria-label="Settings">⚙</button>
-    <button type="button" class="cardRefresh" id="npUserRefresh" title="Refresh profile data" aria-label="Refresh">↻</button>
     <div class="shieldSlot"><img class="shield" id="npUserShield" alt=""></div>
     <div class="rightSide">
       <div class="avatarSlot"><img class="avatar" id="npUserAvatar" alt="Avatar"></div>
@@ -2315,7 +2311,6 @@
         <span class="metaSt"><span class="k">Stamps</span><span id="npStCount">—</span></span>
       </div>
     </div>
-    <div class="spinner" aria-hidden="true"><div class="npSpin"></div></div>
   `;
 
   const cardBank = document.createElement('div');
@@ -2457,13 +2452,11 @@
   (function userModule(){
     const USERNAME_KEY = 'npqol_hud_username';
     const CACHE_PREFIX = 'npqol_hud_userlookup:';
-    const COOLDOWN = 60000;
-    const st = { username:null, cacheKey:null, lastFetch:0 };
+    const st = { username:null, cacheKey:null };
 
     const sGet = (k, f='') => { try { return String(localStorage.getItem(k) ?? f); } catch { return f; } };
     const sSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
     const cacheRead = (k) => { try { const r = localStorage.getItem(k); return r ? (JSON.parse(r)?.data || null) : null; } catch { return null; } };
-    const cacheWrite = (k, data) => { try { localStorage.setItem(k, JSON.stringify({ data })); } catch {} };
 
     const titleEl = () => cardUser.querySelector('#npUserTitle');
     const linkEl = () => cardUser.querySelector('#npUserLink');
@@ -2607,45 +2600,12 @@
       }
     }
     function hydrate(){ if (!st.cacheKey) return; const c = cacheRead(st.cacheKey); if (c) render(c); }
-    function mayFetch(){ const t = now(); if (t - st.lastFetch < COOLDOWN) return false; st.lastFetch = t; return true; }
-    function setLoading(on){ cardUser.classList.toggle('loading', !!on); }
-
-    function parse(html){
-      let avatarUrl = null;
-      const m = html.match(/<img[^>]+src="([^"]+\/neoboards\/avatars\/[^"]+)"[^>]*>/i) || html.match(/<img[^>]+src="([^"]+\/images\/avatars\/[^"]+)"[^>]*>/i);
-      if (m) avatarUrl = m[1];
-      let shieldUrl = null;
-      const sm = html.match(/<img[^>]+src="([^"]+\/images\/shields\/[^"]+\.gif[^"]*)"[^>]*>/i);
-      if (sm) shieldUrl = sm[1];
-      const text = html.replace(/<script[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-      const rc = (re) => { const mm = re.exec(text); return mm ? Number(mm[1].replace(/,/g,'')) : null; };
-      return { avatarUrl, shieldUrl, avatars: rc(/Avatars\s*:?\s*(\d[\d,]*)/i), stamps: rc(/Stamps\s*:?\s*(\d[\d,]*)/i) };
-    }
-    async function refresh(){
-      if (np403BackoffActive()) return;
-      if (!mayFetch()) return;
-      setLoading(true);
-      try {
-        const u = ensureUsername(); if (!u) return;
-        const r = await fetch(`https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(u)}`, { credentials:'include', cache:'no-store' });
-        npNote403(r);
-        const data = parse(await r.text());
-        if (data){ cacheWrite(st.cacheKey, data); render(data); }
-      } catch {} finally { setLoading(false); }
-    }
 
     cardUser.addEventListener('click', (e) => {
       if (e.target?.closest?.('#npUserLink, button, a, input, select')) return;
       const href = userLinkUrl();
       if (href) window.location.assign(href);
     });
-    const userRefreshBtn = cardUser.querySelector('#npUserRefresh');
-    if (userRefreshBtn){
-      userRefreshBtn.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        refresh();
-      });
-    }
     function userLinkUrl(){
       const a = cardUser.querySelector('#npUserLink');
       return a ? (a.getAttribute('href') || '') : '';
@@ -2693,7 +2653,6 @@
     const SETTINGS_LS = 'npqol_bank_btn_settings_v1';
     const DAILY_LS    = 'npqol_bank_daily_v1';
     const FORM_TTL = 5*60*1000;
-    const RECHECK_MS = 5*60*1000;
     const load = () => { try { return JSON.parse(localStorage.getItem(STORE) || 'null') || {}; } catch { return {}; } };
     const save = (s) => { try { localStorage.setItem(STORE, JSON.stringify(s || {})); } catch {} };
     const state = Object.assign({
@@ -3032,8 +2991,8 @@
       return out;
     }
     async function fetchBank(){ if (np403BackoffActive()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); npNote403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
-    async function refreshBank(){
-      const p = parseBank(await fetchBank());
+    async function refreshBank(html){
+      const p = parseBank(html || await fetchBank());
       if (p.balance){ state.bank_balance = p.balance; noteBalance(p.balance); }
       state.bank_forms = p.forms || {};
       state.bank_interest = p.interest || null;
@@ -3355,27 +3314,11 @@
 
     render();
 
-    npWhenBgAllowed(() => {
-      const stale = !state.bank_updatedAt || (now() - state.bank_updatedAt) > FORM_TTL;
-      const onBankPage = /^\/bank\.phtml/.test(location.pathname);
-      if (!state.bank_balance || crossedDailyReset(state.bank_updatedAt, now()) || stale || onBankPage){
-        refreshBank().catch(() => {});
-      }
-    });
-
-    setInterval(() => {
-      if (busy || document.hidden) return;
-      if (crossedDailyReset(state.bank_updatedAt, now())){
-        refreshBank().catch(() => {});
-      }
-    }, RECHECK_MS);
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState !== 'visible' || busy) return;
-      if (crossedDailyReset(state.bank_updatedAt, now())){
-        refreshBank().catch(() => {});
-      }
-    });
+    if (/^\/bank\.phtml/.test(location.pathname)){
+      const fromPage = () => refreshBank(document.documentElement.outerHTML).catch(() => {});
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fromPage, { once:true });
+      else fromPage();
+    }
   })();
 
   (function qrModule(){
@@ -3789,21 +3732,6 @@
             link.textContent = 'Make Active';
             link.target = '_self';
             link.rel = 'nofollow';
-            link.addEventListener('click', async (e) => {
-              if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-              e.preventDefault();
-              e.stopPropagation();
-              const href = make.href;
-              try {
-                const mkRes = await fetch(href, { credentials: 'include', cache: 'no-store' });
-                npNote403(mkRes);
-                try { localStorage.removeItem(LS_DATA + '_lastFetch'); } catch {}
-                try { await refresh({ force: true }); } catch {}
-                try { setOpen(false); } catch {}
-              } catch {
-                window.location.assign(href);
-              }
-            });
             overlay.appendChild(link);
           }
         }

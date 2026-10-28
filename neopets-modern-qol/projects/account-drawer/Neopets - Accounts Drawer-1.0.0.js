@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.20
+// @version      1.3.21
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -1041,7 +1041,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     $('.nppAcctAddCancel', drawer).addEventListener('click', () => { closeAdd(); msgEx.textContent = ''; });
     input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeAdd(); } });
 
-    let autoErr = '';
     const place = () => {
       if (MODE === 'standalone') { drawer.style.left = 'auto'; drawer.style.right = '20px'; drawer.style.top = 'auto'; drawer.style.bottom = '76px'; drawer.style.width = '280px'; drawer.style.height = 'min(500px, calc(100vh - 120px))'; return; }
       if (!card) return;
@@ -1051,7 +1050,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     };
     const setOpen = (o) => {
       open = !!o;
-      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nppAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = autoErr; msgEx.textContent = ''; }
+      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nppAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = ''; msgEx.textContent = ''; }
       drawer.classList.toggle('open', open);
       if (tabEl) tabEl.classList.toggle('on', open);
     };
@@ -1125,15 +1124,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       if (added && !bad.length) closeAdd();
       render();
     });
-
-    // First-time auto-sync: once per day if nothing has been saved yet.
-    const AUTO_KEY = 'npp_np_auto_ts';
-    if (!readNP().length && Date.now() - (parseInt(LSget(AUTO_KEY), 10) || 0) > 24 * 3600e3) {
-      LSset(AUTO_KEY, String(Date.now()));
-      syncNeoPass()
-        .then(() => { autoErr = ''; render(); document.dispatchEvent(new CustomEvent('npp:main')); if (open) msgNp.textContent = ''; })
-        .catch(() => { autoErr = 'Couldn’t sync automatically. Sign in to NeoPass in this browser, then press Sync.'; if (open) msgNp.textContent = autoErr; });
-    }
 
     acctTabRefresh();
     render();
@@ -1286,19 +1276,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     const find = (re) => { const x = srcs.find(v => re.test(v)); return x ? ABS_URL(x) : ''; };
     return { avatar: find(/\/neoboards\/avatars\//i) };
   }
-  function profFromFrame(user) {
-    return new Promise((resolve) => {
-      const f = document.createElement('iframe');
-      f.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:900px;border:0;visibility:hidden';
-      let done = false;
-      const finish = (v) => { if (done) return; done = true; try { f.remove(); } catch {} resolve(v); };
-      f.onload = () => setTimeout(() => { try { finish(pickProfImgs(f.contentDocument)); } catch { finish({ avatar: '' }); } }, 1500);
-      f.onerror = () => finish({ avatar: '' });
-      setTimeout(() => finish({ avatar: '' }), 12000);
-      f.src = '/userlookup.phtml?user=' + encodeURIComponent(user);
-      document.documentElement.appendChild(f);
-    });
-  }
   function profDirtyDue() { try { const d = JSON.parse(LSget(DIRTY_KEY) || 'null'); return d && Date.now() - d.t >= 3000 ? d : null; } catch { return null; } }
   function markProfDirty(first) {
     try { if (JSON.parse(LSget(DIRTY_KEY) || 'null')) return; } catch {}
@@ -1313,7 +1290,6 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       const r = await fetch('/userlookup.phtml?user=' + encodeURIComponent(user), { credentials: 'include', cache: 'no-store' });
       if (r.status === 403) { LSset('npqol_403_backoff_until_v1', String(Date.now() + 10 * 60 * 1000)); throw new Error('403'); }
       if (r.ok) res = pickProfImgs(new DOMParser().parseFromString(await r.text(), 'text/html'));
-      if (!res.avatar && Date.now() - (parseInt(LSget('npp_prof_frame_ts'), 10) || 0) > 24 * 3600e3) { LSset('npp_prof_frame_ts', String(Date.now())); res = await profFromFrame(user); }
       LSset(PROF_KEY(user), JSON.stringify({ avatar: res.avatar || old.avatar, ts: Date.now() }));
     } catch {
       LSset(PROF_KEY(user), JSON.stringify({ avatar: old.avatar, ts: Date.now() }));
@@ -1345,6 +1321,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
   watchSettingsForAvatar();
   setInterval(maybeRefreshProfile, 30000);        // cheap check every 30s
   setTimeout(maybeRefreshProfile, 3000);
+  ['npp_np_auto_ts', 'npp_prof_frame_ts'].forEach(LSdel);
 
   /* ───────────────────────────────── boot ───────────────────────────────── */
   function mount() {

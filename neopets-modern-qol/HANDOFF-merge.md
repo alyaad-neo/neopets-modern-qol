@@ -71,7 +71,7 @@ Do these one group at a time. Run `node bundle.js` after each, and check for lef
 
 Keep `W.appInsightsUserName`: that one comes from Neopets itself.
 
-**Requests.** List every `fetch(` and `GM_xmlhttpRequest(` left in the bundle, with what triggers it and how often. Show Aly the list and delete any she doesn't want. Keep the 403 backoff (`np403BackoffActive`, `npNote403`) for whatever stays.
+**Requests.** DONE (bundle 5.5.9), waiting on Aly's test. Deleted dead code: the base user-card `userlookup` fetch (only `#npUserRefresh` could trigger it, and the patcher hid it; button, spinner and `.loading` CSS gone) and the base Make Active fetch (the patcher's capture handler always pre-empts it). Aly removed: the drawer's hidden `userlookup` iframe avatar fallback, the NeoPass daily auto-sync (Sync button kept), and the base bank background refresh (page-load, 5-min and tab-focus). On `/bank.phtml` the bank card now parses the page itself with no fetch. Clicking the balance and deposit/withdraw still fetch. Old keys `npp_np_auto_ts`, `npp_prof_frame_ts` are deleted on load. Kept: quickref (load if >5 min), bank POST + click refresh, drawer avatar `userlookup` (24h), NeoPass Sync button, logout on swap, patcher Make Active, JellyNeo Symol/Tarla (hourly max), DTI GraphQL (picker only), pet image tone blobs. Original brief: List every `fetch(` and `GM_xmlhttpRequest(` left in the bundle, with what triggers it and how often. Show Aly the list and delete any she doesn't want. Keep the 403 backoff (`np403BackoffActive`, `npNote403`) for whatever stays.
 
 **Other base features.** Make a short table of each remaining base feature (the `/* ===` section banners were stripped in 5.5.5; read them in `vendor/`): kept as-is, restyled by the patcher, or replaced. Ask Aly about anything unclear.
 
@@ -101,10 +101,10 @@ After stage 2, tell Aly what to test (list below). Report and stop.
 
 ## Current state (2026-10-28)
 
-- Stage 0 and 1 done. Stage 2: Alerts bell, Header right side, Header CSS are DONE and tested. Sidebar and HUD DONE (5.5.4). Backgrounds and colors DONE (5.5.5), waiting on Aly's test. All comments stripped from modern-interface and the patcher in 5.5.5 (only the MIT credit line kept). Cross-script plumbing DONE (5.5.7 bridges, 5.5.8 boot loop), tested. Next: Requests.
+- Stage 0 and 1 done. Stage 2: Alerts bell, Header right side, Header CSS are DONE and tested. Sidebar and HUD DONE (5.5.4). Backgrounds and colors DONE (5.5.5), waiting on Aly's test. All comments stripped from modern-interface and the patcher in 5.5.5 (only the MIT credit line kept). Cross-script plumbing DONE (5.5.7 bridges, 5.5.8 boot loop), tested. Requests DONE (5.5.9), waiting on Aly's test. Next: Other base features.
 - Aly confirmed the active-pet card fix (5.5.6: base renderActivePetImage now prepends the img). She suspects the bundle slows page loads: 22 setInterval and 31 MutationObservers (19 subtree). Removing the polling loops is the main goal of Cross-script plumbing.
-- Bundle 5.5.8: modern-interface 4.2.8, patcher 4.1.35, dailies 1.0.8, account-drawer 1.3.20, page-pins 1.0.6.
-- Start a new chat with: "Read neopets-modern-qol/HANDOFF-merge.md and AGENTS.md, then do the Requests group of stage 2."
+- Bundle 5.5.9: modern-interface 4.2.9, patcher 4.1.36, dailies 1.0.8, account-drawer 1.3.21, page-pins 1.0.6.
+- Start a new chat with: "Read neopets-modern-qol/HANDOFF-merge.md and AGENTS.md, then do the Other base features group of stage 2."
 - CSS dedupe tool: `node tools/css-dedupe.js <base.js> <patcher.js> --report out.txt` lists dead declarations (add `--apply` to delete them). It only removes a declaration when a rule matching the same element always beats it (same media or broader, importance, specificity, order, shorthands). Its facts are hardcoded: the HUD cards are direct children of `#npHud`, `npp-css` is present wherever `#npHud` shows, and PET_IMG_STYLE is inline. Check those still hold before you re-use it. A comment heading a group gets deleted with the group's first rule if that rule is dead, so restore it by hand.
 - Lessons from this run:
   - Before deleting base markup, grep the patcher for code that MOVES it (e.g. patchShadow moved the Quest Log link into .left). Quests was lost in 5.5.2 and restored in 5.5.3.
