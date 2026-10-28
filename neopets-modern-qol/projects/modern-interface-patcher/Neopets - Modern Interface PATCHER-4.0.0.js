@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.36
+// @version      4.1.37
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -97,9 +97,8 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1',
-    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_layout_v1',
-    'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1', 'npqol_side_icon_size_v1',
-    'npqol_topbar_custom_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_bank_btn_settings_v1',
+    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_icon_size_v1',
+    'npqol_topbar_custom_v1', 'npqol_bank_btn_settings_v1',
     'npp_color_main', 'npp_color_left', 'npp_color_head', 'npp_defaults_v3'];
   const DATA_KEYS = ['npqol_hud_username', 'npqol_np_last', 'npqol_bank_state_v2', 'npqol_bank_daily_v1', 'npqol_bank_history_v1',
     'npqol_qr_data', 'npqol_active_pet_img_v1', 'npqol_user_stub'];
@@ -113,7 +112,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       const save = () => {
         const o = {};
         SYNC_KEYS.concat(DATA_KEYS).forEach(k => { const v = LSget(k); if (v) o[k] = v; });
-        try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('npqol_hud_userlookup:')) o[k] = localStorage.getItem(k); } } catch {}
         try { GM_setValue('npp_sync', JSON.stringify(o)); } catch {}
       };
       save(); setInterval(save, 8000); window.addEventListener('pagehide', save);
@@ -187,10 +185,9 @@ html[data-np-modern-interface] {
   }
   @media (max-width: 900px) { body > .errorOuter, body > .errorInner, body > .errorMessage { width: auto; margin: 110px 16px 32px !important; } }
 
-  #npHudResizer, #npxFrameResizeR, #npxFrameResizeB { display: none !important; }
 
   #npLeftBar { border: 0 !important; box-shadow: 0 0 10px rgba(0,0,0,.4) !important; top: 0 !important; bottom: auto !important; height: 100vh !important; }
-  #npHud > #npBank, #npQrActive { display: none !important; }
+  #npHud > #npBank { display: none !important; }
 
   #npNp { flex-direction: column !important; align-items: stretch !important; cursor: default !important; }
   #npNp .np-amounts { flex: 1; display: flex; align-items: center; white-space: nowrap; }
@@ -226,8 +223,6 @@ html[data-np-modern-interface] {
 
   #nppFoot { position: fixed; left: 0; bottom: 0; width: var(--np-col-width); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
 
-  #btnOverlay[data-mode="single"] .col.left { left: 239px !important; top: auto !important; bottom: calc(16px + var(--npp-tools-h, 0px) + var(--npp-ig, 10px)) !important; transform: translate(-50%, var(--np-side-col-shift, 0px)) !important; }
-  #btnOverlay .col.right { position: fixed !important; left: calc(var(--np-col-width) - 24px) !important; top: auto !important; bottom: 16px !important; transform: translateY(var(--np-side-col-shift, 0px)) !important; }
 
   #npBgSidebar { top: 0 !important; height: 100vh !important; box-sizing: border-box !important; padding-top: 0 !important; z-index: 2100 !important; background: #1a1722 !important; border-left: 1px solid rgba(255,255,255,.14); box-shadow: -4px 0 32px rgba(0,0,0,.12) !important; }
   #npBgHandle { top: calc(60px + (100vh - 60px - 44px) / 2) !important; width: 16px !important; height: 44px !important; font-size: 0 !important; opacity: 0; transition: opacity .15s, background .12s !important; }
@@ -327,8 +322,6 @@ html[data-np-modern-interface] {
   #npHud, #nppFoot { text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 
   #npUserTitle { color: #fff !important; text-shadow: 0 2px 6px rgba(0,0,0,.7) !important; }
-  #npUser .meta .k { opacity: .85 !important; }
-  #npUserGear, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta { display: none !important; }
   #npUser { min-height: 0 !important; }
   #nppAcctTab { display: none !important; }
   #npUser .rightSide { display: grid !important; width: 100%; }
@@ -470,7 +463,7 @@ html[data-np-modern-interface] {
 
   &.npp-nc { --np-col-width: 0px !important; }
   &.npp-nc #npHud, &.npp-nc #npLeftBar, &.npp-nc #btnOverlay, &.npp-nc #npxSideBtnHost, &.npp-nc #qrDockWrap, &.npp-nc #nppFoot,
-  &.npp-nc #npHudResizer, &.npp-nc #npBgHandle, &.npp-nc #npBgSidebar { display: none !important; }
+  &.npp-nc #npBgHandle, &.npp-nc #npBgSidebar { display: none !important; }
   &.npp-nc body #container__2020 { max-width: var(--np-frame-width) !important; }
   &.npp-nc body :is(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) :is(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) {
     width: auto !important; max-width: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
@@ -538,7 +531,7 @@ html[data-np-modern-interface] {
   #nppIcons .nppIcHead { display: none; }
   #nppIcons .nppIcBody, #nppIcons.nppShut .nppIcBody { display: block; padding: 0; }
   #nppIcons #btnOverlay { position: static !important; inset: auto !important; width: auto !important; height: auto !important; transform: none !important; z-index: auto !important; pointer-events: auto !important; opacity: 1 !important; overflow: visible !important; }
-  #nppIcons #btnOverlay .col, #nppIcons #btnOverlay .col.left, #nppIcons #btnOverlay .col.right { position: static !important; inset: auto !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; row-gap: 10px !important; }
+  #nppIcons #btnOverlay .col { position: static !important; inset: auto !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; row-gap: 10px !important; }
   #nppIcons #btnOverlay .col:empty { display: none !important; }
   #nppIcons #btnOverlay .col > * { flex: 0 0 auto !important; position: relative; }
   #nppIcons #btnOverlay .col img { max-width: 40px; max-height: 40px; }
@@ -848,7 +841,7 @@ html[data-np-modern-interface] {
 html[data-np-modern-interface] {
   --np-col-width: 0px !important;
   --np-bar-inset-left: 0px !important;
-  #npHud, #npLeftBar, #btnOverlay, #npxSideBtnHost, #qrDockWrap, #nppFoot, #npHudResizer, #npBgHandle, #npBgSidebar,
+  #npHud, #npLeftBar, #btnOverlay, #npxSideBtnHost, #qrDockWrap, #nppFoot, #npBgHandle, #npBgSidebar,
   .navsub-left__2020, .navsub-right__2020 { display: none !important; }
 }`;
 
@@ -992,20 +985,11 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .tab:hover { background: #26222f !important; }
 .panel.open { box-shadow: 0 -6px 36px rgba(0,0,0,.16) !important; }
 .panel { background: #1a1722 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; border-color: rgba(255,255,255,.14) !important; }
-.head .grp { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); padding: 4px 8px; }
-.head .grpLbl { color: rgba(255,255,255,.92); font-size: 10px; letter-spacing: .08em; }
 .head button { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); color: #fff; }
 .head button:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.4); }
-.head .stepVal { background: transparent; border: 0; color: #fff; font-size: 12px; }
-.head .stepVal:hover { background: rgba(255,255,255,.14); }
 .head .close { background: transparent; border: 0; color: rgba(255,255,255,.75); }
 .head .close:hover { color: #fff; background: rgba(255,255,255,.14); }
-.modeSeg { background: rgba(0,0,0,.3); border-color: rgba(255,255,255,.18); }
-.modeSeg .modeBtn { background: transparent; border: 0; color: rgba(255,255,255,.7); }
-.modeSeg .modeBtn:hover { background: rgba(255,255,255,.14); color: #fff; }
-.modeSeg .modeBtn.isOn { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1722); box-shadow: none; }
 .body { align-content: start; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.3) transparent; }
-.modeNote { margin: 0; padding: 8px 12px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.82); font-size: 11px; font-weight: 500; line-height: 1.4; }
 .col { border-color: rgba(255,255,255,.14); border-radius: 12px; }
 .item { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.16); }
 .item:hover { background: rgba(255,255,255,.12); }
@@ -1018,7 +1002,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .add button { height: 34px; background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1722); border-color: transparent; font-size: 12px; text-shadow: var(--npp-accent-fg-shadow, none); }
 .add button:hover { background: var(--np-accent, #fff); filter: brightness(1.06); }
 .panel { width: 420px !important; max-width: 96vw !important; height: auto !important; max-height: min(470px, 78vh) !important; }
-.head .grp, .modeNote, .col[data-side="right"], .item [data-act="swap"] { display: none !important; }
 .head { align-items: center; gap: 8px; padding: 12px 14px 10px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .head::before { content: 'Shortcut icons'; margin-right: auto; font: 700 13px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.92); }
 .body { grid-template-columns: 1fr !important; gap: 0; }
@@ -1666,18 +1649,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       menu.style.top = Math.round($('#npx-host').getBoundingClientRect().bottom) + 'px';
       menu.style.display = 'block';
     });
-  }
-
-  let shortcutsLocked = false;
-  function lockShortcuts() {
-    const A = NQ.sideBtns;
-    if (!A || shortcutsLocked || isNc) return;
-    shortcutsLocked = true;
-    try {
-      if (A.getLayout() !== 'single') A.setLayout('single');
-      const cfg = A.load();
-      if (cfg.right && cfg.right.length) A.save({ left: [...cfg.left, ...cfg.right], right: [] });
-    } catch {}
   }
 
   const SEARCH_URL = 'https://www.neopets.com/search.phtml';
@@ -2494,7 +2465,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     root.classList.add('npp-auth');
     const st = document.getElementById('npp-auth-css') || document.createElement('style');
     st.id = 'npp-auth-css';
-    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npHudResizer, html.npp-auth #npxFrameResizeR, html.npp-auth #npxFrameResizeB, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppBell,html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
+    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppBell,html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
     if (!st.isConnected) (document.head || root).appendChild(st);
     document.querySelectorAll('style').forEach(el => {
       const t = el.textContent || '';
@@ -2539,8 +2510,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       root.classList.remove('np-recolor-site');
       paintAll(saved());
       if (A) {
-        A.setLayout(A.getLayout()); A.setSide(A.getSide()); A.setColOffset(A.getColOffset()); A.setIconSize(A.getIconSize());
-        A.setColShift(A.getColShift()); A.setColX(A.getColX()); A.rebuild();
+        A.setIconSize(A.getIconSize()); A.rebuild();
       }
     } catch {}
   }
@@ -2704,8 +2674,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
     }
 
-    ['npqol_frame_size_v1', 'npqol_col_width_v1'].forEach(LSdel);
-    ['--np-frame-minh', '--np-frame-width', '--np-col-width'].forEach(p => rs.removeProperty(p));
+    ['npqol_frame_size_v1', 'npqol_col_width_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_side_layout_v1',
+      'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1'].forEach(LSdel);
+    try { Object.keys(localStorage).filter(k => k.startsWith('npqol_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
     applyBarStyle(LSget('npqol_topbar_bg_v1'));
@@ -2721,7 +2692,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     patchShadow();
     globalListeners();
     setupKeys();
-    setupClock(); fixNcNavLinks(); setupPremium(); lockShortcuts(); lockShopkeeper();
+    setupClock(); fixNcNavLinks(); setupPremium(); lockShopkeeper();
     const build = () => {
       buildFooter(); setupTools(); setupScrollTop(); setupBell(); setupNest(); patchEditor(); layoutSidebar(); setupDrawer();
       setupBank(); petUI(); setupDailyFold(); wireSidebar(); setupPremium(); highlightShopPrices(); updateNc();

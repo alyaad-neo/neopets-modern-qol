@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.9
+// @version      5.5.10
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -335,8 +335,7 @@ const NQ = {};
     :root{
       --np-frame-shift: var(--np-col-width, 0px);
       --np-frame-width: clamp(600px, calc(100vw - var(--np-frame-shift) - 40px), 1100px);
-      --np-content-drop: 0px;
-      --np-top-offset: calc(100px + var(--np-content-drop, 0px));
+      --np-top-offset: 100px;
       --np-h5-gap: 0px;
       --np-frame-radius: 30px;
       --np-frame-padding: 16px;
@@ -590,7 +589,7 @@ const NQ = {};
       :root{
         --np-frame-radius: 14px;
         --np-frame-padding: 10px;
-        --np-top-offset: calc(80px + var(--np-content-drop, 0px));
+        --np-top-offset: 80px;
         --np-frame-shift: 0px;
       }
     }
@@ -1128,198 +1127,6 @@ const NQ = {};
     closeAll();
   }, true);
 
-  (function frameResize(){
-    const LS_KEY = 'npqol_frame_size_v1';
-    const MIN_W = 600, MIN_H = 200;
-    const rootEl = document.documentElement;
-
-    function loadSize(){
-      try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null') || {}; }
-      catch { return {}; }
-    }
-    function saveSize(s){
-      try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {}
-    }
-    const size = loadSize();
-
-    function applyW(){
-      if (Number.isFinite(size.w) && size.w >= MIN_W){
-        rootEl.style.setProperty('--np-frame-width',
-          `clamp(${MIN_W}px, ${Math.round(size.w)}px, calc(100vw - var(--np-frame-shift) - 40px))`);
-      } else {
-        rootEl.style.removeProperty('--np-frame-width');
-      }
-    }
-    function applyH(){
-      if (Number.isFinite(size.h) && size.h >= MIN_H){
-        rootEl.style.setProperty('--np-frame-minh', Math.round(size.h) + 'px');
-      } else {
-        rootEl.style.removeProperty('--np-frame-minh');
-      }
-    }
-    applyW(); applyH();
-
-    const hStyle = document.createElement('style');
-    hStyle.id = 'np-frame-resize-style';
-    hStyle.textContent = `
-      #npxFrameResizeR, #npxFrameResizeB{
-        position:absolute;
-        z-index:900;
-        background:transparent;
-        touch-action:none;
-      }
-      #npxFrameResizeR{ width:14px; cursor:ew-resize; }
-      #npxFrameResizeB{ height:14px; cursor:ns-resize; }
-      @media (pointer: coarse){
-        #npxFrameResizeR{ width:26px; }
-        #npxFrameResizeB{ height:26px; }
-      }
-      #npxFrameResizeR::after, #npxFrameResizeB::after{
-        content:"";
-        position:absolute;
-        border-radius:3px;
-        background:transparent;
-        transition:background .15s ease;
-        pointer-events:none;
-      }
-      #npxFrameResizeR::after{
-        top:50%; left:50%;
-        width:4px; height:64px;
-        transform:translate(-50%, -50%);
-      }
-      #npxFrameResizeB::after{
-        top:50%; left:50%;
-        width:64px; height:4px;
-        transform:translate(-50%, -50%);
-      }
-      #npxFrameResizeR:hover::after, #npxFrameResizeR.dragging::after,
-      #npxFrameResizeB:hover::after, #npxFrameResizeB.dragging::after{
-        background:var(--np-accent, rgba(255,255,255,.6));
-        box-shadow:0 0 8px var(--np-accent, rgba(255,255,255,.4));
-      }
-      @media (max-width: 900px){
-        #npxFrameResizeR, #npxFrameResizeB{ display:none; }
-      }
-    `;
-    (document.head || document.documentElement).appendChild(hStyle);
-
-    const FRAME_SEL = '#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner';
-    function findFrame(){
-      const cands = [...document.querySelectorAll(FRAME_SEL)];
-      return cands.find(el => !cands.some(o => o !== el && o.contains(el))) || null;
-    }
-
-    const hR = document.createElement('div');
-    hR.id = 'npxFrameResizeR';
-    hR.title = 'Drag to resize the content width · double-click to reset';
-    const hB = document.createElement('div');
-    hB.id = 'npxFrameResizeB';
-    hB.title = 'Drag to resize the content height · double-click to reset';
-
-    let frame = null;
-    let frameRO = null;
-
-    function place(){
-      if (!frame || !frame.isConnected) frame = findFrame();
-      if (!frame){ hR.style.display = 'none'; hB.style.display = 'none'; return; }
-      const r = frame.getBoundingClientRect();
-      const sx = window.scrollX, sy = window.scrollY;
-      hR.style.display = '';
-      hB.style.display = '';
-      const hw = hR.offsetWidth  || 14;
-      const bh = hB.offsetHeight || 14;
-      hR.style.left   = (r.right + sx - hw / 2) + 'px';
-      hR.style.top    = (r.top + sy) + 'px';
-      hR.style.height = Math.max(0, r.height) + 'px';
-      hB.style.left   = (r.left + sx) + 'px';
-      hB.style.top    = (r.bottom + sy - bh / 2) + 'px';
-      hB.style.width  = Math.max(0, r.width) + 'px';
-    }
-    let placeQueued = false;
-    function schedulePlace(){
-      if (placeQueued) return;
-      placeQueued = true;
-      requestAnimationFrame(() => { placeQueued = false; place(); });
-    }
-
-    function watchFrame(){
-      const f = findFrame();
-      if (!f) return false;
-      if (f !== frame){
-        frame = f;
-        try { frameRO?.disconnect(); } catch {}
-        try {
-          frameRO = new ResizeObserver(schedulePlace);
-          frameRO.observe(frame);
-        } catch {}
-      }
-      schedulePlace();
-      return true;
-    }
-
-    function mountHandles(){
-      if (!document.body) return false;
-      if (!hR.isConnected) document.body.append(hR, hB);
-      watchFrame();
-      return true;
-    }
-    if (!mountHandles()){
-      new MutationObserver((_, o) => { if (mountHandles()) o.disconnect(); })
-        .observe(document.documentElement, { childList: true, subtree: true });
-    }
-    window.addEventListener('load', () => { watchFrame(); });
-    window.addEventListener('resize', schedulePlace);
-    document.addEventListener('DOMContentLoaded', () => { watchFrame(); }, { once: true });
-
-    let drag = null;
-    function beginDrag(e, axis, el){
-      if (!frame) return;
-      drag = { axis, pointerId: e.pointerId };
-      el.classList.add('dragging');
-      try { el.setPointerCapture(e.pointerId); } catch {}
-      try { document.body.style.userSelect = 'none'; } catch {}
-      const r = frame.getBoundingClientRect();
-      if (axis === 'w' && !Number.isFinite(size.w)) size.w = Math.round(r.width);
-      if (axis === 'h' && !Number.isFinite(size.h)) size.h = Math.round(r.height);
-      e.preventDefault();
-    }
-    function moveDrag(e){
-      if (!drag || !frame) return;
-      const r = frame.getBoundingClientRect();
-      if (drag.axis === 'w'){
-        const leftGap  = r.left;
-        const rightGap = window.innerWidth - r.right;
-        const centered = Math.abs(leftGap - rightGap) < 4;
-        const delta = (e.clientX - r.right) * (centered ? 2 : 1);
-        size.w = Math.max(MIN_W, Math.round((size.w || r.width) + delta));
-        applyW();
-      } else {
-        size.h = Math.max(MIN_H, Math.round(e.clientY - r.top));
-        applyH();
-      }
-      schedulePlace();
-    }
-    function endDrag(e, el){
-      if (!drag) return;
-      drag = null;
-      el.classList.remove('dragging');
-      try { el.releasePointerCapture(e.pointerId); } catch {}
-      try { document.body.style.userSelect = ''; } catch {}
-      saveSize(size);
-      schedulePlace();
-    }
-    hR.addEventListener('pointerdown', (e) => beginDrag(e, 'w', hR));
-    hB.addEventListener('pointerdown', (e) => beginDrag(e, 'h', hB));
-    hR.addEventListener('pointermove', moveDrag);
-    hB.addEventListener('pointermove', moveDrag);
-    hR.addEventListener('pointerup',     (e) => endDrag(e, hR));
-    hR.addEventListener('pointercancel', (e) => endDrag(e, hR));
-    hB.addEventListener('pointerup',     (e) => endDrag(e, hB));
-    hB.addEventListener('pointercancel', (e) => endDrag(e, hB));
-    hR.addEventListener('dblclick', () => { delete size.w; saveSize(size); applyW(); schedulePlace(); });
-    hB.addEventListener('dblclick', () => { delete size.h; saveSize(size); applyH(); schedulePlace(); });
-  })();
-
   (function firstVisibleAlign(){
     const FRAME_SEL = '#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner';
     const SKIP_TAGS = /^(STYLE|SCRIPT|LINK|META|TEMPLATE|BR|HR)$/;
@@ -1652,34 +1459,6 @@ const NQ = {};
     :root{ --np-bar-inset-left:0px !important; }
   }
 
-  #npHudResizer{
-    position:fixed;
-    top:64px;
-    bottom:8px;
-    left: calc(var(--np-col-width, 330px) - 8px);
-    width:16px;
-    cursor:ew-resize;
-    background:transparent;
-    pointer-events:auto;
-    z-index:1001;
-  }
-  #npHudResizer::after{
-    content:"";
-    position:absolute;
-    top:50%; left:50%;
-    width:4px; height:64px;
-    border-radius:2px;
-    background:rgba(255,255,255,0);
-    transform:translate(-50%, -50%);
-    transition:background .15s ease;
-    pointer-events:none;
-  }
-  #npHudResizer:hover::after,
-  #npHudResizer.dragging::after{
-    background:var(--np-accent, rgba(255,255,255,.6));
-    box-shadow:0 0 8px var(--np-accent, rgba(255,255,255,.4));
-  }
-
   .npCard{
     width:100%;
     box-sizing:border-box;
@@ -1727,55 +1506,12 @@ const NQ = {};
     gap:12px;
     position:relative;
   }
-  #npUser.no-shield{
-    align-items:center;
-    justify-content:center;
-  }
-  #npUser.no-shield .shieldSlot{ display:none; }
-  #npUser.hide-avatar .avatarSlot{ display:none; }
-  #npUser.hide-username .name{ display:none; }
-  #npUser.hide-avatars .meta .metaAv{ display:none; }
-  #npUser.hide-stamps .meta .metaSt{ display:none; }
-  #npUser.hide-avatars .meta .sep,
-  #npUser.hide-stamps  .meta .sep{ display:none; }
-  #npUser.hide-avatars.hide-stamps .meta{ display:none; }
-  #npUser .shieldSlot{
-    flex:0 0 33%;
-    align-items:center; justify-content:center;
-    min-width:0;
-  }
-  #npUser .shield{
-    display:block;
-    width:auto; height:100%;
-    max-width:100%; max-height:120px;
-    object-fit:contain;
-    opacity:0; transition:opacity .18s ease;
-    filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
-  }
-  #npUser .shield.loaded{ opacity:1; }
-  #npUser .shieldSlot:has(.shield:not([src])){
-    flex:0 0 0;
-    overflow:hidden;
-  }
   #npUser .rightSide{
     flex:1 1 0;
     min-width:0;
     flex-direction:column; justify-content:center;
     gap:6px;
   }
-  #npUser .avatarSlot{
-    width:36px; height:36px;
-    align-items:center; justify-content:center;
-    flex-shrink:0;
-  }
-  #npUser .avatar{
-    display:block;
-    width:36px; height:36px;
-    object-fit:cover;
-    border-radius:9px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04);
-    opacity:0; transition:opacity .18s ease;
-  }
-  #npUser .avatar.loaded{ opacity:1; }
   #npUser .name{
     display:block;
     width:100%;
@@ -1791,19 +1527,6 @@ const NQ = {};
     text-decoration-color:var(--np-accent, #dcb8ff) !important;
     text-underline-offset:3px;
   }
-  #npUser .meta{
-    align-items:baseline; gap:6px; flex-wrap:wrap;
-    justify-content:center;
-    font-size:11px; font-weight:500; line-height:1.1;
-    min-width:0;
-  }
-  #npUser .meta .metaAv,
-  #npUser .meta .metaSt{
-    display:inline-flex;
-    align-items:baseline;
-    gap:4px;
-  }
-  #npUser .meta .sep{ opacity:.40; padding:0 1px; }
 
   #npBank{ padding:10px 12px; }
   #npBank .head{
@@ -2119,24 +1842,6 @@ const NQ = {};
   .bankSettingsRow.toggleOnly{ padding:6px 10px; }
   .bankSettingsRow.toggleOnly .topLine{ gap:10px; }
 
-  #npQrActive{
-    min-height:150px; padding:10px 12px;
-    flex-direction:column; align-items:center; justify-content:flex-start; text-align:center;
-    gap:4px;
-  }
-  #npQrActive h3{ margin:0 0 6px 0; width:100%; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
-  #npQrActive h3:hover{
-    text-decoration:underline;
-    text-decoration-color:var(--np-accent, #dcb8ff);
-    text-underline-offset:3px;
-  }
-  .qrBadges{ display:flex; gap:6px; margin:6px 0; flex-wrap:wrap; justify-content:center; }
-  .qrBadge{ font-size:11px; padding:3px 6px; border-radius:10px; background:var(--np-btn, rgba(255,255,255,.06)); border:1px solid var(--np-line, rgba(255,255,255,.16)); font-weight:600; color:#fff; opacity:.95; }
-  .qrStat{ display:grid; grid-template-columns:max-content max-content; gap:4px 10px; justify-content:center; justify-items:center; font-size:12px; font-weight:500; color:#fff; }
-  .qrStat b{ color:#fff; font-weight:600; opacity:.92; }
-  #npQrActive .qrPP{ display:flex; gap:8px; justify-content:center; align-items:flex-end; margin-top:8px; }
-  #npQrActive .qrPPimg{ height:76px; width:auto; max-width:46%; object-fit:contain; }
-  #npQrActive .qrPP .qrPPimg:only-child{ max-width: 92%; height: 96px; }
 
   @font-face {
     font-family: 'CafeteriaBlack';
@@ -2237,7 +1942,6 @@ const NQ = {};
   body.npDockActive #npUser,
   body.npDockActive #npBank,
   body.npDockActive #npNp,
-  body.npDockActive #npQrActive,
   body.npDockActive #npActivePet{
     opacity: 0;
     pointer-events: none;
@@ -2245,8 +1949,7 @@ const NQ = {};
   }
 
   #npUser .name #npUserTitle,
-  #npBank .title,
-  #npQrActive h3{
+  #npBank .title{
     font-family: 'CafeteriaBlack', var(--np-font, system-ui), sans-serif;
     font-weight: 400;
     letter-spacing: .02em;
@@ -2284,14 +1987,9 @@ const NQ = {};
       background:rgba(0,0,0,.30);
     }
   }
-  @media (pointer: coarse){
-    #npHudResizer{ width:28px; left: calc(var(--np-col-width, 330px) - 14px); }
-  }
-
   #npHud > #npUser,
   #npHud > #npBank,
-  #npHud > #npNp,
-  #npHud > #npQrActive{
+  #npHud > #npNp{
     flex: 0 0 auto;
   }
   `;
@@ -2308,16 +2006,8 @@ const NQ = {};
   cardUser.className = 'npCard clickable';
   cardUser.id = 'npUser';
   cardUser.innerHTML = `
-    <button type="button" class="cardGear" id="npUserGear" title="Profile settings" aria-label="Settings">⚙</button>
-    <div class="shieldSlot"><img class="shield" id="npUserShield" alt=""></div>
     <div class="rightSide">
-      <div class="avatarSlot"><img class="avatar" id="npUserAvatar" alt="Avatar"></div>
       <a class="name" id="npUserLink" href="https://www.neopets.com/userlookup.phtml" target="_self" rel="noopener"><span id="npUserTitle">—</span></a>
-      <div class="meta">
-        <span class="metaAv"><span class="k">Avatars</span><span id="npAvCount">—</span></span>
-        <span class="sep">·</span>
-        <span class="metaSt"><span class="k">Stamps</span><span id="npStCount">—</span></span>
-      </div>
     </div>
   `;
 
@@ -2348,11 +2038,6 @@ const NQ = {};
   cardNp.title = 'Bank (Alt+click = refresh NP)';
   cardNp.innerHTML = `NP: <span class="npVal">…</span> <img src="https://images.neopets.com/themes/h5/basic/images/np-icon.svg" alt="">`;
 
-  const cardQr = document.createElement('div');
-  cardQr.className = 'npCard clickable';
-  cardQr.id = 'npQrActive';
-  cardQr.innerHTML = `<h3>Active Pet</h3><div class="qrStat"><div>Health</div><div><b>—</b></div><div>Strength</div><div>—</div><div>Defence</div><div>—</div></div>`;
-
   const cardActivePet = document.createElement('div');
   cardActivePet.className = 'npCard clickable';
   cardActivePet.id = 'npActivePet';
@@ -2362,25 +2047,7 @@ const NQ = {};
     cardActivePet.appendChild(_earlyActivePetImg);
   }
 
-  hud.append(cardUser, cardBank, cardNp, cardQr, cardActivePet);
-
-  const RESIZE_LS_KEY = 'npqol_col_width_v1';
-  const RESIZE_MIN = 200;
-  const RESIZE_MAX = 520;
-  const RESIZE_DEFAULT = 330;
-  function clampColW(v){
-    if (!Number.isFinite(v)) return RESIZE_DEFAULT;
-    return Math.max(RESIZE_MIN, Math.min(RESIZE_MAX, v));
-  }
-  let resizeCurrentW = RESIZE_DEFAULT;
-  try {
-    const raw = localStorage.getItem(RESIZE_LS_KEY);
-    const v = parseInt(raw || '', 10);
-    if (Number.isFinite(v)) resizeCurrentW = clampColW(v);
-  } catch {}
-  try {
-    document.documentElement.style.setProperty('--np-col-width', resizeCurrentW + 'px');
-  } catch {}
+  hud.append(cardUser, cardBank, cardNp, cardActivePet);
 
   const dockWrap = document.createElement('div');
   dockWrap.id = 'qrDockWrap';
@@ -2398,88 +2065,22 @@ const NQ = {};
     new MutationObserver((_, o) => { if (mountAll()) o.disconnect(); }).observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  try {
-    function saveResizeW(v){
-      try { localStorage.setItem(RESIZE_LS_KEY, String(v)); } catch {}
-    }
-    function applyResizeW(v){
-      try { document.documentElement.style.setProperty('--np-col-width', v + 'px'); } catch {}
-    }
-
-    const resizer = document.createElement('div');
-    resizer.id = 'npHudResizer';
-    resizer.title = 'Drag to resize the left column · double-click to reset';
-
-    function mountResizer(){
-      if (resizer.isConnected) return;
-      (document.body || document.documentElement).appendChild(resizer);
-    }
-    if (document.body) mountResizer();
-    else new MutationObserver((_, o) => {
-      if (document.body){ mountResizer(); o.disconnect(); }
-    }).observe(document.documentElement, { childList:true, subtree:true });
-
-    let dragging = false;
-    let startX = 0;
-    let startW = 0;
-
-    resizer.addEventListener('pointerdown', (e) => {
-      dragging = true;
-      startX = e.clientX;
-      startW = resizeCurrentW;
-      try { resizer.setPointerCapture(e.pointerId); } catch {}
-      resizer.classList.add('dragging');
-      try { document.body.style.userSelect = 'none'; } catch {}
-      e.preventDefault();
-    });
-    resizer.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      resizeCurrentW = clampColW(Math.round(startW + (e.clientX - startX)));
-      applyResizeW(resizeCurrentW);
-    });
-    function endDrag(e){
-      if (!dragging) return;
-      dragging = false;
-      try { resizer.releasePointerCapture(e.pointerId); } catch {}
-      resizer.classList.remove('dragging');
-      try { document.body.style.userSelect = ''; } catch {}
-      saveResizeW(resizeCurrentW);
-    }
-    resizer.addEventListener('pointerup', endDrag);
-    resizer.addEventListener('pointercancel', endDrag);
-
-    resizer.addEventListener('dblclick', () => {
-      resizeCurrentW = RESIZE_DEFAULT;
-      applyResizeW(resizeCurrentW);
-      saveResizeW(resizeCurrentW);
-    });
-  } catch (err) {
-    console.warn('[npqol HUD] resize handle setup failed:', err);
-  }
-
   (function userModule(){
     const USERNAME_KEY = 'npqol_hud_username';
-    const CACHE_PREFIX = 'npqol_hud_userlookup:';
-    const st = { username:null, cacheKey:null };
+    const st = { username:null };
 
     const sGet = (k, f='') => { try { return String(localStorage.getItem(k) ?? f); } catch { return f; } };
     const sSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
-    const cacheRead = (k) => { try { const r = localStorage.getItem(k); return r ? (JSON.parse(r)?.data || null) : null; } catch { return null; } };
 
     const titleEl = () => cardUser.querySelector('#npUserTitle');
     const linkEl = () => cardUser.querySelector('#npUserLink');
-    const imgEl = () => cardUser.querySelector('#npUserAvatar');
-
-    const img = imgEl();
-    img.addEventListener('load', () => img.classList.add('loaded'));
-    img.addEventListener('error', () => img.classList.remove('loaded'));
 
     function pickFromPage(){
       try { const u = (PW.appInsightsUserName || '').trim(); if (u) return u; } catch {}
       return null;
     }
     function applyUsername(u){
-      st.username = u; st.cacheKey = CACHE_PREFIX + u; sSet(USERNAME_KEY, u);
+      st.username = u; sSet(USERNAME_KEY, u);
       const l = linkEl(), t = titleEl();
       if (l) l.href = `https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(u)}`;
       if (t) t.textContent = u;
@@ -2494,121 +2095,11 @@ const NQ = {};
       const start = now();
       const tick = () => {
         let u=''; try { u=(PW.appInsightsUserName||'').trim(); } catch {}
-        if (u){ if (u !== st.username){ applyUsername(u); hydrate(); } return; }
+        if (u){ if (u !== st.username) applyUsername(u); return; }
         if (now()-start < maxMs) setTimeout(tick, step);
       };
       tick();
     }
-    const USER_SETTINGS_LS = 'npqol_user_settings_v1';
-    const DEFAULT_USER_SETTINGS = {
-      avatar: true,
-      username: true,
-      avatars: true,
-      stamps: true,
-      shield: true,
-    };
-    function loadUserSettings(){
-      try {
-        const raw = localStorage.getItem(USER_SETTINGS_LS);
-        if (!raw) return { ...DEFAULT_USER_SETTINGS };
-        const p = JSON.parse(raw) || {};
-        return { ...DEFAULT_USER_SETTINGS, ...p };
-      } catch { return { ...DEFAULT_USER_SETTINGS }; }
-    }
-    function saveUserSettings(s){
-      try { localStorage.setItem(USER_SETTINGS_LS, JSON.stringify(s||{})); } catch {}
-    }
-    function applyUserSettings(){
-      const s = loadUserSettings();
-      cardUser.classList.toggle('hide-avatar',   !s.avatar);
-      cardUser.classList.toggle('hide-username', !s.username);
-      cardUser.classList.toggle('hide-avatars',  !s.avatars);
-      cardUser.classList.toggle('hide-stamps',   !s.stamps);
-      cardUser.classList.toggle('no-shield',     !s.shield);
-    }
-
-    function openUserSettings(){
-      document.querySelector('.bankSettingsBackdrop')?.remove();
-      const backdrop = document.createElement('div');
-      backdrop.className = 'bankSettingsBackdrop';
-      backdrop.innerHTML = `
-        <div class="bankSettingsBox" role="dialog" aria-modal="true" aria-label="Profile settings">
-          <div class="bankSettingsHead">
-            <h3>Profile Settings</h3>
-            <button type="button" class="closeBtn" aria-label="Close">×</button>
-          </div>
-          <div class="bankSettingsBody bankSettingsBodySingle"></div>
-          <div class="bankSettingsFoot">
-            <button type="button" class="npBtn cancel">Cancel</button>
-            <button type="button" class="npBtn save">Save</button>
-          </div>
-        </div>
-      `;
-      const body  = backdrop.querySelector('.bankSettingsBody');
-      const draft = loadUserSettings();
-      const fields = [
-        ['avatar',   'Avatar'],
-        ['username', 'Username'],
-        ['avatars',  'Avatar count'],
-        ['stamps',   'Stamp count'],
-        ['shield',   'Years shield'],
-      ];
-      fields.forEach(([k, label]) => {
-        const r = document.createElement('div');
-        r.className = 'bankSettingsRow toggleOnly ' + (draft[k] ? 'on' : 'off');
-        r.innerHTML =
-          `<div class="topLine">` +
-            `<input type="checkbox" id="us_${k}" ${draft[k] ? 'checked' : ''}>` +
-            `<label class="lbl" for="us_${k}">${label}</label>` +
-          `</div>`;
-        const cb = r.querySelector('input[type="checkbox"]');
-        cb.addEventListener('change', () => {
-          draft[k] = cb.checked;
-          r.classList.toggle('on',  cb.checked);
-          r.classList.toggle('off', !cb.checked);
-        });
-        body.appendChild(r);
-      });
-      const close = () => { backdrop.remove(); document.removeEventListener('keydown', onKey, true); };
-      function onKey(ev){ if (ev.key === 'Escape'){ ev.preventDefault(); close(); } }
-      document.addEventListener('keydown', onKey, true);
-      backdrop.querySelector('.closeBtn').addEventListener('click', close);
-      backdrop.querySelector('.cancel').addEventListener('click', close);
-      backdrop.querySelector('.save').addEventListener('click', () => {
-        saveUserSettings(draft);
-        applyUserSettings();
-        close();
-      });
-      backdrop.addEventListener('click', (ev) => { if (ev.target === backdrop) close(); });
-      document.body.appendChild(backdrop);
-    }
-
-    function render(data){
-      const i = imgEl(), av = cardUser.querySelector('#npAvCount'), stc = cardUser.querySelector('#npStCount');
-      if (i){ const src = data?.avatarUrl || ''; i.classList.remove('loaded'); if (src && i.src !== src) i.src = src; if (src && i.complete) requestAnimationFrame(() => i.classList.add('loaded')); }
-      if (av) av.textContent = (data?.avatars ?? '—');
-      if (stc) stc.textContent = (data?.stamps ?? '—');
-      const sh = cardUser.querySelector('#npUserShield');
-      const shSrc = data?.shieldUrl || '';
-      if (sh){
-        if (!shSrc){
-          sh.removeAttribute('src');
-          sh.classList.remove('loaded');
-        } else {
-          sh.classList.remove('loaded');
-          if (sh.src !== shSrc) sh.src = shSrc;
-          sh.addEventListener('load', () => sh.classList.add('loaded'), { once:true });
-          const tryClean = (n=0) => {
-            const fn = NQ.cleanImg;
-            if (typeof fn === 'function'){ try { fn(shSrc, sh); } catch {} return; }
-            if (n < 30) setTimeout(() => tryClean(n+1), 60);
-          };
-          setTimeout(tryClean, 0);
-        }
-      }
-    }
-    function hydrate(){ if (!st.cacheKey) return; const c = cacheRead(st.cacheKey); if (c) render(c); }
-
     cardUser.addEventListener('click', (e) => {
       if (e.target?.closest?.('#npUserLink, button, a, input, select')) return;
       const href = userLinkUrl();
@@ -2644,16 +2135,7 @@ const NQ = {};
       e.preventDefault(); e.stopPropagation();
       window.open(href, '_blank', 'noopener');
     }, true);
-    applyUserSettings();
-    const userGear = cardUser.querySelector('#npUserGear');
-    if (userGear){
-      userGear.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        openUserSettings();
-      });
-    }
-
-    ensureUsername(); hydrate(); waitForGlobal();
+    ensureUsername(); waitForGlobal();
   })();
 
   (function bankModule(){
@@ -3384,147 +2866,6 @@ const NQ = {};
       }
       return { pets, active:a };
     }
-    const statNum = (s) => { if (!s) return ''; let m = /\$?([\d,]+)$/.exec(s); if (m) return m[1].replace(/,/g,''); m = /(\d[\d,]*)/.exec(s); return m ? m[1].replace(/,/g,'') : ''; };
-    const hpInline = (s) => { if (!s) return ''; const t = s.replace(/\s+/g,' ').trim(); const m = /(\d[\d,]*)\s*\/\s*(\d[\d,]*)/.exec(t); return m ? `${m[1].replace(/,/g,'')} / ${m[2].replace(/,/g,'')}` : t; };
-
-    const QR_SETTINGS_LS = 'npqol_qr_settings_v1';
-    const DEFAULT_QR_SETTINGS = {
-      colour: true, species: true, gender: false, age: false,
-      level: true, mood: false,
-      health: true, strength: true, defence: true,
-      move: false, intelligence: false,
-      petpet: true, petpetpet: true,
-    };
-    function loadQrSettings(){
-      try {
-        const raw = localStorage.getItem(QR_SETTINGS_LS);
-        if (!raw) return { ...DEFAULT_QR_SETTINGS };
-        const p = JSON.parse(raw) || {};
-        return { ...DEFAULT_QR_SETTINGS, ...p };
-      } catch { return { ...DEFAULT_QR_SETTINGS }; }
-    }
-    function saveQrSettings(s){
-      try { localStorage.setItem(QR_SETTINGS_LS, JSON.stringify(s||{})); } catch {}
-    }
-
-    function openQrSettings(){
-      document.querySelector('.bankSettingsBackdrop')?.remove();
-      const backdrop = document.createElement('div');
-      backdrop.className = 'bankSettingsBackdrop';
-      backdrop.innerHTML = `
-        <div class="bankSettingsBox" role="dialog" aria-modal="true" aria-label="QuickRef settings">
-          <div class="bankSettingsHead">
-            <h3>QuickRef Settings</h3>
-            <button type="button" class="closeBtn" aria-label="Close">×</button>
-          </div>
-          <div class="bankSettingsBody bankSettingsBodySingle"></div>
-          <div class="bankSettingsFoot">
-            <button type="button" class="npBtn cancel">Cancel</button>
-            <button type="button" class="npBtn save">Save</button>
-          </div>
-        </div>
-      `;
-      const body  = backdrop.querySelector('.bankSettingsBody');
-      const draft = loadQrSettings();
-
-      const fields = [
-        ['colour',       'Colour'],
-        ['species',      'Species'],
-        ['gender',       'Gender'],
-        ['age',          'Age'],
-        ['level',        'Level'],
-        ['mood',         'Mood'],
-        ['health',       'Health'],
-        ['strength',     'Strength'],
-        ['defence',      'Defence'],
-        ['move',         'Move (Agility)'],
-        ['intelligence', 'Intelligence'],
-        ['petpet',       'Petpet image'],
-        ['petpetpet',    'Petpetpet image'],
-      ];
-
-      fields.forEach(([k, label]) => {
-        const r = document.createElement('div');
-        r.className = 'bankSettingsRow toggleOnly ' + (draft[k] ? 'on' : 'off');
-        r.innerHTML =
-          `<div class="topLine">` +
-            `<input type="checkbox" id="qs_${k}" ${draft[k] ? 'checked' : ''}>` +
-            `<label class="lbl" for="qs_${k}">${label}</label>` +
-          `</div>`;
-        const cb = r.querySelector('input[type="checkbox"]');
-        cb.addEventListener('change', () => {
-          draft[k] = cb.checked;
-          r.classList.toggle('on',  cb.checked);
-          r.classList.toggle('off', !cb.checked);
-        });
-        body.appendChild(r);
-      });
-
-      const close = () => { backdrop.remove(); document.removeEventListener('keydown', onKey, true); };
-      function onKey(ev){ if (ev.key === 'Escape'){ ev.preventDefault(); close(); } }
-      document.addEventListener('keydown', onKey, true);
-      backdrop.querySelector('.closeBtn').addEventListener('click', close);
-      backdrop.querySelector('.cancel').addEventListener('click', close);
-      backdrop.querySelector('.save').addEventListener('click', () => {
-        saveQrSettings(draft);
-        if (state.data?.active) renderActive(state.data.active);
-        close();
-      });
-      backdrop.addEventListener('click', (ev) => { if (ev.target === backdrop) close(); });
-      document.body.appendChild(backdrop);
-    }
-
-    function renderActive(a){
-      if (!a){ cardQr.style.display = 'none'; return; }
-      cardQr.style.display = '';
-      const qs = loadQrSettings();
-      const lv = statNum(a.level), str = statNum(a.strength), def = statNum(a.defence);
-      const mv = statNum(a.move), intel = statNum(a.intelligence);
-      const hp = hpInline(a.health);
-
-      const badgeHTML = [];
-      if (qs.colour && a.colour)   badgeHTML.push(`<div class="qrBadge">${a.colour}</div>`);
-      if (qs.species && a.species) badgeHTML.push(`<div class="qrBadge">${a.species}</div>`);
-      if (qs.gender && a.gender)   badgeHTML.push(`<div class="qrBadge">${a.gender}</div>`);
-      if (qs.age && a.age)         badgeHTML.push(`<div class="qrBadge">${a.age}</div>`);
-      if (qs.level && lv)          badgeHTML.push(`<div class="qrBadge">Level ${lv}</div>`);
-      if (qs.mood && a.mood)       badgeHTML.push(`<div class="qrBadge">${a.mood}</div>`);
-
-      const statHTML = [];
-      if (qs.health && hp)            statHTML.push(`<div>Health</div><div><b>${hp}</b></div>`);
-      if (qs.strength && str)         statHTML.push(`<div>Strength</div><div>${str}</div>`);
-      if (qs.defence && def)          statHTML.push(`<div>Defence</div><div>${def}</div>`);
-      if (qs.move && mv)              statHTML.push(`<div>Move</div><div>${mv}</div>`);
-      if (qs.intelligence && intel)   statHTML.push(`<div>Intelligence</div><div>${intel}</div>`);
-
-      const showPP   = qs.petpet && a.petpet;
-      const showPPP  = qs.petpetpet && a.petpetpet;
-      const hasPP    = showPP || showPPP;
-
-      cardQr.innerHTML =
-        `<h3>${a.name || 'Active'}</h3>` +
-        `<button type="button" class="cardGear" id="npQrGear" title="QuickRef settings" aria-label="Settings">⚙</button>` +
-        `<button type="button" class="cardRefresh" id="npQrRefresh" title="Refresh pet data" aria-label="Refresh">↻</button>` +
-        (badgeHTML.length ? `<div class="qrBadges">${badgeHTML.join('')}</div>` : '') +
-        (statHTML.length  ? `<div class="qrStat">${statHTML.join('')}</div>`   : '') +
-        (hasPP ? `<div class="qrPP">${showPP ? `<img class="qrPPimg" alt="petpet">` : ''}${showPPP ? `<img class="qrPPimg" alt="petpetpet">` : ''}</div>` : '');
-      if (hasPP){
-        const imgs = [...cardQr.querySelectorAll('.qrPPimg')];
-        const urls = [showPP ? a.petpet : null, showPPP ? a.petpetpet : null].filter(Boolean);
-        imgs.forEach((im, i) => cleanImg(urls[i], im));
-      }
-      const gear = cardQr.querySelector('#npQrGear');
-      if (gear) gear.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        openQrSettings();
-      });
-      const rfr = cardQr.querySelector('#npQrRefresh');
-      if (rfr) rfr.addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        refresh({ force: true });
-      });
-    }
-
     function removeWhiteBg(id){
       const d = id.data, w = id.width, h = id.height;
       const BG_MIN = 216, BG_CHROMA = 44;
@@ -3815,7 +3156,6 @@ const NQ = {};
       if (!data) return;
       state.data = data;
       if (data.active){
-        renderActive(data.active);
         const activePet = (data.pets || []).find(p => p.isActive);
         renderActivePetImage(data.active.name, activePet?.sci || '');
       }
@@ -3878,9 +3218,6 @@ const NQ = {};
       e.preventDefault();
       window.open(QR_URL, '_blank', 'noopener');
     }
-    cardQr.addEventListener('click', navQuickRef);
-    cardQr.addEventListener('auxclick', navQuickRefMiddle);
-    cardQr.addEventListener('contextmenu', navQuickRefMenu);
     cardActivePet.addEventListener('click', navQuickRef);
     cardActivePet.addEventListener('auxclick', navQuickRefMiddle);
     cardActivePet.addEventListener('contextmenu', navQuickRefMenu);
@@ -4054,8 +3391,7 @@ const NQ = {};
     const CATALOG_BY_ID = Object.fromEntries(ICON_CATALOG.map(it => [it.id, it]));
 
     const DEFAULT_CFG = {
-      left:  ['customise', 'stylingchamber', 'settings'],
-      right: ['inventory', 'quickstock', 'sdb', 'shopwizard'],
+      left: ['customise', 'stylingchamber', 'settings', 'inventory', 'quickstock', 'sdb', 'shopwizard'],
     };
     const LS_BTNS_KEY = 'npqol_side_btns_v2';
 
@@ -4074,40 +3410,14 @@ const NQ = {};
         const raw = localStorage.getItem(LS_BTNS_KEY);
         if (raw){
           const j = JSON.parse(raw);
-          return {
-            left:  (j.left  || []).map(resolveItem).filter(Boolean),
-            right: (j.right || []).map(resolveItem).filter(Boolean),
-          };
+          return { left: [...(j.left || []), ...(j.right || [])].map(resolveItem).filter(Boolean) };
         }
       } catch {}
-      return {
-        left:  DEFAULT_CFG.left.map(id => CATALOG_BY_ID[id]).filter(Boolean),
-        right: DEFAULT_CFG.right.map(id => CATALOG_BY_ID[id]).filter(Boolean),
-      };
+      return { left: DEFAULT_CFG.left.map(id => CATALOG_BY_ID[id]).filter(Boolean) };
     }
     function saveConfig(cfg){
-      try { localStorage.setItem(LS_BTNS_KEY, JSON.stringify(cfg)); } catch {}
+      try { localStorage.setItem(LS_BTNS_KEY, JSON.stringify({ left: cfg.left })); } catch {}
     }
-
-    const COL_OFFSET_LS = 'npqol_col_offset_v1';
-    const COL_OFFSET_MIN = -60, COL_OFFSET_MAX = 300, COL_OFFSET_STEP = 6;
-    function getColOffset(){
-      try {
-        const v = parseInt(localStorage.getItem(COL_OFFSET_LS) || '', 10);
-        if (Number.isFinite(v)) return Math.max(COL_OFFSET_MIN, Math.min(COL_OFFSET_MAX, v));
-      } catch {}
-      return 0;
-    }
-    function setColOffset(v){
-      v = Math.max(COL_OFFSET_MIN, Math.min(COL_OFFSET_MAX, Math.round(v)));
-      try { localStorage.setItem(COL_OFFSET_LS, String(v)); } catch {}
-      applyColOffset(v);
-      return v;
-    }
-    function applyColOffset(v){
-      try { document.documentElement.style.setProperty('--np-side-col-offset', v + 'px'); } catch {}
-    }
-    applyColOffset(getColOffset());
 
     const ICON_SIZE_LS = 'npqol_side_icon_size_v1';
     const ICON_SIZE_MIN = 36, ICON_SIZE_MAX = 84, ICON_SIZE_STEP = 6, ICON_SIZE_DEFAULT = 60;
@@ -4153,33 +3463,11 @@ const NQ = {};
         flex-wrap:wrap !important;
         max-height:calc(100vh - 96px) !important;
         align-content:center !important;
-        transform: translate(-50%, calc(-50% + var(--np-side-col-shift, 0px))) !important;
+        transform: translate(-50%, -50%) !important;
       }
       #btnOverlay .col .iconBtn{ pointer-events:auto !important; }
-      #btnOverlay .col.left{ left: calc(var(--frame-left) - var(--np-side-col-offset, 0px)) !important; }
-      #btnOverlay .col.right{ left: calc(var(--frame-right) + var(--np-side-col-offset, 0px)) !important; }
+      #btnOverlay .col.left{ left: var(--frame-left) !important; }
 
-      #btnOverlay[data-mode="single"] .col.right,
-      #btnOverlay[data-mode="row"] .col.right{ display:none !important; }
-
-      #btnOverlay[data-mode="single"] .col.left{
-        left: calc(var(--frame-left) + var(--np-side-col-x, 0px)) !important;
-      }
-      #btnOverlay[data-mode="single"][data-side="right"] .col.left{
-        left: calc(var(--frame-right) + var(--np-side-col-x, 0px)) !important;
-      }
-
-      #btnOverlay[data-mode="row"] .col.left{
-        flex-direction:row !important;
-        flex-wrap:wrap !important;
-        justify-content:center !important;
-        width:max-content !important;
-        --row-center: calc((var(--frame-left) + min(var(--frame-right), 100vw)) / 2 + var(--np-side-col-x, 0px));
-        max-width:min(94vw, calc(2 * min(var(--row-center), 100vw - var(--row-center)) - 8px)) !important;
-        left: var(--row-center) !important;
-        top: 76px !important;
-        transform: translate(-50%, var(--np-side-col-shift, 0px)) !important;
-      }
       #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none !important; padding:0 !important; margin:0 !important; line-height:0 !important; -webkit-tap-highlight-color:transparent; opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn img{ width:var(--np-side-icon-size, 60px) !important; height:var(--np-side-icon-size, 60px) !important; max-width:none !important; display:block !important; transform:scale(1); transition:transform .12s ease; will-change:transform; transform-origin:center center; filter:drop-shadow(0 1px 4px rgba(0,0,0,.45)); opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn:hover img{ transform:scale(1.08) !important; }
@@ -4191,8 +3479,7 @@ const NQ = {};
     const overlay = document.createElement('div'); overlay.id = 'btnOverlay';
     const center = document.createElement('div'); center.className = 'center';
     const leftCol = document.createElement('div'); leftCol.className = 'col left';
-    const rightCol = document.createElement('div'); rightCol.className = 'col right';
-    center.append(leftCol, rightCol);
+    center.append(leftCol);
     overlay.appendChild(center);
 
     function tryOpenSSW(){
@@ -4233,97 +3520,12 @@ const NQ = {};
       return a;
     };
 
-    const LAYOUT_LS = 'npqol_side_layout_v1';
-    const SIDE_LS   = 'npqol_side_side_v1';
-    const SHIFT_LS  = 'npqol_side_shift_v1';
-    const XPOS_LS   = 'npqol_side_x_v1';
-    const LAYOUTS = ['cols', 'single', 'row'];
-    const SHIFT_MIN = -400, SHIFT_MAX = 400, SHIFT_STEP = 10;
-    const XPOS_MIN = -700, XPOS_MAX = 700, XPOS_STEP = 6;
-    const ROW_TOP = 76, FRAME_TOP = 100, DROP_MAX = 360;
-    function getLayout(){
-      try { const v = localStorage.getItem(LAYOUT_LS); if (LAYOUTS.indexOf(v) >= 0) return v; } catch {}
-      return 'cols';
-    }
-    function getSide(){
-      try { return localStorage.getItem(SIDE_LS) === 'right' ? 'right' : 'left'; } catch {}
-      return 'left';
-    }
-    function getColShift(){
-      try {
-        const v = parseInt(localStorage.getItem(SHIFT_LS) || '', 10);
-        if (Number.isFinite(v)) return Math.max(SHIFT_MIN, Math.min(SHIFT_MAX, v));
-      } catch {}
-      return 0;
-    }
-    function getColX(){
-      try {
-        const v = parseInt(localStorage.getItem(XPOS_LS) || '', 10);
-        if (Number.isFinite(v)) return Math.max(XPOS_MIN, Math.min(XPOS_MAX, v));
-      } catch {}
-      return 0;
-    }
-    function syncContentDrop(){
-      const rs = document.documentElement.style;
-      if (getLayout() !== 'row'){ rs.setProperty('--np-content-drop', '0px'); return; }
-      const h = leftCol.offsetHeight || 0;
-      if (!h){ rs.setProperty('--np-content-drop', '0px'); return; }
-      const bottom = ROW_TOP + getColShift() + h + 14;
-      const drop = Math.max(0, Math.min(DROP_MAX, Math.round(bottom - FRAME_TOP)));
-      rs.setProperty('--np-content-drop', drop + 'px');
-    }
-    function applyLayout(){
-      try {
-        overlay.dataset.mode = getLayout();
-        overlay.dataset.side = getSide();
-        const rs = document.documentElement.style;
-        rs.setProperty('--np-side-col-shift', getColShift() + 'px');
-        rs.setProperty('--np-side-col-x', getColX() + 'px');
-      } catch {}
-      try { requestAnimationFrame(syncContentDrop); } catch { syncContentDrop(); }
-    }
-    function setLayout(v){
-      if (LAYOUTS.indexOf(v) < 0) v = 'cols';
-      try { localStorage.setItem(LAYOUT_LS, v); } catch {}
-      applyLayout(); rebuildColumns();
-      return v;
-    }
-    function setSide(v){
-      v = (v === 'right') ? 'right' : 'left';
-      try { localStorage.setItem(SIDE_LS, v); } catch {}
-      applyLayout();
-      return v;
-    }
-    function setColShift(v){
-      v = Math.max(SHIFT_MIN, Math.min(SHIFT_MAX, Math.round(v)));
-      try { localStorage.setItem(SHIFT_LS, String(v)); } catch {}
-      applyLayout();
-      return v;
-    }
-    function setColX(v){
-      v = Math.max(XPOS_MIN, Math.min(XPOS_MAX, Math.round(v)));
-      try { localStorage.setItem(XPOS_LS, String(v)); } catch {}
-      applyLayout();
-      return v;
-    }
-    let dropT = 0;
-    window.addEventListener('resize', () => {
-      clearTimeout(dropT);
-      dropT = setTimeout(syncContentDrop, 120);
-    });
-
     function rebuildColumns(){
       const cfg = loadConfig();
       const t = getTheme();
       leftCol.innerHTML = '';
-      rightCol.innerHTML = '';
-      const first  = (getLayout() === 'cols') ? cfg.left  : [...cfg.left, ...cfg.right];
-      const second = (getLayout() === 'cols') ? cfg.right : [];
-      first .forEach(it => leftCol .appendChild(makeBtn(it.icon || it.id, it.link, t, it.fixedSrc, it)));
-      second.forEach(it => rightCol.appendChild(makeBtn(it.icon || it.id, it.link, t, it.fixedSrc, it)));
-      try { requestAnimationFrame(syncContentDrop); } catch { syncContentDrop(); }
+      cfg.left.forEach(it => leftCol.appendChild(makeBtn(it.icon || it.id, it.link, t, it.fixedSrc, it)));
     }
-    applyLayout();
     rebuildColumns();
 
     const mountOv = () => { if (!document.body) return false; if (!overlay.isConnected) document.body.appendChild(overlay); return true; };
@@ -4345,17 +3547,9 @@ const NQ = {};
       reset: () => { try { localStorage.removeItem(LS_BTNS_KEY); } catch {}; rebuildColumns(); },
       rebuild: rebuildColumns,
       iconUrl, fallbackUrl, getTheme,
-      getColOffset, setColOffset,
-      colOffsetStep: COL_OFFSET_STEP,
       getIconSize, setIconSize,
       iconSizeStep: ICON_SIZE_STEP,
       iconSizeDefault: ICON_SIZE_DEFAULT,
-      getLayout, setLayout, getSide, setSide,
-      getColShift, setColShift,
-      getColX, setColX,
-      colShiftStep: SHIFT_STEP,
-      colXStep: XPOS_STEP,
-      layouts: LAYOUTS,
     };
   })();
 
@@ -4432,77 +3626,6 @@ const NQ = {};
       .head button:hover{ background:var(--np-accent-bg); border-color:var(--np-accent-line); color:#fff; }
       .head .close{ background:transparent; border:0; color:rgba(255,255,255,.65); font-size:16px; padding:0 6px; }
       .head .close:hover{ color:#fff; }
-      .head .grp{
-        display:flex; align-items:center; gap:3px;
-        padding:3px 7px;
-        border-radius:9px;
-        background:rgba(255,255,255,.035);
-        border:1px solid rgba(255,255,255,.08);
-      }
-      .head .grp:last-of-type{ margin-right:auto; }
-      .head .grpLbl{
-        font:700 9px/1 system-ui,sans-serif;
-        color:rgba(255,255,255,.5);
-        letter-spacing:.06em; text-transform:uppercase;
-        margin-right:3px;
-      }
-      .head .stepBtn{
-        width:20px; height:20px; padding:0;
-        display:flex; align-items:center; justify-content:center;
-        font:700 13px/1 system-ui,sans-serif;
-        border-radius:6px;
-      }
-      .head .stepVal{
-        min-width:48px; height:20px; padding:0 2px;
-        background:transparent; border:0; border-radius:6px;
-        font:700 10px/20px system-ui,sans-serif;
-        font-variant-numeric:tabular-nums;
-        color:rgba(255,255,255,.9);
-        text-transform:none; letter-spacing:0;
-        cursor:pointer;
-      }
-      .head .stepVal:hover{ background:rgba(255,255,255,.12); color:#fff; }
-      .head .sideBtn{ width:22px; height:20px; padding:0; font-size:12px; line-height:1; }
-      .head .sideBtn[hidden]{ display:none; }
-
-      .modeSeg{
-        display:flex; gap:2px; padding:2px;
-        border-radius:7px;
-        background:rgba(0,0,0,.28);
-        border:1px solid rgba(255,255,255,.10);
-      }
-      .modeSeg .modeBtn{
-        display:flex; align-items:center; justify-content:center;
-        width:28px; height:20px; padding:0;
-        border:0; border-radius:5px;
-        background:transparent; color:rgba(255,255,255,.55);
-        cursor:pointer;
-        transition:background .12s ease, color .12s ease, box-shadow .12s ease;
-      }
-      .modeSeg .modeBtn:hover{
-        background:rgba(255,255,255,.10);
-        border-color:transparent;
-        color:#fff;
-      }
-      .modeSeg .modeBtn.isOn{
-        background:var(--np-accent-bg, rgba(220,184,255,.14));
-        color:var(--np-accent, #dcb8ff);
-        box-shadow:inset 0 0 0 1px var(--np-accent-line, rgba(220,184,255,.45));
-      }
-      .modeSeg .modeBtn svg{ display:block; }
-
-      .modeNote{
-        grid-column:1 / -1;
-        margin:0 0 2px;
-        padding:6px 9px;
-        border-radius:8px;
-        background:var(--np-accent-bg, rgba(220,184,255,.12));
-        border:1px solid var(--np-accent-line, rgba(220,184,255,.35));
-        font:600 10px/1.35 system-ui,sans-serif;
-        color:rgba(255,255,255,.82);
-      }
-      .modeNote[hidden]{ display:none; }
-
       .body{
         flex:1 1 auto; min-height:0;
         overflow-y:auto; overflow-x:hidden;
@@ -4566,68 +3689,20 @@ const NQ = {};
     tab.innerHTML = `<span>˄</span>`;
     root.appendChild(tab);
 
-    const SVG_COLS = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
-      '<rect x="4.6" y="2.5" width="6.8" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".5"/>' +
-      '<line x1="2" y1="4.5" x2="2" y2="11.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' +
-      '<line x1="14" y1="4.5" x2="14" y2="11.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
-    const SVG_SINGLE = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
-      '<rect x="5.4" y="2.5" width="8.1" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".5"/>' +
-      '<line x1="2.4" y1="4.5" x2="2.4" y2="11.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
-    const SVG_ROW = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
-      '<rect x="2.5" y="5.4" width="11" height="8.1" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".5"/>' +
-      '<line x1="4.5" y1="2.6" x2="11.5" y2="2.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
-
     const panel = document.createElement('div');
     panel.className = 'panel';
     panel.innerHTML = `
       <div class="head">
-        <div class="grp" title="Icon layout — two columns, one vertical column, or one horizontal row">
-          <span class="grpLbl">Layout</span>
-          <div class="modeSeg" id="modeSeg">
-            <button type="button" class="modeBtn" data-layout="cols" title="Two columns, one on each side of the content">${SVG_COLS}</button>
-            <button type="button" class="modeBtn" data-layout="single" title="One vertical column">${SVG_SINGLE}</button>
-            <button type="button" class="modeBtn" data-layout="row" title="One horizontal row above the content">${SVG_ROW}</button>
-          </div>
-          <button type="button" class="sideBtn" id="sideFlip" title="Put the column on the other side of the content">⇄</button>
-        </div>
-        <div class="grp">
-          <span class="grpLbl" id="posLbl">Spread</span>
-          <button type="button" class="stepBtn" data-k="pos" data-d="-1" id="posDown">−</button>
-          <button type="button" class="stepVal" id="posVal" title="Click to reset">0px</button>
-          <button type="button" class="stepBtn" data-k="pos" data-d="1" id="posUp">+</button>
-        </div>
-        <div class="grp" title="Move the icons up or down">
-          <span class="grpLbl">Height</span>
-          <button type="button" class="stepBtn" data-k="hgt" data-d="-1" title="Move the icons up">−</button>
-          <button type="button" class="stepVal" id="hgtVal" title="Click to reset">0px</button>
-          <button type="button" class="stepBtn" data-k="hgt" data-d="1" title="Move the icons down">+</button>
-        </div>
-        <div class="grp" title="Shortcut icon size">
-          <span class="grpLbl">Size</span>
-          <button type="button" class="stepBtn" data-k="siz" data-d="-1" title="Smaller icons">−</button>
-          <button type="button" class="stepVal" id="sizVal" title="Click to reset">60px</button>
-          <button type="button" class="stepBtn" data-k="siz" data-d="1" title="Bigger icons">+</button>
-        </div>
         <button type="button" id="resetBtn" title="Restore the default config">Reset</button>
         <button type="button" class="close" id="closeBtn" aria-label="Close">×</button>
       </div>
       <div class="body">
-        <div class="modeNote" id="modeNote" hidden>Both lists are shown as one strip in this layout — left list first, then right. Your two-column setup is kept and comes back untouched when you switch to ▮▮.</div>
         <div class="col" data-side="left">
           <div class="items" id="itemsLeft"></div>
           <div class="add">
             <div class="row">
               <select id="addSelLeft"></select>
               <button type="button" data-add="left">ADD</button>
-            </div>
-          </div>
-        </div>
-        <div class="col" data-side="right">
-          <div class="items" id="itemsRight"></div>
-          <div class="add">
-            <div class="row">
-              <select id="addSelRight"></select>
-              <button type="button" data-add="right">ADD</button>
             </div>
           </div>
         </div>
@@ -4645,26 +3720,22 @@ const NQ = {};
     function paint(){
       const cfg = API.load();
       const itemsLeft  = panel.querySelector('#itemsLeft');
-      const itemsRight = panel.querySelector('#itemsRight');
       const render = (arr, side) => arr.map((it, i) => `
         <div class="item" data-side="${side}" data-idx="${i}" title="${esc(it.link)}">
           <div class="ico" style="background-image:url('${esc(iconPreviewUrl(it))}')"></div>
           <div class="lbl">${esc(it.label || it.id)}</div>
           <button type="button" class="iconBtnMini dim" data-act="up"    title="Move up">▲</button>
-          <button type="button" class="iconBtnMini dim" data-act="swap"  title="${side==='left'?'Move to right':'Move to left'}">${side==='left'?'→':'←'}</button>
           <button type="button" class="iconBtnMini del"  data-act="del"   title="Remove">🗑</button>
         </div>
       `).join('');
       itemsLeft.innerHTML  = render(cfg.left, 'left')   || `<div style="opacity:.5;font-size:12px;text-align:center;padding:14px">(empty)</div>`;
-      itemsRight.innerHTML = render(cfg.right, 'right') || `<div style="opacity:.5;font-size:12px;text-align:center;padding:14px">(empty)</div>`;
 
-      const usedIds = new Set([...cfg.left, ...cfg.right].map(it => it.id));
+      const usedIds = new Set(cfg.left.map(it => it.id));
       const opts = API.catalog
         .filter(it => !usedIds.has(it.id))
         .map(it => `<option value="${esc(it.id)}">${esc(it.label)}</option>`)
         .join('') || `<option value="" disabled>(everything is placed)</option>`;
       panel.querySelector('#addSelLeft').innerHTML  = opts;
-      panel.querySelector('#addSelRight').innerHTML = opts;
     }
 
     let open = false;
@@ -4682,87 +3753,12 @@ const NQ = {};
       }
     });
 
-    (function wireToolbar(){
-      const seg  = panel.querySelector('#modeSeg');
-      const note = panel.querySelector('#modeNote');
-      const flip = panel.querySelector('#sideFlip');
-      const posLbl = panel.querySelector('#posLbl');
-      const els = {
-        pos: panel.querySelector('#posVal'),
-        hgt: panel.querySelector('#hgtVal'),
-        siz: panel.querySelector('#sizVal'),
-      };
-      if (!seg || typeof API.setLayout !== 'function') return;
-
-      const isCols = () => API.getLayout() === 'cols';
-      const signed = (v) => (v > 0 ? '+' : '') + v + 'px';
-      const CTL = {
-        pos: {
-          get:  () => isCols() ? API.getColOffset() : API.getColX(),
-          set:  (v) => isCols() ? API.setColOffset(v) : API.setColX(v),
-          step: () => isCols() ? (API.colOffsetStep || 6) : (API.colXStep || 6),
-          zero: 0,
-          text: (v) => signed(v),
-        },
-        hgt: {
-          get: () => API.getColShift(), set: (v) => API.setColShift(v),
-          step: () => API.colShiftStep || 10, zero: 0, text: (v) => signed(v),
-        },
-        siz: {
-          get: () => API.getIconSize(), set: (v) => API.setIconSize(v),
-          step: () => API.iconSizeStep || 6, zero: API.iconSizeDefault || 60,
-          text: (v) => v + 'px',
-        },
-      };
-
-      const paint = () => {
-        const mode = API.getLayout();
-        seg.querySelectorAll('.modeBtn').forEach(b => b.classList.toggle('isOn', b.dataset.layout === mode));
-        if (note) note.hidden = (mode === 'cols');
-        if (flip){
-          flip.hidden = (mode !== 'single');
-          flip.title = (API.getSide() === 'right')
-            ? 'Column is on the right — click to move it left'
-            : 'Column is on the left — click to move it right';
-        }
-        if (posLbl) posLbl.textContent = isCols() ? 'Spread' : 'Position';
-        const posDown = panel.querySelector('#posDown'), posUp = panel.querySelector('#posUp');
-        if (posDown) posDown.title = isCols() ? 'Bring the columns closer' : 'Move the icons left';
-        if (posUp)   posUp.title   = isCols() ? 'Push the columns apart'   : 'Move the icons right';
-        Object.keys(CTL).forEach(k => { if (els[k]) els[k].textContent = CTL[k].text(CTL[k].get()); });
-      };
-      paint();
-
-      seg.addEventListener('click', (e) => {
-        const b = e.target.closest && e.target.closest('.modeBtn');
-        if (!b) return;
-        API.setLayout(b.dataset.layout);
-        paint();
-      });
-      if (flip) flip.addEventListener('click', () => {
-        API.setSide(API.getSide() === 'right' ? 'left' : 'right');
-        paint();
-      });
-      panel.querySelector('.head').addEventListener('click', (e) => {
-        const t = e.target.closest && e.target.closest('.stepBtn, .stepVal');
-        if (!t) return;
-        if (t.classList.contains('stepVal')){
-          const k = t.id.slice(0, 3);
-          if (CTL[k]) CTL[k].set(CTL[k].zero);
-        } else {
-          const k = t.dataset.k, d = +t.dataset.d || 0;
-          if (CTL[k]) CTL[k].set(CTL[k].get() + d * CTL[k].step());
-        }
-        paint();
-      });
-    })();
-
     panel.addEventListener('click', (e) => {
       const t = e.target;
       const addBtn = t.closest('button[data-add]');
       if (addBtn){
         const side = addBtn.dataset.add;
-        const sel  = panel.querySelector(side === 'left' ? '#addSelLeft' : '#addSelRight');
+        const sel  = panel.querySelector('#addSelLeft');
         const id   = sel.value;
         if (!id) return;
         const item = API.catalogById[id]; if (!item) return;
@@ -4784,10 +3780,6 @@ const NQ = {};
         } else if (act === 'up'){
           if (idx > 0){ const [it] = arr.splice(idx, 1); arr.splice(idx - 1, 0, it); }
           else if (arr.length > 1){ const [it] = arr.splice(0, 1); arr.push(it); }
-        } else if (act === 'swap'){
-          const other = side === 'left' ? 'right' : 'left';
-          const [it]  = arr.splice(idx, 1);
-          cfg[other]  = [...cfg[other], it];
         }
         API.save(cfg); paint();
         return;
@@ -6215,9 +5207,8 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1',
-    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_layout_v1',
-    'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1', 'npqol_side_icon_size_v1',
-    'npqol_topbar_custom_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_bank_btn_settings_v1',
+    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_icon_size_v1',
+    'npqol_topbar_custom_v1', 'npqol_bank_btn_settings_v1',
     'npp_color_main', 'npp_color_left', 'npp_color_head', 'npp_defaults_v3'];
   const DATA_KEYS = ['npqol_hud_username', 'npqol_np_last', 'npqol_bank_state_v2', 'npqol_bank_daily_v1', 'npqol_bank_history_v1',
     'npqol_qr_data', 'npqol_active_pet_img_v1', 'npqol_user_stub'];
@@ -6231,7 +5222,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       const save = () => {
         const o = {};
         SYNC_KEYS.concat(DATA_KEYS).forEach(k => { const v = LSget(k); if (v) o[k] = v; });
-        try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('npqol_hud_userlookup:')) o[k] = localStorage.getItem(k); } } catch {}
         try { GM_setValue('npp_sync', JSON.stringify(o)); } catch {}
       };
       save(); setInterval(save, 8000); window.addEventListener('pagehide', save);
@@ -6305,10 +5295,9 @@ html[data-np-modern-interface] {
   }
   @media (max-width: 900px) { body > .errorOuter, body > .errorInner, body > .errorMessage { width: auto; margin: 110px 16px 32px !important; } }
 
-  #npHudResizer, #npxFrameResizeR, #npxFrameResizeB { display: none !important; }
 
   #npLeftBar { border: 0 !important; box-shadow: 0 0 10px rgba(0,0,0,.4) !important; top: 0 !important; bottom: auto !important; height: 100vh !important; }
-  #npHud > #npBank, #npQrActive { display: none !important; }
+  #npHud > #npBank { display: none !important; }
 
   #npNp { flex-direction: column !important; align-items: stretch !important; cursor: default !important; }
   #npNp .np-amounts { flex: 1; display: flex; align-items: center; white-space: nowrap; }
@@ -6344,8 +5333,6 @@ html[data-np-modern-interface] {
 
   #nppFoot { position: fixed; left: 0; bottom: 0; width: var(--np-col-width); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
 
-  #btnOverlay[data-mode="single"] .col.left { left: 239px !important; top: auto !important; bottom: calc(16px + var(--npp-tools-h, 0px) + var(--npp-ig, 10px)) !important; transform: translate(-50%, var(--np-side-col-shift, 0px)) !important; }
-  #btnOverlay .col.right { position: fixed !important; left: calc(var(--np-col-width) - 24px) !important; top: auto !important; bottom: 16px !important; transform: translateY(var(--np-side-col-shift, 0px)) !important; }
 
   #npBgSidebar { top: 0 !important; height: 100vh !important; box-sizing: border-box !important; padding-top: 0 !important; z-index: 2100 !important; background: #1a1722 !important; border-left: 1px solid rgba(255,255,255,.14); box-shadow: -4px 0 32px rgba(0,0,0,.12) !important; }
   #npBgHandle { top: calc(60px + (100vh - 60px - 44px) / 2) !important; width: 16px !important; height: 44px !important; font-size: 0 !important; opacity: 0; transition: opacity .15s, background .12s !important; }
@@ -6445,8 +5432,6 @@ html[data-np-modern-interface] {
   #npHud, #nppFoot { text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 
   #npUserTitle { color: #fff !important; text-shadow: 0 2px 6px rgba(0,0,0,.7) !important; }
-  #npUser .meta .k { opacity: .85 !important; }
-  #npUserGear, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta { display: none !important; }
   #npUser { min-height: 0 !important; }
   #nppAcctTab { display: none !important; }
   #npUser .rightSide { display: grid !important; width: 100%; }
@@ -6588,7 +5573,7 @@ html[data-np-modern-interface] {
 
   &.npp-nc { --np-col-width: 0px !important; }
   &.npp-nc #npHud, &.npp-nc #npLeftBar, &.npp-nc #btnOverlay, &.npp-nc #npxSideBtnHost, &.npp-nc #qrDockWrap, &.npp-nc #nppFoot,
-  &.npp-nc #npHudResizer, &.npp-nc #npBgHandle, &.npp-nc #npBgSidebar { display: none !important; }
+  &.npp-nc #npBgHandle, &.npp-nc #npBgSidebar { display: none !important; }
   &.npp-nc body #container__2020 { max-width: var(--np-frame-width) !important; }
   &.npp-nc body :is(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) :is(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) {
     width: auto !important; max-width: none !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
@@ -6656,7 +5641,7 @@ html[data-np-modern-interface] {
   #nppIcons .nppIcHead { display: none; }
   #nppIcons .nppIcBody, #nppIcons.nppShut .nppIcBody { display: block; padding: 0; }
   #nppIcons #btnOverlay { position: static !important; inset: auto !important; width: auto !important; height: auto !important; transform: none !important; z-index: auto !important; pointer-events: auto !important; opacity: 1 !important; overflow: visible !important; }
-  #nppIcons #btnOverlay .col, #nppIcons #btnOverlay .col.left, #nppIcons #btnOverlay .col.right { position: static !important; inset: auto !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; row-gap: 10px !important; }
+  #nppIcons #btnOverlay .col { position: static !important; inset: auto !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; row-gap: 10px !important; }
   #nppIcons #btnOverlay .col:empty { display: none !important; }
   #nppIcons #btnOverlay .col > * { flex: 0 0 auto !important; position: relative; }
   #nppIcons #btnOverlay .col img { max-width: 40px; max-height: 40px; }
@@ -6966,7 +5951,7 @@ html[data-np-modern-interface] {
 html[data-np-modern-interface] {
   --np-col-width: 0px !important;
   --np-bar-inset-left: 0px !important;
-  #npHud, #npLeftBar, #btnOverlay, #npxSideBtnHost, #qrDockWrap, #nppFoot, #npHudResizer, #npBgHandle, #npBgSidebar,
+  #npHud, #npLeftBar, #btnOverlay, #npxSideBtnHost, #qrDockWrap, #nppFoot, #npBgHandle, #npBgSidebar,
   .navsub-left__2020, .navsub-right__2020 { display: none !important; }
 }`;
 
@@ -7110,20 +6095,11 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .tab:hover { background: #26222f !important; }
 .panel.open { box-shadow: 0 -6px 36px rgba(0,0,0,.16) !important; }
 .panel { background: #1a1722 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; border-color: rgba(255,255,255,.14) !important; }
-.head .grp { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.18); padding: 4px 8px; }
-.head .grpLbl { color: rgba(255,255,255,.92); font-size: 10px; letter-spacing: .08em; }
 .head button { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); color: #fff; }
 .head button:hover { background: rgba(255,255,255,.22); border-color: rgba(255,255,255,.4); }
-.head .stepVal { background: transparent; border: 0; color: #fff; font-size: 12px; }
-.head .stepVal:hover { background: rgba(255,255,255,.14); }
 .head .close { background: transparent; border: 0; color: rgba(255,255,255,.75); }
 .head .close:hover { color: #fff; background: rgba(255,255,255,.14); }
-.modeSeg { background: rgba(0,0,0,.3); border-color: rgba(255,255,255,.18); }
-.modeSeg .modeBtn { background: transparent; border: 0; color: rgba(255,255,255,.7); }
-.modeSeg .modeBtn:hover { background: rgba(255,255,255,.14); color: #fff; }
-.modeSeg .modeBtn.isOn { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1722); box-shadow: none; }
 .body { align-content: start; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.3) transparent; }
-.modeNote { margin: 0; padding: 8px 12px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.82); font-size: 11px; font-weight: 500; line-height: 1.4; }
 .col { border-color: rgba(255,255,255,.14); border-radius: 12px; }
 .item { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.16); }
 .item:hover { background: rgba(255,255,255,.12); }
@@ -7136,7 +6112,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .add button { height: 34px; background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1722); border-color: transparent; font-size: 12px; text-shadow: var(--npp-accent-fg-shadow, none); }
 .add button:hover { background: var(--np-accent, #fff); filter: brightness(1.06); }
 .panel { width: 420px !important; max-width: 96vw !important; height: auto !important; max-height: min(470px, 78vh) !important; }
-.head .grp, .modeNote, .col[data-side="right"], .item [data-act="swap"] { display: none !important; }
 .head { align-items: center; gap: 8px; padding: 12px 14px 10px; border-bottom: 1px solid rgba(255,255,255,.1); }
 .head::before { content: 'Shortcut icons'; margin-right: auto; font: 700 13px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.92); }
 .body { grid-template-columns: 1fr !important; gap: 0; }
@@ -7784,18 +6759,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       menu.style.top = Math.round($('#npx-host').getBoundingClientRect().bottom) + 'px';
       menu.style.display = 'block';
     });
-  }
-
-  let shortcutsLocked = false;
-  function lockShortcuts() {
-    const A = NQ.sideBtns;
-    if (!A || shortcutsLocked || isNc) return;
-    shortcutsLocked = true;
-    try {
-      if (A.getLayout() !== 'single') A.setLayout('single');
-      const cfg = A.load();
-      if (cfg.right && cfg.right.length) A.save({ left: [...cfg.left, ...cfg.right], right: [] });
-    } catch {}
   }
 
   const SEARCH_URL = 'https://www.neopets.com/search.phtml';
@@ -8612,7 +7575,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     root.classList.add('npp-auth');
     const st = document.getElementById('npp-auth-css') || document.createElement('style');
     st.id = 'npp-auth-css';
-    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npHudResizer, html.npp-auth #npxFrameResizeR, html.npp-auth #npxFrameResizeB, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppBell,html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
+    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppBell,html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
     if (!st.isConnected) (document.head || root).appendChild(st);
     document.querySelectorAll('style').forEach(el => {
       const t = el.textContent || '';
@@ -8657,8 +7620,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       root.classList.remove('np-recolor-site');
       paintAll(saved());
       if (A) {
-        A.setLayout(A.getLayout()); A.setSide(A.getSide()); A.setColOffset(A.getColOffset()); A.setIconSize(A.getIconSize());
-        A.setColShift(A.getColShift()); A.setColX(A.getColX()); A.rebuild();
+        A.setIconSize(A.getIconSize()); A.rebuild();
       }
     } catch {}
   }
@@ -8822,8 +7784,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
     }
 
-    ['npqol_frame_size_v1', 'npqol_col_width_v1'].forEach(LSdel);
-    ['--np-frame-minh', '--np-frame-width', '--np-col-width'].forEach(p => rs.removeProperty(p));
+    ['npqol_frame_size_v1', 'npqol_col_width_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_side_layout_v1',
+      'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1'].forEach(LSdel);
+    try { Object.keys(localStorage).filter(k => k.startsWith('npqol_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
     applyBarStyle(LSget('npqol_topbar_bg_v1'));
@@ -8839,7 +7802,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     patchShadow();
     globalListeners();
     setupKeys();
-    setupClock(); fixNcNavLinks(); setupPremium(); lockShortcuts(); lockShopkeeper();
+    setupClock(); fixNcNavLinks(); setupPremium(); lockShopkeeper();
     const build = () => {
       buildFooter(); setupTools(); setupScrollTop(); setupBell(); setupNest(); patchEditor(); layoutSidebar(); setupDrawer();
       setupBank(); petUI(); setupDailyFold(); wireSidebar(); setupPremium(); highlightShopPrices(); updateNc();

@@ -25,6 +25,7 @@ No comments in the code (stripped 4.2.5). Section banners are only in `vendor/`.
 | Top bar bell | removed 4.2.1 (Neopets bell via patcher `setupBell`) |
 | Sidebar HUD | `#npHud`, `PET_IMG_STYLE` |
 | Backgrounds picker shell (handle, panel, button style, top bar select, recolor, save/cancel) | `#npBgSidebar`, `#npBgHandle`, `buildUI` |
+| Shortcut icon column + editor (one column, size only) | `#btnOverlay`, `sideBtnEditor`, `NQ.sideBtns` |
 | Inventory menu bar | always full (`html:root body .inv-menubar`) |
 
 ## Depends on
@@ -38,4 +39,5 @@ No comments in the code (stripped 4.2.5). Section banners are only in `vendor/`.
 ## Lessons learned
 
 - 2026-10-27: stage 1 of `HANDOFF-merge.md`: copied from vendor unchanged except the credit comment and the `Bundle gate` block. Line endings: LF.
-- 2026-10-28 (4.2.4): HUD_CSS lost every declaration the patcher always overrides (see `tools/css-dedupe.js`). What is left in HUD_CSS for #npHud cards is only what still applies. `#npBank` and `#npQrActive` are still built but hidden by patcher PAGE_CSS.
+- 2026-10-28 (4.2.4): HUD_CSS lost every declaration the patcher always overrides (see `tools/css-dedupe.js`). What is left in HUD_CSS for #npHud cards is only what still applies. `#npBank` is moved into the NP drawer by the patcher.
+- 2026-10-28 (4.2.10): removed the user card avatar/shield/counts + settings, HUD and frame resizers, `#npQrActive` + QuickRef settings, and the cols/row/side/offset icon layouts. Icon config is one list (`left`); old `right` entries are merged on load.
