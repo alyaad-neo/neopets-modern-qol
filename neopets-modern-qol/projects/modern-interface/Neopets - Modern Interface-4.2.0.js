@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.1
+// @version      4.2.2
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -1045,8 +1045,8 @@
        controls themselves are interactive; the grid columns they sit in
        stay transparent to the cursor, which is what gives the HUD cards
        under the bar their top-right corner back. */
-    .inner, .left, .right{ pointer-events:none; }
-    .left > *, .right > *, .menu{ pointer-events:auto; }
+    .inner, .left{ pointer-events:none; }
+    .left > *, .menu{ pointer-events:auto; }
     .inner{
       display:grid;
       grid-template-columns: 1fr auto 1fr;
@@ -1054,7 +1054,6 @@
       padding:0 10px; gap:10px;
     }
     .left{ grid-column:2; display:flex; align-items:center; gap:8px; justify-content:center; }
-    .right{ grid-column:3; display:flex; align-items:center; gap:10px; justify-content:flex-end; }
 
     .btn{
       display:flex; align-items:center; gap:8px;
@@ -1172,59 +1171,13 @@
     }
     .menu .menuAddBtns button:hover{ filter:brightness(1.1); }
 
-    /* Top bar: search button (toggle) */
-    .searchBtn{ cursor:pointer; }
-
-    /* Search form: hidden by default, appears when the magnifier is clicked */
-    .searchForm{
-      display:none;
-      align-items:center;
-      height:34px; padding:0 4px 0 10px;
-      border-radius:18px;
-      background:rgba(255,255,255,.10);
-      border:1px solid rgba(255,255,255,.20);
-      transition:border-color .12s ease, background .12s ease;
-    }
-    .searchForm.open{ display:flex; }
-    .searchForm:focus-within{
-      border-color:var(--np-accent, #dcb8ff);
-      background:rgba(255,255,255,.14);
-    }
-    .searchInput{
-      width:200px; min-width:0; height:30px; padding:0 6px;
-      border:0; background:transparent; outline:0;
-      color:#fff; font:inherit; font-weight:500; font-size:13px;
-    }
-    .searchInput::placeholder{ color:rgba(255,255,255,.45); }
-    .searchGo{
-      height:26px; padding:0 12px;
-      border:0; border-radius:13px;
-      background:var(--np-accent, #dcb8ff);
-      color:#1a1330; font:inherit; font-weight:800; font-size:12px;
-      cursor:pointer;
-    }
-    .searchGo:hover{ filter:brightness(1.08); }
-
-    /* Top bar: NST clock */
-    .nst{
-      display:flex; align-items:baseline; gap:4px;
-      color:var(--np-accent-text, var(--np-accent, #dcb8ff)); font-weight:600; font-size:13px;
-      font-variant-numeric:tabular-nums;
-      text-shadow:0 1px 3px rgba(0,0,0,.9);
-      padding:0 4px; white-space:nowrap;
-    }
-    .nst .nstLabel{ font-size:11px; opacity:.7; }
-
     /* Smaller top bar on narrow screens */
     @media (max-width: 900px){
       .left{ gap:6px; }
-      .right{ gap:8px; }
-      .nst{ display:none; }  /* drop the clock first */
       .btn span{ display:none; } /* keep only icons */
     }
     @media (max-width: 700px){
       .btn img{ width:28px; height:28px; }
-      .searchInput{ width:120px; }
     }
   `;
   root.appendChild(barStyle);
@@ -1325,20 +1278,6 @@
         <a class="btn cat" data-id="explore"><img src="${icons.explore}" data-icon="explore" alt=""><span>Explore</span></a>
         <a class="btn cat" data-id="shop"><img src="${icons.shop}" data-icon="shop" alt=""><span>Shop</span></a>
         <a class="btn" href="https://nc.neopets.com/membership/"><img src="${icons.premium}" data-icon="premium" alt=""><span>Premium</span></a>
-      </div>
-      <div class="right">
-        <div class="btn searchBtn" id="npxSearchToggle" title="Search ( / )">
-          <img src="${icons.search}" data-icon="search" alt="Search">
-        </div>
-        <form class="searchForm" id="npxSearch" action="https://www.neopets.com/search.phtml" method="get" role="search">
-          <input class="searchInput" id="npxSearchInput" name="string" autocomplete="off" placeholder="Search Neopets…">
-          <button class="searchGo" type="submit" aria-label="Go">Go</button>
-        </form>
-        <div class="nst" id="npxNst"><span class="nstTime">--:--:--</span> <span class="nstLabel">NST</span></div>
-        <a class="btn" href="https://www.neopets.com/questlog/" title="Quest Log"><img src="${icons.quests}" data-icon="quests" alt="Quests"></a>
-        <a class="btn" id="npxNews" href="https://www.neopets.com/nf.phtml" title="New Features">
-          <img src="https://images.neopets.com/themes/h5/basic/images/v3/news-icon.svg" alt="News">
-        </a>
       </div>
     </div>
   `;
@@ -1552,77 +1491,6 @@
   });
 
   document.documentElement.appendChild(host);
-
-  /* =========================================================
-     NST CLOCK — Neopian Standard Time (America/Los_Angeles),
-     ticks every second in the top bar.
-  ========================================================= */
-  (function nstClock(){
-    const nstEl = root.querySelector('#npxNst');
-    if (!nstEl) return;
-    const timeEl  = nstEl.querySelector('.nstTime');
-    const labelEl = nstEl.querySelector('.nstLabel');
-    const fmt = new Intl.DateTimeFormat('en-US', {
-      hour:'numeric', minute:'2-digit', second:'2-digit',
-      hour12:true, timeZone:'America/Los_Angeles'
-    });
-    function tick(){
-      const parts = fmt.formatToParts(new Date());
-      let h='--', m='--', s='--', dp='am';
-      for (const p of parts){
-        if (p.type === 'hour') h = p.value;
-        else if (p.type === 'minute') m = p.value;
-        else if (p.type === 'second') s = p.value;
-        else if (p.type === 'dayPeriod') dp = String(p.value || 'am').toLowerCase();
-      }
-      timeEl.textContent = `${h}:${m}:${s}`;
-      labelEl.textContent = `${dp} NST`;
-    }
-    tick();
-    setInterval(tick, 1000);
-  })();
-
-  /* =========================================================
-     SEARCH — toggle on magnifier click + "/" keyboard shortcut.
-  ========================================================= */
-  (function searchToggle(){
-    const toggle = root.querySelector('#npxSearchToggle');
-    const form   = root.querySelector('#npxSearch');
-    const inp    = root.querySelector('#npxSearchInput');
-    if (!toggle || !form || !inp) return;
-
-    let open = false;
-    function setOpen(o){
-      open = !!o;
-      form.classList.toggle('open', open);
-      if (open){
-        setTimeout(() => { inp.focus(); inp.select(); }, 0);
-      } else {
-        inp.blur();
-      }
-    }
-    toggle.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      setOpen(!open);
-    });
-    inp.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape'){ e.preventDefault(); setOpen(false); }
-    });
-    document.addEventListener('pointerdown', (ev) => {
-      if (!open) return;
-      const path = ev.composedPath ? ev.composedPath() : [];
-      if (path.some(n => n === toggle || n === form)) return;
-      setOpen(false);
-    }, true);
-    document.addEventListener('keydown', (e) => {
-      if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
-      const t = e.target;
-      const isField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
-      if (isField) return;
-      e.preventDefault();
-      setOpen(true);
-    }, true);
-  })();
 
   /* =========================================================
      Theme listener → refresh top-bar icons.

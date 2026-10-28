@@ -55,7 +55,7 @@ Do these one group at a time. Run `node bundle.js` after each, and check for lef
 - Base: the `bellNotif()` IIFE (search `BELL DROPDOWN`), `#npxBell`, `#npxBellDot`, `.bellMenu`, `#npxBellList`, the `.bell*` CSS, and its fetches of `/nf.phtml` and `/`. Also storage keys `npqol_notifs_v2` and `npqol_notifs_hidden_v1`.
 - Patcher: `muteVendorAlerts` and its calls, the `.npp-bell*` shadow CSS (dead), and the unused `MAIL_SVG` and `BELL_SVG` constants. Check whether `clearNotifCaches`, which exists in both the patcher and account-drawer, is still needed once those keys are gone.
 
-**Header right side.** The patcher hides the base `.right`: `#npxSearchToggle`, `#npxSearch`, `#npxNst`, `#npxBell`, `#npxNews`. Aly's versions are `#nppTools` (search), `.npp-clock` and the patcher's New Features link in Community. Delete the base markup, its CSS and its JS (search toggle, `/` key, NST timer), and the patcher's `.right { display: none }`.
+**Header right side.** DONE (bundle 5.5.2: base .right markup/CSS, NST clock, search toggle and / key removed; patcher .right hide removed). The patcher hides the base `.right`: `#npxSearchToggle`, `#npxSearch`, `#npxNst`, `#npxBell`, `#npxNews`. Aly's versions are `#nppTools` (search), `.npp-clock` and the patcher's New Features link in Community. Delete the base markup, its CSS and its JS (search toggle, `/` key, NST timer), and the patcher's `.right { display: none }`.
 
 **Header CSS.** The patcher's `SHADOW_CSS` overrides the base top-bar CSS inside the shadow root (`.btn`, `.menu`, `.left`, `.inner`, carets, media queries). Fold the winning values into the base CSS, then delete both the losing rules and the override.
 

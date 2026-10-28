@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.29
+// @version      4.1.30
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1020,7 +1020,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .menuHead { position: sticky; top: -8px; z-index: 1; margin: 0 -8px; padding: 9px 20px 4px; background: rgba(14,12,22,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 #menu-premium::-webkit-scrollbar { width: 8px; }
 #menu-premium::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
-.right { display: none !important; }
 .btn { position: relative; gap: 10px !important; padding: 9px 15px !important; border-radius: 999px !important; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; -webkit-text-stroke: var(--npp-nav-stroke, 0 transparent); paint-order: stroke fill; transition: background .18s, box-shadow .18s !important; }
 .btn, .btn span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 24px !important; font-weight: 400 !important; letter-spacing: .01em; }
 .btn span { display: inline !important; }
@@ -1103,7 +1102,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   :host(.nppHam) .inner { padding-left: 0 !important; padding-right: 0 !important; }
 }
 @media (max-width: 420px) { :host(.nppHam) .npp-logo img { max-width: clamp(70px, calc(100vw - 190px), 110px); } }
-@media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } .right { gap: 4px !important; } }
+@media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } }
 `;
 
   const EDITOR_CSS = `
