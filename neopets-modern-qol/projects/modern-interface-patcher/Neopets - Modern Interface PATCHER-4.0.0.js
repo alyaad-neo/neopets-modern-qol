@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.0.5
+// @version      4.0.9
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -157,8 +157,8 @@ html[data-np-modern-interface] {
 
   #npActivePet { flex: 0 0 auto !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 8px; height: auto !important; min-height: 0 !important; max-height: none !important; padding: 8px !important; overflow: visible !important; background: rgba(0,0,0,.13) !important; border: 1px solid var(--np-accent-line, rgba(255,255,255,.22)) !important; border-radius: var(--np-radius, 14px) !important; }
   #npActivePet > img { width: 100% !important; height: auto !important; max-width: 100% !important; max-height: none !important; transform: none !important; background: #fff !important; border-radius: 10px !important; opacity: 1 !important; display: block !important; order: 0; }
-  #npPetDockBtn { position: absolute; top: 12px; right: 12px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 7px; background: rgba(0,0,0,.55); color: #fff; cursor: pointer; opacity: 0; transition: opacity .14s; z-index: 4; }
-  #npActivePet:hover #npPetDockBtn { opacity: 1; }
+  #npPetDockBtn { position: absolute; top: 12px; right: 12px; width: auto; height: 26px; padding: 0 9px; gap: 5px; font: 700 11px/1 'Outfit', system-ui, sans-serif; white-space: nowrap; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 7px; background: rgba(0,0,0,.55); color: #fff; cursor: pointer; opacity: 1; transition: background .14s; z-index: 4; }
+  #npPetDockBtn:hover { background: rgba(0,0,0,.75); }
   #nppPetInfo .nppTitle { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 700; text-align: center; }
   #nppPetInfo .nppTitle a { color: #fff !important; font-weight: 700; text-decoration: none !important; }
   #nppPetInfo .nppTitle a:hover { text-decoration: underline !important; }
@@ -309,8 +309,8 @@ html[data-np-modern-interface] {
 
   #npNp .np-amount, #npNp .np-nc { font-size: 16px !important; font-weight: 800 !important; color: #fff !important; background: rgba(255,255,255,.08); }
   #npNp .np-amount:hover, #npNp .np-nc:hover { background: rgba(255,255,255,.2) !important; }
-  #npNp .np-chevron { width: 22px !important; height: 22px !important; background: rgba(255,255,255,.16) !important; color: #fff !important; border: 1px solid rgba(255,255,255,.25) !important; }
-  #npNp .np-chevron:hover { background: rgba(255,255,255,.28) !important; }
+  #npNp .np-chevron { width: 22px !important; height: 22px !important; background: none !important; color: #fff !important; border: 0 !important; }
+  #npNp .np-chevron:hover { background: none !important; opacity: .75; }
   #npNp .np-top-row { padding: 8px 8px 8px 14px; }
   #npNp .np-amounts { gap: 10px; min-width: 0; }
   #npNp .npVal, #npNp .ncVal { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -541,6 +541,114 @@ html[data-np-modern-interface]:not(.np-keep-native-bg) body .theme-bg {
 @keyframes nppPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @keyframes nppBellHalo { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,59,59,.65); } 50% { box-shadow: 0 0 0 9px rgba(255,59,59,0); } }`;
 
+  const LAYOUT_CSS = `
+html[data-np-modern-interface] {
+  --npp-drawer-w: min(320px, 88vw);
+
+  #npHud { position: fixed !important; top: var(--np-hud-top, 72px) !important; bottom: 0 !important; height: auto !important; max-height: none !important; display: flex !important; flex-direction: column !important; justify-content: flex-start !important; gap: 8px; overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; padding: 0 0 14px !important; box-sizing: border-box; scrollbar-width: thin !important; scrollbar-color: rgba(255,255,255,.28) transparent; }
+  #npHud::-webkit-scrollbar { display: block; width: 6px; }
+  #npHud::-webkit-scrollbar-thumb { background: rgba(255,255,255,.28); border-radius: 3px; }
+  #npHud > * { flex: 0 0 auto !important; min-width: 0; }
+  #npHud > #nppFoot { position: static !important; width: auto !important; padding: 0 !important; z-index: auto; display: flex; flex-direction: column; gap: 8px; }
+  #npActivePet > img { width: max(84px, min(100%, 30vh)) !important; margin-inline: auto !important; }
+
+  #nppNavMod { box-sizing: border-box; border-radius: 14px; background: var(--npp-card); border: 1px solid var(--npp-card-line); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  #nppIcons { position: relative; box-sizing: border-box; margin-top: auto !important; padding: 6px 0 0; background: none; border: 0; }
+  #nppIcons:not(:has(.col > *)) { display: none; }
+  #nppNavMod .nppNavHead { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 9px 12px; border: 0; background: transparent; color: #fff; font: 700 12px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; text-shadow: inherit; }
+  #nppNavMod .nppNavHead svg { width: 12px; height: 12px; transition: transform .2s; }
+  #nppNavMod .nppNavGrp.open .nppNavHead svg { transform: rotate(180deg); }
+  #nppIcons .nppIcHead { display: none; }
+  #nppIcons .nppIcBody, #nppIcons.nppShut .nppIcBody { display: block; padding: 0; }
+  #nppIcons #btnOverlay { position: static !important; inset: auto !important; width: auto !important; height: auto !important; transform: none !important; z-index: auto !important; pointer-events: auto !important; opacity: 1 !important; overflow: visible !important; }
+  #nppIcons #btnOverlay .col, #nppIcons #btnOverlay .col.left, #nppIcons #btnOverlay .col.right { position: static !important; inset: auto !important; transform: none !important; width: auto !important; height: auto !important; margin: 0 !important; display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; row-gap: 10px !important; }
+  #nppIcons #btnOverlay .col:empty { display: none !important; }
+  #nppIcons #btnOverlay .col > * { flex: 0 0 auto !important; position: relative; }
+  #nppIcons #btnOverlay .col img { max-width: 40px; max-height: 40px; }
+  #nppIcons .nppHasNest::after { content: ""; position: absolute; left: 50%; top: -5px; width: 12px; height: 4px; margin-left: -6px; border-radius: 3px; background: rgba(255,255,255,.85); box-shadow: 0 1px 2px rgba(0,0,0,.5); pointer-events: none; }
+  #nppIcons #nppNestPop { position: absolute !important; left: 0 !important; right: 0 !important; bottom: calc(100% + 8px) !important; top: auto !important; width: auto !important; box-sizing: border-box; margin: 0 !important; padding: 10px 8px !important; display: flex !important; flex-wrap: wrap; justify-content: center; gap: 10px !important; border-radius: 16px !important; background: var(--npp-drawer-bg) !important; border: 1px solid var(--npp-card-line) !important; box-shadow: 0 10px 28px rgba(0,0,0,.4) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); z-index: 5; opacity: 0; visibility: hidden; pointer-events: none !important; transform: translateY(14px) scale(.92) !important; transform-origin: var(--tx, 50%) 100%; transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.4, .5, 1), visibility 0s .3s; }
+  #nppIcons #nppNestPop.open { opacity: 1; visibility: visible; pointer-events: auto !important; transform: none !important; transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.4, .5, 1), visibility 0s; }
+  #nppIcons #nppNestPop::after { content: ""; position: absolute; bottom: -6px; left: var(--tx, 50%); width: 10px; height: 10px; margin-left: -5px; transform: rotate(45deg); background: inherit; border-right: 1px solid var(--npp-card-line); border-bottom: 1px solid var(--npp-card-line); }
+  #nppIcons #nppNestPop.open .col > * { animation: nppTrayIn .42s cubic-bezier(.34, 1.56, .5, 1) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
+  @media (prefers-reduced-motion: reduce) { #nppIcons #nppNestPop, #nppIcons #nppNestPop.open { transition: none; } #nppIcons #nppNestPop.open .col > * { animation: none; } }
+
+  /* NP / NC stat pills */
+  #npNp .np-top-row { gap: 6px; padding: 8px 8px 8px 8px; }
+  #npNp .np-top-row .np-amounts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; flex: 1 1 0; min-width: 0; }
+  #npNp .np-top-row .np-amount, #npNp .np-top-row .np-nc { display: flex !important; flex-direction: row; align-items: center; justify-content: center; gap: 4px; min-width: 0; min-height: 30px; padding: 3px 6px !important; border-radius: 999px !important; border: 1px solid rgba(255,255,255,.22) !important; background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); position: relative; overflow: visible; white-space: nowrap; }
+  #npNp .np-top-row .np-amount { border-color: rgba(255,200,90,.45) !important; }
+  #npNp .np-top-row .np-nc { border-color: rgba(190,140,255,.5) !important; }
+  #npNp .np-top-row .np-amount img, #npNp .np-top-row .np-nc img { position: static !important; transform: none !important; flex: 0 0 auto; order: -1; width: 16px !important; height: 16px !important; }
+  #npNp .np-top-row .npVal, #npNp .np-top-row .ncVal { flex: 0 0 auto; min-width: 0; overflow: visible !important; text-overflow: clip !important; white-space: nowrap !important; font-size: 14px !important; font-weight: 800; letter-spacing: 0; line-height: 1; }
+  #npNp .np-top-row .np-chevron { flex: 0 0 auto; }
+
+  /* user card: avatar + name on one centred row */
+  #npUser .rightSide { align-items: center !important; }
+  #npUser #nppAvatar { grid-row: 1 !important; align-self: center !important; }
+  #npUser .name { grid-row: 1 !important; align-self: center !important; }
+
+  /* never overlap: pins module above, shortcuts below */
+  html #npHud #nppFoot { position: relative !important; z-index: 0; flex: 0 0 auto !important; min-height: 0; }
+  #nppPinsMod { position: relative; }
+  #nppIcons { z-index: 1; flex: 0 0 auto !important; padding-top: 12px; }
+
+  /* pet-swap dock */
+  #qrDockWrap { scrollbar-width: none !important; -ms-overflow-style: none; }
+  #qrDockWrap::-webkit-scrollbar, #qrDock::-webkit-scrollbar { display: none !important; }
+  #qrDock { scrollbar-width: none !important; }
+  #qrDock .qrPet { position: relative !important; min-height: 120px !important; flex: 1 0 120px !important; overflow: hidden; }
+  #qrDock .qrPet::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 55%; background: linear-gradient(to top, rgba(0,0,0,.82), rgba(0,0,0,0)); pointer-events: none; z-index: 1; }
+  #qrDock .qrPetName { position: absolute !important; left: 0 !important; right: 0 !important; bottom: 0 !important; top: auto !important; z-index: 2; margin: 0 !important; padding: 14px 10px 8px !important; opacity: 1 !important; visibility: visible !important; transform: none !important; background: none !important; color: #fff !important; font-size: 17px !important; line-height: 1.15; text-align: center; text-shadow: 0 1px 3px rgba(0,0,0,.95), 0 0 8px rgba(0,0,0,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  #qrDock .qrOverlay { position: absolute !important; inset: 0 !important; z-index: 3; opacity: 1 !important; visibility: visible !important; background: none !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 0 28px; pointer-events: none; }
+  #qrDock .qrOverlay a { pointer-events: auto; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .15s, transform .15s, visibility 0s .15s; display: inline-flex; align-items: center; justify-content: center; min-width: 118px; min-height: 30px; box-sizing: border-box; padding: 5px 14px; border-radius: 999px; background: rgba(14,12,22,.88) !important; border: 1px solid rgba(255,255,255,.55); color: #fff !important; font-size: 14px !important; font-weight: 700; text-decoration: none !important; text-shadow: none; box-shadow: 0 2px 8px rgba(0,0,0,.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  #qrDock .qrOverlay a:hover, #qrDock .qrOverlay a:focus-visible { background: #fff !important; color: #14111f !important; outline: none; }
+  #qrDock .qrPet:hover .qrOverlay a, #qrDock .qrPet:focus-within .qrOverlay a, #qrDock .qrPet.nppTap .qrOverlay a { opacity: 1; visibility: visible; transform: none; transition: opacity .15s, transform .15s, visibility 0s; }
+  @media (hover: none), (max-width: 640px) { #qrDock .qrOverlay a { opacity: 1; visibility: visible; transform: none; min-height: 28px; font-size: 13px !important; } #qrDock .qrOverlay { gap: 5px; } }
+  @media (prefers-reduced-motion: reduce) { #qrDock .qrOverlay a { transition: none; } }
+
+  #nppNavMod { display: none; }
+  #nppNavMod .nppNavGrp + .nppNavGrp { border-top: 1px solid var(--npp-card-line); }
+  #nppNavMod .nppNavLinks { display: none; padding: 0 12px 8px; }
+  #nppNavMod .nppNavGrp.open .nppNavLinks { display: block; }
+  #nppNavMod .nppNavLinks a { display: block; padding: 6px 4px; color: rgba(255,255,255,.9) !important; font-size: 13.5px; text-decoration: none !important; border-radius: 6px; }
+  #nppNavMod .nppNavLinks a:hover { background: rgba(255,255,255,.12); }
+  #nppNavMod a.nppNavSolo { display: block; padding: 9px 12px; color: #fff !important; font: 700 12px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; text-decoration: none !important; }
+
+  #nppMenuBtn { display: none; position: fixed; left: 10px; top: var(--npp-tools-top, 27px); transform: translateY(-50%); z-index: 2010; width: 40px; height: 40px; padding: 0; align-items: center; justify-content: center; border: 1px solid var(--npp-card-line); border-radius: 12px; background: var(--npp-card); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: #fff; cursor: pointer; }
+  #nppMenuBtn svg { width: 20px; height: 20px; }
+  #nppScrim { display: none; position: fixed; inset: 0; z-index: 2040; background: rgba(8,6,14,.55); opacity: 0; transition: opacity .25s; }
+  #nppDrawerClose { display: none; position: fixed; top: 8px; left: calc(var(--npp-drawer-w) - 48px); z-index: 2052; width: 38px; height: 38px; padding: 0; align-items: center; justify-content: center; border: 1px solid var(--npp-card-line); border-radius: 10px; background: rgba(0,0,0,.35); color: #fff; font-size: 22px; line-height: 1; cursor: pointer; }
+  &.npp-wait #nppMenuBtn { opacity: 0; }
+
+  @media (max-height: 820px) {
+    --np-hud-top: 66px !important;
+    #npUser { padding: 8px 10px 20px !important; margin-bottom: 0; }
+    #npActivePet { padding: 6px !important; gap: 6px; }
+  }
+  @media (max-height: 640px) {
+    #npHud { gap: 6px; }
+    #npActivePet > img { width: max(72px, min(100%, 22vh)) !important; }
+    #npActivePet { padding: 5px !important; gap: 4px; }
+    }
+
+  @media (max-width: 1100px) {
+    --np-col-width: 0px !important;
+    #npLeftBar { left: 0 !important; width: var(--npp-drawer-w) !important; z-index: 2050 !important; transform: translateX(-104%); visibility: hidden; transition: transform .26s cubic-bezier(.22, 1, .36, 1), visibility 0s .26s; }
+    #npHud { left: 0 !important; width: var(--npp-drawer-w) !important; padding: 0 14px 18px !important; top: 52px !important; z-index: 2051 !important; transform: translateX(-104%); visibility: hidden; transition: transform .26s cubic-bezier(.22, 1, .36, 1), visibility 0s .26s; }
+    &.nppDrawerOpen #npLeftBar, &.nppDrawerOpen #npHud { transform: none; visibility: visible; transition: transform .26s cubic-bezier(.22, 1, .36, 1), visibility 0s; }
+    &.nppDrawerOpen #nppScrim { display: block; opacity: 1; }
+    &.nppDrawerOpen #nppDrawerClose { display: flex; }
+    &.nppDrawerOpen body { overflow: hidden !important; }
+    #nppMenuBtn { display: flex; }
+    #nppTools .nppSearch.nppOpen input { width: min(252px, calc(100vw - 150px)); }
+    #nppNotifDrawer { width: min(356px, calc(100vw - 20px)); right: 10px; }
+  }
+  @media (max-width: 1100px) and (max-height: 820px) { #npHud { top: 48px !important; } }
+  @media (max-width: 640px) { #nppNavMod { display: block; } }
+  @keyframes nppTrayIn { from { opacity: 0; transform: translateY(16px) scale(.4); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { #npLeftBar, #npHud, #nppScrim { transition: none !important; } }
+}`;
+
   const NC_CSS = `
 html[data-np-modern-interface] {
   --np-col-width: 0px !important;
@@ -690,7 +798,28 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 @media (max-width: 1250px) { .btn.npp-alert-on::after { left: 26px; } }
 @media (max-width: 1500px) { .btn { padding: 9px 10px !important; } .btn, .btn span { font-size: 21px !important; } .btn img { width: 26px !important; height: 26px !important; } }
 @media (max-width: 1250px) { .btn { padding: 8px 7px !important; } .btn, .btn span { font-size: 19px !important; } }
-@media (max-width: 900px) { .inner { padding-left: 12px !important; padding-right: 12px !important; } .npp-logo { display: none; } }
+@media (max-width: 900px) { :host(:not(.nppHam)) .inner { padding-left: 12px !important; padding-right: 12px !important; } :host(:not(.nppHam)) .npp-logo { display: none; } }
+@media (max-width: 1100px) {
+  :host(.nppHam) .npp-clock { display: none !important; }
+  :host(.nppHam) .inner { padding-left: 206px !important; padding-right: 126px !important; }
+  :host(.nppHam) .npp-logo { display: flex; left: 58px; }
+  :host(.nppHam) .npp-logo img { height: 34px; max-width: clamp(80px, calc(100vw - 200px), 140px); }
+  :host(.nppHam) .btn { padding: 8px 5px !important; }
+}
+@media (max-width: 950px) {
+  :host(.nppHam) .btn:has(img) span { display: none !important; }
+  :host(.nppHam) .left { gap: 0 !important; }
+}
+@media (max-width: 820px) {
+  :host(.nppHam) .inner { padding-left: 164px !important; padding-right: 118px !important; }
+  :host(.nppHam) .npp-logo img { max-width: 96px; }
+  :host(.nppHam) .btn { padding: 8px 3px !important; }
+}
+@media (max-width: 640px) {
+  :host(.nppHam) .left { display: none !important; }
+  :host(.nppHam) .inner { padding-left: 0 !important; padding-right: 0 !important; }
+}
+@media (max-width: 420px) { :host(.nppHam) .npp-logo img { max-width: clamp(70px, calc(100vw - 190px), 110px); } }
 @media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } .right { gap: 4px !important; } }
 `;
 
@@ -1327,6 +1456,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const MAIN_KEY = 'npp_main_account';
   const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
   const mainAcct = () => LSget(MAIN_KEY);
+  // Dailies sections of the premium menu only show on the main account (no main set: always show).
+  const onMainAcct = () => { const m = mainAcct().toLowerCase(); let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {} return !m || u.toLowerCase() === m; };
 
   function nativePremium() {
     const out = [];
@@ -1360,9 +1491,12 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const btn = [...sr.querySelectorAll('.left a.btn')].find(a => /membership/.test(a.getAttribute('href') || ''));
     if (!btn) return;
     const icon = (btn.querySelector('img') || {}).src || '';
+    let menuMain = true;
     const build = () => {
       let items = nativePremium(), curated = false;
-      if (items.length < 4) { items = PREMIUM_ITEMS; curated = true; }
+      menuMain = onMainAcct();
+      if (!menuMain) { items = PREMIUM_ITEMS.slice(0, PREMIUM_ITEMS.indexOf('# Daily rewards')); curated = true; }
+      else if (items.length < 4) { items = PREMIUM_ITEMS; curated = true; }
       else if (!items.some(it => /starlight/i.test(it[0]))) items = [PREMIUM_ITEMS.find(it => Array.isArray(it) && it[4] === 'starlight'), ...items];
       if (!curated) { const pos = Math.min(2, items.length); items = items.slice(0, pos).concat(PREMIUM_EXTRA, items.slice(pos), [QASALAN_ITEM, FOOD_CLUB, STOCK_MARKET]); }
       return items.map(it => it === '---' ? '<div class="menuSep"></div>'
@@ -1424,6 +1558,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     window.addEventListener('blur', closeMenu);
     btn.addEventListener('pointerenter', () => {
       sr.querySelectorAll('.menu').forEach(m => { if (m !== menu) m.style.display = 'none'; });
+      if (menuMain !== onMainAcct()) menu.innerHTML = build();   // username arrives late, or main changed
       if (W.__nppDailies) W.__nppDailies.decoratePremium(menu);
       let tall = 0;
       sr.querySelectorAll('.menu:not(#menu-premium)').forEach(m => {
@@ -1606,8 +1741,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const showPop = (parent) => {
       clearTimeout(hideT);
       const key = itemKey(parent), nest = readNest(), by = kidsByKey();
-      const list = (nest[key] || []).map(c => by.get(c)).filter(Boolean);
+      let list = (nest[key] || []).map(c => by.get(c)).filter(Boolean);
       if (!list.length) return;
+      if (col.closest('#nppIcons')) list = [parent].concat(list);
       mount();
       const sig = key + '|' + list.map(itemKey).join(',');
       if (!(pop._sig === sig && inner.children.length)) {
@@ -1621,28 +1757,41 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         pop._sig = sig;
       }
       pop._list = list;
+      const modEl = col.closest('#nppIcons');
+      if (modEl) { const pr = parent.getBoundingClientRect(), mr = modEl.getBoundingClientRect(); pop.style.setProperty('--tx', Math.round(pr.left + pr.width / 2 - mr.left) + 'px'); }
       const r = parent.getBoundingClientRect();
       pop.style.left = Math.round(r.right) + 'px'; pop.style.top = Math.round(r.top + r.height / 2) + 'px';
       if (!pop.classList.contains('open')) pop.classList.add('open');
     };
     const hidePop = () => { clearTimeout(hideT); hideT = setTimeout(() => pop.classList.remove('open'), 260); };
+    const inMod = () => !!col.closest('#nppIcons');
     col.addEventListener('mouseover', (e) => {
+      if (inMod()) return;
       const item = [...col.children].find(k => k.contains(e.target));
       if (!item) return;
       if (item.classList.contains('nppHasNest')) showPop(item); else if (pop.classList.contains('open')) hidePop();
     });
-    col.addEventListener('mouseleave', hidePop);
+    col.addEventListener('mouseleave', () => { if (!inMod()) hidePop(); });
     pop.addEventListener('mouseenter', () => clearTimeout(hideT));
-    pop.addEventListener('mouseleave', hidePop);
+    pop.addEventListener('mouseleave', () => { if (!inMod()) hidePop(); });
+    col.addEventListener('click', (e) => {
+      if (!inMod() || pop._via || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
+      const item = [...col.children].find(k => k.contains(e.target));
+      if (!item || !item.classList.contains('nppHasNest')) return;
+      e.preventDefault(); e.stopPropagation();
+      const k = itemKey(item);
+      if (pop.classList.contains('open') && pop._key === k) pop.classList.remove('open'); else { showPop(item); pop._key = k; }
+    }, true);
     pop.addEventListener('click', (e) => {
       const a = e.target.closest('#nppNestPop .col > *'); if (!a) return;
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
       e.preventDefault(); e.stopPropagation();
       const orig = pop._list && pop._list[+a.dataset.i];
-      if (orig) orig.click();
+      if (orig) { pop._via = true; try { orig.click(); } finally { pop._via = false; } }
       pop.classList.remove('open');
     });
 
+    document.addEventListener('pointerdown', (e) => { if (inMod() && pop.classList.contains('open') && !e.target.closest('#nppIcons')) pop.classList.remove('open'); }, true);
     const closeMenu = () => { menu.classList.remove('open'); };
     const openMenu = (x, y, entries) => {
       menu.innerHTML = entries.map((e, i) => `<button type="button" data-i="${i}">${esc(e.label)}</button>`).join('');
@@ -2018,13 +2167,22 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (el.dataset.loaded === '1' || !el.dataset.bg) return;
       el.style.backgroundImage = `url(${el.dataset.bg})`; el.dataset.loaded = '1';
     });
+    if (open) wrap.querySelectorAll('.qrPet').forEach(el => {
+      const ov = el.querySelector('.qrOverlay'), nm = el.querySelector('.qrPetName');
+      if (!ov || ov.querySelector('.nppPetPage')) return;
+      const name = ((nm && nm.textContent) || '').trim();
+      if (!/^\w+$/.test(name)) return;
+      const a = document.createElement('a');
+      a.className = 'nppPetPage'; a.href = 'https://www.neopets.com/~' + name; a.textContent = 'Pet Page';
+      ov.appendChild(a);
+    });
   }
   function petUI() {
     const card = $('#npActivePet');
     if (!card || card.dataset.npp) return;
     card.dataset.npp = '1';
     const btn = document.createElement('button');
-    btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Switch active pet'; btn.innerHTML = SWAP;
+    btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Switch active pet'; btn.innerHTML = SWAP + '<span>Swap Active</span>';
     card.appendChild(btn);
     renderPetInfo(); fixPetImg();
     new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
@@ -2245,6 +2403,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (m) { const k = m.classList.contains('npBgR') ? 'main' : 'left'; draft[k] = null; clearImg[k] = false; if (!m.dataset.disc) pendingImg[k] = null; }
     }, true);
 
+    document.addEventListener('click', (e) => {
+      const pet = e.target.closest && e.target.closest('#qrDock .qrPet');
+      if (!pet || e.target.closest('a')) return;
+      const on = !pet.classList.contains('nppTap');
+      document.querySelectorAll('#qrDock .qrPet.nppTap').forEach(x => x.classList.remove('nppTap'));
+      if (on) pet.classList.add('nppTap');
+    });
     document.addEventListener('click', async (e) => {
       const a = e.target.closest && e.target.closest('#qrDock .qrOverlay a');
       if (!a || !/make active/i.test(a.textContent) || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
@@ -2414,6 +2579,107 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, 300);
   }
 
+  /* ═══════════════════════════════ Responsive sidebar: icon module, drawer, mobile nav ═══════════════════════════════ */
+  const ICONS_KEY = 'npp_side_icons_v1';
+  const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
+  let hudMo = null;
+  let hudWait = null;
+  function layoutSidebar() {
+    if (isNc || isPopup) return;
+    const hud = $('#npHud');
+    if (!hud) {
+      // #npHud can appear after boot; without this the footer (pins) stays fixed over the shortcuts.
+      if (!hudWait) { hudWait = new MutationObserver(() => { if ($('#npHud')) { hudWait.disconnect(); layoutSidebar(); } }); hudWait.observe(document.documentElement, { childList: true, subtree: true }); }
+      return;
+    }
+    let mod = $('#nppIcons');
+    const ov = $('#btnOverlay');
+    if (!mod && ov) {
+      mod = document.createElement('div');
+      mod.id = 'nppIcons';
+      mod.innerHTML = `<button type="button" class="nppIcHead" aria-expanded="true"><span>Shortcuts</span>${NPP_CHEV}</button><div class="nppIcBody"></div>`;
+      const shut = LSget(ICONS_KEY) === '0';
+      mod.classList.toggle('nppShut', shut);
+      $('.nppIcHead', mod).setAttribute('aria-expanded', shut ? 'false' : 'true');
+      $('.nppIcHead', mod).addEventListener('click', () => {
+        const f = mod.classList.toggle('nppShut');
+        $('.nppIcHead', mod).setAttribute('aria-expanded', f ? 'false' : 'true');
+        LSset(ICONS_KEY, f ? '0' : '1');
+      });
+    }
+    if (mod && ov && !mod.contains(ov)) { $('.nppIcBody', mod).appendChild(ov); ov.classList.add('nppIn'); }
+    let nav = $('#nppNavMod');
+    if (!nav) { nav = document.createElement('div'); nav.id = 'nppNavMod'; }
+    const foot = $('#nppFoot');
+    const un = $('#npUser');
+    if (nav.parentNode !== hud) hud.insertBefore(nav, un && un.parentNode === hud ? un.nextSibling : hud.firstChild);
+    if (foot && foot.parentNode !== hud) hud.appendChild(foot);
+    if (mod && hud.lastElementChild !== mod) hud.appendChild(mod);
+    if (!hudMo) {
+      let raf = 0;
+      hudMo = new MutationObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(layoutSidebar); });
+      hudMo.observe(hud, { childList: true });
+    }
+  }
+
+  function buildNav() {
+    const sr = shadow(), mod = $('#nppNavMod');
+    if (!sr || !mod) return;
+    const seen = new Set(), html = [];
+    sr.querySelectorAll('.left .btn').forEach((b) => {
+      const label = (b.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!label) return;
+      const id = b.dataset && b.dataset.id, menu = id ? sr.getElementById('menu-' + id) : null;
+      const links = menu ? [...menu.querySelectorAll('a[href]')].filter(a => { const h = a.getAttribute('href'); return h && h !== '#' && !a.closest('.menuAddRow'); }).map(a => [(a.textContent || '').replace(/\s+/g, ' ').trim(), a.href]).filter(l => l[0]) : [];
+      if (links.length) html.push(`<div class="nppNavGrp"><button type="button" class="nppNavHead" aria-expanded="false"><span>${esc(label)}</span>${NPP_CHEV}</button><div class="nppNavLinks">${links.map(l => `<a href="${esc(l[1])}">${esc(l[0])}</a>`).join('')}</div></div>`);
+      else if (b.href && !seen.has(b.href)) { seen.add(b.href); html.push(`<div class="nppNavGrp"><a class="nppNavSolo" href="${esc(b.href)}">${esc(label)}</a></div>`); }
+    });
+    const out = html.join('');
+    if (mod._html === out) return;
+    const open = new Set([...mod.querySelectorAll('.nppNavGrp.open .nppNavHead span')].map(x => x.textContent));
+    mod.innerHTML = out; mod._html = out;
+    mod.querySelectorAll('.nppNavGrp').forEach(g => { const h = $('.nppNavHead span', g); if (h && open.has(h.textContent)) g.classList.add('open'); });
+    if (!mod._wired) {
+      mod._wired = true;
+      mod.addEventListener('click', (e) => {
+        const h = e.target.closest('.nppNavHead'); if (!h) return;
+        const g = h.parentNode, o = g.classList.toggle('open');
+        h.setAttribute('aria-expanded', o ? 'true' : 'false');
+      });
+    }
+  }
+
+  function setupDrawer() {
+    if (isNc || isPopup || !document.body) return;
+    const host = $('#npx-host');
+    if (host && !host.classList.contains('nppHam')) host.classList.add('nppHam');
+    const sr0 = host && host.shadowRoot;
+    if (sr0) sr0.querySelectorAll('.left .btn:not([title])').forEach(b => { const t = (b.textContent || '').replace(/\s+/g, ' ').trim(); if (t) b.title = t; });
+    if ($('#nppMenuBtn')) return;
+    const btn = document.createElement('button');
+    btn.id = 'nppMenuBtn'; btn.type = 'button'; btn.setAttribute('aria-label', 'Open menu'); btn.setAttribute('aria-controls', 'npHud'); btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+    const scrim = document.createElement('div'); scrim.id = 'nppScrim'; scrim.setAttribute('aria-hidden', 'true');
+    const cls = document.createElement('button'); cls.id = 'nppDrawerClose'; cls.type = 'button'; cls.setAttribute('aria-label', 'Close menu'); cls.textContent = '\u00d7';
+    document.body.append(btn, scrim, cls);
+    const isOpen = () => root.classList.contains('nppDrawerOpen');
+    const set = (open) => {
+      if (open === isOpen()) return;
+      root.classList.toggle('nppDrawerOpen', open);
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) { document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'side' })); buildNav(); setTimeout(() => cls.focus({ preventScroll: true }), 30); }
+      else { const hud = $('#npHud'); if (hud && hud.contains(document.activeElement)) btn.focus({ preventScroll: true }); }
+    };
+    btn.addEventListener('click', () => set(!isOpen()));
+    scrim.addEventListener('click', () => set(false));
+    cls.addEventListener('click', () => set(false));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) set(false); });
+    document.addEventListener('npp:drawer', (e) => { if (e.detail !== 'side') set(false); });
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const wide = (e) => { if (e.matches) set(false); };
+    if (mq.addEventListener) mq.addEventListener('change', wide); else if (mq.addListener) mq.addListener(wide);
+  }
+
   function boot() {
     if (root.dataset.nppBoot) return;
     root.dataset.nppBoot = '1';
@@ -2428,7 +2694,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }
 
     const css = document.createElement('style');
-    css.id = 'npp-css'; css.textContent = (isNc ? NC_CSS : PAGE_CSS) + BAR_CSS;
+    css.id = 'npp-css'; css.textContent = (isNc ? NC_CSS : PAGE_CSS + LAYOUT_CSS) + BAR_CSS;
     (document.head || root).appendChild(css);
     const font = document.createElement('link');
     font.rel = 'stylesheet'; font.href = 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap';
@@ -2463,7 +2729,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     setupKeys();
     let n = 0;
     const iv = setInterval(() => {
-      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupNest(); decorateEditorNest(); wireNotif(); syncPetImg(); setupBank(); petUI(); wireSidebar();
+      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupNest(); layoutSidebar(); setupDrawer(); decorateEditorNest(); wireNotif(); syncPetImg(); setupBank(); petUI(); wireSidebar();
       if (root.classList.contains('npp-wait') && (($('#nppFoot') && $('#nppTools') && $('#npNp') && $('#npNp').dataset.acc && acctChecked && (petSettled || n > 10)) || n > 14)) root.classList.remove('npp-wait');
       if (++n > 100) clearInterval(iv);
     }, 200);

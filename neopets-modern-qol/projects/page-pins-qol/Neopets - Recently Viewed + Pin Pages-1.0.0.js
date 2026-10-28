@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.1
+// @version      1.0.3
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -42,7 +42,7 @@
   const RECENT_KEY = 'npp_recent_v3';
   const PIN_KEY_OLD = 'npp_recent_pins_v1';
   const BOARD_NAMES_KEY = 'npp_board_names_v1';
-  const RECENT_MAX = 15;
+  const RECENT_MAX = 10;
   const GENERIC_NB = /^(neoboards?|reply to this topic|post a reply|quick reply|neopets|home)$/i;
   const PIN_SVG = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M9.8 1.5 14.5 6.2l-1.4 1.4-.7-.7L9.5 9.7v3.1l-1.4 1.4-2.5-2.5-3.6 3.6-.7-.7 3.6-3.6-2.5-2.5L3.4 8.7h3.1L10.5 4l-.7-.7z"/></svg>';
   const PIN_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2h6l-1 4 2 2v1H4V8l2-2-1-4zM8 9v5"/></svg>';
@@ -68,6 +68,23 @@
 #nppPinned[hidden] { display: none !important; }
 #nppPinned { background: rgba(255,209,102,.07); border: 1px solid rgba(255,209,102,.22); border-radius: 12px; box-shadow: inset 3px 0 0 #ffd166; }
 #nppPinned .rHead { color: #ffd166; }
+
+/* Combined Pinned / Recent module (sidebar) */
+#nppPinsMod { box-sizing: border-box; width: 100%; min-width: 0; border-radius: 14px; background: var(--npp-card, rgba(20,18,28,.42)); border: 1px solid var(--npp-card-line, rgba(255,255,255,.14)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); overflow: hidden; }
+#nppPinsMod .pTabs { display: flex; gap: 4px; padding: 6px 6px 0; }
+#nppPinsMod .pTabs button { flex: 1 1 0; min-width: 0; padding: 7px 4px; border: 0; border-radius: 9px 9px 0 0; background: transparent; color: rgba(255,255,255,.6); font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; }
+#nppPinsMod .pTabs button:hover { color: #fff; }
+#nppPinsMod .pTabs button.on { color: #fff; background: rgba(255,255,255,.08); border-bottom-color: var(--np-accent, #fff); }
+#nppPinsMod .pTabs button[data-t="pinned"].on { color: #ffd166; border-bottom-color: #ffd166; }
+#nppPinsMod #nppRecent, #nppPinsMod #nppPinned { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 6px 8px 8px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#nppPinsMod .rHead { display: none; }
+#nppPinsMod[data-tab="pinned"] #nppRecent, #nppPinsMod[data-tab="recent"] #nppPinned { display: none !important; }
+#nppPinsMod[data-tab="pinned"] #nppPinned[hidden] { display: flex !important; }
+#nppPinsMod .rList { max-height: 90px; gap: 3px; overflow-y: auto; scrollbar-width: thin; }
+#nppPinsMod .rList:empty::before { content: "Nothing here yet"; font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.55); padding: 4px 2px; }
+#nppPinsMod .rList li { flex: 0 0 auto; }
+#nppPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 30px 0 8px !important; }
+#nppPinsMod .rList b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Fallback footer (modern interface without core) */
 #nppRecentFoot { position: fixed; left: 0; bottom: 0; width: var(--np-col-width, 240px); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
@@ -250,7 +267,8 @@
 
   /* ───────────────────────────────── mount: sidebar cards ───────────────────────────────── */
   function mountSidebarCards() {
-    if (hasCard()) return;
+    // Cards already exist: only continue if they need moving from #nppRecentFoot into the core's #nppFoot.
+    if (hasCard() && (!hasFoot() || $('#nppFoot #nppPinsMod'))) return;
     if (!document.body) return;
 
     let pinned = $('#nppPinned'), card = $('#nppRecent');
@@ -265,11 +283,25 @@
       document.body.appendChild(foot);
     }
     const clock = $('#nppBottom', foot);
-    if (card.parentNode !== foot || card.nextElementSibling !== (clock || null) || pinned.parentNode !== foot || pinned.nextElementSibling !== card) {
-      foot.insertBefore(card, clock || null);
-      foot.insertBefore(pinned, card);
+    let wrap = $('#nppPinsMod');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'nppPinsMod';
+      wrap.dataset.tab = 'recent';
+      wrap.innerHTML = '<div class="pTabs" role="tablist"><button type="button" role="tab" data-t="recent">Recent</button><button type="button" role="tab" data-t="pinned">Pinned</button></div>';
+      const sync = () => wrap.querySelectorAll('.pTabs button').forEach(b => { const on = b.dataset.t === wrap.dataset.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+      wrap.querySelector('.pTabs').addEventListener('click', (e) => {
+        const b = e.target.closest('button'); if (!b) return;
+        wrap.dataset.tab = b.dataset.t; sync();
+      });
+      wrap._sync = sync; sync();
     }
+    if (pinned.parentNode !== wrap) wrap.appendChild(pinned);
+    if (card.parentNode !== wrap) wrap.appendChild(card);
+    if (wrap.parentNode !== foot) foot.insertBefore(wrap, clock || null);
+    const tmp = $('#nppRecentFoot'); if (tmp && tmp !== foot && !tmp.children.length) tmp.remove();
     refreshCards();
+    if (!wrap._init) { wrap._init = 1; wrap.dataset.tab = pinned.hidden ? 'recent' : 'pinned'; if (wrap._sync) wrap._sync(); }
 
     // Refresh the "current page" tracking when the URL changes (some pages are single-page).
     const acct = (curUser() || '').toLowerCase();
@@ -337,7 +369,8 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true }); else mount();
 
   // If the core appears later (its footer element), swap to sidebar cards.
-  new MutationObserver(() => { if (!hasCard() && (hasFoot() || hasSidebar())) mount(); }).observe(document.documentElement, { childList: true, subtree: true });
+  // Also re-mount when the core's #nppFoot shows up after we fell back to #nppRecentFoot (fixed, overlaps the sidebar).
+  new MutationObserver(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nppFoot #nppPinsMod'))) mount(); }).observe(document.documentElement, { childList: true, subtree: true });
 
   // Record the current page. The core used to do this at 1.5s / 4s / 8s.
   [1500, 4000, 8000].forEach(ms => setTimeout(recordVisit, ms));

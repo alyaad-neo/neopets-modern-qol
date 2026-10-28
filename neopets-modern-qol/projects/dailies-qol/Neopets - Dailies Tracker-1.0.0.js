@@ -145,6 +145,18 @@
   /* ─── Qasalan Expellibox (NC Mall) ─── */
   const NC_CD_KEY = 'npp_nc_cd';
   const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
+  // Dailies only run on the main account (starred in the accounts drawer). No main set: run anyway.
+  // The page sets appInsightsUserName late, so whenUser() polls for it (like the core's accountGuard).
+  let acctUser = '';
+  const onMain = () => { const m = LSget('npp_main_account').toLowerCase(); return !m || (!!acctUser && acctUser.toLowerCase() === m); };
+  function whenUser(cb) {
+    let tries = 0;
+    const iv = setInterval(() => {
+      let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {}
+      if (u || ++tries > 100) { clearInterval(iv); acctUser = u || LSget('npqol_hud_username'); cb(); }
+    }, 100);
+  }
+  document.addEventListener('npp:main', () => { if (!onMain()) ['nppDaily', 'nppDailiesRoot'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); });
   function ncShare(name, ts, approx) {
     if (typeof GM_getValue !== 'function' || typeof GM_setValue !== 'function') return;
     try { const o = JSON.parse(GM_getValue(NC_CD_KEY, '{}') || '{}'); o[curUser().toLowerCase() + '|' + name] = { t: ts, a: approx ? 1 : 0 }; GM_setValue(NC_CD_KEY, JSON.stringify(o)); } catch {}
@@ -317,7 +329,7 @@
 
   /* ─── Premium-menu decoration helpers ─── */
   function decoratePremium(menu) {
-    if (!menu || !menu.querySelectorAll) return;
+    if (!menu || !menu.querySelectorAll || !onMain()) return;
     refreshCd(menu);
     updateSnow(menu, null);
   }
@@ -374,6 +386,7 @@
     } else if (snow) snow.remove();
   }
   function updateSnow(menu, btn) {
+    if (!onMain()) return;
     const st = snowagerState(), b = snowBadge(st);
     const el = menu && menu.querySelector('.nppSnowBadge:not(.ready)');
     if (el) { el.classList.toggle('asleep', st.asleep); el.textContent = b.text; el.title = b.title; }
@@ -587,9 +600,12 @@
   /* ─── Mount ─── */
   function mount() {
     if (document.body) {
-      mountStandalonePanel();
-      if (isModernInterface()) sidebarDailyCard();
-      bootWatch();
+      whenUser(() => {
+        if (!onMain()) return;
+        mountStandalonePanel();
+        if (isModernInterface()) sidebarDailyCard();
+        bootWatch();
+      });
     } else {
       document.addEventListener('DOMContentLoaded', mount, { once: true });
     }
@@ -598,6 +614,7 @@
 
   // If the Modern Interface shows up later (its boot mutates `data-np-modern-interface`), hide the standalone panel and mount the sidebar card.
   new MutationObserver(() => {
+    if (!onMain()) return;
     const modern = isModernInterface();
     if (modern && !document.getElementById('nppDaily')) sidebarDailyCard();
     const w = document.getElementById('nppDailiesRoot'); if (w) w.dataset.modern = modern ? '1' : '0';

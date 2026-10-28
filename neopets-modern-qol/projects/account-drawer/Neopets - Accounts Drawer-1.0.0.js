@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.0.2
+// @version      1.2.3
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -14,6 +14,8 @@
 // @exclude      *://www.neopets.com/neopass*
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @connect      account.neopets.com
 // ==/UserScript==
 
@@ -233,6 +235,242 @@
     } catch { go(); }
   }
 
+  /* ───────────────────────────────── All Pets ─────────────────────────────────
+     Passive and offline: ZERO extra network requests. Pets of the logged-in account are read from data the
+     Modern Interface patcher already stores (localStorage npqol_qr_data) and from its pet dock (.qrPet),
+     then cached per account in GM storage. Other accounts appear after you log in to them once. */
+  const AP_KEY = 'npp_allpets_v1';
+  const AP_TAGS = 'npp_allpets_tags_v1';
+  const gmGet = (k, d) => { try { const v = typeof GM_getValue === 'function' ? GM_getValue(k, null) : JSON.parse(LSget(k) || 'null'); return v && typeof v === 'object' ? v : d; } catch { return d; } };
+  const gmSet = (k, v) => { try { if (typeof GM_setValue === 'function') GM_setValue(k, v); else LSset(k, JSON.stringify(v)); } catch {} };
+  const apRead = () => gmGet(AP_KEY, {});
+  const apTags = () => gmGet(AP_TAGS, {});
+  const apOrdered = () => { const m = mainAcct().toLowerCase(); return allAccts().slice().sort((a, b) => (b.toLowerCase() === m) - (a.toLowerCase() === m)); };
+  const AP_I = (d) => '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  const AP_COPY = AP_I('<rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 3.5v-.4A1.6 1.6 0 0 0 8.9 1.5H3.6a1.6 1.6 0 0 0-1.6 1.6v5.3a1.6 1.6 0 0 0 1.6 1.6h.4"/>'), AP_PAGE = AP_I('<path d="M9 2.5h4.5V7M13.5 2.5L7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3"/>'), AP_ACTIVE = AP_I('<circle cx="8" cy="8" r="6"/><path d="M5.5 8.2l1.7 1.7 3.4-3.6"/>');
+  const ST = { uft: 'Up for Trade', perm: 'Permanent', maybe: 'Maybe' };
+
+  // Collect the current account's pets from the patcher's cached Quick Ref data (tolerant: any objects with a
+  // name plus species/colour/level found under data) and from the pet dock DOM (.qrPet name + image).
+  function apCollect() {
+    const me = curUser();
+    if (!validName(me)) return;
+    const byName = new Map();
+    const put = (o) => {
+      const name = String(o.name || '').trim();
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) return;
+      const k = name.toLowerCase(), p = byName.get(k) || { name, img: '', species: '', color: '', level: 0, active: false };
+      p.img = p.img || o.img || ''; p.species = p.species || o.species || ''; p.color = p.color || o.color || ''; p.level = p.level || o.level || 0; p.active = p.active || !!o.active;
+      byName.set(k, p);
+    };
+    let activeName = '';
+    try {
+      const d = JSON.parse(LSget('npqol_qr_data') || 'null');
+      const data = d && d.data;
+      if (data && data.active && data.active.name) activeName = String(data.active.name);
+      const walk = (v, depth) => {
+        if (!v || typeof v !== 'object' || depth > 3) return;
+        if (Array.isArray(v)) { v.forEach(x => walk(x, depth + 1)); return; }
+        // Quick Ref pets are { name, isActive, actions }; only data.active carries colour/species/level.
+        if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
+        else Object.values(v).forEach(x => walk(x, depth + 1));
+      };
+      walk(data, 0);
+    } catch {}
+    document.querySelectorAll('#qrDock .qrPet, .qrPet').forEach(el => {
+      const nm = el.querySelector('.qrPetName');
+      const name = nm ? nm.textContent.trim() : '';
+      let img = el.dataset.bg || '';
+      const im = !img && el.querySelector('img[src*="pets.neopets.com"]'); if (im) img = im.getAttribute('src') || '';
+      if (!img) { const bg = (el.getAttribute('style') || '') + (nm ? '' : ''); const m = bg.match(/url\(["']?([^"')]+pets\.neopets\.com[^"')]+)/i); if (m) img = m[1]; }
+      put({ name, img });
+    });
+    // Home page carousel (visited by the user): each .hp-carousel-nameplate carries data-species/-color/-level.
+    // Only pets already in this account's list get details, so a stray pet never enters the tracker.
+    document.querySelectorAll('.hp-carousel-nameplate[data-species]').forEach(el => {
+      const name = (el.dataset.name || el.textContent || '').trim();
+      if (!byName.has(name.toLowerCase())) return;
+      put({ name, species: el.dataset.species || '', color: el.dataset.color || '', level: parseInt(el.dataset.level, 10) || 0, img: el.dataset.petimage || '' });
+    });
+    if (activeName) put({ name: activeName, active: true });
+    if (!byName.size) return;
+    const c = apRead(), old = c[me];
+    // Keep colour/species/level learned earlier (each pet's details arrive while it is the active pet).
+    const prev = new Map(((old && old.pets) || []).map(p => [p.name.toLowerCase(), p]));
+    const pets = [...byName.values()].map(p => { const o = prev.get(p.name.toLowerCase()) || {}; return { ...p,
+      img: /^(https?:)?\/\/pets\.neopets\.com\//i.test(p.img) ? p.img.replace(/^\/\//, 'https://') : `https://pets.neopets.com/cpn/${encodeURIComponent(p.name)}/1/4.png`,
+      species: p.species || o.species || '', color: p.color || o.color || '', level: p.level || o.level || 0,
+      active: p.active || p.name.toLowerCase() === activeName.toLowerCase() }; });
+    const same = old && JSON.stringify(old.pets) === JSON.stringify(pets);
+    if (same && Date.now() - old.t < 10 * 60e3) return;
+    c[me] = { t: Date.now(), pets }; gmSet(AP_KEY, c);
+    if (apEl && apEl.classList.contains('open') && !same) apRender();
+  }
+
+  const AP_CSS = `
+#nppAP { --ap-bg: #15111f; --ap-panel: #1c1730; --ap-line: rgba(255,255,255,.1); --ap-text: #f4f0fb; --ap-mute: #b4acc8; --ap-acc: var(--np-accent, #ff8a1f); position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: stretch; justify-content: center; padding: 24px; background: rgba(8,6,16,.66); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: 'Outfit', system-ui, sans-serif; color: var(--ap-text); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s linear .2s; }
+#nppAP.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .2s ease; }
+#nppAP *, #nppAP *::before, #nppAP *::after { box-sizing: border-box; }
+#nppAP .apWin { width: min(1240px, 100%); display: flex; flex-direction: column; min-height: 0; background: var(--ap-bg); border: 1px solid var(--ap-line); border-radius: 20px; box-shadow: 0 24px 80px rgba(0,0,0,.6); overflow: hidden; position: relative; transform: scale(.97) translateY(8px); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+#nppAP.open .apWin { transform: none; }
+#nppAP .apTop { position: sticky; top: 0; z-index: 2; background: var(--ap-panel); border-bottom: 1px solid var(--ap-line); }
+#nppAP .apBar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 16px 16px 8px; }
+#nppAP .apBar h2 { margin: 0 8px 0 0; font-size: 20px; line-height: 28px; font-weight: 700; letter-spacing: -.01em; color: var(--ap-text); }
+#nppAP input, #nppAP select { font: inherit; font-size: 14px; line-height: 20px; color: var(--ap-text); background: rgba(255,255,255,.06); border: 1px solid var(--ap-line); border-radius: 10px; padding: 8px 12px; min-width: 0; }
+#nppAP input::placeholder { color: var(--ap-mute); }
+#nppAP select option { color: #111; }
+#nppAP .apSearch { flex: 1 1 200px; }
+#nppAP button, #nppAP a.apBtn { font: inherit; font-size: 13px; font-weight: 600; line-height: 20px; cursor: pointer; color: var(--ap-text); background: rgba(255,255,255,.07); border: 1px solid var(--ap-line); border-radius: 10px; padding: 7px 12px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, transform .15s, border-color .15s; }
+#nppAP button:hover, #nppAP a.apBtn:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.22); }
+#nppAP .apPrimary { background: var(--ap-acc); color: #1a1330; border-color: transparent; }
+#nppAP .apPrimary:hover { background: var(--ap-acc); filter: brightness(1.08); }
+#nppAP :focus-visible { outline: 2px solid #8ab4ff; outline-offset: 2px; }
+#nppAP svg { width: 16px; height: 16px; flex: none; }
+#nppAP .apIcon { width: 32px; height: 32px; padding: 0; }
+#nppAP .apRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 16px 12px; }
+#nppAP .apSeg { display: inline-flex; padding: 3px; gap: 2px; background: rgba(255,255,255,.06); border: 1px solid var(--ap-line); border-radius: 12px; max-width: 100%; overflow-x: auto; }
+#nppAP .apSeg button { border: 0; background: transparent; padding: 5px 12px; border-radius: 9px; color: var(--ap-mute); white-space: nowrap; }
+#nppAP .apSeg button:hover { background: rgba(255,255,255,.08); color: var(--ap-text); }
+#nppAP .apSeg button.on { background: var(--ap-acc); color: #1a1330; }
+#nppAP .apChip { padding: 4px 12px; font-size: 12px; border-radius: 999px; color: var(--ap-mute); }
+#nppAP .apChip.on { color: var(--ap-text); background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.3); }
+#nppAP .apStatus { padding: 8px 16px 0; font-size: 13px; color: var(--ap-mute); min-height: 28px; }
+#nppAP .apBody { flex: 1; overflow: auto; padding: 0 16px 24px; }
+#nppAP .apHead { display: flex; align-items: baseline; gap: 8px; margin: 24px 0 12px; font-weight: 700; font-size: 16px; line-height: 24px; flex-wrap: wrap; }
+#nppAP .apHead small { font-weight: 400; color: var(--ap-mute); font-size: 13px; }
+#nppAP .apGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+#nppAP .apCard { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; background: var(--ap-panel); border: 1px solid var(--ap-line); border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.25); transition: transform .18s ease, box-shadow .18s ease, border-color .18s; }
+#nppAP .apCard:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.4); border-color: rgba(255,255,255,.22); }
+#nppAP .apPic { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; border-radius: 12px; background: radial-gradient(circle at 50% 35%, #fff 0%, #ece6fb 60%, #d7cdf2 100%); overflow: hidden; }
+#nppAP .apPic img { width: 100%; height: 100%; object-fit: contain; display: block; }
+#nppAP .apNoImg { font-size: 44px; font-weight: 700; color: #6d5fa0; }
+#nppAP .apBadge { position: absolute; top: 20px; left: 20px; font-size: 11px; line-height: 16px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #fff; background: #5e5875; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+#nppAP .apBadge.uft { background: #f5a623; color: #2a1a00; } #nppAP .apBadge.perm { background: #22a45d; } #nppAP .apBadge.maybe { background: #3b82f6; }
+#nppAP .apCopy { position: absolute; top: 20px; right: 20px; width: 28px; height: 28px; padding: 0; border-radius: 8px; background: rgba(20,16,32,.75); }
+#nppAP .apInfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#nppAP .apInfo b { font-size: 15px; line-height: 20px; font-weight: 700; overflow-wrap: anywhere; }
+#nppAP .apInfo small { font-size: 12px; line-height: 16px; color: var(--ap-mute); }
+#nppAP .apCard select, #nppAP .apCard input { width: 100%; font-size: 13px; padding: 6px 10px; }
+#nppAP .apAct { display: flex; gap: 8px; }
+#nppAP .apAct .apIcon { flex: 1; }
+#nppAP .sk .apPic { background: linear-gradient(110deg, rgba(255,255,255,.05) 30%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.05) 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
+#nppAP .sk .apLine { height: 12px; border-radius: 6px; background: rgba(255,255,255,.07); }
+@keyframes apSk { to { background-position: -200% 0; } }
+#nppAP .apNone { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px; color: var(--ap-mute); border: 1px dashed rgba(255,255,255,.2); border-radius: 14px; }
+#nppAP .apEmpty { padding: 48px 16px; text-align: center; color: var(--ap-mute); font-size: 15px; }
+#nppAP .apToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 16px; border-radius: 999px; background: #2a2342; border: 1px solid rgba(255,255,255,.25); font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+#nppAP .apToast.on { opacity: 1; transform: translate(-50%, 0); }
+.nppAcctAllPets { width: 100%; margin: 8px 0 0; }
+@media (max-width: 600px) {
+  #nppAP { padding: 0; }
+  #nppAP .apWin { border-radius: 0; border: 0; width: 100%; }
+  #nppAP .apBar { padding: 12px 12px 6px; }
+  #nppAP .apBar h2 { flex: 1; font-size: 18px; }
+  #nppAP .apSearch { order: 5; flex-basis: 100%; }
+  #nppAP .apRow { flex-wrap: nowrap; overflow-x: auto; padding: 4px 12px 10px; }
+  #nppAP .apBody { padding: 0 12px 24px; }
+  #nppAP .apGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { #nppAP, #nppAP *, #nppAP .apWin { transition: none !important; animation: none !important; transform: none !important; } }
+`;
+
+  let apEl = null, apToastT = null;
+  const apState = { q: '', sort: 'account', tab: 'all', only: new Set() };
+  const fmtAgo = (t) => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
+  const apToast = (m) => { if (!apEl) return; const t = $('.apToast', apEl); t.textContent = m; t.classList.add('on'); clearTimeout(apToastT); apToastT = setTimeout(() => t.classList.remove('on'), 1800); };
+  const apStatus = (m) => { if (apEl) $('.apStatus', apEl).textContent = m || ''; };
+  async function apCopy(text, msg) {
+    try { await navigator.clipboard.writeText(text); apToast(msg); }
+    catch { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} ta.remove(); apToast(ok ? msg : 'Copy failed'); }
+  }
+
+  function openAllPets() {
+    apCollect();
+    if (!apEl) {
+      const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
+      apEl = document.createElement('div'); apEl.id = 'nppAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'All pets');
+      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets</h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><select class="apSort" aria-label="Sort"><option value="account">Sort: account</option><option value="name">Sort: name</option><option value="species">Sort: species</option></select><button type="button" class="apTrade apPrimary" title="Copy Up for Trade pets as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div></div><div class="apRow apChips"></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
+      document.body.appendChild(apEl);
+      apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
+      $('.apClose', apEl).addEventListener('click', closeAllPets);
+      $('.apSearch', apEl).addEventListener('input', (e) => { apState.q = e.target.value.trim().toLowerCase(); apRender(); });
+      $('.apSort', apEl).addEventListener('change', (e) => { apState.sort = e.target.value; apRender(); });
+      $('.apTrade', apEl).addEventListener('click', () => {
+        const c = apRead(), tags = apTags(), lines = [];
+        apOrdered().forEach(a => ((c[a] && c[a].pets) || []).forEach(p => { if ((tags[p.name.toLowerCase()] || {}).s === 'uft') lines.push(p.name + ' - ' + ([p.color, p.species].filter(Boolean).join(' ') || '?') + ' (' + a + ')'); }));
+        if (!lines.length) { apToast('No Up for Trade pets yet'); return; }
+        apCopy(lines.join('\n'), 'Copied ' + lines.length + ' pet' + (lines.length === 1 ? '' : 's'));
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && apEl.classList.contains('open')) { e.stopPropagation(); closeAllPets(); } }, true);
+      apEl.addEventListener('change', (e) => {
+        const el = e.target.closest('[data-tag]'); if (!el) return;
+        const k = el.dataset.tag, t = apTags(), cur = t[k] || {};
+        if (el.tagName === 'SELECT') cur.s = el.value; else cur.n = el.value.trim().slice(0, 60);
+        if (!cur.s && !cur.n) delete t[k]; else t[k] = cur;
+        gmSet(AP_TAGS, t); apRender();
+      });
+      apEl.addEventListener('click', (e) => {
+        const tab = e.target.closest('[data-tab]'); if (tab) { apState.tab = tab.dataset.tab; apRender(); return; }
+        const b = e.target.closest('button[data-act]'); if (!b) return;
+        const n = b.dataset.n, acct = b.dataset.a;
+        if (b.dataset.act === 'copy') apCopy(n, 'Copied ' + n);
+        else if (b.dataset.act === 'active') {
+          const a = [...document.querySelectorAll('#qrDock .qrOverlay a')].find(x => /make active/i.test(x.textContent) && (x.getAttribute('href') || '').toLowerCase().includes(n.toLowerCase()));
+          if (a) { b.disabled = true; a.click(); } else apStatus('Open your Quick Ref / pet menu on Neopets to make ' + n + ' active.');
+        } else if (b.dataset.act === 'switch') {
+          swapAccount(() => { b.disabled = true; }, () => { b.disabled = false; apStatus('Log in as ' + acct + ' in the new tab. Nothing happens automatically.'); });
+        }
+      });
+    }
+    document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'allpets' }));
+    apEl.classList.add('open');
+    apStatus('');
+    apRender();
+  }
+  function closeAllPets() { if (apEl) apEl.classList.remove('open'); }
+
+  function apRender() {
+    if (!apEl) return;
+    const c = apRead(), tags = apTags(), accts = apOrdered(), me = curUser().toLowerCase();
+    const tabs = [['all', 'All'], ['uft', 'UFT'], ['perm', 'Permanent'], ['maybe', 'Maybe'], ['none', 'Untagged']];
+    $('.apTabs', apEl).innerHTML = tabs.map(t => `<button type="button" role="tab" aria-selected="${apState.tab === t[0]}" class="${apState.tab === t[0] ? 'on' : ''}" data-tab="${t[0]}">${t[1]}</button>`).join('');
+    const chips = $('.apChips', apEl);
+    chips.innerHTML = accts.map(n => `<button type="button" class="apChip${!apState.only.size || apState.only.has(n) ? ' on' : ''}" data-n="${esc(n)}">${esc(n)}</button>`).join('');
+    chips.onclick = (e) => { const b = e.target.closest('.apChip'); if (!b) return; const n = b.dataset.n; apState.only.has(n) ? apState.only.delete(n) : apState.only.add(n); apRender(); };
+    const tagOf = (p) => tags[p.name.toLowerCase()] || {};
+    const match = (p) => {
+      const s = tagOf(p).s || '';
+      if (apState.tab === 'none' ? s : apState.tab !== 'all' && s !== apState.tab) return false;
+      return !apState.q || [p.name, p.species, p.color, tagOf(p).n || '', ST[s] || ''].join(' ').toLowerCase().includes(apState.q);
+    };
+    const card = (p, a) => {
+      const mine = a.toLowerCase() === me, t = tagOf(p), sub = [p.color, p.species].filter(Boolean).join(' ') + (p.level ? (p.color || p.species ? ' · ' : '') + 'Lv ' + p.level : '');
+      const tip = mine ? 'Make ' + p.name + ' your active pet' : 'Switch to ' + a;
+      return `<div class="apCard"><span class="apBadge ${t.s || ''}">${esc(ST[t.s] || 'Untagged')}</span><button type="button" class="apCopy" data-act="copy" data-n="${esc(p.name)}" title="Copy name" aria-label="Copy ${esc(p.name)}">${AP_COPY}</button><div class="apPic">${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy">` : `<span class="apNoImg">${esc(p.name.charAt(0).toUpperCase())}</span>`}</div><div class="apInfo"><b>${esc(p.name)}${p.active ? ' ●' : ''}</b><small>${esc(sub || '—')}</small><small>${esc(a)}</small></div><select data-tag="${esc(p.name.toLowerCase())}" aria-label="Status"><option value="">Untagged</option>${Object.keys(ST).map(k => `<option value="${k}"${t.s === k ? ' selected' : ''}>${ST[k]}</option>`).join('')}</select><input type="text" data-tag="${esc(p.name.toLowerCase())}" value="${esc(t.n || '')}" maxlength="60" placeholder="Note…" aria-label="Note"><div class="apAct"><a class="apBtn apIcon" href="https://www.neopets.com/~${encodeURIComponent(p.name)}" target="_blank" rel="noopener" title="Pet Page" aria-label="Pet Page for ${esc(p.name)}">${AP_PAGE}</a>${mine ? (p.active ? '' : `<button type="button" class="apIcon" data-act="active" data-n="${esc(p.name)}" title="${esc(tip)}" aria-label="Swap Active: ${esc(p.name)}">${AP_ACTIVE}</button>`) : `<button type="button" class="apIcon" data-act="switch" data-a="${esc(a)}" title="${esc(tip)}" aria-label="Switch to account ${esc(a)}">${USERS_ICON}</button>`}</div></div>`;
+    };
+    const shown = accts.filter(a => !apState.only.size || apState.only.has(a));
+    let html = '';
+    if (apState.sort === 'account') {
+      shown.forEach(a => {
+        const e = c[a], pets = e ? e.pets.filter(match) : [];
+        const star = a.toLowerCase() === mainAcct().toLowerCase() ? ' ★' : '';
+        if (!e) html += `<div class="apHead">${esc(a)}${star}<small>not seen yet</small></div><div class="apGrid"><div class="apCard sk" aria-hidden="true"><div class="apPic"></div><div class="apLine" style="width:60%"></div><div class="apLine" style="width:40%"></div></div><div class="apNone" style="grid-column:span 2">Log in to this account once to add its pets. <button type="button" data-act="switch" data-a="${esc(a)}" title="Switch to ${esc(a)}">${USERS_ICON}<span>Switch account</span></button></div></div>`;
+        else html += `<div class="apHead">${esc(a)}${star}<small>${pets.length}${pets.length !== e.pets.length ? ' / ' + e.pets.length : ''} pets · last seen ${fmtAgo(e.t)}</small></div>` + (pets.length ? `<div class="apGrid">${pets.map(p => card(p, a)).join('')}</div>` : '');
+      });
+    } else {
+      const all = [];
+      shown.forEach(a => (c[a] ? c[a].pets : []).forEach(p => match(p) && all.push([p, a])));
+      const k = apState.sort === 'species' ? (x) => (x[0].species + ' ' + x[0].name).toLowerCase() : (x) => x[0].name.toLowerCase();
+      all.sort((x, y) => k(x) < k(y) ? -1 : k(x) > k(y) ? 1 : 0);
+      html = all.length ? `<div class="apHead">${all.length} pets</div><div class="apGrid">${all.map(x => card(x[0], x[1])).join('')}</div>` : '';
+    }
+    $('.apBody', apEl).innerHTML = html || '<div class="apEmpty">No pets match. Try another filter, or clear the search.</div>';
+  }
+
+  // Passive collection: local reads only (no network). Runs shortly after load and when the data changes.
+  setTimeout(apCollect, 2500); setTimeout(apCollect, 9000);
+  setInterval(() => { if (!document.hidden) apCollect(); }, 30000);
+
   /* ───────────────────────────────── drawer ───────────────────────────────── */
   let MODE = 'standalone';
   const detectMode = () => {
@@ -253,7 +491,7 @@
       '</div>' +
       '<div class="nppAcctHint"></div>' +
       '<div class="nppAcctBody">' +
-        '<section class="nppAcctSec"><div class="nppAcctSecHead"><span>NeoPass</span><em class="nppCntNp"></em></div><div class="nppAcctList" data-list="np"></div><div class="nppAcctNote" data-note="np"></div><button type="button" class="nppAcctSync">Sync from NeoPass</button><div class="nppAcctMsg" data-msg="np"></div></section>' +
+        '<section class="nppAcctSec"><div class="nppAcctSecHead"><span>NeoPass</span><em class="nppCntNp"></em></div><div class="nppAcctList" data-list="np"></div><div class="nppAcctNote" data-note="np"></div><button type="button" class="nppAcctSync">Sync from NeoPass</button><button type="button" class="nppAcctSync nppAcctAllPets">All Pets</button><div class="nppAcctMsg" data-msg="np"></div></section>' +
         '<section class="nppAcctSec" data-sec="ex" hidden><div class="nppAcctSecHead"><span>Additional accounts</span><em class="nppCntEx"></em></div><div class="nppAcctList" data-list="ex"></div></section>' +
         '<div class="nppAcctAddWrap"><button type="button" class="nppAcctAddBtn">+ Add account</button><form class="nppAcctAdd" autocomplete="off" hidden><input type="text" placeholder="Account name…" aria-label="Account name" spellcheck="false"><button type="submit" class="nppAcctAddOk">Add</button><button type="button" class="nppAcctAddCancel" aria-label="Cancel" title="Cancel">×</button></form><div class="nppAcctMsg" data-msg="ex"></div></div>' +
       '</div>' +
@@ -342,7 +580,8 @@
       if (logoutLink) logoutLink.addEventListener('click', () => clearNotifCaches());
     }
 
-    const syncBtn = q('.nppAcctSync');
+    q('.nppAcctAllPets').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); setOpen(false); openAllPets(); });
+    const syncBtn = q('.nppAcctSync:not(.nppAcctAllPets)');
     syncBtn.addEventListener('click', async (e) => {
       e.preventDefault(); e.stopPropagation();
       if (syncBtn.disabled) return;

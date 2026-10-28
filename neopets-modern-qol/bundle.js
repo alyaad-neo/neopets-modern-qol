@@ -1,10 +1,10 @@
-// bundle.js — builds the single upload file from the three source projects.
+// bundle.js — builds the single upload file from the four source projects.
 //
 // Usage (run from this folder):
 //   node bundle.js
 //
-// Edit features in projects/modern-interface-patcher, projects/account-drawer,
-// or projects/page-pins-qol. Never edit dist/. Bump the @version in
+// Edit features in projects/dailies-qol, projects/modern-interface-patcher,
+// projects/account-drawer, or projects/page-pins-qol. Never edit dist/. Bump the @version in
 // projects/_bundle/00-header.js whenever a source project changes.
 
 const fs = require('fs');
@@ -16,6 +16,8 @@ const headerFile = path.join(root, 'projects', '_bundle', '00-header.js');
 const outFile = path.join(root, 'dist', 'Neopets - Modern QOL.user.js');
 
 const sources = [
+  // dailies first so W.__nppDailies exists before the patcher looks for it.
+  ['dailies-qol', path.join(root, 'projects', 'dailies-qol')],
   ['modern-interface-patcher', path.join(root, 'projects', 'modern-interface-patcher')],
   ['account-drawer', path.join(root, 'projects', 'account-drawer')],
   ['page-pins-qol', path.join(root, 'projects', 'page-pins-qol')]

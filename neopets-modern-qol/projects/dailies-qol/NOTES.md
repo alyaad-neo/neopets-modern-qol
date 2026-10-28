@@ -8,7 +8,7 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 
 ## Type
 
-- Single-file. Edit and upload: `Neopets - Dailies Tracker-1.0.0.js`
+- Single-file source, bundled into `dist/Neopets - Modern QOL.user.js` by `node bundle.js`. Do not upload it separately.
 
 ## Pages it runs on
 
@@ -38,6 +38,8 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 - localStorage keys: `npp_cd_v1`, `npp_cd_seen_v1`, `npp_ack_v1`, `npp_symol_v1`, `npp_symol_try`, `npp_symol_status`, `npp_tarla_v1`, `npp_nc_cd`
 
 ## Don't touch
+
+- `onMain()` gates mount, the observer, `decoratePremium` and `updateSnow`: only the main account (`npp_main_account`) gets dailies. Side accounts see nothing and record no cooldowns. Mount waits for `appInsightsUserName` via `whenUser()`; until then `onMain()` is false.
 
 - `isModernInterface()` checks `root.dataset.npModernInterface === '1'` — do not change this detection.
 - `W.__nppDailies` is a public API consumed by the core. Keep it in sync if adding features.
