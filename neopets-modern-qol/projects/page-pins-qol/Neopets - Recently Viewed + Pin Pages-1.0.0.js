@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.3
+// @version      1.0.4
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -348,7 +348,7 @@
       wrap.dataset.stack = String(Math.min(3, n));
     };
     restack();
-    new MutationObserver(restack).observe(document.documentElement, { childList: true, subtree: true });
+    watchDoc(restack);
 
     // When the modern interface / core appear, swap to sidebar cards.
     const swapToSidebar = () => {
@@ -358,10 +358,18 @@
         mountSidebarCards();
       }
     };
-    new MutationObserver(swapToSidebar).observe(document.documentElement, { childList: true, subtree: true });
+    watchDoc(swapToSidebar);
   }
 
   /* ───────────────────────────────── boot ───────────────────────────────── */
+  // One shared whole-document observer for the idempotent mount/check callbacks below (rAF-throttled).
+  const docFns = []; let docRaf = 0; let docMo = null;
+  function watchDoc(fn) {
+    docFns.push(fn);
+    if (docMo) return;
+    docMo = new MutationObserver(() => { if (docRaf) return; docRaf = requestAnimationFrame(() => { docRaf = 0; docFns.slice().forEach(f => f()); }); });
+    docMo.observe(document.documentElement, { childList: true, subtree: true });
+  }
   function mount() {
     if (hasFoot() || hasSidebar()) mountSidebarCards();
     else mountStandalone();
@@ -370,7 +378,7 @@
 
   // If the core appears later (its footer element), swap to sidebar cards.
   // Also re-mount when the core's #nppFoot shows up after we fell back to #nppRecentFoot (fixed, overlaps the sidebar).
-  new MutationObserver(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nppFoot #nppPinsMod'))) mount(); }).observe(document.documentElement, { childList: true, subtree: true });
+  watchDoc(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nppFoot #nppPinsMod'))) mount(); });
 
   // Record the current page. The core used to do this at 1.5s / 4s / 8s.
   [1500, 4000, 8000].forEach(ms => setTimeout(recordVisit, ms));

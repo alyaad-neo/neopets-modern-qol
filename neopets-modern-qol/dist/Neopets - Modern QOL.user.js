@@ -4056,9 +4056,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     tabEl = toggle;
 
     // React to the dailies button appearing later.
-    new MutationObserver(() => {
+    watchDoc(() => {
       wrap.classList.toggle('aboveDailies', !!document.getElementById('nppDailiesRoot'));
-    }).observe(document.documentElement, { childList: true, subtree: true });
+    });
 
     setInterval(() => { try { api.render(); } catch {} }, 4000);   // (in case the account list changes elsewhere)
   }
@@ -4162,10 +4162,18 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (MODE === 'modern') mountModern();
     else mountStandalone();
   }
+  // One shared whole-document observer for the idempotent mount/check callbacks below (rAF-throttled).
+  const docFns = []; let docRaf = 0; let docMo = null;
+  function watchDoc(fn) {
+    docFns.push(fn);
+    if (docMo) return;
+    docMo = new MutationObserver(() => { if (docRaf) return; docRaf = requestAnimationFrame(() => { docRaf = 0; docFns.slice().forEach(f => f()); }); });
+    docMo.observe(document.documentElement, { childList: true, subtree: true });
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true }); else mount();
 
   // If the main script arrives later (e.g. on a client-side navigation), re-mount in modern mode.
-  new MutationObserver(() => {
+  watchDoc(() => {
     if ($('#nppAcctTab') || !document.getElementById('npUser')) return;
     const floating = document.getElementById('nppStandaloneAcct');
     const oldDrawer = floating ? drawerEl : null;
@@ -4173,7 +4181,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!mountModern()) return;
     if (oldDrawer) oldDrawer.remove();
     if (floating) floating.remove();
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  });
 })();
 
 // ---------- page-pins-qol / Neopets - Recently Viewed + Pin Pages-1.0.0.js ----------
@@ -4510,7 +4518,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       wrap.dataset.stack = String(Math.min(3, n));
     };
     restack();
-    new MutationObserver(restack).observe(document.documentElement, { childList: true, subtree: true });
+    watchDoc(restack);
 
     // When the modern interface / core appear, swap to sidebar cards.
     const swapToSidebar = () => {
@@ -4520,10 +4528,18 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         mountSidebarCards();
       }
     };
-    new MutationObserver(swapToSidebar).observe(document.documentElement, { childList: true, subtree: true });
+    watchDoc(swapToSidebar);
   }
 
   /* ───────────────────────────────── boot ───────────────────────────────── */
+  // One shared whole-document observer for the idempotent mount/check callbacks below (rAF-throttled).
+  const docFns = []; let docRaf = 0; let docMo = null;
+  function watchDoc(fn) {
+    docFns.push(fn);
+    if (docMo) return;
+    docMo = new MutationObserver(() => { if (docRaf) return; docRaf = requestAnimationFrame(() => { docRaf = 0; docFns.slice().forEach(f => f()); }); });
+    docMo.observe(document.documentElement, { childList: true, subtree: true });
+  }
   function mount() {
     if (hasFoot() || hasSidebar()) mountSidebarCards();
     else mountStandalone();
@@ -4532,7 +4548,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
   // If the core appears later (its footer element), swap to sidebar cards.
   // Also re-mount when the core's #nppFoot shows up after we fell back to #nppRecentFoot (fixed, overlaps the sidebar).
-  new MutationObserver(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nppFoot #nppPinsMod'))) mount(); }).observe(document.documentElement, { childList: true, subtree: true });
+  watchDoc(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nppFoot #nppPinsMod'))) mount(); });
 
   // Record the current page. The core used to do this at 1.5s / 4s / 8s.
   [1500, 4000, 8000].forEach(ms => setTimeout(recordVisit, ms));

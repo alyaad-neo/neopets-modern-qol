@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.2.3
+// @version      1.2.4
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -722,9 +722,9 @@
     tabEl = toggle;
 
     // React to the dailies button appearing later.
-    new MutationObserver(() => {
+    watchDoc(() => {
       wrap.classList.toggle('aboveDailies', !!document.getElementById('nppDailiesRoot'));
-    }).observe(document.documentElement, { childList: true, subtree: true });
+    });
 
     setInterval(() => { try { api.render(); } catch {} }, 4000);   // (in case the account list changes elsewhere)
   }
@@ -828,10 +828,18 @@
     if (MODE === 'modern') mountModern();
     else mountStandalone();
   }
+  // One shared whole-document observer for the idempotent mount/check callbacks below (rAF-throttled).
+  const docFns = []; let docRaf = 0; let docMo = null;
+  function watchDoc(fn) {
+    docFns.push(fn);
+    if (docMo) return;
+    docMo = new MutationObserver(() => { if (docRaf) return; docRaf = requestAnimationFrame(() => { docRaf = 0; docFns.slice().forEach(f => f()); }); });
+    docMo.observe(document.documentElement, { childList: true, subtree: true });
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true }); else mount();
 
   // If the main script arrives later (e.g. on a client-side navigation), re-mount in modern mode.
-  new MutationObserver(() => {
+  watchDoc(() => {
     if ($('#nppAcctTab') || !document.getElementById('npUser')) return;
     const floating = document.getElementById('nppStandaloneAcct');
     const oldDrawer = floating ? drawerEl : null;
@@ -839,5 +847,5 @@
     if (!mountModern()) return;
     if (oldDrawer) oldDrawer.remove();
     if (floating) floating.remove();
-  }).observe(document.documentElement, { childList: true, subtree: true });
+  });
 })();
