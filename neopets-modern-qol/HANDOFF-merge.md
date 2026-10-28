@@ -57,7 +57,7 @@ Do these one group at a time. Run `node bundle.js` after each, and check for lef
 
 **Header right side.** DONE (bundle 5.5.2: base .right markup/CSS, NST clock, search toggle and / key removed; patcher .right hide removed). The patcher hides the base `.right`: `#npxSearchToggle`, `#npxSearch`, `#npxNst`, `#npxBell`, `#npxNews`. Aly's versions are `#nppTools` (search), `.npp-clock` and the patcher's New Features link in Community. Delete the base markup, its CSS and its JS (search toggle, `/` key, NST timer), and the patcher's `.right { display: none }`.
 
-**Header CSS.** The patcher's `SHADOW_CSS` overrides the base top-bar CSS inside the shadow root (`.btn`, `.menu`, `.left`, `.inner`, carets, media queries). Fold the winning values into the base CSS, then delete both the losing rules and the override.
+**Header CSS.** DONE (bundle 5.5.3: base-selector rules folded into base barStyle with their !important flags kept; SHADOW_CSS now holds only npp-*/edit-row/hamburger rules; Quests link restored in base .left). The patcher's `SHADOW_CSS` overrides the base top-bar CSS inside the shadow root (`.btn`, `.menu`, `.left`, `.inner`, carets, media queries). Fold the winning values into the base CSS, then delete both the losing rules and the override.
 
 **Sidebar and HUD.** Patcher NOTES say many `#npHud` rules exist 3 to 5 times: the base CSS, then overrides including "sidebar v4.1.2", "top half tidy 4.1.11" and "sidebar round 5/6/7". Keep only the final computed result for each element. Watch for the base's inline `!important` styles, such as the `PET_IMG_STYLE` constant.
 
@@ -99,15 +99,12 @@ After stage 2, tell Aly what to test (list below). Report and stop.
 6. NC Mall page, login/logout pages (UI stripped), popups.
 7. DevTools Network tab: no new background requests to neopets.com while idle.
 
-## Current state (2026-10-27)
+## Current state (2026-10-28)
 
-- Bundle 5.4.34: patcher 4.1.28, dailies 1.0.6, account-drawer 1.3.19, page-pins 1.0.6.
-- Recent patcher changes:
-  - watch list removed
-  - patcher's own notification drawer removed
-  - Neopets' bell moved into the header (`setupBell`)
-  - base alert fetch muted (`muteVendorAlerts`)
-  - frosted dropdowns, using `.npp-prembg` for the scrolling Premium menu
-  - "Edit links" text row
-  - shop price highlight fix and shopkeeper click lock
-- Patcher NOTES.md "Lessons learned" entries 4.1.24 to 4.1.28 have the details.
+- Stage 0 and 1 done. Stage 2: Alerts bell, Header right side, Header CSS are DONE and tested. Next: **Sidebar and HUD**.
+- Bundle 5.5.3: modern-interface 4.2.3, patcher 4.1.31, dailies 1.0.6, account-drawer 1.3.20, page-pins 1.0.6.
+- Start a new chat with: "Read neopets-modern-qol/HANDOFF-merge.md and AGENTS.md, then do the Sidebar and HUD group of stage 2."
+- Lessons from this run:
+  - Before deleting base markup, grep the patcher for code that MOVES it (e.g. patchShadow moved the Quest Log link into .left). Quests was lost in 5.5.2 and restored in 5.5.3.
+  - Folded CSS keeps the patcher's !important flags so precedence is unchanged. Strip them in stage 3.
+  - Git Bash heredocs mangle backslashes. Write node edit scripts with the Write tool into the scratchpad.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.30
+// @version      4.1.31
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1010,21 +1010,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
   const SHADOW_CSS = `
 @font-face { font-family: 'CafeteriaBlack'; src: url('https://images.neopets.com/js/fonts/cafeteria-black.otf') format('opentype'); font-display: swap; }
-.bar { position: relative; }
 .npp-clock { position: absolute; top: 50%; right: calc(14px + var(--npp-ic, 44px) * 2 + var(--npp-ig, 10px) + 12px); transform: translateY(-50%); z-index: 2; font: 400 20px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; pointer-events: none; white-space: nowrap; transition: opacity .15s ease; }
 :host(.npp-search-open) .npp-clock { opacity: 0; }
-.inner { grid-template-columns: 1fr !important; padding: 0 18px 0 var(--np-col-width, 240px) !important; }
-.left { grid-column: 1 !important; justify-content: center !important; gap: 2px !important; }
 #menu-premium { max-height: calc(100vh - 100px); overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
 .menu a .npp-cd { margin-left: auto; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; }
 .menuHead { position: sticky; top: -8px; z-index: 1; margin: 0 -8px; padding: 9px 20px 4px; background: rgba(14,12,22,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 #menu-premium::-webkit-scrollbar { width: 8px; }
 #menu-premium::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
-.btn { position: relative; gap: 10px !important; padding: 9px 15px !important; border-radius: 999px !important; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; -webkit-text-stroke: var(--npp-nav-stroke, 0 transparent); paint-order: stroke fill; transition: background .18s, box-shadow .18s !important; }
-.btn, .btn span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 24px !important; font-weight: 400 !important; letter-spacing: .01em; }
-.btn span { display: inline !important; }
-.btn img { width: 30px !important; height: 30px !important; filter: var(--npp-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.3))); }
-.btn:hover { background: var(--npp-nav-hover, rgba(255,255,255,.2)) !important; box-shadow: inset 0 0 0 1px var(--npp-nav-ring, rgba(255,255,255,.25)); }
 .npp-search { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); z-index: 2; width: 34px; height: 34px; margin: 0; pointer-events: auto; transition: width .45s cubic-bezier(.22, 1, .36, 1); }
 .npp-search:hover, .npp-search:focus-within { width: 232px; }
 .npp-search input { box-sizing: border-box; width: 100%; height: 34px; padding: 0 16px 0 40px; border: 1px solid transparent; border-radius: 999px; background: transparent; box-shadow: none; color: var(--npp-search-fg-auto, #fff); font: 400 17px 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-shadow: var(--npp-search-ts-auto, 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)); outline: 0; cursor: pointer; text-overflow: clip; transition: background .3s, border-color .3s, box-shadow .3s; }
@@ -1043,20 +1035,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .npp-logo img { height: 43px; max-width: 215px; display: block; filter: var(--npp-logo-filter, none); }
 .npp-logo span { display: none; font: 400 32px 'CafeteriaBlack', Georgia, serif; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 .npp-logo.txt span { display: inline; }
-.menu::before { content: ""; position: absolute; inset: -24px; z-index: -1; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--npLeftBarImg, none) center / cover no-repeat, var(--npLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); clip-path: inset(24px round var(--npp-menu-radius, 0 0 16px 16px)); pointer-events: none; }
-.btn.cat::before { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; }
-.menu { min-width: 264px !important; padding: 8px !important; overflow: visible; border: 1px solid rgba(255,255,255,.2) !important; border-radius: var(--npp-menu-radius, 0 0 16px 16px) !important; background: rgba(14,12,22,.2) !important; -webkit-backdrop-filter: blur(18px) saturate(1.2) !important; backdrop-filter: blur(18px) saturate(1.2) !important; box-shadow: 0 18px 44px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08) !important; margin-top: var(--npp-menu-lift, 0px); }
-.menu::after { content: ""; display: var(--npp-menu-caret, none); position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: rgba(40,36,52,.92); border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); border-radius: 3px 0 0 0; pointer-events: none; }
-.menu a { gap: 14px !important; margin-bottom: 2px; padding: 11px 14px !important; border-radius: 12px !important; transition: background .18s, transform .18s cubic-bezier(.3,1.4,.5,1) !important; }
-.menu a, .menu a span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 21px !important; font-weight: 400 !important; color: #fff !important; text-shadow: 0 2px 4px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.9) !important; }
-.menu a img { width: 28px !important; height: 28px !important; filter: drop-shadow(0 2px 3px rgba(0,0,0,.7)); transition: transform .22s cubic-bezier(.3,1.6,.5,1); }
-.menu a:hover { background: linear-gradient(90deg, var(--np-accent-hover, rgba(255,255,255,.14)), var(--np-accent-soft, rgba(255,255,255,.04))), rgba(255,255,255,.07) !important; transform: translateX(3px); }
-.menu a:hover img { transform: scale(1.14) rotate(-5deg); }
-.menu a:hover span { color: #fff !important; }
-.menu .menuSep { margin: 6px 4px !important; background: rgba(255,255,255,.1) !important; }
-.menu .menuTrash, .menu .menuAddRow { display: none !important; }
-.menu.np-edit-mode .menuTrash { display: flex !important; opacity: 1 !important; }
-.menu.np-edit-mode .menuAddRow { display: block !important; }
 .np-menu-edit-btn { position: relative; display: flex; align-items: center; justify-content: flex-start; gap: 8px; box-sizing: border-box; width: 100%; height: auto; margin: 6px 0 0; padding: 9px 14px 5px; border: 0; border-top: 1px solid rgba(255,255,255,.14); border-radius: 0; background: transparent; color: rgba(255,255,255,.78); font: 600 13px/1 'Outfit', system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.85); cursor: pointer; transition: color .15s; }
 .np-menu-edit-btn svg { width: 13px; height: 13px; flex: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
 .np-menu-edit-btn:hover, .np-menu-edit-btn.active { color: #fff; }
@@ -1075,11 +1053,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .menu a.nppMainRow span { font-size: 15px !important; }
 .nppAlertRow svg { color: #ffd27a !important; }
 .btn.npp-alert-on::after { content: ""; position: absolute; top: 6px; left: 37px; width: 9px; height: 9px; border-radius: 50%; background: #2fd873; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 1px 3px rgba(0,0,0,.35); pointer-events: none; z-index: 1; }
-.menu .menuAddBtns button.menuAddOk { color: var(--npp-accent-fg, #1a1330); }
 @media (max-width: 1500px) { .btn.npp-alert-on::after { left: 29px; } }
 @media (max-width: 1250px) { .btn.npp-alert-on::after { left: 26px; } }
-@media (max-width: 1500px) { .btn { padding: 9px 10px !important; } .btn, .btn span { font-size: 21px !important; } .btn img { width: 26px !important; height: 26px !important; } }
-@media (max-width: 1250px) { .btn { padding: 8px 7px !important; } .btn, .btn span { font-size: 19px !important; } }
 @media (max-width: 900px) { :host(:not(.nppHam)) .inner { padding-left: 12px !important; padding-right: 12px !important; } :host(:not(.nppHam)) .npp-logo { display: none; } }
 @media (max-width: 1100px) {
   :host(.nppHam) .npp-clock { display: none !important; }
@@ -1102,7 +1077,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   :host(.nppHam) .inner { padding-left: 0 !important; padding-right: 0 !important; }
 }
 @media (max-width: 420px) { :host(.nppHam) .npp-logo img { max-width: clamp(70px, calc(100vw - 190px), 110px); } }
-@media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } }
 `;
 
   const EDITOR_CSS = `
@@ -1590,8 +1564,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (/[?&]type=shop\b/i.test(location.search)) st.textContent += '\n.menu { display: none !important; }';
     sr.appendChild(st);
 
-    const q = sr.querySelector('a[href*="questlog"]'), left = sr.querySelector('.left');
-    if (q && left) { q.insertAdjacentHTML('beforeend', '<span>Quests</span>'); left.appendChild(q); }
 
     ['community', 'games', 'explore', 'shop'].forEach(id => {
       const menu = sr.getElementById('menu-' + id);

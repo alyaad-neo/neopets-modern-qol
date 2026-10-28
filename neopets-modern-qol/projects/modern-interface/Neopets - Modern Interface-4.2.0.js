@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.2
+// @version      4.2.3
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -1049,50 +1049,43 @@
     .left > *, .menu{ pointer-events:auto; }
     .inner{
       display:grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns:1fr !important;
       align-items:center; width:100%;
-      padding:0 10px; gap:10px;
+      padding:0 18px 0 var(--np-col-width, 240px) !important; gap:10px;
     }
-    .left{ grid-column:2; display:flex; align-items:center; gap:8px; justify-content:center; }
+    .left{ grid-column:1 !important; display:flex; align-items:center; gap:2px !important; justify-content:center !important; }
 
     .btn{
-      display:flex; align-items:center; gap:8px;
-      text-decoration:none; cursor:pointer; user-select:none;
-      padding:4px 8px; border-radius:10px;
-      color:var(--np-accent-text, var(--np-accent, #dcb8ff)); font-weight:700;
-      text-shadow:0 1px 3px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.5);
-      transition: background .15s ease;
+      display:flex; align-items:center; text-decoration:none; cursor:pointer; user-select:none;
+      position: relative; gap: 10px !important; padding: 9px 15px !important; border-radius: 999px !important; color: var(--npp-nav-fg, #fff) !important; text-shadow: var(--npp-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; -webkit-text-stroke: var(--npp-nav-stroke, 0 transparent); paint-order: stroke fill; transition: background .18s, box-shadow .18s !important;
     }
-    .btn:hover{ background:var(--np-accent-bg, var(--np-accent-bg)); }
-    .btn img{ width:34px; height:34px; display:block; }
+    .btn, .btn span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 24px !important; font-weight: 400 !important; letter-spacing: .01em; }
+    .btn span { display: inline !important; }
+    .btn:hover{ background: var(--npp-nav-hover, rgba(255,255,255,.2)) !important; box-shadow: inset 0 0 0 1px var(--npp-nav-ring, rgba(255,255,255,.25)); }
+    .btn img{ display:block; width: 30px !important; height: 30px !important; filter: var(--npp-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.3))); }
+    .btn.cat::before { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; }
     .btn.fight img{ width:68px; height:68px; }
 
     .menu{
       position:fixed; top:${BAR_H + 6}px; left:0; display:none;
-      background:rgba(20,14,32,.96);
-      backdrop-filter: blur(var(--np-blur, 8px));
-      -webkit-backdrop-filter: blur(var(--np-blur, 8px));
-      border:1px solid var(--np-line, rgba(255,255,255,.16));
-      border-radius:var(--np-radius, 14px);
-      box-shadow:0 10px 28px rgba(0,0,0,.45);
-      padding:8px; min-width:220px; max-width:min(640px,92vw);
-      z-index:2000;
+      max-width:min(640px,92vw); z-index:2000;
+      min-width: 264px !important; padding: 8px !important; overflow: visible; border: 1px solid rgba(255,255,255,.2) !important; border-radius: var(--npp-menu-radius, 0 0 16px 16px) !important; background: rgba(14,12,22,.2) !important; -webkit-backdrop-filter: blur(18px) saturate(1.2) !important; backdrop-filter: blur(18px) saturate(1.2) !important; box-shadow: 0 18px 44px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08) !important; margin-top: var(--npp-menu-lift, 0px);
     }
+    .menu::before { content: ""; position: absolute; inset: -24px; z-index: -1; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--npLeftBarImg, none) center / cover no-repeat, var(--npLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); clip-path: inset(24px round var(--npp-menu-radius, 0 0 16px 16px)); pointer-events: none; }
+    .menu::after { content: ""; display: var(--npp-menu-caret, none); position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: rgba(40,36,52,.92); border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); border-radius: 3px 0 0 0; pointer-events: none; }
     .menu a{
-      display:flex; align-items:center; gap:10px;
-      padding:8px 10px; border-radius:var(--np-radius-sm, 10px);
-      text-decoration:none; color:var(--np-accent-text, var(--np-accent, #dcb8ff)); font-weight:600;
+      display:flex; align-items:center; text-decoration:none;
+      gap: 14px !important; margin-bottom: 2px; padding: 11px 14px !important; border-radius: 12px !important; transition: background .18s, transform .18s cubic-bezier(.3,1.4,.5,1) !important;
     }
-    .menu a:hover{ background:var(--np-accent-bg, var(--np-accent-bg)); color:#fff; }
-    .menu a img{ width:24px; height:24px; display:block; flex:0 0 auto; }
+    .menu a, .menu a span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 21px !important; font-weight: 400 !important; color: #fff !important; text-shadow: 0 2px 4px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.9) !important; }
+    .menu a:hover{ background: linear-gradient(90deg, var(--np-accent-hover, rgba(255,255,255,.14)), var(--np-accent-soft, rgba(255,255,255,.04))), rgba(255,255,255,.07) !important; transform: translateX(3px); }
+    .menu a:hover span { color: #fff !important; }
+    .menu a img{ display:block; flex:0 0 auto; width: 28px !important; height: 28px !important; filter: drop-shadow(0 2px 3px rgba(0,0,0,.7)); transition: transform .22s cubic-bezier(.3,1.6,.5,1); }
+    .menu a:hover img { transform: scale(1.14) rotate(-5deg); }
     .menu a span{ flex:1 1 auto; white-space:nowrap; }
-    .menu .menuSep{
-      height:1px;
-      background:rgba(255,255,255,.14);
-      margin:6px 8px;
-    }
+    .menu .menuSep{ height:1px; margin: 6px 4px !important; background: rgba(255,255,255,.1) !important; }
 
-    /* Trash button: hidden by default, appears on row hover */
+    /* Trash button and add row: only shown in edit mode (.np-edit-mode) */
     .menu a{ position:relative; }
     .menu a .menuTrash{
       position:absolute; top:50%; right:6px;
@@ -1102,10 +1095,11 @@
       background:rgba(255,80,80,.15);
       color:#ff8080; font-size:14px; font-weight:900;
       line-height:1; cursor:pointer;
-      opacity:0; transition:opacity .12s ease;
-      display:flex; align-items:center; justify-content:center;
+      align-items:center; justify-content:center;
     }
-    .menu a:hover .menuTrash{ opacity:1; }
+    .menu .menuTrash, .menu .menuAddRow { display: none !important; }
+    .menu.np-edit-mode .menuTrash { display: flex !important; opacity: 1 !important; }
+    .menu.np-edit-mode .menuAddRow { display: block !important; }
     .menu a .menuTrash:hover{
       background:#ff5a5a; color:#fff;
     }
@@ -1166,19 +1160,15 @@
     }
     .menu .menuAddBtns button.menuAddOk{
       background:var(--np-accent, #dcb8ff);
-      color:#1a1330;
+      color:var(--npp-accent-fg, #1a1330);
       border-color:transparent;
     }
     .menu .menuAddBtns button:hover{ filter:brightness(1.1); }
 
     /* Smaller top bar on narrow screens */
-    @media (max-width: 900px){
-      .left{ gap:6px; }
-      .btn span{ display:none; } /* keep only icons */
-    }
-    @media (max-width: 700px){
-      .btn img{ width:28px; height:28px; }
-    }
+    @media (max-width: 1500px) { .btn { padding: 9px 10px !important; } .btn, .btn span { font-size: 21px !important; } .btn img { width: 26px !important; height: 26px !important; } }
+    @media (max-width: 1250px) { .btn { padding: 8px 7px !important; } .btn, .btn span { font-size: 19px !important; } }
+    @media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } }
   `;
   root.appendChild(barStyle);
 
@@ -1278,6 +1268,7 @@
         <a class="btn cat" data-id="explore"><img src="${icons.explore}" data-icon="explore" alt=""><span>Explore</span></a>
         <a class="btn cat" data-id="shop"><img src="${icons.shop}" data-icon="shop" alt=""><span>Shop</span></a>
         <a class="btn" href="https://nc.neopets.com/membership/"><img src="${icons.premium}" data-icon="premium" alt=""><span>Premium</span></a>
+        <a class="btn" href="https://www.neopets.com/questlog/" title="Quest Log"><img src="${icons.quests}" data-icon="quests" alt="Quests"><span>Quests</span></a>
       </div>
     </div>
   `;
