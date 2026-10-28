@@ -41,7 +41,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   let jn = null;
   document.addEventListener('click', (e) => {
     if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-    const a = (e.composedPath ? e.composedPath() : [e.target]).find(n => n && n.classList && n.classList.contains('iph-icon--jellyneo') && n.href);
+    const a = (e.composedPath ? e.composedPath() : [e.target]).find(n => n && n.classList && n.href && (n.classList.contains('iph-icon--jellyneo') || (n.hostname === 'items.jellyneo.net' && n.closest('.search-helper'))));
     if (!a) return;
     e.preventDefault(); e.stopPropagation();
     try { if (jn && !jn.closed) jn.close(); } catch {}

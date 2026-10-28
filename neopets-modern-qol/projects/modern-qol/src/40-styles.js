@@ -872,9 +872,4 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .head { flex: none; }
 .body { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; overscroll-behavior: contain; }
 .tab.isOpen { opacity: 0 !important; pointer-events: none; }
-.nppSizeGrp { display: flex; align-items: center; gap: 4px; padding: 3px 7px; border-radius: 9px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.18); }
-.nppSizeGrp .nppSizeLbl { font: 700 9px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.7); margin-right: 3px; }
-.nppSizeGrp button { width: 22px; height: 22px; padding: 0; border-radius: 6px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); color: #fff; font: 700 14px/1 system-ui, sans-serif; cursor: pointer; }
-.nppSizeGrp button:hover { background: rgba(255,255,255,.26); }
-.nppSizeGrp .nppSizeVal { min-width: 44px; text-align: center; font: 700 11px/1 'Outfit', system-ui, sans-serif; color: #fff; font-variant-numeric: tabular-nums; }
 `;

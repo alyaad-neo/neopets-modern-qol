@@ -26,17 +26,7 @@
     const measure = () => {
       const live = [...col.children].filter(k => !k.hasAttribute('data-npp-nested') && k.getBoundingClientRect().width > 8);
       if (!live.length) return;
-      let size = 0;
-      try { const A = NQ.sideBtns, v = A && A.getIconSize ? parseFloat(A.getIconSize()) : NaN; if (v >= 24 && v <= 96) size = Math.round(v); } catch {}
-      if (!size) {
-        const imgs = live.map(k => k.querySelector('img')).filter(Boolean);
-        const boxes = imgs.length ? imgs : live, factor = imgs.length ? 1 : 0.88;
-        const sizes = boxes.map(i => Math.round(Math.max(i.getBoundingClientRect().width, i.getBoundingClientRect().height))).filter(w => w > 8);
-        if (!sizes.length) return;
-        const tally = {}; sizes.forEach(w => { tally[w] = (tally[w] || 0) + 1; });
-        size = Math.round(+Object.keys(tally).sort((x, y) => tally[y] - tally[x] || x - y)[0] * factor);
-      }
-      size = Math.max(28, Math.min(56, size));
+      const size = 36;
       let gap = 10;
       if (live.length > 1) { const r0 = live[0].getBoundingClientRect(), r1 = live[1].getBoundingClientRect(); gap = Math.max(4, Math.min(28, Math.round(Math.abs(r1.top - r0.top) - r0.height))); }
       rs.setProperty('--npp-ic', size + 'px'); rs.setProperty('--npp-ig', gap + 'px');
@@ -280,22 +270,6 @@
     tabEl = tab; panelEl = panel;
 
     const head = panel.querySelector('.head');
-    if (head && NQ.sideBtns && !head.querySelector('.nppSizeGrp')) {
-      const A = NQ.sideBtns;
-      const grp = document.createElement('div');
-      grp.className = 'nppSizeGrp';
-      grp.innerHTML = '<span class="nppSizeLbl">Size</span><button type="button" data-d="-1" title="Smaller icons" aria-label="Smaller icons">−</button><span class="nppSizeVal"></span><button type="button" data-d="1" title="Bigger icons" aria-label="Bigger icons">+</button>';
-      const paintSize = () => { grp.querySelector('.nppSizeVal').textContent = A.getIconSize() + 'px'; };
-      grp.addEventListener('click', (e) => {
-        const b = e.target.closest && e.target.closest('button[data-d]');
-        if (!b) return;
-        e.preventDefault(); e.stopPropagation();
-        A.setIconSize(A.getIconSize() + (+b.dataset.d) * (A.iconSizeStep || 6));
-        paintSize();
-      });
-      head.insertBefore(grp, head.firstChild);
-      paintSize();
-    }
 
     const fixIco = (el) => {
       if (el.dataset.f) return;

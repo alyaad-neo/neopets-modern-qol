@@ -20,9 +20,7 @@
       if (li) { rs.setProperty('--npLeftBarImg', `url("${clean(li)}")`); rs.setProperty('--npLeftBarSolid', '#000'); rs.setProperty('--npLeftBarShadeA', '1'); }
       root.classList.remove('np-recolor-site');
       paintAll(saved());
-      if (A) {
-        A.setIconSize(A.getIconSize()); A.rebuild();
-      }
+      if (A) A.rebuild();
     } catch {}
   }
 
@@ -186,7 +184,7 @@
     }
 
     ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
-      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1'].forEach(LSdel);
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1'].forEach(LSdel);
     try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();

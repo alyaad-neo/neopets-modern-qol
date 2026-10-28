@@ -2117,25 +2117,6 @@ function startHud() {
       LSset(LS_BTNS_KEY, JSON.stringify({ left: cfg.left }));
     }
 
-    const ICON_SIZE_LS = 'nq_side_icon_size_v1';
-    const ICON_SIZE_MIN = 36, ICON_SIZE_MAX = 84, ICON_SIZE_STEP = 6, ICON_SIZE_DEFAULT = 60;
-    function getIconSize(){
-      try {
-        const v = parseInt(LSget(ICON_SIZE_LS) || '', 10);
-        if (Number.isFinite(v)) return Math.max(ICON_SIZE_MIN, Math.min(ICON_SIZE_MAX, v));
-      } catch {}
-      return ICON_SIZE_DEFAULT;
-    }
-    function applyIconSize(v){
-      try { document.documentElement.style.setProperty('--np-side-icon-size', v + 'px'); } catch {}
-    }
-    function setIconSize(v){
-      v = Math.max(ICON_SIZE_MIN, Math.min(ICON_SIZE_MAX, Math.round(v)));
-      LSset(ICON_SIZE_LS, String(v));
-      applyIconSize(v);
-      return v;
-    }
-    applyIconSize(getIconSize());
 
     const st = document.createElement('style');
     st.textContent = `
@@ -2167,7 +2148,7 @@ function startHud() {
       #btnOverlay .col.left{ left: var(--frame-left) !important; }
 
       #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none !important; padding:0 !important; margin:0 !important; line-height:0 !important; -webkit-tap-highlight-color:transparent; opacity:1 !important; visibility:visible !important; }
-      #btnOverlay .iconBtn img{ width:var(--np-side-icon-size, 60px) !important; height:var(--np-side-icon-size, 60px) !important; max-width:none !important; display:block !important; transform:scale(1); transition:transform .12s ease; will-change:transform; transform-origin:center center; filter:drop-shadow(0 1px 4px rgba(0,0,0,.45)); opacity:1 !important; visibility:visible !important; }
+      #btnOverlay .iconBtn img{ width:36px !important; height:36px !important; max-width:none !important; display:block !important; transform:scale(1); transition:transform .12s ease; will-change:transform; transform-origin:center center; filter:drop-shadow(0 1px 4px rgba(0,0,0,.45)); opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn:hover img{ transform:scale(1.08) !important; }
       #btnOverlay .iconBtn:active img{ transform:scale(1.02) !important; }
 
@@ -2245,9 +2226,6 @@ function startHud() {
       reset: () => { LSdel(LS_BTNS_KEY); rebuildColumns(); },
       rebuild: rebuildColumns,
       iconUrl, fallbackUrl, getTheme,
-      getIconSize, setIconSize,
-      iconSizeStep: ICON_SIZE_STEP,
-      iconSizeDefault: ICON_SIZE_DEFAULT,
     };
   })();
 

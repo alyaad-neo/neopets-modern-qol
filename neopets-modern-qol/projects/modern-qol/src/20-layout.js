@@ -35,7 +35,6 @@
       --np-bar-shadow:none;
       --np-bar-inset-left:0px;
 
-      --np-side-icon-size:60px;
 
       --np-gap:10px;
       --np-col-width:330px;

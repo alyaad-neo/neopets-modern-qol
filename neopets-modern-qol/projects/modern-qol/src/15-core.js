@@ -73,7 +73,7 @@
   };
 
   const SYNC_KEYS = ['nq_accent_v1', 'nq_btn_theme_v1', 'nq_topbar_bg_v1', 'nq_recolor_site_v1',
-    'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_side_btns_v2', 'nq_side_icon_size_v1',
+    'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_side_btns_v2',
     'nq_topbar_custom_v1', 'nq_bank_btn_settings_v1',
     'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_defaults_v3'];
   const DATA_KEYS = ['nq_hud_username', 'nq_np_last', 'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1',
