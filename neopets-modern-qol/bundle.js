@@ -1,11 +1,11 @@
-// bundle.js — builds the single upload file from the five source projects.
+// bundle.js — builds the single upload file from the four source projects.
 //
 // Usage (run from this folder):
 //   node bundle.js
 //
-// Edit features in projects/modern-interface, projects/dailies-qol, projects/modern-interface-patcher,
-// projects/account-drawer, or projects/page-pins-qol. Never edit dist/. Bump the @version in
-// projects/_bundle/00-header.js whenever a source project changes.
+// Edit features in projects/modern-qol/src, projects/dailies-qol, projects/account-drawer, or
+// projects/page-pins-qol. Never edit dist/. Bump the @version in projects/_bundle/00-header.js
+// whenever a source project changes.
 
 const fs = require('fs');
 const path = require('path');
@@ -16,21 +16,25 @@ const headerFile = path.join(root, 'projects', '_bundle', '00-header.js');
 const outFile = path.join(root, 'dist', 'Neopets - Modern QOL.user.js');
 
 const sources = [
-  // base skin first: the others call its NQ.* functions (NQ is shared by all projects, hidden from the page).
-  ['modern-interface', path.join(root, 'projects', 'modern-interface')],
-  // dailies before the patcher so NQ.dailies exists before the patcher looks for it.
+  ['modern-qol', path.join(root, 'projects', 'modern-qol')],
   ['dailies-qol', path.join(root, 'projects', 'dailies-qol')],
-  ['modern-interface-patcher', path.join(root, 'projects', 'modern-interface-patcher')],
   ['account-drawer', path.join(root, 'projects', 'account-drawer')],
   ['page-pins-qol', path.join(root, 'projects', 'page-pins-qol')]
 ];
+// modern-qol sets NQ.base and defines NQ.boot; boot runs after dailies so NQ.dailies exists by then.
+const bootAfter = 'dailies-qol';
 
 function fail(msg) {
   console.error('FAILED: ' + msg);
   process.exitCode = 1;
 }
 
-function sourceFile(dir) {
+function sourceFile(name, dir) {
+  if (fs.existsSync(path.join(dir, 'src'))) {
+    const build = spawnSync(process.execPath, [path.join(root, 'build.js'), name], { cwd: root, encoding: 'utf8' });
+    if (build.status !== 0 || build.stderr) throw new Error(build.stderr || build.stdout);
+    return path.join(dir, 'dist', name + '.user.js');
+  }
   const js = fs.readdirSync(dir).filter(f => f.endsWith('.js'));
   if (js.length !== 1) {
     throw new Error(`${dir} must have exactly one .js file (found: ${js.join(', ') || 'none'})`);
@@ -54,8 +58,9 @@ try {
     fail('projects/_bundle/00-header.js must contain a complete userscript header.');
   } else {
     const parts = sources.map(([name, dir]) => {
-      const file = sourceFile(dir);
-      return `// ---------- ${name} / ${path.basename(file)} ----------\n${body(file)}\n`;
+      const file = sourceFile(name, dir);
+      const boot = name === bootAfter ? '\nif (NQ.boot) NQ.boot();\n' : '';
+      return `// ---------- ${name} / ${path.basename(file)} ----------\n${body(file)}\n${boot}`;
     });
 
     const output =

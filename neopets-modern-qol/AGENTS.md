@@ -13,7 +13,7 @@ Read this whole file before every task. Follow it exactly.
 ```
 AGENTS.md            this file
 build.js             combines split projects into one file
-bundle.js            builds the final combined upload from five projects
+bundle.js            builds the final combined upload from four projects
 projects/<name>/     one folder per script project
   NOTES.md           the map of that project. READ IT FIRST.
   <name>.user.js     single-file project: the script itself
@@ -23,7 +23,7 @@ projects/_bundle/    final combined header + NOTES (build-only)
 dist/                final combined upload. NEVER edit by hand.
 projects/_template/  blank NOTES.md for new projects
 vendor/              pristine copies of other people's scripts. READ ONLY. NEVER EDIT.
-                     (Editable copies live in projects/, e.g. projects/modern-interface/.)
+                     (Editable copies live in projects/, e.g. projects/modern-qol/src/.)
 ```
 
 ## Every task: follow these steps in order
@@ -84,7 +84,7 @@ vendor/              pristine copies of other people's scripts. READ ONLY. NEVER
 
 ## Final bundle
 
-`modern-interface`, `dailies-qol`, `modern-interface-patcher`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing, bundled in that order (base skin first; dailies before the patcher). The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the five projects; never edit the bundle output. After any change to one of the five, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the separate scripts, including the Greasy Fork "Neopets - Modern Interface", must be disabled. The bundle header and the top of `projects/modern-interface` must keep the MIT credit line `Based on "Neopets - Modern Interface" by marius@clraik, MIT License.` Never add `@downloadURL`/`@updateURL`. The projects share state through `NQ` (declared by bundle.js, invisible to the page); never expose functions on `unsafeWindow` for another project.
+`modern-qol` (split), `dailies-qol`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing, bundled in that order. `bundle.js` builds `modern-qol` with `build.js` first, and calls `NQ.boot()` right after `dailies-qol` so `NQ.dailies` exists when the header and sidebar boot. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the four projects; never edit the bundle output. After any change to one of the four, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the separate scripts, including the Greasy Fork "Neopets - Modern Interface", must be disabled. The bundle header and `projects/modern-qol/src/05-utils.js` must keep the MIT credit line `Based on "Neopets - Modern Interface" by marius@clraik, MIT License.` Never add `@downloadURL`/`@updateURL`. The projects share state through `NQ` (declared by bundle.js, invisible to the page); never expose functions on `unsafeWindow` for another project.
 
 ## Splitting a project
 
@@ -120,8 +120,7 @@ These are the folders in `projects/`. Each project's NOTES.md has the details. I
 
 - `_bundle` - build-only: final combined header and NOTES. Not a feature project.
 - `account-drawer`
-- `modern-interface` — Aly's own copy of the base skin "Neopets - Modern Interface" 4.2.0 (MIT, marius@clraik). Editable. The pristine original stays in `vendor/` (never edit that). Being merged with the patcher: see `HANDOFF-merge.md`.
-- `modern-interface-patcher` — Aly's PATCHER that restyles the base skin at runtime. Workarounds here are being removed in favour of editing `modern-interface` directly (`HANDOFF-merge.md` stage 2).
+- `modern-qol` — split project: the base skin "Neopets - Modern Interface" 4.2.0 (MIT, marius@clraik) merged with Aly's patcher. The pristine original stays in `vendor/` (never edit that). Being rewritten: see `HANDOFF-merge.md` stage 3.
 - `neoboards-qol`
 - `page-pins-qol` — recently viewed pages and pinned pages.
 - `pet-trading-qol` — Pet Trading boards helper: a tradelist of UFT (Up For Trade) pets, plus Pet Auction House listing and bidding helpers. Never auto-bid or auto-submit.
@@ -129,7 +128,7 @@ These are the folders in `projects/`. Each project's NOTES.md has the details. I
 
 ## Lessons learned (save tokens, avoid rework)
 
-Aly's priorities: 1) account safety, 2) minimal tokens. Read `projects/modern-interface-patcher/HANDOFF.md` for the current state.
+Aly's priorities: 1) account safety, 2) minimal tokens. Read `HANDOFF-merge.md` (while it exists) and `projects/modern-qol/NOTES.md` for the current state.
 
 **You can't see the page. Don't guess.**
 - Before changing behaviour that depends on Neopets or vendor markup, give Aly ONE console snippet that returns the exact HTML or data needed (outerHTML sliced to about 1500 chars, or JSON.stringify of a storage key). Guessing cost many rounds this session (Quick Ref data shape, home carousel, pound page confusion).
@@ -148,7 +147,7 @@ Aly's priorities: 1) account safety, 2) minimal tokens. Read `projects/modern-in
 **Shell and editing on this Windows machine (Git Bash).**
 - `sed -i` converts CRLF to LF. Never use it.
 - Backslashes and apostrophes inside shell-quoted JS get mangled; a heredoc `\\b` arrived as `\b`. Use the Edit tool, or a node script that reads its replacement text from a file. Prefer regexes without backslashes (e.g. `[^A-Za-z0-9_]` instead of `\b`).
-- patcher, account-drawer and dailies use CRLF; page-pins-qol is LF. Check with node after editing: count `\n` vs `\r\n`.
+- account-drawer and dailies use CRLF; page-pins-qol and modern-qol/src are LF. Check with node after editing: count `\n` vs `\r\n`.
 
 **Token budget (measured 2026-10-27).** One long session cost ~$9 and hit the 5-hour limit: 15.7M cache-read tokens (the main chat re-reading its own long history every turn) vs subagents ~30%. Each subagent costs 55-90k tokens just to start cold and find its place. So:
 - **Keep chats short.** The biggest cost is a long main chat. After ~10-15 rounds, or when a feature is done, update HANDOFF.md and tell Aly to start a new chat.

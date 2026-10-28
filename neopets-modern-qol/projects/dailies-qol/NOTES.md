@@ -32,7 +32,7 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 
 ## Depends on
 
-- Modern Interface script (`data-np-modern-interface` attribute on `<html>`)
+- `modern-qol` (`NQ.base`, read when the panel mounts)
 - `@grant GM_getValue`, `@grant GM_setValue`, `@grant GM_xmlhttpRequest`
 - `@connect www.jellyneo.net`, `@connect ncmall.neopets.com`
 - localStorage keys: `npp_cd_v1`, `npp_cd_seen_v1`, `npp_ack_v1`, `npp_symol_v1`, `npp_symol_try`, `npp_symol_status`, `npp_tarla_v1`, `npp_nc_cd`
