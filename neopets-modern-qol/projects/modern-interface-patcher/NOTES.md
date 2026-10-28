@@ -20,8 +20,8 @@ Runtime patches for the third-party "Neopets - Modern Interface" script. Restyle
 
 | Feature | File | Search for (function names, CSS classes, button text) |
 | --- | --- | --- |
-| Background colour picker | lines 834-923 | `injectPicker`, `#nppColors`, `data-preset`, `data-k`, `data-acc` |
-| DTI shuffle & keyword search | lines 924-1169 | `discoverBgs`, `kwSearch`, `#nppShuffle`, `#nppDiscBar`, `dtiPage` |
+| Background colour picker | search | `injectPicker`, `#nppColors`, `data-preset`, `data-k`, `data-acc` |
+| Background list: DTI shuffle (auto on first open) & keyword search | search | `discoverBgs`, `kwSearch`, `#nppShuffle`, `#nppDiscBar`, `dtiPage` |
 | Header bar style (blur/tint/solid/none) | lines 587-612 | `applyBarStyle`, `data-npp-bar`, `BAR_CSS` |
 | Accent colour contrast | lines 553-585, 801-833 | `applyAccentContrast`, `applyNavContrast`, `--npp-accent-fg` |
 | Logo toggle (black/white) | line 585 | `applyLogo`, `--npp-logo-filter`, `nppLogoDot` |
@@ -66,7 +66,7 @@ Runtime patches for the third-party "Neopets - Modern Interface" script. Restyle
 - `#nppTools` (search + bell) is fixed at the header's top-right: search first, bell farthest right. The clock sits to their left using `--npp-ic` / `--npp-ig`; `#npx-host` gets `.npp-search-open` (and `SHADOW_CSS` hides `.npp-clock`) while the search field is open. Search opens on click only, never on hover.
 - The vendor top bar `#npx-host` is z-index 2000 and is appended to `<html>` after `<body>`, so it paints over equal-z-index body elements. `#nppTools` needs `z-index: 2010` to sit on top of the bar; at 2000 it disappears behind it.
 - `#npNp` and `#npActivePet` can no longer be folded: `setupFold()` was removed. The daily-notices fold (`setupDailyFold`) still exists.
-- The DTI background shuffle uses the Neopets Item Search GraphQL API (`impress-2020.openneo.net`). It filters out event-themed backgrounds (Altador Cup, Advent, Birthday) by default.
+- The DTI background shuffle uses the Neopets Item Search GraphQL API (`impress-2020.openneo.net`). It filters out event-themed backgrounds (Altador Cup, Advent, Birthday) by default. It is the only background list since 4.1.33 (the base's full DTI list, favorites and trash are gone). Line numbers in the feature map are stale after the comment strip; search instead.
 - Account state is synced between www.neopets.com and ncmall.neopets.com via `GM_setValue('npp_sync')`. On NC Mall, a 1-year localStorage backoff prevents repeated 403s.
 - The patcher injects CSS into the Modern Interface script's shadow DOM (`#npx-host`). The shadow DOM uses its own class names (`.btn`, `.menu`, `.menuHead`, `.npp-search`, etc.) that differ from the main-page styles.
 - The final upload is a bundle of this project plus `account-drawer` and `page-pins-qol`: `node bundle.js` writes `dist/Neopets - Modern QOL.user.js`. After any source change, bump `projects/_bundle/00-header.js` `@version` and rebuild; never edit `dist/`.

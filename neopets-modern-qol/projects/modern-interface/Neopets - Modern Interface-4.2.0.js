@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.4
+// @version      4.2.6
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -26,34 +26,15 @@
 // @downloadURL https://update.greasyfork.org/scripts/581877/Neopets%20-%20Modern%20Interface.user.js
 // @updateURL https://update.greasyfork.org/scripts/581877/Neopets%20-%20Modern%20Interface.meta.js
 // ==/UserScript==
-
 (function () {
   'use strict';
 
   // Based on "Neopets - Modern Interface" by marius@clraik, MIT License.
 
-  /* =========================================================
-     FUSION ①+②+③ — this file merges the former "Core & Layout",
-     "HUD" and "Background & Decor" scripts. Each part keeps its own
-     IIFE (verbatim scopes, zero variable collisions) and its own
-     idempotence guard; the iframe/host gates are shared here.
-
-     PW = the real PAGE window. The script runs in the Tampermonkey
-     sandbox (GM_xmlhttpRequest is required for the DTI background
-     API, which does not allow CORS from neopets.com), so everything
-     meant to be visible to page scripts and to the standalone tab
-     scripts (6-9: Quest Log, TVW, …) — the __np* APIs — must live on
-     unsafeWindow, not on the sandbox window.
-  ========================================================= */
   const PW = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
 
-  // Never in iframes (game.phtml, NCMall embeds…): the frame + HUD would
-  // be injected into every embedded frame. Main-host gate: the NC sub-apps
-  // (ncmall., secure.nc., …) ship unrelated markup.
   if (window.top !== window) return;
   if (!/^(www\.|ncmall\.)?neopets\.com$/i.test(location.hostname)) return;
-  // Bundle gate: the standalone script's extra @exclude lines (the shared
-  // bundle header can't carry them, other projects need those pages).
   {
     const p = location.pathname;
     if (p === '/' || p.startsWith('/~') || p.startsWith('/faeriefragments') ||
@@ -61,31 +42,12 @@
         (p === '/games/game.phtml' && location.search)) return;
   }
 
-  /* =========================================================
-     PHONE GUARD (4.2.0)
-     This interface is built for desktop and tablet: a fixed
-     60px top bar, a 330px side rail and a centered content
-     frame have nowhere to go on a 400px-wide phone. Rather
-     than render a broken layout (reported by users running
-     Violentmonkey on Firefox for Android), bail out entirely
-     on phones. TABLETS ARE NOT PHONES — iPad and Android
-     tablets keep the full interface, including the touch
-     affordances added in 4.0.
-
-     To run it on a phone anyway, either flip the constant
-     below to true, or run this once in that phone's browser:
-       localStorage.setItem('npqol_mobile_v1','on')
-  ========================================================= */
   const NP_RUN_ON_PHONES = false;
   const npIsPhone = () => {
-    // Client Hints are authoritative where available (Chromium): Android
-    // TABLETS report mobile:false, which is exactly the split we want.
     try {
       const uad = navigator.userAgentData;
       if (uad && typeof uad.mobile === 'boolean') return uad.mobile === true;
     } catch {}
-    // Fallback UA sniff. "Android" alone also matches tablets, so the
-    // "Mobile" token is required; iPad is deliberately absent.
     try {
       return /iPhone|iPod|Windows Phone|IEMobile|BlackBerry|Opera Mini|Android.*Mobile/i.test(navigator.userAgent || '');
     } catch { return false; }
@@ -96,31 +58,10 @@
     if (!forced) return;
   }
 
-  // Presence marker for the DEPRECATION releases of the three legacy
-  // scripts (Core & Layout / HUD / Background & Decor): when they see this
-  // flag they bail out entirely and skip their migration banner — the
-  // merged script owns the page.
   try { document.documentElement.dataset.npModernInterface = '1'; } catch {}
 
-  /* =========================================================
-     ANTI RATE-LIMIT GUARD (Neopets 403 "You don't have
-     permission to access …"). Neopets throttles per-IP request
-     bursts; our background fetches (alerts, userlookup, bank,
-     quickref) add up on top of the user's own browsing. The
-     moment ANY of them gets a 403, we pause every background
-     fetch of the whole suite for 10 minutes so the block can
-     clear instead of being re-triggered. The key is shared
-     with the standalone QuickRef Pet Card script on purpose.
-     Declared in the fusion prelude → visible to all 3 parts.
-  ========================================================= */
   const NP_BACKOFF_KEY = 'npqol_403_backoff_until_v1';
   const NP_STRIKE_KEY  = 'npqol_403_strikes_v1';
-  /* 4.2.0 — ESCALATING backoff. A single unlucky 403 costs 10
-     minutes, but an IP that is genuinely being throttled used to
-     get re-poked every 10 minutes forever, which is what kept the
-     "You don't have permission to access" page alive for the users
-     who reported it. Each further 403 within the same streak backs
-     off harder; three quiet hours forget the streak. */
   const NP_BACKOFF_STEPS_MIN = [10, 30, 60, 120];
   const np403BackoffActive = () => {
     try { return Date.now() < (+localStorage.getItem(NP_BACKOFF_KEY) || 0); } catch { return false; }
@@ -140,14 +81,6 @@
       localStorage.setItem(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
     } catch {}
   };
-  /* Gate for AUTOMATIC page-load refreshes only — the hover ↻ buttons
-     and every bank action deliberately bypass it, an explicit click
-     must still do something.
-
-     Besides the 403 backoff it defers HIDDEN tabs: opening a handful
-     of Neopets links in background tabs used to fire one full set of
-     background fetches per tab, all at once. Now a background tab
-     waits until the user actually looks at it. */
   const npWhenBgAllowed = (fn) => {
     const run = () => { if (np403BackoffActive()) return; try { fn(); } catch {} };
     let hidden = false;
@@ -161,37 +94,18 @@
     document.addEventListener('visibilitychange', onVis);
   };
 
-  /* ╔══════════════════════════════════════════════════════════════╗
-     ║  PART ① — CORE & LAYOUT (frame, top bar, theme tokens)       ║
-     ╚══════════════════════════════════════════════════════════════╝ */
 (function () {
   'use strict';
-  // (iframe + host gates hoisted to the fusion prelude)
   if (document.getElementById('np-core-layout')) return;
 
-  /* =========================================================
-     PAGES WITH A NATIVE THEMED CONTENT BACKGROUND
-     Some Neopets pages (inventory, bank, etc.) ship a gradient
-     or themed background inside the content frame that we want
-     to KEEP visible. We tag <html> early so the CSS below can
-     skip the white-bg override on those paths only — without
-     affecting any other page.
-     Edit this list to add/remove pages.
-  ========================================================= */
   const KEEP_NATIVE_BG_PATHS = [
     '/inventory.phtml',
-    '/bank.phtml',   // keep the Bank's native bg-pattern.png (common/bank.css on .theme-bg)
+    '/bank.phtml',
   ];
   if (KEEP_NATIVE_BG_PATHS.some(p => location.pathname.startsWith(p))) {
     document.documentElement.classList.add('np-keep-native-bg');
   }
 
-  /* =========================================================
-     BUTTON-THEME API (icon set used by the top bar and HUD).
-     Exposed early so any consumer script can read the list,
-     read the current theme, or dispatch `np:btn-theme` to
-     refresh icons.
-  ========================================================= */
   (function exposeBtnThemes(){
     if (PW.__npBtnThemesData) return;
 
@@ -226,11 +140,9 @@
       try { return localStorage.getItem(LS_KEY) || DEFAULT; }
       catch { return DEFAULT; }
     };
-    // apply (no persist) → fires event so each script can refresh its icons.
     PW.__npApplyBtnTheme = (id) => {
       document.dispatchEvent(new CustomEvent('np:btn-theme', { detail: { themeId: id } }));
     };
-    // save (persist + apply)
     PW.__npSaveBtnTheme = (id) => {
       try { localStorage.setItem(LS_KEY, id); } catch {}
       document.dispatchEvent(new CustomEvent('np:btn-theme', { detail: { themeId: id } }));
@@ -242,16 +154,6 @@
     };
     PW.__npBtnFallbackUrl = (iconName) => FALLBACK_PATTERN.replace('{icon}', iconName);
 
-    /* Cascade fallback for icons. Neopets' themes aren't consistent:
-       - basic/images/v3/*.svg has: profile, mypets, customise, inventory,
-         safetydeposit, quickstock, transferlog, gallery, stamps, tradingcards,
-         ncalbum, settings, signout, adoptpet, createpet…
-       - basic/images/*.svg has different icons that v3 DOESN'T have:
-         chamber, bookshelf, neopass, shopwizard…
-       - basic/images/*.png is the last resort (shopwizard is PNG-only).
-       So when a theme is missing an icon, fall back through this chain
-       instead of a single URL — that's the only way `chamber`,`bookshelf`,
-       `neopass` survive on themes that don't ship them. */
     PW.__npBtnFallbackChain = [
       'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg',
       'https://images.neopets.com/themes/h5/basic/images/{icon}-icon.svg',
@@ -266,11 +168,6 @@
         const current = img.src || '';
         tried.add(current);
 
-        // 1) Same theme, opposite extension. Grey Day's chamber/bookshelf/
-        //    neopass live as SVG even though the theme's default pattern is
-        //    PNG — without this step we'd skip straight to basic and show
-        //    the wrong theme's icon. Generalized so any PNG/SVG mismatch
-        //    in any future theme is auto-recovered.
         if (!extSwapped){
           extSwapped = true;
           const m = current.match(/^(.+\/)([^\/]+)-icon\.(svg|png)(\?.*)?$/i);
@@ -284,10 +181,6 @@
           }
         }
 
-        // 2) Static cascade: basic/v3 → basic root SVG → basic root PNG.
-        //    Dedup against `tried` so we never re-fetch an URL the browser
-        //    has already 404'd on (otherwise the cascade would freeze on
-        //    no-op src assignments).
         const chain = PW.__npBtnFallbackChain || [];
         while (chainStep < chain.length){
           const next = chain[chainStep++].replace('{icon}', iconName);
@@ -301,43 +194,11 @@
     };
   })();
 
-  /* =========================================================
-     ACCENT API — single accent color shared by every script
-     via CSS custom properties (--np-accent*). The picker in
-     the BG script calls __npApplyAccent(hex) to re-tint the
-     entire HUD on the fly.
-  ========================================================= */
   (function exposeAccent(){
     if (PW.__npAccentApi) return;
 
     const LS_KEY = 'npqol_accent_v1';
     const DEFAULT_HEX = '#dcb8ff';
-
-    // Two rows of 8. Row 1 = soft pastels (vivid), row 2 = muted/dusty
-    // versions + neutrals — the muted tones keep the "recolor site yellows"
-    // module from looking garish. The hex goes straight into `--np-accent`;
-    // derived bg/line/etc. come from rgba() via hexToRgb() below, and the
-    // light→dark ramp (--np-accent-l*) from hexToHsl() in setCSSVars().
-    const PALETTE = [
-      // Row 1 — soft
-      { id:'lila',    hex:'#dcb8ff', label:'Lila' },
-      { id:'rose',    hex:'#ffb8d4', label:'Rose' },
-      { id:'coral',   hex:'#ffb3ab', label:'Coral' },
-      { id:'peach',   hex:'#ffce9e', label:'Peach' },
-      { id:'yellow',  hex:'#f0dd7a', label:'Yellow' },
-      { id:'mint',    hex:'#b6e6c1', label:'Mint' },
-      { id:'cyan',    hex:'#a8e0ea', label:'Cyan' },
-      { id:'blue',    hex:'#b6c6ff', label:'Blue' },
-      // Row 2 — muted / neutral
-      { id:'dustylila', hex:'#bcb0c8', label:'Dusty lila' },
-      { id:'dustyrose', hex:'#d6bcc6', label:'Dusty rose' },
-      { id:'clay',      hex:'#cdb2a8', label:'Clay' },
-      { id:'sand',      hex:'#d3c6a8', label:'Sand' },
-      { id:'sage',      hex:'#bccbb4', label:'Sage' },
-      { id:'steel',     hex:'#b2c0cf', label:'Steel' },
-      { id:'black',     hex:'#000000', label:'Black' },
-      { id:'white',     hex:'#ffffff', label:'White' },
-    ];
 
     function hexToRgb(hex){
       let h = String(hex || '').replace('#','').trim();
@@ -348,9 +209,6 @@
     }
     const rgba = (hex, a) => { const {r,g,b} = hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
 
-    // HSL of the accent — used to build a fixed-lightness ramp that keeps the
-    // accent's hue+saturation. Lets other scripts recolor Neopets' native gold
-    // surfaces (which run light→dark) with shades of the chosen accent.
     function hexToHsl(hex){
       const { r, g, b } = hexToRgb(hex);
       const rr = r/255, gg = g/255, bb = b/255;
@@ -368,8 +226,6 @@
       }
       return { h, s, l };
     }
-    // Neopets' native "gold" surfaces sit around this hue; a hue-rotate of
-    // (accentHue - GOLD) remaps baked-in gold images/sprites toward the accent.
     const NEO_GOLD_HUE = 40;
 
     function setCSSVars(hex){
@@ -383,9 +239,6 @@
       root.style.setProperty('--np-accent-g', String(hexToRgb(hex).g));
       root.style.setProperty('--np-accent-b', String(hexToRgb(hex).b));
 
-      // Monochrome ramp (same hue/sat, stepped lightness). Consumed by the
-      // Background script's "recolor site yellows" module. Grey accents
-      // (black/white, sat 0) naturally yield a neutral ramp.
       const { h, s, l } = hexToHsl(hex);
       const sPct = Math.round(s * 100);
       const shade = (L) => `hsl(${h.toFixed(1)}, ${sPct}%, ${L}%)`;
@@ -395,22 +248,9 @@
       root.style.setProperty('--np-accent-l45', shade(45));
       root.style.setProperty('--np-accent-l30', shade(30));
 
-      // Readable-text variant of the accent: same hue/sat, lightness floored
-      // at 82% so typography stays LIGHT on the dark top bar / glass panels
-      // whatever accent is picked (black/dusty accents used to make the bar
-      // text unreadably dark). Consumed by the top bar and available to the
-      // other scripts as --np-accent-text.
       const textL = Math.max(l, 0.82);
       root.style.setProperty('--np-accent-text', `hsl(${h.toFixed(1)}, ${sPct}%, ${Math.round(textL * 100)}%)`);
 
-      // Filter pipeline for recoloring image/SVG surfaces (toggle pills) that
-      // can't be recolored in CSS. Used as:
-      //   grayscale(1) sepia(1) hue-rotate(huerot) saturate(sat) brightness(bright)
-      // sepia's neutral base sits at ~hue 40 (≈ NEO_GOLD_HUE) with saturation
-      // ≈0.244, so the SAME hue-rotate remaps it to the accent hue; `sat`
-      // scales chroma to the accent (0 → grey for black/white, fixing the old
-      // "red pill" bug) and `bright` tracks the accent's lightness so muted
-      // accents no longer leave the pills over-saturated.
       const rot = ((h - NEO_GOLD_HUE) % 360 + 360) % 360;
       root.style.setProperty('--np-accent-huerot', rot.toFixed(1) + 'deg');
       root.style.setProperty('--np-accent-sat',    Math.min(6, s / 0.244).toFixed(2));
@@ -436,36 +276,25 @@
     }
 
     PW.__npAccentApi     = true;
-    PW.__npAccentPalette = PALETTE;
     PW.__npAccentDefault = DEFAULT_HEX;
     PW.__npGetAccent     = getAccent;
-    PW.__npApplyAccent   = applyAccent;   // preview (no persist)
-    PW.__npSaveAccent    = saveAccent;    // persist + apply
+    PW.__npApplyAccent   = applyAccent;
+    PW.__npSaveAccent    = saveAccent;
     PW.__npResetAccent   = resetAccent;
 
-    // Apply at document-start so the rest of the page sees the color.
     applyAccent(getAccent());
   })();
 
-  /* =========================================================
-     FLOATING TABS API — shared dimensions + auto-stack.
-     Each tab script (Quest Log, etc.) calls __npRegisterTab(id)
-     at mount and gets the `bottom` offset to use:
-       - 1st tab → at the very bottom-right
-       - 2nd tab → stacked above
-       - 3rd → above that
-     Order = Tampermonkey execution order (alphabetical by default).
-  ========================================================= */
   (function exposeTabsAPI(){
     if (PW.__npTabConfig) return;
     PW.__npTabConfig = {
-      H: 110,           // tab height
-      W: 220,           // tab width
-      PEEK: 80,         // visible part when collapsed
-      HOVER_PEEK: 220,  // visible part on hover (= W → tab fully out)
+      H: 110,
+      W: 220,
+      PEEK: 80,
+      HOVER_PEEK: 220,
       BORDER: 3,
-      GAP: 18,          // vertical gap between two stacked tabs
-      BASE_BOTTOM: 30,  // bottom margin for the first tab
+      GAP: 18,
+      BASE_BOTTOM: 30,
       ACCENT: '#dcb8ff',
       ZINDEX: 100000,
     };
@@ -478,17 +307,10 @@
     };
   })();
 
-  /* =========================================================
-     SHARED THEME TOKENS — also consumed by HUD and BACKGROUND
-     scripts. Other scripts reference them via var(--np-*, fallback)
-     so they keep working even if this script is disabled.
-  ========================================================= */
   const THEME = `
     :root{
       --np-font: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 
-      /* Accent — overridden by exposeAccent() from localStorage.
-         These values are just fallbacks (default lila). */
       --np-accent:#dcb8ff;
       --np-accent-text:#e3c8ff;
       --np-accent-bg:rgba(220,184,255,.14);
@@ -512,27 +334,20 @@
       --np-shadow:0 8px 24px rgba(0,0,0,.28);
       --np-blur:8px;
 
-      /* Top-bar surface (right panel → "Top bar"). Defaults reproduce
-         the original fully transparent bar exactly. */
       --np-bar-bg:transparent;
       --np-bar-backdrop:none;
       --np-bar-line:transparent;
       --np-bar-shadow:none;
-      /* Left edge of the bar's PAINTED surface. The bar element itself
-         stays full-width (its menus must keep centring on the viewport);
-         only its background starts after the side rail, so the rail and
-         the user card sit in front of it instead of under a tint. */
       --np-bar-inset-left:0px;
 
-      /* Shortcut icon size (bottom editor → "Icons"). */
       --np-side-icon-size:60px;
 
       --np-gap:10px;
-      --np-col-width:330px;          /* width of the left decor column */
-      --np-hud-left:20px;            /* left margin inside the column */
+      --np-col-width:330px;
+      --np-hud-left:20px;
       --np-hud-top:10px;
       --np-hud-bottom:10px;
-      --np-hud-width:290px;          /* 20 + 290 + 20 = 330 → balanced margins */
+      --np-hud-width:290px;
 
       --np-z-bg:-2147483640;
       --np-z-bar:1000;
@@ -541,48 +356,22 @@
     }
   `;
 
-  /* =========================================================
-     LAYOUT (frame + kill native + offsets)
-  ========================================================= */
   const BAR_H = 60;
   const FRAME = `
     :root{
-      /* --np-frame-shift mirrors --np-col-width (the HUD's left rail) so
-         the frame width and position both adapt when the user drags the
-         resize handle. When the HUD is hidden (narrow viewport media
-         query below), we reset --np-frame-shift to 0 so the frame can
-         use the full viewport. The fallback (var(..., 0px)) keeps things
-         working even when the HUD script isn't loaded. */
       --np-frame-shift: var(--np-col-width, 0px);
-      /* Responsive frame width: never wider than 1100px, never wider than
-         the space remaining after the HUD column, never narrower than
-         600px (below that, content readability collapses anyway).
-         The 40px subtracted = 20px breathing room on each side. */
       --np-frame-width: clamp(600px, calc(100vw - var(--np-frame-shift) - 40px), 1100px);
-      /* Clearance below the top bar. --np-content-drop is added by the
-         horizontal icon-row layout, which needs the page to start BELOW
-         the row rather than underneath it; the column layouts live in the
-         side margins and leave it at 0. Kept as its own token so the
-         media query below inherits the behaviour. */
       --np-content-drop: 0px;
       --np-top-offset: calc(100px + var(--np-content-drop, 0px));
-      --np-h5-gap: 0px;           /* 0 = BETA aligned with CLASSIC (top position) */
+      --np-h5-gap: 0px;
       --np-frame-radius: 30px;
       --np-frame-padding: 16px;
       --np-frame-border: 2px solid #000;
       --np-bottom-spacer: 10px;
     }
 
-    /* CLASSIC: no H5 gap */
     body#neobdy{ --np-h5-gap: 0px; }
 
-    /* Native scrollbars hidden. The previous "stable both-edges" gutter
-       reserved a strip on BOTH viewport edges (the two ugly black bars),
-       and a native bar can neither be transparent nor sit BEHIND the BG
-       picker tab. Scroll position feedback comes from a custom
-       accent-tinted indicator instead (#npxScrollThumb, pointer-events:
-       none, z-index below every panel/tab) — see customScrollbar() at the
-       end of PART ①. */
     html, body {
       -ms-overflow-style: none;
       scrollbar-width: none;
@@ -594,7 +383,6 @@
     html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
     body::after{ content:""; display:block; height:var(--np-bottom-spacer); }
 
-    /* ===== HIDE NATIVE (nav + ads + footer + sidebar) ===== */
     #pushdown_banner,#ad-slug-wrapper,#ad-table,#ad-table-btf,
     .nl-instream-video,.nl-ads-leaderWrapper,#nl_ad_left,#nl_ad_right,
     [id^="pb-slot-"],#header,#navigation,#template_nav,#ban,#nst,
@@ -608,7 +396,6 @@
       overflow:hidden !important;
     }
 
-    /* Classic sidebar */
     td.sidebar, td.sidebar .sidebarModule{
       display:none !important;
       width:0 !important;
@@ -616,10 +403,8 @@
       overflow:hidden !important;
     }
 
-    /* Classic content full width */
     #content, td.content{ width:100% !important; }
 
-    /* H5 subnav (favorites / NP / NC) */
     body .navsub-left__2020,
     body .navsub-right__2020,
     body .navsub-fav-icon__2020,
@@ -635,19 +420,6 @@
       height:0 !important; margin:0 !important; padding:0 !important;
     }
 
-    /* Main content frame — viewport-centered on wide screens, pushed past
-       the HUD's right edge when the viewport gets narrow enough that the
-       natural center would collide with the HUD.
-       The max() picks whichever is larger between:
-         - the symmetric viewport-centered margin ((100vw - frame_width) / 2)
-         - the HUD's right edge (var(--np-frame-shift))
-       On wide viewports the first wins → behavior unchanged.
-       On narrow viewports the second wins → frame docks against the HUD
-       and the right side absorbs the remaining margin via margin-right
-       auto. This combined with the adaptive --np-frame-width clamp above
-       guarantees zero overlap at every viewport size.
-       Layout part (width/padding/border) always applies; the white-bg part
-       below is gated so KEEP_NATIVE_BG_PATHS pages keep their themed gradient. */
     body :where(
       #container__2020,#content,#pageContent,#contentContainer,
       #main,main,.inner-body,.content,#np-content,#alpha-inner
@@ -675,10 +447,6 @@
       background-image:none !important;
     }
 
-    /* Override Neopets' sand/cream gradient on H5 containers
-       (.theme-bg, .container) — otherwise the background goes beige.
-       Skipped on pages flagged via KEEP_NATIVE_BG_PATHS (inventory, etc.)
-       so their native gradient stays visible. */
     html:not(.np-keep-native-bg) body .container.theme-bg,
     html:not(.np-keep-native-bg) body #container__2020.theme-bg,
     html:not(.np-keep-native-bg) body .container,
@@ -687,12 +455,10 @@
       background-image:none !important;
     }
 
-    /* BETA/H5 : adds the "removed bar" gap */
     body #container__2020{
       margin-top: calc(var(--np-top-offset) + var(--np-h5-gap)) !important;
     }
 
-    /* Anti-blank top */
     body :where(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) > :first-child{
       margin-top:0 !important; padding-top:0 !important;
     }
@@ -703,21 +469,10 @@
     body .page-title__2020, body .inv-title-container { margin-top:0 !important; padding-top:0 !important; }
     body .page-title__2020 :is(h1,h2,h3), body .inv-title-container :is(h1,h2,h3){ margin-top:0 !important; }
 
-    /* Neoboards containers ship "margin:20px auto" (neoboards.css) — the
-       anti-blank-top rule above misses them because the frame's LITERAL
-       first child on those pages is a hidden ad/buffer div, so the first
-       VISIBLE element keeps its top margin and the content starts lower
-       than on other pages. Kill the top margin here (sides stay auto for
-       centering); the generic firstVisibleAlign() module below covers any
-       page with the same hidden-first-child pattern. */
     body #boardList, body #boardTopic, body #boardIndex, body #boardCreateTopic{
       margin-top:0 !important;
     }
 
-    /* Remove decorative borders / table chrome inside the frame.
-       NOTE: background-image:none is gated behind :not(.np-keep-native-bg)
-       below so themed pages (inventory, …) keep their native gradients
-       even when those live on a <table>/<td>. */
     body :where(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner)
     :is(table,thead,tbody,tfoot,tr,td,th){
       border:0 !important; outline:0 !important; box-shadow:none !important;
@@ -731,35 +486,15 @@
       border:0 !important; outline:0 !important; box-shadow:none !important;
     }
 
-    /* CLASSIC: kill the 160px floated column blocking the content */
     body#neobdy td.content > div[style*="float: right"][style*="width: 160px"]{
       display:none !important;
     }
-    /* CLASSIC: free the 635px-forced main block */
     body#neobdy td.content > div[style*="width: 635px"]{
       width:auto !important; max-width:100% !important;
       margin-left:auto !important; margin-right:auto !important;
     }
-    /* CLASSIC: cleanup floats */
     body#neobdy td.content::after{ content:""; display:block; clear:both; }
 
-    /* ===== Modern BETA pages: hide redundant chrome =====
-       Recently rebuilt pages (SDB, Inventory, Closet, Quickstock…)
-       duplicate things that already live in the HUD:
-         - "Back to Neopia Central" button
-         - inter-page nav (Inventory / Closet / SDB / ...)
-         - verbose descriptions ("Your Safety Deposit Box holds...")
-       Hide all of it so the nav stays clean.
-
-       .inv-menubar is the parent of .inv-filtericons (NP/NC toggles,
-       sort A-Z, stack/unstack). It can't be display:none without
-       killing its useful children. Strategy:
-         - keep .inv-menubar visible
-         - hide ALL its direct children EXCEPT .inv-filtericons
-       Same for .sdb-menubar and .closet-menubar.
-
-       Specificity (0,1,2) with 'html body' beats the fallback
-       [class$="-menubar"] (0,1,1) that comes later in source order. */
     html body .inv-menubar,
     html body .sdb-menubar,
     html body .closet-menubar,
@@ -774,8 +509,6 @@
       overflow:visible !important;
       pointer-events:auto !important;
     }
-    /* Position the menubar absolutely (to the right of the page title)
-       so it doesn't stack at the top-left. */
     html body .page-title__2020,
     html body .inv-title-container{
       position:relative !important;
@@ -787,22 +520,7 @@
       transform:translateY(-50%) !important;
       gap:8px !important;
     }
-    /* 4.2.0 — the trim is now opt-out. html.np-inv-menubar-full (right
-       panel → "Full inventory bar") keeps Neopets' own menu-bar links —
-       Quick Stock, Transfer Log, Item Search… — beside the NP/NC filter
-       icons, for the users who navigate from there. Default behaviour is
-       unchanged: filters only. */
-    html:not(.np-inv-menubar-full) body .inv-menubar > *:not(.inv-filtericons),
-    html:not(.np-inv-menubar-full) body .sdb-menubar > *:not(.sdb-filtericons),
-    html:not(.np-inv-menubar-full) body .closet-menubar > *:not(.closet-filtericons),
-    html:not(.np-inv-menubar-full) body .quickstock-menubar > *:not(.quickstock-filtericons),
-    html:not(.np-inv-menubar-full) body .gallery-menubar > *:not(.gallery-filtericons){
-      display:none !important;
-    }
-    /* With every link shown the bar no longer fits the absolute slot to
-       the right of the page title, so it goes back into the flow and wraps
-       across the full width. */
-    html.np-inv-menubar-full body .inv-menubar{
+    html:root body .inv-menubar{
       position:static !important;
       transform:none !important;
       flex-wrap:wrap !important;
@@ -811,18 +529,10 @@
       column-gap:8px !important;
       margin:0 !important;
     }
-    /* Neopets gives .inv-menulinks a 140px BOTTOM MARGIN: in their own
-       layout the link row floats over the item grid, and that margin is
-       what pushes the grid clear of it. Ours is in the flow, so the margin
-       became a 140px empty band between the bar and the category tabs —
-       measured on the live page: bar height 230px = 34 (filter pills) + 6
-       (row gap) + 50 (links) + 140 (this margin). */
-    html.np-inv-menubar-full body [class*="-menulinks"]{
+    html:root body [class*="-menulinks"]{
       margin-bottom:0 !important;
     }
-    /* Quickstock / Gallery hide their WHOLE bar further down (the shared
-       :is() cleanup list) — bring it back for the same setting. */
-    html.np-inv-menubar-full body :is(.quickstock-menubar, .gallery-menubar){
+    html:root body :is(.quickstock-menubar, .gallery-menubar){
       display:flex !important;
       visibility:visible !important;
       opacity:1 !important;
@@ -831,8 +541,6 @@
       overflow:visible !important;
       pointer-events:auto !important;
     }
-    /* Force visibility of .inv-filtericons only. No display:flex on its
-       children — let Neopets size the icons (containers + bg sizing). */
     html body .inv-filtericons{
       visibility:visible !important;
       opacity:1 !important;
@@ -846,35 +554,25 @@
       .closet-header-back, .closet-header-description,
       .quickstock-header-back, .quickstock-menubar, .quickstock-header-description,
       .gallery-header-back, .gallery-menubar, .gallery-header-description,
-      /* GENERIC "Back" button used by every rebuilt beta page */
       .back-button-circle__2020,
-      /* per-page descriptions / instructions */
       #pageDesc, #qs-instructions,
-      /* Battledome header (Board/FAQ + iframe FB) */
       #bdHeader,
-      /* social widgets (FB Like, Twitter Share/Follow) */
       .social-links, .fb-like, .fb_iframe_widget, #fb-root,
       .twitter-share-button, .twitter-follow-button
     ){
       display:none !important;
     }
-    /* social plugin iframes wherever they get injected */
     body iframe[src*="facebook.com/plugins"],
     body iframe[src*="platform.twitter.com"],
     body iframe[title*="Facebook Social Plugin" i],
     body iframe[title*="Twitter" i]{
       display:none !important;
     }
-    /* Generic fallback: every "*-menubar"/"*-header-back"/"*-header-description"
-       follows the same naming pattern. Covers beta pages we don't know
-       about yet (closet, stamps, tcg, etc.). */
     body [class$="-menubar"],
     body [class$="-header-back"],
     body [class$="-header-description"]{
       display:none !important;
     }
-    /* Remove the empty space left above the page title once Back and the
-       menu are gone (the title-row has nothing left to balance). */
     body :is(.sdb-header, .inv-header, .closet-header, .quickstock-header, .qs-page-header){
       padding-top:0 !important;
       margin-top:0 !important;
@@ -884,26 +582,16 @@
       padding-top:0 !important;
       margin-top:0 !important;
     }
-    /* Frame: cancel the calc(2em+15px+2em) bottom padding from Neopets, but
-       guarantee a min-height that covers the central icon-column area so it
-       stays visually INSIDE the frame on short pages. */
     body :where(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner){
-      /* --np-frame-minh is set by the frame-resize module when the user drags
-         the bottom edge (persisted); default = the historical 50vh+80px. */
       min-height:var(--np-frame-minh, calc(50vh + 80px)) !important;
       padding-bottom:var(--np-frame-padding) !important;
     }
 
-    /* Community Central: decorative wood planks flanking the content — they
-       stick out of the frame, remove them. */
     body .community-wood-left,
     body .community-wood-right{
       display:none !important;
     }
 
-    /* CLASSIC: avoid the DOUBLE frame. #main stays as THE single frame (it
-       carries the top offset). Nested elements get their border removed but
-       keep their internal padding so the content breathes. */
     body#neobdy #main #content{
       border:0 !important;
       border-radius:0 !important;
@@ -921,17 +609,10 @@
       padding:0 !important;
     }
 
-    /* Narrow viewports: reduce frame radius/padding so it doesn't look
-       chunky at smaller widths. */
     @media (max-width: 1100px){
       :root{ --np-frame-radius: 20px; --np-frame-padding: 12px; }
     }
     @media (max-width: 900px){
-      /* HUD is display:none below 900px (set by the HUD script) → we also
-         zero out --np-frame-shift so the frame doesn't keep a 330px gap
-         on the left where the HUD used to be. We override --np-frame-shift
-         specifically (not --np-col-width) so the Dailies sidebar still
-         uses the persisted column width for its open-state layout. */
       :root{
         --np-frame-radius: 14px;
         --np-frame-padding: 10px;
@@ -946,13 +627,6 @@
   style.textContent = THEME + FRAME;
   (document.head || document.documentElement).appendChild(style);
 
-  /* ===== HIDE NATIVE (CSS only — NOT removed from DOM) =====
-     We don't .remove() these because Neopets scripts then try to
-     query them (setDotOnBellIcon, manageProfileMenuSize2020, etc.)
-     and crash when they're missing — which breaks page init
-     (e.g. inventory NP/NC filters never bind).
-     Solution: keep them in the DOM, just visually hidden.
-  */
   const KILL = [
     '#pushdown_banner','#ad-slug-wrapper','#ad-table','#ad-table-btf',
     '.nl-instream-video','.nl-ads-leaderWrapper','#nl_ad_left','#nl_ad_right',
@@ -973,37 +647,12 @@
   }`;
   (document.head || document.documentElement).appendChild(killStyle);
 
-  /* =========================================================
-     TOP BAR (Shadow DOM, hover-open menus)
-  ========================================================= */
   const mkLink = (attrs) => { const el = document.createElement('link'); Object.assign(el, attrs); (document.head || document.documentElement).append(el); };
   mkLink({ rel:'preconnect', href:'https://images.neopets.com', crossorigin:'' });
   mkLink({ rel:'dns-prefetch', href:'//images.neopets.com' });
 
   const host = document.createElement('div');
   host.id = 'npx-host';
-  /* pointer-events:none on the HOST (4.2.0). The bar is a full-width
-     60px fixed strip, so its empty left third sat directly on top of
-     the HUD's user card. That is the whole "I can't click the ⚙ and ↻
-     on the username / avatar count card — they show on hover but
-     vanish as soon as I leave the words" report: the buttons live at
-     the card's top-right corner, INSIDE that strip, so the cursor left
-     the card before it ever reached them. Only the controls inside the
-     bar take pointer events now; the empty strip between them lets
-     everything underneath — HUD cards and page content alike — through. */
-  /* Z-ORDER of the whole suite, for reference:
-        18   #npLeftBar   decor column
-        1000 #npHud       HUD cards
-        1001 #npHudResizer rail drag strip
-        1002 #btnOverlay  shortcut icons   (above the drag strip)
-        1005 #npxSideBtnHost  bottom editor (above the icons)
-        2000 #npx-host    top bar + its dropdown menus (above everything)
-     The bar host has to win because its menus live INSIDE it: they open
-     at y=66px and would otherwise be covered by the icons in the
-     horizontal-row layout, which is exactly what happened when the
-     overlay was first lifted above the drag strip. The host is
-     pointer-events:none and its painted surface starts after the side
-     rail, so sitting on top costs nothing. */
   Object.assign(host.style, { position:'fixed', top:'0', left:'0', right:'0', zIndex:'2000', pointerEvents:'none' });
   const root = host.attachShadow({ mode:'open' });
 
@@ -1022,11 +671,6 @@
       overflow:visible;
       pointer-events:none;
     }
-    /* The painted surface is a separate layer so it can START AFTER the
-       left rail (--np-bar-inset-left) while the bar element itself stays
-       full-width — the menu row keeps centring on the viewport exactly as
-       before. User-selectable in the right panel → "Top bar"; the token
-       defaults reproduce the original fully transparent bar. */
     .bar::before{
       content:"";
       position:absolute;
@@ -1039,12 +683,7 @@
       box-shadow:var(--np-bar-shadow, none);
       pointer-events:none;
     }
-    /* Controls ride above the painted layer. */
     .inner{ position:relative; z-index:1; }
-    /* Companion to the host's pointer-events:none — see there. Only the
-       controls themselves are interactive; the grid columns they sit in
-       stay transparent to the cursor, which is what gives the HUD cards
-       under the bar their top-right corner back. */
     .inner, .left{ pointer-events:none; }
     .left > *, .menu{ pointer-events:auto; }
     .inner{
@@ -1085,7 +724,6 @@
     .menu a span{ flex:1 1 auto; white-space:nowrap; }
     .menu .menuSep{ height:1px; margin: 6px 4px !important; background: rgba(255,255,255,.1) !important; }
 
-    /* Trash button and add row: only shown in edit mode (.np-edit-mode) */
     .menu a{ position:relative; }
     .menu a .menuTrash{
       position:absolute; top:50%; right:6px;
@@ -1104,7 +742,6 @@
       background:#ff5a5a; color:#fff;
     }
 
-    /* Add row: + button + inline form */
     .menu .menuAddRow{
       margin-top:6px;
       padding-top:6px;
@@ -1165,16 +802,12 @@
     }
     .menu .menuAddBtns button:hover{ filter:brightness(1.1); }
 
-    /* Smaller top bar on narrow screens */
     @media (max-width: 1500px) { .btn { padding: 9px 10px !important; } .btn, .btn span { font-size: 21px !important; } .btn img { width: 26px !important; height: 26px !important; } }
     @media (max-width: 1250px) { .btn { padding: 8px 7px !important; } .btn, .btn span { font-size: 19px !important; } }
     @media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } }
   `;
   root.appendChild(barStyle);
 
-  // Mapping key → Neopets icon name (used in data-icon + URL pattern).
-  // Structure mirrors the original Neopets nav (Community / Games /
-  // Explore / Shop + Premium on the right, Quests + Bell at the far right).
   const TOPBAR_ICON_NAMES = {
     community: 'community',
     games:     'games',
@@ -1193,13 +826,6 @@
   const icons = Object.fromEntries(
     Object.entries(TOPBAR_ICON_NAMES).map(([key, iconName]) => [key, _iconUrl(iconName, _initialTheme)])
   );
-  // Each item: [href, label, iconSpec].
-  // Special element: '---' = visual separator between groups.
-  // iconSpec:
-  //   - "name"        → follows current theme via __npBtnIconUrl
-  //   - "basic:name"  → fixed icon basic/images/<name>-icon.png (sub-icons)
-  //   - "basicsvg:name" → fixed icon basic/images/<name>-icon.svg
-  //   - "https://..." → fixed URL, ignored by theme switching
   const BASIC_ICON_BASE = 'https://images.neopets.com/themes/h5/basic/images/';
   const menus = {
     community:[
@@ -1223,7 +849,6 @@
       ['/prizepass/adventure/','Adventure Pass','basic:prizepass'],
     ],
     shop:[
-      // NP section
       ['/shops/wizard.phtml','Shop Wizard','basic:shopwizard'],
       ['/market.phtml?type=your','My Shop','basic:myshop'],
       ['/auctions.phtml','Auctions','basic:auction'],
@@ -1231,7 +856,6 @@
       ['/bank.phtml','Bank','shop'],
       ['/space/warehouse/prizecodes.phtml','Redeem Codes','basic:redeemcode'],
       '---',
-      // NC section
       ['https://ncmall.neopets.com/mall/shop.phtml?layout=new','NC Mall','basic:ncmall'],
       ['https://secure.nc.neopets.com/get-neocash','Buy NC','basic:buync'],
       ['https://secure.nc.neopets.com/redeemnc','Redeem NC Cards','basic:redeemnc'],
@@ -1274,20 +898,6 @@
   `;
   root.appendChild(bar);
 
-  /* Arm the cascade fallback on every themed icon in the top bar.
-     The `<img>` tags were built via template literal `src=` strings,
-     which means they fetch immediately at parse time WITHOUT any
-     onerror handler. The previous applyTopbarTheme() was the only
-     spot that attached the fallback — and it only ran on theme-
-     CHANGE (np:btn-theme event). So if any of the initial URLs 404,
-     the icon stayed broken forever. This helper:
-       1. attaches __npAttachBtnFallback so future errors cascade
-          through basic/v3 → basic root → basic png
-       2. force re-fetches icons that already errored before the
-          fallback was attached (otherwise src=sameURL is a no-op
-          and the broken state is permanent)
-     Called immediately on the freshly-built bar, on every menu
-     (initial + rerender), and on pageshow/load/visibilitychange. */
   function armTopbarIcons(scope){
     const attachFb = PW.__npAttachBtnFallback;
     const target = scope || root;
@@ -1306,13 +916,6 @@
   }
   armTopbarIcons(bar);
 
-  /* =========================================================
-     TOP-BAR MENU CUSTOMIZATION (per category):
-       - users can remove an item (trash on hover)
-       - users can add a custom link (+ at the end of the menu)
-     Persisted in localStorage as
-       { [catId]: { removed:[href], added:[{href,label,iconSpec}] } }
-  ========================================================= */
   const TOPBAR_CUSTOM_LS = 'npqol_topbar_custom_v1';
   function loadAllCustom(){
     try {
@@ -1401,8 +1004,6 @@
         if (!a) return;
         const href = a.getAttribute('data-href');
         const custom = getCustom(catId);
-        // If the item is a default → add it to "removed".
-        // If it's a previously added item → drop it from "added".
         const inAdded = (custom.added || []).findIndex(x => x.href === href);
         if (inAdded >= 0){
           custom.added.splice(inAdded, 1);
@@ -1453,9 +1054,6 @@
         const label = form.querySelector('input[name="label"]').value.trim();
         const href  = form.querySelector('input[name="href"]').value.trim();
         if (!label || !href) return;
-        // Whitelist URL schemes: only http(s) absolute URLs or site-relative paths.
-        // Blocks javascript:, data:, vbscript:, file:, etc. which would otherwise
-        // run with the page's privileges when the user clicks the saved link.
         if (!/^(https?:\/\/|\/)/i.test(href)){
           alert('Link URL must start with http://, https://, or / (e.g. /shops/wizard.phtml).');
           return;
@@ -1483,11 +1081,6 @@
 
   document.documentElement.appendChild(host);
 
-  /* =========================================================
-     Theme listener → refresh top-bar icons.
-     <img data-icon="..."> tags get their src swapped; <img> tags
-     without data-icon (e.g. fight = battledome) stay untouched.
-  ========================================================= */
   function applyTopbarTheme(themeId){
     const iconUrl      = PW.__npBtnIconUrl;
     const attachFb     = PW.__npAttachBtnFallback;
@@ -1499,10 +1092,6 @@
       if (typeof attachFb === 'function') attachFb(img, name);
       const newUrl = iconUrl(name, themeId);
       const broken = img.complete && img.naturalWidth === 0;
-      // Skip the assignment if the URL is unchanged AND the image
-      // is already painted — avoids a useless flicker on theme
-      // change. Otherwise force a fresh fetch (clearing src first
-      // because browsers no-op img.src = sameURL).
       if (img.src === newUrl && !broken) return;
       img.src = '';
       img.src = newUrl;
@@ -1513,11 +1102,6 @@
     if (id) applyTopbarTheme(id);
   });
 
-  /* Re-arm broken topbar icons on bfcache restore, full load, and
-     tab visibility regain. Same rationale as #btnOverlay over in
-     the HUD script: navigations can leave <img> nodes in a pending
-     state that no event reports, and we want a passive recovery
-     instead of "user opens the BG sidebar to make icons appear". */
   const rearmTopbar = () => { try { armTopbarIcons(root); } catch {} };
   window.addEventListener('pageshow', rearmTopbar);
   window.addEventListener('load',     rearmTopbar);
@@ -1544,7 +1128,6 @@
     Object.keys(dd).forEach(id => { if (id !== exceptId) dd[id].style.display = 'none'; });
   }
   let closeTimer = null;
-  // Touch devices have no hover → the category menus must toggle on tap.
   const TOUCH_LIKE = (() => {
     try { return window.matchMedia('(hover: none)').matches; } catch { return false; }
   })();
@@ -1568,9 +1151,6 @@
   }
   root.querySelectorAll('.btn.cat').forEach(bindHover);
   window.addEventListener('resize', () => closeAll());
-  // Tap/click anywhere outside the bar's buttons/menus closes every category
-  // menu — pointerleave never fires on touch, so without this the menus
-  // stayed open until a navigation.
   document.addEventListener('pointerdown', (ev) => {
     const path = ev.composedPath ? ev.composedPath() : [];
     if (path.some(n => n && n.classList &&
@@ -1578,15 +1158,6 @@
     closeAll();
   }, true);
 
-  /* =========================================================
-     FRAME RESIZE — drag the frame's RIGHT edge to set the content
-     width, drag the BOTTOM edge to set the frame's min-height.
-     Both persisted (npqol_frame_size_v1) and re-applied on every
-     page. Double-click a handle to reset that axis to default.
-     The width override still goes through the same clamp as the
-     default --np-frame-width, so the frame can never overlap the
-     HUD column or overflow the viewport.
-  ========================================================= */
   (function frameResize(){
     const LS_KEY = 'npqol_frame_size_v1';
     const MIN_W = 600, MIN_H = 200;
@@ -1616,26 +1187,19 @@
         rootEl.style.removeProperty('--np-frame-minh');
       }
     }
-    // Apply persisted size at document-start so the very first paint uses it.
     applyW(); applyH();
 
-    // Handle chrome lives in the page (not the shadow bar) — small style tag.
     const hStyle = document.createElement('style');
     hStyle.id = 'np-frame-resize-style';
     hStyle.textContent = `
       #npxFrameResizeR, #npxFrameResizeB{
         position:absolute;
-        /* Below the HUD's icon columns (#btnOverlay, z 1000): the right
-           column sits exactly ON the frame edge, and the icons must win
-           the pointer over the resize strip. The handle stays usable on
-           the rest of the edge. */
         z-index:900;
         background:transparent;
         touch-action:none;
       }
       #npxFrameResizeR{ width:14px; cursor:ew-resize; }
       #npxFrameResizeB{ height:14px; cursor:ns-resize; }
-      /* Touch devices: widen the grab strips. */
       @media (pointer: coarse){
         #npxFrameResizeR{ width:26px; }
         #npxFrameResizeB{ height:26px; }
@@ -1670,8 +1234,6 @@
     (document.head || document.documentElement).appendChild(hStyle);
 
     const FRAME_SEL = '#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner';
-    // The frame styling applies to every match; the VISIBLE frame is the
-    // outermost one (e.g. classic: #main contains #content — pick #main).
     function findFrame(){
       const cands = [...document.querySelectorAll(FRAME_SEL)];
       return cands.find(el => !cands.some(o => o !== el && o.contains(el))) || null;
@@ -1694,9 +1256,6 @@
       const sx = window.scrollX, sy = window.scrollY;
       hR.style.display = '';
       hB.style.display = '';
-      // Center each strip on the frame border using its LIVE width — the
-      // old hardcoded -7 assumed the 14px desktop size and drifted off the
-      // border with the 26px touch size (and any future width change).
       const hw = hR.offsetWidth  || 14;
       const bh = hB.offsetHeight || 14;
       hR.style.left   = (r.right + sx - hw / 2) + 'px';
@@ -1742,11 +1301,7 @@
     window.addEventListener('resize', schedulePlace);
     document.addEventListener('DOMContentLoaded', () => { watchFrame(); }, { once: true });
 
-    /* Width drag — the right edge follows the cursor. Incremental with a
-       fresh rect each move (self-correcting): when the frame is centered a
-       1px cursor move shifts the edge by 0.5px (both margins share the
-       slack), so we scale the delta ×2 in that case. */
-    let drag = null; // { axis:'w'|'h', pointerId }
+    let drag = null;
     function beginDrag(e, axis, el){
       if (!frame) return;
       drag = { axis, pointerId: e.pointerId };
@@ -1795,18 +1350,6 @@
     hB.addEventListener('dblclick', () => { delete size.h; saveSize(size); applyH(); schedulePlace(); });
   })();
 
-  /* =========================================================
-     FIRST-VISIBLE-CHILD ALIGNMENT — the CSS anti-blank-top rule
-     zeroes `> :first-child`, but on many pages (neoboards, forum
-     index…) the frame's literal first children are HIDDEN nodes
-     (#navsub-buffer__2020, ad wrappers, <style>/<script>) — so the
-     first VISIBLE element keeps its own top margin and the content
-     starts lower than elsewhere. This walks the frame's children,
-     finds the first one that actually renders in-flow, and zeroes
-     its top margin (inline + !important, per the frame gotcha).
-     padding-top is preserved on nested frame-list containers
-     (classic #content keeps its interior 24px padding).
-  ========================================================= */
   (function firstVisibleAlign(){
     const FRAME_SEL = '#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner';
     const SKIP_TAGS = /^(STYLE|SCRIPT|LINK|META|TEMPLATE|BR|HR)$/;
@@ -1822,7 +1365,6 @@
         if (SKIP_TAGS.test(child.tagName)) continue;
         const cs = getComputedStyle(child);
         if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-        // Out-of-flow elements (popups, overlays) don't define the content top.
         if (cs.position === 'absolute' || cs.position === 'fixed') continue;
         child.style.setProperty('margin-top', '0', 'important');
         if (!child.matches(FRAME_SEL)){
@@ -1839,20 +1381,11 @@
     }
     window.addEventListener('load', run);
     window.addEventListener('pageshow', run);
-    // Late re-renders (Vue pages swap content after load).
     setTimeout(run, 800);
   })();
 
-  /* =========================================================
-     CUSTOM SCROLLBAR — replaces the hidden native bar.
-     Accent-tinted, z-index below every panel/handle (the BG
-     picker tab sits ABOVE it and stays clickable). Fully
-     interactive: drag the thumb, click the track to jump,
-     hovering the right edge reveals + widens it; it fades out
-     when idle and unhovered. Wheel/keyboard scrolling untouched.
-  ========================================================= */
   (function customScrollbar(){
-    const M = 8; // track margins top/bottom (px)
+    const M = 8;
 
     const track = document.createElement('div');
     track.id = 'npxScrollTrack';
@@ -1864,8 +1397,6 @@
       width: '14px',
       zIndex: '800',
       background: 'transparent',
-      // Enabled in layout() only when the page actually scrolls, so the
-      // strip never eats clicks on non-scrolling pages.
       pointerEvents: 'none',
       touchAction: 'none',
     });
@@ -1897,8 +1428,6 @@
 
     let fadeT = 0, queued = false, dragging = false, hovering = false, dragOff = 0;
 
-    /* Position + size the thumb; returns the geometry (null when the page
-       doesn't scroll). Also flips the track's pointer-events accordingly. */
     function layout(){
       const doc = document.documentElement;
       const sh = Math.max(doc.scrollHeight, document.body ? document.body.scrollHeight : 0);
@@ -1949,9 +1478,9 @@
       e.preventDefault();
       const r = thumb.getBoundingClientRect();
       if (e.clientY >= r.top && e.clientY <= r.bottom){
-        dragOff = e.clientY - r.top;   // grab: keep the offset inside the thumb
+        dragOff = e.clientY - r.top;
       } else {
-        dragOff = m.thH / 2;           // track click: center the thumb on it
+        dragOff = m.thH / 2;
         moveTo(e.clientY, m);
       }
       dragging = true;
@@ -1981,52 +1510,24 @@
   })();
 })();
 
-  /* ╔══════════════════════════════════════════════════════════════╗
-     ║  PART ② — HUD (user, bank, NP, quickref card, icon columns)  ║
-     ╚══════════════════════════════════════════════════════════════╝ */
 (function () {
   'use strict';
-  // (iframe + host gates hoisted to the fusion prelude)
   if (document.getElementById('npHud')) return;
 
-  /* =========================================================
-     EARLY PRELOAD — fire the active pet image fetch at document-start
-     so the network round-trip is in flight BEFORE the rest of the HUD
-     (CSS, DOM mounting, qrModule init) blocks the main thread.
-
-     We actually create a REAL <img> element here (not just a <link
-     rel=preload>) and set its src right away. The browser starts the
-     network fetch + image decode immediately. Later, when qrModule
-     renders the active-pet card, it doesn't re-create the img — it
-     just MOVES this pre-loaded element into the card (no second
-     fetch, no decode, no transition delay).
-  ========================================================= */
-  /* Background-cache a CPN pet image as a data URL in localStorage.
-     Called from preloadActivePet (first visit on this device) and from
-     renderActivePetImage (when the active pet changes mid-session, e.g.
-     after "Make Active"). The data URL becomes the FAST PATH on the
-     next page load — no network, no DNS, no decode-from-bytes loop,
-     just LS read + image-from-string decode in a single frame. */
-  /* Last KNOWN-GOOD active-pet image URL (/cp/<sci>/<mood>/9.png form).
-     Written every time we successfully resolve a sci-based URL; read as a
-     fallback when the shared caches are missing. This is what keeps the HUD
-     image stable when script 5's sandbox "refresh cache" button wipes
-     jb_np_homedata_v2 — without it the HUD regressed to the cpn/<name>
-     customised render (pet WITH its custom background) and cached that. */
   const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
   function readLastGoodPetImg(){
     try { return JSON.parse(localStorage.getItem(ACTIVE_IMG_LS) || 'null'); }
     catch { return null; }
   }
   function saveLastGoodPetImg(name, url){
-    if (!name || !url || !/\/cp\//.test(url)) return; // only sci-based URLs qualify
+    if (!name || !url || !/\/cp\//.test(url)) return;
     try { localStorage.setItem(ACTIVE_IMG_LS, JSON.stringify({ name, url })); } catch {}
   }
 
   function _cacheRawPetImage(url){
     try {
       const cacheKey = 'npqol_pp_png:' + url;
-      if (localStorage.getItem(cacheKey)) return; // already cached
+      if (localStorage.getItem(cacheKey)) return;
       const probe = new Image();
       probe.crossOrigin = 'anonymous';
       probe.onload = () => {
@@ -2036,31 +1537,21 @@
           cv.height = probe.naturalHeight;
           cv.getContext('2d').drawImage(probe, 0, 0);
           const out = cv.toDataURL('image/png');
-          // Sanity cap so a freak-large image doesn't fill LS.
           if (out.length < 800000){
             try { localStorage.setItem(cacheKey, out); } catch {}
           }
-        } catch {}  // canvas tainted (CORS denied) → silent fail; img still works
+        } catch {}
       };
       probe.src = url;
     } catch {}
   }
 
-  // Resolve the active pet's SCI (Stored Customisation ID) by trying
-  // every place the suite caches it, in order of recency. The SCI lets
-  // us use the /cp/<sci>/<mood>/9.png URL — the exact one used by the
-  // home page carousel AND by script 5's dollhouse, which renders the
-  // pet WITHOUT its custom background (transparent PNG of just the pet
-  // character). Smaller, faster, and HTTP-cache-shared with those pages.
   function _resolveActivePet(){
-    // 1) Script 5's home-page snapshot — most reliable source, populated
-    //    every time the user visits /quickref.phtml.
     try {
       const homeRaw = localStorage.getItem('jb_np_homedata_v2');
       if (homeRaw){
         const home = JSON.parse(homeRaw);
         if (home && home.data && Date.now() - (home.ts||0) < 7*24*3600*1000){
-          // Find the active pet — we need its name from somewhere first.
           const qr = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
           const name = qr?.data?.active?.name;
           if (name && home.data[name] && home.data[name].sci){
@@ -2069,8 +1560,6 @@
         }
       }
     } catch {}
-    // 2) Our own qr cache — populated by qrModule.refresh() after parse()
-    //    extracts SCI from the quickref thumbnails.
     try {
       const qrRaw = localStorage.getItem('npqol_qr_data');
       if (qrRaw){
@@ -2079,9 +1568,6 @@
         const pets = qr?.data?.pets || [];
         const ap   = pets.find(p => p.isActive);
         if (name && ap?.sci) return { name, sci: ap.sci, mood: '1' };
-        // No SCI in the qr cache → try the last known-good URL before
-        // giving up (step 3), so a wiped homedata cache never downgrades
-        // the image to the cpn customised render.
         if (name){
           const lg = readLastGoodPetImg();
           if (lg && lg.name === name){
@@ -2092,7 +1578,6 @@
         }
       }
     } catch {}
-    // 3) Last known-good URL alone (caches wiped but we remember the pet).
     try {
       const lg = readLastGoodPetImg();
       if (lg && lg.name){
@@ -2103,14 +1588,6 @@
     return { name: '', sci: '', mood: '1' };
   }
 
-  // If the qr cache was written by an older script version that didn't
-  // include SCI (or that scanned the wrong attribute), invalidate the
-  // fetch cooldown so qrModule re-fetches and rebuilds the cache with
-  // SCI on the next refresh. We keep the stale DATA so the HUD can
-  // still preload by name (otherwise the active card sits blank until
-  // the fresh fetch completes 1-3s later). The user accepts a brief
-  // /cpn/<name>/1/4.png customised render on the very first boot
-  // after upgrade; subsequent boots use the SCI-rich cache.
   try {
     const qr = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
     if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
@@ -2123,22 +1600,12 @@
     try {
       const { name, sci, mood } = _resolveActivePet();
       if (!name) return;
-      // Build the URL: /cp/<sci>/<mood>/9.png when SCI is known (the
-      // "raw character pose" used by the home carousel & dollhouse,
-      // no custom background, transparent PNG). Falls back to
-      // /cpn/<name>/ only on the very first visit when no cache has
-      // populated yet — with the parse() SCI extraction fixed, this
-      // fallback path is rare in practice.
       const url = sci
         ? `https://pets.neopets.com/cp/${sci}/${mood}/9.png`
         : `https://pets.neopets.com/cpn/${encodeURIComponent(name)}/1/4.png`;
       if (sci) saveLastGoodPetImg(name, url);
       const cacheKey = 'npqol_pp_png:' + url;
 
-      // FAST PATH — data URL cached in LS from a previous visit.
-      // Loading a data URL is purely client-side: no network, no DNS,
-      // no TCP/TLS, no HTTP. The image decodes in <50ms and paints in
-      // the same frame as the rest of the HUD.
       const cached = localStorage.getItem(cacheKey);
       const initialSrc = cached || url;
 
@@ -2154,23 +1621,14 @@
       if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
       _earlyActivePetImg = img;
 
-      // FIRST-VISIT CACHE WRITE — delay so it doesn't compete with the
-      // visible img's fetch (which uses the same URL → HTTP cache reuse).
       if (!cached){
         setTimeout(() => _cacheRawPetImage(url), 1200);
       }
 
-      // <link rel=preload> as a network-priority hint for first-visit
-      // case (when cached is null). crossorigin="anonymous" matches the
-      // probe above so they share the HTTP fetch.
       const link = document.createElement('link');
       link.rel = 'preload'; link.as = 'image'; link.href = url; link.crossOrigin = 'anonymous';
       (document.head || document.documentElement).appendChild(link);
 
-      // Pre-warm petpet / petpetpet (rendered in the stats card).
-      // (was `j?.data?.active` — `j` never existed in this scope, the
-      // ReferenceError was silently swallowed by the try/catch and the
-      // prewarm never ran. Read the qr cache it always meant to read.)
       const qrSnap = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
       const a = qrSnap?.data?.active || {};
       [a.petpet, a.petpetpet].filter(Boolean).forEach(src => {
@@ -2181,25 +1639,6 @@
     } catch {}
   })();
 
-  /* =========================================================
-     The shared icon-theme API (PW.__npBtnThemes*, helpers,
-     np:btn-theme event) is exposed by the Core script which
-     runs before the HUD. This script only listens to the event
-     to refresh its central-column icons (see colsModule below).
-  ========================================================= */
-
-  /* ==========================================================
-     BANK PIN.
-     RECOMMENDED: leave this empty. The first time you click
-     Withdraw, the script will prompt for your 4-digit PIN and
-     store it in localStorage (this browser only). To clear it
-     later, Alt+click the Withdraw button.
-     You CAN hardcode it here for convenience, but if you ever
-     share your script file you'll leak it — the LS path is
-     safer and survives across script updates.
-     In both cases the PIN never leaves your browser except
-     when *you* click Withdraw.
-  ========================================================== */
   const BANK_PIN = "";
   const BANK_PIN_LS = 'npqol_bank_pin_v1';
   function getBankPin(){
@@ -2229,9 +1668,6 @@
 
   const now = () => Date.now();
 
-  /* =========================================================
-     SHARED STYLE (glass + accent) — falls back if Core is absent.
-  ========================================================= */
   const HUD_CSS = `
   #npHud{
     z-index:var(--np-z-hud, 1000);
@@ -2242,22 +1678,13 @@
   #npHud > *{ pointer-events:auto; }
   #npHud *, #npHud *::before, #npHud *::after{ box-sizing:border-box; }
 
-  /* Narrow viewports: hide entirely (no auto-shrink anymore — the user
-     controls width via the resize handle). */
   @media (max-width: 900px){
-    /* No side rail below this width, so the bar's painted surface goes
-       back to full width. !important beats the inline value that
-       applyTopbarBg() writes on the root. */
     :root{ --np-bar-inset-left:0px !important; }
   }
 
-  /* Resize handle — sits ON the decor bar's right border (the black 2px
-     line separating the left column from the central content). The CSS
-     left: calc(--np-col-width - 8px) keeps the 16px-wide hover zone
-     centered exactly on that border at all times. */
   #npHudResizer{
     position:fixed;
-    top:64px;          /* clears the top bar */
+    top:64px;
     bottom:8px;
     left: calc(var(--np-col-width, 330px) - 8px);
     width:16px;
@@ -2267,8 +1694,6 @@
     z-index:1001;
   }
   #npHudResizer::after{
-    /* Subtle vertical bar visible on hover/drag — sits on top of the
-       decor bar's existing black border. */
     content:"";
     position:absolute;
     top:50%; left:50%;
@@ -2326,42 +1751,23 @@
   }
   @keyframes npSpin{ to{ transform:rotate(360deg); } }
 
-  /* ============ USER ============
-     Two-column layout: the "X years played" shield occupies the LEFT 1/3
-     of the card at full height (so the trophy reads big and prominent),
-     and the RIGHT 2/3 stacks avatar / username / counts. The shield is
-     fetched from /userlookup.phtml and cleaned via the same canvas
-     pipeline used for petpets (transparent bg + soft outline). */
   #npUser{
     display:flex;
     align-items:stretch;
     gap:12px;
     position:relative;
   }
-  /* When the Years shield is hidden via Mini User settings, the card
-     collapses to a single centered column. */
   #npUser.no-shield{
     align-items:center;
     justify-content:center;
   }
   #npUser.no-shield .shieldSlot{ display:none; }
-  /* Individual info toggles. Each section can be hidden independently
-     via Mini User settings; the others stay centered. */
   #npUser.hide-avatar .avatarSlot{ display:none; }
   #npUser.hide-username .name{ display:none; }
-  /* Specificity trap fixed: the display:inline-flex rule further down
-     (#npUser .meta .metaAv, 1-2-0) tied with the previous
-     #npUser.hide-avatars .metaAv form (also 1-2-0) and, coming later in
-     the sheet, silently WON — hiding a single count did nothing, and
-     unchecking the second one nuked the whole row via the both-hidden
-     rule below. That read as "avatar and stamp counts are linked". The
-     .meta hop bumps these to 1-3-0 so they always win. */
   #npUser.hide-avatars .meta .metaAv{ display:none; }
   #npUser.hide-stamps .meta .metaSt{ display:none; }
-  /* Hide the "·" separator when either side of it is hidden. */
   #npUser.hide-avatars .meta .sep,
   #npUser.hide-stamps  .meta .sep{ display:none; }
-  /* Hide the whole meta row when BOTH counts are off. */
   #npUser.hide-avatars.hide-stamps .meta{ display:none; }
   #npUser .shieldSlot{
     flex:0 0 33%;
@@ -2372,13 +1778,11 @@
     display:block;
     width:auto; height:100%;
     max-width:100%; max-height:120px;
-    object-fit:contain;       /* shield asset is non-square (100×150) → keep aspect */
+    object-fit:contain;
     opacity:0; transition:opacity .18s ease;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,.45));
   }
   #npUser .shield.loaded{ opacity:1; }
-  /* If the shield image isn't available yet, collapse the left slot so
-     the right side takes the full card width — no awkward empty column. */
   #npUser .shieldSlot:has(.shield:not([src])){
     flex:0 0 0;
     overflow:hidden;
@@ -2408,8 +1812,6 @@
     text-decoration:none !important; color:#fff !important;
     font-size:14px; font-weight:700;
     cursor:pointer !important;
-    /* Defensive: ensure clicks land on this anchor even on beta pages
-       where Vue overlays might sit at higher z-index than the HUD card. */
     pointer-events:auto !important;
     position:relative;
     z-index:1;
@@ -2425,8 +1827,6 @@
     font-size:11px; font-weight:500; line-height:1.1;
     min-width:0;
   }
-  /* Inner inline-flex so label and value have their own gap and don't
-     glue together ("Avatars449" → "Avatars 449"). */
   #npUser .meta .metaAv,
   #npUser .meta .metaSt{
     display:inline-flex;
@@ -2438,10 +1838,7 @@
   #npUser.loading{ cursor:progress; }
   #npUser.loading .spinner{ display:block; }
 
-  /* ============ BANK ============ */
   #npBank{ padding:10px 12px; }
-  /* 3-column grid: empty spacer | centered title | gear. The spacer
-     mirrors the gear's width so the title sits dead center. */
   #npBank .head{
     display:grid;
     grid-template-columns: 26px 1fr 26px;
@@ -2454,11 +1851,6 @@
     text-align:center;
     opacity:.95;
   }
-  /* ⚙ + ↻ use the shared absolute top-right .cardGear/.cardRefresh pair
-     (same placement as the User and QuickRef cards — the head grid keeps
-     its empty 26px side columns so the title stays dead center). */
-  /* Title behaves like the username: hover underline + the card click
-     opens /bank.phtml. Same affordance on the QuickRef pet name below. */
   #npBank .title{ cursor:pointer; }
   #npBank .title:hover{
     text-decoration:underline;
@@ -2472,8 +1864,6 @@
     flex-wrap:wrap;
   }
   #npBank .balance .balVal{ font-variant-numeric:tabular-nums; }
-  /* Daily delta — green for net deposits today, red for net withdrawals.
-     Hidden via empty content (no margin reserved). */
   #npBank .dailyDelta{
     display:inline-flex; gap:6px; align-items:baseline;
     font-size:11px; font-weight:600; line-height:1;
@@ -2483,8 +1873,6 @@
   #npBank .dailyDelta:empty{ display:none; }
   #npBank .dailyDelta .dgain{ color:#7be08e; }
   #npBank .dailyDelta .dloss{ color:#ff8a8a; }
-  /* Collect interest = important alert (daily reset at 9am Paris time).
-     Red border + pulse + glow, animation pauses when display:none. */
   #npBank #npInterest{
     width:100%;
     background:rgba(255,90,90,.18);
@@ -2506,10 +1894,6 @@
     0%, 100%{ box-shadow:0 0 0 0  rgba(255,90,90,.65), 0 0 18px rgba(255,90,90,.55); }
     50%     { box-shadow:0 0 0 12px rgba(255,90,90,0),  0 0 26px rgba(255,90,90,.75); }
   }
-  /* Dynamic two-column button layout — deposit-class buttons stack
-     in the left column, withdraw-class buttons in the right column.
-     User-resizable HUD width: the columns just keep splitting 50/50,
-     which is more predictable than auto-fit ever was. */
   #npBank .bankBtns{
     display:grid;
     grid-template-columns: 1fr 1fr;
@@ -2519,24 +1903,19 @@
   #npBank .bankBtns:empty{ display:none; }
   #npBank .bankCol{
     display:flex; flex-direction:column; gap:8px;
-    min-width:0; /* allow children to shrink (required for inline custom form) */
+    min-width:0;
   }
   #npBank .bankCol:empty{ display:none; }
-  /* Force a fixed height on every button cell so the custom-amount form
-     (when it replaces a button) doesn't push siblings or wrap. */
   #npBank .bankBtns .npBtn{ width:100%; height:30px; padding:0 8px; }
-  /* Inline custom-amount form — fills the SINGLE cell the button used
-     to occupy. No grid-column expansion, no row jump: input + ✓ button
-     share the cell's 100% width via flex with min-width:0 on the input. */
   #npBank .bankCustomForm{
     display:flex; align-items:stretch; gap:3px;
     width:100%; height:30px;
     box-sizing:border-box;
   }
   #npBank .bankCustomForm input{
-    flex:1 1 0;            /* basis 0 + grow 1 → fills only the remaining space */
-    min-width:0;           /* required, or the input refuses to shrink below content */
-    width:0;               /* paired with flex:1 1 0, keeps it strictly fluid */
+    flex:1 1 0;
+    min-width:0;
+    width:0;
     height:100%;
     padding:0 6px;
     border:1px solid var(--np-line, rgba(255,255,255,.16));
@@ -2563,10 +1942,6 @@
   #npBank .msg:empty{ display:none; }
   #npBank .disabled{ opacity:.55; cursor:not-allowed; pointer-events:none; }
 
-  /* Optional NP-balance line chart under the balance row. Hidden when
-     the user hasn't enabled it in Mini Bank settings (settings.graph
-     .enabled=false → JS leaves the div empty → :empty rule below
-     collapses it so no extra vertical space is taken). */
   #npBank .bankGraph{
     width:100%;
     height:72px;
@@ -2590,8 +1965,6 @@
     fill:url(#npBankGraphFill);
     opacity:.18;
   }
-  /* Axis labels — small monospaced numerics so they don't bounce around
-     when the value goes from "1k" to "1.2k". */
   #npBank .bankGraph text{
     font-family: var(--np-font, system-ui, sans-serif);
     font-size: 7px;
@@ -2602,7 +1975,6 @@
   #npBank .bankGraph .axisX{ text-anchor: middle; }
   #npBank .bankGraph .axisXLeft{ text-anchor: start; }
   #npBank .bankGraph .axisXRight{ text-anchor: end; }
-  /* Faint baseline grid for min/max so the user can read the values. */
   #npBank .bankGraph .gridLine{
     stroke: rgba(255,255,255,.10);
     stroke-width: 0.5;
@@ -2616,7 +1988,6 @@
     line-height:1.2;
   }
 
-  /* ============ BANK SETTINGS MODAL ============ */
   .bankSettingsBackdrop{
     position:fixed; inset:0;
     background:rgba(0,0,0,.55);
@@ -2658,9 +2029,6 @@
     display:grid;
     grid-template-columns: 1fr 1fr;
     gap:10px;
-    /* No max-height / overflow: the modal sizes to its content so every
-       option is visible without scrolling. The popup is centered in a
-       flex backdrop so it stays on screen even on short viewports. */
   }
   .bankSettingsCol{
     display:flex; flex-direction:column; gap:10px;
@@ -2695,9 +2063,6 @@
     flex:1; font-size:13px; font-weight:600;
     cursor:pointer; user-select:none;
   }
-  /* Sub-fields stack VERTICALLY (label above field) so the field always
-     gets the row's full width — labels like "Round to:" never wrap, and
-     no horizontal scroll appears when the column is narrow. */
   .bankSettingsRow .sub{
     display:flex; flex-direction:column; gap:4px;
   }
@@ -2739,9 +2104,6 @@
   }
   .bankSettingsFoot .npBtn.save:hover{ filter:brightness(1.08); }
 
-  /* Generic per-card "⚙ settings" button used by #npUser and
-     #npQrActive. Tucked in the top-right corner, fades in on hover,
-     rotates on hover for a touch of feedback. */
   .npCard .cardGear{
     position:absolute;
     top:6px; right:6px;
@@ -2763,9 +2125,6 @@
     transform: rotate(45deg);
   }
 
-  /* Companion "↻ refresh cache" button — same hover-reveal treatment as the
-     gear, sitting just left of it. Every card (User / Bank / QuickRef) gets
-     the same pair on hover: ↻ refetch + ⚙ settings. */
   .npCard .cardRefresh{
     position:absolute;
     top:6px; right:36px;
@@ -2787,27 +2146,18 @@
     transform: rotate(180deg);
   }
 
-  /* Compact-row variant for settings modals that only need a single
-     column of toggles (User and QuickRef). */
   .bankSettingsBody.bankSettingsBodySingle{
     grid-template-columns: 1fr;
   }
   .bankSettingsRow.toggleOnly{ padding:6px 10px; }
   .bankSettingsRow.toggleOnly .topLine{ gap:10px; }
 
-  /* ============ QUICKREF (active card) ============ */
-  /* No max-height: the card grows to fit ALL its content. flex:0 0 auto
-     (set below in the global rule) keeps the card from being squeezed
-     by the active-pet card's growth at wide sidebar widths. The active
-     pet image absorbs the slack via flex:1 1 auto + min-height:0. */
   #npQrActive{
     min-height:150px; padding:10px 12px;
     flex-direction:column; align-items:center; justify-content:flex-start; text-align:center;
     gap:4px;
   }
   #npQrActive h3{ margin:0 0 6px 0; width:100%; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
-  /* Pet name = link affordance, like the username: hover underline, and
-     the card click already opens /quickref.phtml. */
   #npQrActive h3:hover{
     text-decoration:underline;
     text-decoration-color:var(--np-accent, #dcb8ff);
@@ -2819,43 +2169,22 @@
   .qrStat b{ color:#fff; font-weight:600; opacity:.92; }
   #npQrActive .qrPP{ display:flex; gap:8px; justify-content:center; align-items:flex-end; margin-top:8px; }
   #npQrActive .qrPPimg{ height:76px; width:auto; max-width:46%; object-fit:contain; }
-  /* When only one of petpet / petpetpet is shown (the other was
-     unchecked in QR settings) the 46% cap was inherited from the
-     2-image layout and made the single image look tiny. With
-     :only-child we relax the cap so it occupies the room it has. */
   #npQrActive .qrPP .qrPPimg:only-child{ max-width: 92%; height: 96px; }
 
-  /* Neopets-themed display font, loaded once for the HUD. Used for the
-     labels the user marked as "important": username, Bank title, and
-     pet names in the dock overlay. */
   @font-face {
     font-family: 'CafeteriaBlack';
     src: url('https://images.neopets.com/js/fonts/cafeteria-black.otf') format('opentype');
     font-display: swap;
   }
 
-  /* QUICKREF hover dock — full-sidebar gallery that emerges from the
-     active pet's position. Two synchronized animations:
-       1) the dock GROWS upward from its initial "active-pet-sized" footprint
-          to the full sidebar height (height transition on #qrDockWrap),
-       2) the tiles INSIDE redistribute (active tile shrinks, others
-          expand from 0) via flex-grow transitions on .qrPet.
-     The result reads as "active pet image fluidly resizes to its tile
-     size, others unfold above it" — exactly what the user asked for. */
   #qrDockWrap{
     position: fixed;
-    /* Sits INSIDE the decor sidebar's 2px black border (defined in script
-       3 on #npLeftBar). The 2px inset on all four sides preserves the
-       sidebar's black frame around the dock. */
     left: 2px;
     width: calc(var(--np-col-width, 330px) - 4px);
     bottom: 2px;
-    /* Top is animated, bottom stays anchored → the dock grows upward from
-       its initial "active-pet-sized" footprint. Initial top is calculated
-       so that the collapsed dock sits exactly where #npActivePet was. */
     --collapsed-h: calc(var(--np-col-width, 330px) - 2 * var(--np-hud-left, 20px));
     top: calc(100vh - var(--collapsed-h) - 2px);
-    z-index: calc(var(--np-z-hud, 1000) + 1);  /* above HUD cards */
+    z-index: calc(var(--np-z-hud, 1000) + 1);
     pointer-events: none;
     opacity: 0;
     overflow: hidden;
@@ -2864,8 +2193,6 @@
       opacity .28s ease;
   }
   #qrDockWrap.open{
-    /* Open: top docks to 2px (inside the sidebar top border) — full
-       vertical span minus 4px (2px each for top + bottom borders). */
     top: 2px;
     opacity: 1;
     pointer-events: auto;
@@ -2877,7 +2204,7 @@
     height: 100%;
     margin: 0; padding: 0; gap: 0;
     list-style: none;
-    background: rgba(20, 14, 32, 0.95);  /* near-opaque so HUD cards behind don't bleed through */
+    background: rgba(20, 14, 32, 0.95);
     -webkit-backdrop-filter: blur(var(--np-blur, 8px));
     backdrop-filter: blur(var(--np-blur, 8px));
     overflow: hidden;
@@ -2889,9 +2216,6 @@
     cursor: pointer;
     background: rgba(0,0,0,.5) no-repeat center / cover;
     min-height: 0;
-    /* Initial state: collapsed (no height, invisible). Only the active
-       tile (rule below) defaults to flex-grow:1 so it occupies the entire
-       initial dock height (= same footprint as #npActivePet). */
     flex-grow: 0;
     flex-shrink: 1;
     flex-basis: 0;
@@ -2901,8 +2225,6 @@
       opacity .3s ease;
   }
   .qrPet.active{
-    /* Active tile owns 100% of the collapsed dock height. Once .open is
-       applied, all tiles share flex-grow:1 → active shrinks to 1/N. */
     flex-grow: 1;
     opacity: 1;
   }
@@ -2910,13 +2232,9 @@
     flex-grow: 1;
     opacity: 1;
   }
-  /* Subtle accent ring on the active tile. */
   .qrPet.active{
     box-shadow: inset 0 0 0 2px var(--np-accent, #dcb8ff);
   }
-  /* 2px black divider between consecutive pet tiles — matches the
-     sidebar's outer border thickness so the dock reads as one block
-     divided by the same line weight throughout. */
   .qrPet + .qrPet{ border-top: 2px solid #000; }
   .qrPet:hover{ filter: brightness(1.10); }
   .qrOverlay{
@@ -2924,8 +2242,6 @@
     padding: 8px;
     display:flex; flex-direction:column; gap:6px;
     justify-content: center;
-    /* Lower opacity vs previous .72 so the pet image stays readable under
-       the "Make Active" prompt. */
     background: rgba(0,0,0,.42);
     opacity:0; pointer-events:none;
     transition: opacity .14s linear;
@@ -2943,7 +2259,6 @@
   .qrOverlay a:hover{ background:var(--np-btn-hover, rgba(255,255,255,.10)); }
   .qrOverlay a:active{ transform:translateY(1px); }
   .qrPetName{
-    /* Neopets-themed font for pet names in the overlay. */
     font-family: 'CafeteriaBlack', var(--np-font, system-ui), sans-serif;
     font-size: 20px; font-weight: 400; color: #fff;
     text-align: center; padding: 0 4px;
@@ -2952,10 +2267,6 @@
     text-shadow: 0 1px 2px rgba(0,0,0,.7);
   }
 
-  /* When the dock is open, fade out the OTHER HUD cards (User, Bank,
-     NP, Stats) and the original active pet card. The dock itself takes
-     over the visible sidebar surface, giving the impression that the
-     entire sidebar transformed into the pet gallery. */
   body.npDockActive #npUser,
   body.npDockActive #npBank,
   body.npDockActive #npNp,
@@ -2966,10 +2277,6 @@
     transition: opacity .25s ease;
   }
 
-  /* Neopets-themed font applied ONLY to the labels the user designates
-     as "titles": username, Bank header, active pet name in stats card.
-     Numeric/operational text (bank balance, interest, NP on hand) keeps
-     the system font so digits stay tightly readable. */
   #npUser .name #npUserTitle,
   #npBank .title,
   #npQrActive h3{
@@ -2980,23 +2287,11 @@
     line-height: 1.1;
   }
 
-  /* ============ NP (neopoints) ============ */
   #npNp{ display:flex; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
   #npNp .npVal{ font-variant-numeric:tabular-nums; }
   #npNp img{ width:24px; height:24px; display:block; flex:0 0 24px; }
   #npNp.dim{ opacity:.6; }
 
-  /* ============ ACTIVE PET IMAGE ============
-     The active pet card is the visual "slack" of the HUD: it fills
-     whatever vertical space the info cards (user / bank / NP / stats)
-     leave free, with the pet image floating on the decor sidebar (no
-     surrounding glass box).
-     SIZING — capped to the image's INTRINSIC pixel size so a small
-     pet (e.g. baby/petpet-sized PNG) is never upscaled and never
-     blurs. width/height:auto + max-w/h:100% lets the image shrink
-     when the container is smaller than its natural size, but never
-     grow past its natural pixels. The parent is a flex centering
-     container so the image stays centered regardless of size. */
   #npActivePet{
     cursor:pointer;
     justify-content:center;
@@ -3005,13 +2300,6 @@
     background: transparent;
   }
   #npActivePet img{
-    /* width/height:auto + max-w/h:100% = "shrink to fit, never grow
-       past natural size". Combined with the flex centering above this
-       gives perfect proportional scaling with no upscale blur.
-       transform:scale(.8) reduces the visible pet by 20% across the
-       board (big pets, small pets, all consistent) without breaking
-       the no-upscale logic above — the image still picks its own
-       natural pixel size first, the transform just shrinks the paint. */
     width:auto; height:auto;
     max-width:100%; max-height:100%;
     transform: scale(0.8);
@@ -3021,10 +2309,6 @@
   }
   #npActivePet img.loaded{ opacity:1; }
 
-  /* ============ TOUCH / TABLET (no hover) ============
-     Hover-revealed controls are unreachable on touch screens — show them
-     at rest instead. The pet-switch overlay ("Make Active") also becomes
-     visible so the dock stays usable on iPad. */
   @media (hover: none){
     .npCard .cardGear, .npCard .cardRefresh{ opacity:.85; }
     .qrOverlay{
@@ -3033,15 +2317,10 @@
       background:rgba(0,0,0,.30);
     }
   }
-  /* Wider grab strip for the column resize handle on touch devices. */
   @media (pointer: coarse){
     #npHudResizer{ width:28px; left: calc(var(--np-col-width, 330px) - 14px); }
   }
 
-  /* The four info cards lock to their natural content height — flex:0 0 auto
-     prevents them from being squeezed below their min-height when the active
-     pet card (flex:1 1 auto above) tries to grow. This is what keeps every
-     label / value visible regardless of the user-resized sidebar width. */
   #npHud > #npUser,
   #npHud > #npBank,
   #npHud > #npNp,
@@ -3055,9 +2334,6 @@
   styleEl.textContent = HUD_CSS;
   (document.head || document.documentElement).prepend(styleEl);
 
-  /* =========================================================
-     CONTAINER + MOUNT
-  ========================================================= */
   const hud = document.createElement('div');
   hud.id = 'npHud';
 
@@ -3117,26 +2393,12 @@
   cardActivePet.id = 'npActivePet';
   cardActivePet.title = 'Hover to switch active pet · click for Quick Reference';
 
-  // EARLY ADOPT: if we created a pre-loaded <img> at document-start
-  // (preloadActivePet), attach it to the active-pet card RIGHT NOW so
-  // it's already in the DOM tree by the time mountAll appends the HUD
-  // to <body>. When the Stylus FOUC rule reveals body at ~150ms, the
-  // image is already painted — no "appears then disappears" flicker
-  // waiting for qrModule's applyData() to run.
   if (_earlyActivePetImg){
     cardActivePet.appendChild(_earlyActivePetImg);
-    // Don't null it yet — qrModule's renderActivePetImage checks the
-    // existing img by dataset.forName and skips re-setting src if it
-    // already matches the cached active pet (avoids the late flicker).
   }
 
   hud.append(cardUser, cardBank, cardNp, cardQr, cardActivePet);
 
-  /* ====== Resize-state bootstrap (run BEFORE anything else) ======
-     Read the persisted column width from LS and apply it to :root, so
-     that the rest of the page (HUD card width, decor bar, etc.) renders
-     at the right size on the very first frame. Wrapped in try/catch so a
-     storage error can never block the rest of the HUD from rendering. */
   const RESIZE_LS_KEY = 'npqol_col_width_v1';
   const RESIZE_MIN = 200;
   const RESIZE_MAX = 520;
@@ -3159,8 +2421,6 @@
   dockWrap.id = 'qrDockWrap';
   const dock = document.createElement('div');
   dock.id = 'qrDock';
-  // Tiles are created dynamically in renderDock() based on the actual
-  // number of inactive pets — no need to pre-allocate placeholders.
   dockWrap.appendChild(dock);
 
   function mountAll() {
@@ -3173,10 +2433,6 @@
     new MutationObserver((_, o) => { if (mountAll()) o.disconnect(); }).observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  /* ====== Resize handle (UI portion) ======
-     Runs AFTER mountAll so a bug here can never prevent the HUD from
-     mounting. Everything inside is wrapped in try/catch for safety.
-     The persisted width was already applied to --np-col-width above. */
   try {
     function saveResizeW(v){
       try { localStorage.setItem(RESIZE_LS_KEY, String(v)); } catch {}
@@ -3227,23 +2483,15 @@
     resizer.addEventListener('pointerup', endDrag);
     resizer.addEventListener('pointercancel', endDrag);
 
-    // Double-click on the handle = reset to default.
     resizer.addEventListener('dblclick', () => {
       resizeCurrentW = RESIZE_DEFAULT;
       applyResizeW(resizeCurrentW);
       saveResizeW(resizeCurrentW);
     });
   } catch (err) {
-    // Resize UI failed to set up — the HUD itself still works.
     console.warn('[npqol HUD] resize handle setup failed:', err);
   }
 
-  /* =========================================================
-     USER MODULE
-     Reads the logged-in username from PW.appInsightsUserName.
-     We deliberately NEVER scan ?user= in the URL — that gives
-     other people's usernames when looking at their lookups.
-  ========================================================= */
   (function userModule(){
     const USERNAME_KEY = 'npqol_hud_username';
     const CACHE_PREFIX = 'npqol_hud_userlookup:';
@@ -3264,7 +2512,6 @@
     img.addEventListener('error', () => img.classList.remove('loaded'));
 
     function pickFromPage(){
-      // Only reliable signal of the LOGGED-IN user. We don't scan ?user=.
       try { const u = (PW.appInsightsUserName || '').trim(); if (u) return u; } catch {}
       return null;
     }
@@ -3289,8 +2536,6 @@
       };
       tick();
     }
-    /* ===== Mini User settings — which info segments show inside
-       #npUser. Defaults: everything on. Persisted to LS. */
     const USER_SETTINGS_LS = 'npqol_user_settings_v1';
     const DEFAULT_USER_SETTINGS = {
       avatar: true,
@@ -3380,12 +2625,6 @@
       if (i){ const src = data?.avatarUrl || ''; i.classList.remove('loaded'); if (src && i.src !== src) i.src = src; if (src && i.complete) requestAnimationFrame(() => i.classList.add('loaded')); }
       if (av) av.textContent = (data?.avatars ?? '—');
       if (stc) stc.textContent = (data?.stamps ?? '—');
-      // Shield ("X years badge"). The raw image is a JPEG-on-white from
-      // images.neopets.com, so we show it raw first and then try to swap
-      // in a cleaned PNG (transparent bg + soft outline) via the same
-      // pipeline used for petpets. cleanImg is exposed on window by
-      // qrModule once it has initialised; we poll briefly in case the
-      // first render happens before qrModule runs.
       const sh = cardUser.querySelector('#npUserShield');
       const shSrc = data?.shieldUrl || '';
       if (sh){
@@ -3413,10 +2652,6 @@
       let avatarUrl = null;
       const m = html.match(/<img[^>]+src="([^"]+\/neoboards\/avatars\/[^"]+)"[^>]*>/i) || html.match(/<img[^>]+src="([^"]+\/images\/avatars\/[^"]+)"[^>]*>/i);
       if (m) avatarUrl = m[1];
-      // "Years played" shield. URL pattern on classic userlookup is
-      //   https://images.neopets.com/images/shields/XX_X_years.gif?v=2
-      // where XX = age in years and X = sub-version. We capture the
-      // full URL (with query string) to preserve cache-busting.
       let shieldUrl = null;
       const sm = html.match(/<img[^>]+src="([^"]+\/images\/shields\/[^"]+\.gif[^"]*)"[^>]*>/i);
       if (sm) shieldUrl = sm[1];
@@ -3437,9 +2672,6 @@
       } catch {} finally { setLoading(false); }
     }
 
-    // Uniform card behavior: clicking the card (or the title) OPENS the
-    // page it represents — here the user's own lookup. The data refetch
-    // moved to the hover ↻ button (same pattern on Bank and QuickRef).
     cardUser.addEventListener('click', (e) => {
       if (e.target?.closest?.('#npUserLink, button, a, input, select')) return;
       const href = userLinkUrl();
@@ -3452,12 +2684,6 @@
         refresh();
       });
     }
-    // Force navigation when the username is clicked. Bound on `document`
-    // at capture phase rather than on cardUser so the handler still
-    // fires on beta pages where Vue/React overlays sometimes sit on top
-    // of #npHud and would otherwise eat the click before it bubbles up.
-    // Also handles middle-click (auxclick) and right-click (contextmenu)
-    // → both open the userlookup in a new tab.
     function userLinkUrl(){
       const a = cardUser.querySelector('#npUserLink');
       return a ? (a.getAttribute('href') || '') : '';
@@ -3472,7 +2698,7 @@
       else window.location.assign(href);
     }, true);
     document.addEventListener('auxclick', (e) => {
-      if (e.button !== 1) return; // middle button only
+      if (e.button !== 1) return;
       const a = e.target?.closest?.('#npUserLink');
       if (!a) return;
       const href = a.getAttribute('href') || '';
@@ -3488,9 +2714,7 @@
       e.preventDefault(); e.stopPropagation();
       window.open(href, '_blank', 'noopener');
     }, true);
-    // Apply persisted user-card visibility prefs at boot.
     applyUserSettings();
-    // Wire the ⚙ button on cardUser.
     const userGear = cardUser.querySelector('#npUserGear');
     if (userGear){
       userGear.addEventListener('click', (e) => {
@@ -3502,22 +2726,12 @@
     ensureUsername(); hydrate(); waitForGlobal();
   })();
 
-  /* =========================================================
-     BANK MODULE
-     Fully user-configurable Mini Bank: enable/disable any of
-     five button types (Rounded Deposit / Custom Deposit / Auto
-     Deposit / Custom Withdraw / Auto Withdraw) from a settings
-     modal (⚙ button in the card header).
-     Daily balance delta (+gained / -lost) is shown next to the
-     bank balance and resets at midnight NST. All actions are
-     explicit clicks — no polling, no scheduled actions.
-  ========================================================= */
   (function bankModule(){
     const STORE = 'npqol_bank_state_v2';
     const SETTINGS_LS = 'npqol_bank_btn_settings_v1';
     const DAILY_LS    = 'npqol_bank_daily_v1';
-    const FORM_TTL = 5*60*1000;      // refetch forms older than this (fresh _ref_ck token)
-    const RECHECK_MS = 5*60*1000;    // periodic re-check (cross-reset)
+    const FORM_TTL = 5*60*1000;
+    const RECHECK_MS = 5*60*1000;
     const load = () => { try { return JSON.parse(localStorage.getItem(STORE) || 'null') || {}; } catch { return {}; } };
     const save = (s) => { try { localStorage.setItem(STORE, JSON.stringify(s || {})); } catch {} };
     const state = Object.assign({
@@ -3530,9 +2744,6 @@
       bank_msg:'',
     }, load());
 
-    /* ===== Button settings (which buttons appear, with what params) =====
-       Defaults reproduce the legacy two-button setup: Rounded Deposit
-       (100k) + Auto Withdraw (500k). Anything else is opt-in. */
     const ROUND_OPTIONS = [
       { value: 0,        label: 'Total (deposit all)' },
       { value: 10,       label: '10 NP' },
@@ -3548,9 +2759,6 @@
       autoDeposit:    { enabled: false, amount: 5000 },
       customWithdraw: { enabled: false },
       autoWithdraw:   { enabled: true,  amount: 500000 },
-      // Optional inline SVG line chart of the bank balance over the
-      // last ~30 daily snapshots. Off by default to keep the card
-      // minimal; the user enables it via the ⚙ settings modal.
       graph:          { enabled: false },
     };
     function loadSettings(){
@@ -3571,10 +2779,6 @@
     function saveSettings(s){ try { localStorage.setItem(SETTINGS_LS, JSON.stringify(s||{})); } catch {} }
     let settings = loadSettings();
 
-    // History of daily bank balances for the optional graph — one entry per
-    // NST calendar day, the last one kept live for "today". Kept to ~180
-    // entries → ~6 months of data, well under LS limits even with bigint
-    // balances. Format: [{ d:'YYYY-MM-DD', b:Number }, …].
     const HISTORY_LS = 'npqol_bank_history_v1';
     const HISTORY_MAX = 180;
     function loadHistory(){
@@ -3589,18 +2793,12 @@
     function pushHistory(dateKey, balance){
       if (!dateKey || !Number.isFinite(balance)) return;
       const hist = loadHistory();
-      // Replace the entry for this date if it already exists (multiple
-      // observations same day → only the last balance matters).
       const idx = hist.findIndex(e => e.d === dateKey);
       if (idx >= 0) hist[idx] = { d: dateKey, b: balance };
       else hist.push({ d: dateKey, b: balance });
       saveHistory(hist);
     }
 
-    /* ===== Daily delta (resets at midnight NST = America/Los_Angeles) =====
-       Tracks every observed bank-balance change between two refreshBank()
-       calls, including interest and transactions made directly on
-       /bank.phtml outside this script. */
     function nstDateKey(ms){
       const parts = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Los_Angeles',
@@ -3620,22 +2818,14 @@
       if (!Number.isFinite(n)) return;
       const today = nstDateKey();
       if (daily.date !== today){
-        // Day rollover. Persist YESTERDAY's final balance into the
-        // history log before resetting — this is what the optional graph
-        // feeds on. We also push TODAY's first balance so even brand-new
-        // installs get at least one data point.
         if (daily.date && daily.lastSeen != null){
           pushHistory(daily.date, daily.lastSeen);
         }
         pushHistory(today, n);
-        // First observation of a new NST day → set baseline, no delta yet.
         daily = { date: today, baseline: n, gained: 0, lost: 0, lastSeen: n };
         saveDaily();
         return;
       }
-      // Same-day re-observation — keep the history entry for "today"
-      // current with the most recent balance so the graph's right edge
-      // reflects the live value, not a stale morning snapshot.
       pushHistory(today, n);
       if (daily.lastSeen == null){
         daily.baseline = (daily.baseline == null) ? n : daily.baseline;
@@ -3650,10 +2840,6 @@
       saveDaily();
     }
 
-    /* "Bank day" helper (Paris time). Interest resets at 9am Europe/Paris.
-       A bank day starts at 9am Paris and ends at 9am Paris the next day.
-       If bankDayKey(lastFetch) != bankDayKey(now), a reset happened in
-       between → refetch /bank.phtml to check whether Collect is available. */
     function parisDateParts(ms){
       const parts = new Intl.DateTimeFormat('en-US', {
         timeZone: 'Europe/Paris',
@@ -3665,7 +2851,6 @@
     }
     function bankDayKey(ms){
       const p = parisDateParts(ms);
-      // If we're before 9am Paris, attribute to the previous bank day.
       if (p.hour < 9){
         const d = new Date(p.year, p.month - 1, p.day - 1);
         return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
@@ -3696,7 +2881,6 @@
     const setMsg = (t) => { state.bank_msg = String(t||''); msgEl.textContent = state.bank_msg; save(state); };
     const tryJSON = (t) => { try { return JSON.parse(t); } catch { return null; } };
 
-    // Compact number formatter for the daily delta. 12345 → "12.3k", 1500000 → "1.5M".
     function formatShort(n){
       n = Math.round(Number(n) || 0);
       if (n < 1000) return String(n);
@@ -3708,14 +2892,10 @@
       return (v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/,'')) + 'M';
     }
     function renderDelta(){
-      // Day rollover at NST midnight — reset if we crossed.
       if (daily.date && daily.date !== nstDateKey()){
         daily = { date: nstDateKey(), baseline: daily.lastSeen, gained: 0, lost: 0, lastSeen: daily.lastSeen };
         saveDaily();
       }
-      // Net = total deposited today minus total withdrawn today.
-      // Captures everything that moves the bank balance, including
-      // interest collected and transactions made on /bank.phtml itself.
       const net = daily.gained - daily.lost;
       if (net === 0){
         deltaEl.innerHTML = '';
@@ -3734,9 +2914,6 @@
       renderDelta();
       renderGraph();
       msgEl.textContent = state.bank_msg || '';
-      // Interest button — now includes the annual rate when known, so the
-      // rate has a home without the standalone "12.5%" hint that lived in
-      // the card header (replaced by the ⚙ settings button).
       if (state.bank_interest){
         intBtn.style.display = '';
         const amount = state.bank_dailyInterest ? `Collect ${state.bank_dailyInterest} NP` : 'Collect interest';
@@ -3748,52 +2925,24 @@
       renderButtons();
     }
 
-    /* Optional inline SVG line chart of the bank balance with min/max
-       NP labels on the left and date labels at the bottom. Driven
-       entirely by client-side state (HISTORY_LS in localStorage,
-       populated by noteBalance on each day rollover), so no network
-       calls are added.
-       To make the graph visible IMMEDIATELY on first install we don't
-       wait for a multi-day history — we synthesize today's curve from
-       (baseline at first observation) + (current balance), giving at
-       least 1 point on day-zero with 0 transactions and 2 points on
-       day-zero with any movement. Past days then accumulate one entry
-       each from the history log. */
     function renderGraph(){
       if (!graphEl) return;
       if (!settings?.graph?.enabled){
         graphEl.innerHTML = '';
         return;
       }
-      // One point per NST calendar day. noteBalance() keeps the history log
-      // current — including a live-updating entry for TODAY — so we can plot
-      // it directly, in order.
-      //
-      // This is the fix for the "3 arbitrary points / forgets older data"
-      // report: the old code plotted the history AND then appended TWO extra
-      // points for today (baseline + current balance). On a 2-day-old install
-      // that produced exactly 3 points, two of them stacked on "today" with
-      // index-based spacing, which looked like a random cutoff. Plotting the
-      // day log straight makes the axis uniform (1 slot = 1 day) and the line
-      // grows by one point each day the user opens their bank.
       const hist = loadHistory();
       const points = [];
       hist.forEach(e => {
         const b = Number(e.b);
         if (Number.isFinite(b)) points.push({ d: e.d, b });
       });
-      // Guarantee left-to-right chronological order (YYYY-MM-DD sorts lexically
-      // = chronologically) so the line never zig-zags if entries were stored
-      // out of order.
       points.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0));
       if (points.length === 0){
         graphEl.innerHTML = '<div class="gEmpty">Open your bank once to start recording — one point is added per day.</div>';
         return;
       }
 
-      // SVG viewport reserves space for the axes: 36px left for NP
-      // labels (formatShort outputs up to 5 chars like "1.2M"), 11px
-      // bottom for date labels, 6px top + 4px right for breathing room.
       const W = 220, H = 72;
       const ML = 36, MR = 4, MT = 6, MB = 11;
       const innerW = W - ML - MR;
@@ -3812,9 +2961,6 @@
         return m ? `${m[2]}/${m[3]}` : '';
       };
 
-      // Y-axis labels — min at the baseline, max at the top. When
-      // min===max (flat) we draw a single label in the middle so the
-      // user still sees the current value as scale reference.
       const yMaxText = formatShort(max);
       const yMinText = formatShort(min);
       const yLabelsSvg = (max === min)
@@ -3824,7 +2970,6 @@
           `<text class="axisY" x="${ML - 3}" y="${MT + innerH}">${yMinText}</text>`
         );
 
-      // X-axis labels: first date on the left, last date on the right.
       const firstDate = fmtDate(points[0].d);
       const lastDate  = fmtDate(points[points.length - 1].d);
       const xLabelsSvg = (firstDate === lastDate)
@@ -3834,7 +2979,6 @@
           `<text class="axisXRight" x="${ML + innerW}" y="${H - 2}">${lastDate}</text>`
         );
 
-      // Dashed grid lines at top and bottom for the min/max anchor.
       const gridSvg = (max === min)
         ? `<line class="gridLine" x1="${ML}" y1="${MT + innerH/2}" x2="${ML + innerW}" y2="${MT + innerH/2}"/>`
         : (
@@ -3842,7 +2986,6 @@
           `<line class="gridLine" x1="${ML}" y1="${MT + innerH}" x2="${ML + innerW}" y2="${MT + innerH}"/>`
         );
 
-      // Single-point graph → centered dot, axes still drawn for context.
       if (points.length === 1){
         graphEl.innerHTML =
           `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
@@ -3854,7 +2997,6 @@
         return;
       }
 
-      // 2+ points → polyline + area fill anchored in the inner area.
       const coords = points.map((p, i) => {
         const x = ML + (i / (points.length - 1)) * innerW;
         const y = MT + innerH - ((p.b - min) / range) * innerH;
@@ -3876,8 +3018,6 @@
         `</svg>`;
     }
 
-    // NP on hand: native counter (still present even though Core hides it),
-    // falling back to last cached value.
     function npOnHand(){
       let raw = '';
       const el = document.querySelector('#npanchor');
@@ -3893,7 +3033,7 @@
       if (np != null){ const el = document.querySelector('#npanchor'); if (el) el.textContent = np; try { localStorage.setItem('npqol_np_last', np); } catch {} }
       if (bal != null){
         state.bank_balance = numComma(bal);
-        noteBalance(bal); // feed the daily delta tracker
+        noteBalance(bal);
       }
     }
 
@@ -3915,10 +3055,8 @@
       const wdF  = doc.querySelector('form input[name="type"][value="withdraw"]')?.closest('form');
       const dep = grabForm(depF, 'deposit'); if (dep) out.forms.deposit = dep;
       const wd  = grabForm(wdF, 'withdraw');  if (wd) out.forms.withdraw = wd;
-      // #frmCollectInterest only exists in the page when there's something to collect.
       const intF = doc.querySelector('#frmCollectInterest');
       if (intF) out.interest = grabForm(intF, null);
-      // Daily amount — always present in #txtDailyInterest, format e.g. "Daily Interest: 206,754 NP"
       const dailyEl = doc.querySelector('#txtDailyInterest');
       if (dailyEl){
         const m = strip(dailyEl.textContent).match(/([\d,]+)\s*NP/i);
@@ -3947,17 +3085,12 @@
       const body = new URLSearchParams();
       Object.entries(dataObj || {}).forEach(([k,v]) => body.set(k, v ?? ''));
       const r = await fetch(url, { method:'POST', credentials:'include', headers:{ 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With':'XMLHttpRequest', 'Accept':'*/*' }, body });
-      // User-initiated money action: never blocked by the backoff, but a
-      // 403 answer still arms it (the site is throttling this IP).
       npNote403(r);
       return { ok:r.ok, status:r.status, text: await r.text() };
     }
     const extractMsg = (t) => { const s = strip(String(t||'')); if (!s) return 'ok'; const j = tryJSON(s); if (j) return strip(j.message||j.msg||j.error||j.status||'ok'); return s.length>90 ? s.slice(0,90)+'…' : s; };
     async function ensureForms(){ if (!state.bank_forms?.deposit?.action || (now()-state.bank_updatedAt) > FORM_TTL) await refreshBank(); }
 
-    /* ===== Generic deposit / withdraw — amount is a positive integer in NP.
-       doDepositAmount accepts the special value 0 to mean "all NP on hand"
-       (Total mode for Rounded Deposit). */
     async function doDepositAmount(amount){
       setBusy(true);
       try {
@@ -3981,11 +3114,6 @@
         if (amt < 1){ setMsg('Enter an amount ≥ 1'); return; }
         const form = state.bank_forms?.withdraw; if (!form?.action){ setMsg('no withdraw form'); return; }
 
-        // Only require a PIN when the bank form actually has a `pin`
-        // input — accounts without a configured bank PIN don't, and
-        // forcing a 4-digit entry on them blocks withdrawals entirely.
-        // We check by looking at the form's parsed hidden fields (built
-        // by grabForm: every input[name] from the form gets a key).
         const post = { ...(form.hidden||{}), type:'withdraw', amount:String(amt) };
         if (form.hidden && Object.prototype.hasOwnProperty.call(form.hidden, 'pin')){
           let pin = getBankPin();
@@ -4005,7 +3133,6 @@
     async function collectInterest(){
       setBusy(true);
       try {
-        // Refresh if no form, or if forms are stale (the _ref_ck token might be expired).
         if (!state.bank_interest?.action || (now()-state.bank_updatedAt) > FORM_TTL){
           await refreshBank();
         }
@@ -4018,35 +3145,21 @@
           state.bank_dailyInterest = '';
           setMsg(''); save(state); render();
         } else {
-          // The POST didn't return the success JSON we expect. This happens
-          // when the interest was actually already collected (e.g. on
-          // /bank.phtml directly, or a double-click) — the server rejects the
-          // second collect and our cached button would otherwise stay lit red.
-          // Reconcile against the live bank so the button reflects reality:
-          // refreshBank() re-parses the page and, finding no #frmCollectInterest,
-          // clears bank_interest → render() hides the button.
           setMsg(extractMsg(r.text));
           try { await refreshBank(); } catch {}
         }
       } catch { setMsg('interest error'); } finally { setBusy(false); }
     }
 
-    /* ===== Dynamic button rendering based on settings =====
-       Two columns: deposit-class buttons on the LEFT, withdraw-class
-       buttons on the RIGHT. The slot of each button is fixed by its
-       type, not by toggle order — turning a button on/off doesn't
-       shuffle the other side. */
     function renderButtons(){
       btnsEl.innerHTML = '';
       const colDep = document.createElement('div'); colDep.className = 'bankCol bankColDep';
       const colWd  = document.createElement('div'); colWd.className  = 'bankCol bankColWd';
       btnsEl.append(colDep, colWd);
 
-      // Deposit column (top-to-bottom in fixed order)
       if (settings.rounded.enabled)        addBtn(colDep, 'rounded',        'Rounded Deposit');
       if (settings.customDeposit.enabled)  addBtn(colDep, 'customDeposit',  'Custom Deposit');
       if (settings.autoDeposit.enabled)    addBtn(colDep, 'autoDeposit',    `Deposit ${formatShort(settings.autoDeposit.amount)}`);
-      // Withdraw column (top-to-bottom in fixed order)
       if (settings.customWithdraw.enabled) addBtn(colWd,  'customWithdraw', 'Custom Withdraw');
       if (settings.autoWithdraw.enabled)   addBtn(colWd,  'autoWithdraw',   `Withdraw ${formatShort(settings.autoWithdraw.amount)}`);
     }
@@ -4055,8 +3168,6 @@
       b.className = 'npBtn bankBtn';
       b.dataset.key = key;
       b.textContent = label;
-      // Tooltips — full-precision amount for the Auto buttons (since the
-      // label uses the compact "500k" form), PIN hint for any withdraw.
       if (key === 'rounded'){
         const r = settings.rounded.round;
         b.title = r === 0
@@ -4078,7 +3189,6 @@
     function onButtonClick(e, key, btnEl){
       e.preventDefault(); e.stopPropagation();
       const isWithdraw = (key === 'autoWithdraw' || key === 'customWithdraw');
-      // Alt+click on any withdraw button = forget the stored PIN.
       if (isWithdraw && e.altKey){ clearBankPin(); setMsg('PIN cleared'); return; }
       if (busy || !gate()) return;
 
@@ -4098,17 +3208,10 @@
       }
     }
 
-    /* ===== Inline custom-amount form =====
-       Replaces the clicked button IN-PLACE in its single grid cell.
-       Layout is locked: input flex-grows, ✓ is a fixed-width button,
-       both share the cell's 30px height — no row jump, no expansion.
-       Escape or click-outside cancels (no × button to save space). */
     function openCustomInput(btnEl, key){
       const isWithdraw = (key === 'customWithdraw');
       const form = document.createElement('div');
       form.className = 'bankCustomForm';
-      // Empty placeholder — the surrounding context (just clicked
-      // "Custom Deposit"/"Custom Withdraw") makes the intent obvious.
       form.innerHTML = `
         <input type="text" inputmode="numeric" autocomplete="off" placeholder="amount">
         <button type="button" class="ok" title="${isWithdraw ? 'Withdraw' : 'Deposit'}">✓</button>
@@ -4144,9 +3247,7 @@
       setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
     }
 
-    /* ===== Settings modal ===== */
     function openSettings(){
-      // One open at a time.
       document.querySelector('.bankSettingsBackdrop')?.remove();
 
       const backdrop = document.createElement('div');
@@ -4165,10 +3266,8 @@
         </div>
       `;
       const body = backdrop.querySelector('.bankSettingsBody');
-      // Working copy — committed only on Save.
       const draft = JSON.parse(JSON.stringify(settings));
 
-      // Two columns mirroring the Mini Bank layout: deposits left, withdraws right.
       const colDep = document.createElement('div'); colDep.className = 'bankSettingsCol';
       const colWd  = document.createElement('div'); colWd.className  = 'bankSettingsCol';
       colDep.innerHTML = `<div class="bankSettingsColHead">Deposits</div>`;
@@ -4193,7 +3292,6 @@
         });
         return r;
       }
-      // Same wiring for both Auto amount inputs.
       function wireAmountInput(inputEl, draftSlot){
         inputEl.addEventListener('input', () => {
           inputEl.value = inputEl.value.replace(/[^\d, ]/g, '');
@@ -4209,7 +3307,6 @@
         });
       }
 
-      // ----- LEFT COLUMN: deposits -----
       const roundOpts = ROUND_OPTIONS.map(o =>
         `<option value="${o.value}" ${draft.rounded.round === o.value ? 'selected' : ''}>${o.label}</option>`
       ).join('');
@@ -4232,7 +3329,6 @@
       wireAmountInput(autoDepInp, draft.autoDeposit);
       colDep.appendChild(autoDepRow);
 
-      // ----- RIGHT COLUMN: withdraws -----
       colWd.appendChild(row('customWithdraw', 'Custom Withdraw'));
 
       const autoWdRow = row('autoWithdraw', 'Auto Withdraw', `
@@ -4243,12 +3339,10 @@
       wireAmountInput(autoWdInp, draft.autoWithdraw);
       colWd.appendChild(autoWdRow);
 
-      // ----- BOTTOM ROW: misc options spanning both columns -----
       const graphRow = row('graph', 'Show balance trend graph');
       graphRow.style.gridColumn = '1 / -1';
       body.appendChild(graphRow);
 
-      // Wire close/save/cancel + outside click + Escape
       const close = () => {
         backdrop.remove();
         document.removeEventListener('keydown', onKey, true);
@@ -4260,7 +3354,6 @@
       backdrop.querySelector('.closeBtn').addEventListener('click', close);
       backdrop.querySelector('.cancel').addEventListener('click', close);
       backdrop.querySelector('.save').addEventListener('click', () => {
-        // Force-commit any pending blur on focused inputs.
         autoDepInp.dispatchEvent(new Event('blur'));
         autoWdInp.dispatchEvent(new Event('blur'));
         settings = draft;
@@ -4278,8 +3371,6 @@
     balEl.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; setBusy(true); try { await refreshBank(); setMsg(''); } catch { setMsg('refresh error'); } finally { setBusy(false); } });
     gearBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openSettings(); });
     intBtn.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; await collectInterest(); });
-    // Hover ↻ button — same refetch as clicking the balance, in the uniform
-    // "↻ + ⚙ on hover" spot shared by every HUD card.
     const bankRefreshBtn = $('#npBankRefresh');
     if (bankRefreshBtn){
       bankRefreshBtn.addEventListener('click', async (e) => {
@@ -4289,16 +3380,11 @@
         try { await refreshBank(); setMsg(''); } catch { setMsg('refresh error'); } finally { setBusy(false); }
       });
     }
-    // Uniform card behavior: clicking the card body / title (anything that
-    // isn't an action button or the custom-amount form) opens /bank.phtml.
     cardBank.addEventListener('click', (e) => {
       if (e.target?.closest?.('button, a, input, select, .npBtn, .bankCustomForm')) return;
       window.location.assign('https://www.neopets.com/bank.phtml');
     });
 
-    // If we crossed the 9am Paris reset since the last fetch, the interest
-    // cache is necessarily stale → nuke it before the first render so we
-    // don't transiently display a button bound to a dead token.
     if (crossedDailyReset(state.bank_updatedAt, now())){
       state.bank_interest = null;
       state.bank_dailyInterest = '';
@@ -4307,12 +3393,6 @@
 
     render();
 
-    // Silent fetch: first visit, after a reset, stale forms, or whenever the
-    // user is looking AT the bank page itself. The "stale" criterion catches
-    // reloads after a long session; the on-bank-page criterion is what fixes
-    // the "collected interest on /bank.phtml but the HUD button stayed red"
-    // report — the classic bank page reloads after a collect, so re-syncing
-    // on that reload clears the stale cached button immediately.
     npWhenBgAllowed(() => {
       const stale = !state.bank_updatedAt || (now() - state.bank_updatedAt) > FORM_TTL;
       const onBankPage = /^\/bank\.phtml/.test(location.pathname);
@@ -4322,8 +3402,6 @@
     });
 
     setInterval(() => {
-      // Skip in background tabs: the visibilitychange listener below already
-      // catches up on focus return, so this tick is just wasted work.
       if (busy || document.hidden) return;
       if (crossedDailyReset(state.bank_updatedAt, now())){
         refreshBank().catch(() => {});
@@ -4338,21 +3416,8 @@
     });
   })();
 
-  /* =========================================================
-     QUICKREF MODULE (active card + hover rail)
-  ========================================================= */
   (function qrModule(){
     const FETCH_URL = 'https://www.neopets.com/quickref.phtml';
-    // 5 min — this fetch fires on (nearly) every page load; at the old
-    // 7 s it re-fetched quickref.phtml on almost every navigation, which
-    // stacked with the user's own browsing and helped trip Neopets' rate
-    // limiter (403). Freshness paths are unaffected: "Make Active" clears
-    // the cooldown key and the ↻ button forces.
-    // PETS_MAX was 6, which silently dropped pets 7+ from the hover
-    // switcher for anyone with a bigger family ("I have 8 pets, but the
-    // hover-over active pet selector only allows me to choose from six").
-    // 20 is Neopets' own per-account ceiling, so the cap is now a guard
-    // against malformed markup rather than a real limit.
     const COOLDOWN = 5 * 60 * 1000, PETS_MAX = 20;
     const LS_DATA = 'npqol_qr_data';
     const BLOCK_RE = /(customi[sz]e|view abilities|equip)/i;
@@ -4369,12 +3434,6 @@
       const pets = [...dom.querySelectorAll('#nav td.active_pet, #nav td.inactive_pet')].slice(0, PETS_MAX).map(td => {
         const img = td.querySelector('img[id$="_thumb"]');
         const name = img?.getAttribute('title') || img?.alt || 'Pet';
-        // SCI (Stored Customisation ID) is embedded in the thumbnail's
-        // src URL: `//pets.neopets.com/cp/<sci>/<mood>/<size>.png`.
-        // We extract it so the HUD active pet image can use the cp/<sci>
-        // URL (same one script 5's dollhouse + the home page use) which
-        // skips the server-side name→sci lookup and shares the browser
-        // HTTP cache with /home/index.phtml and /quickref.phtml.
         const thumbSrc = img?.getAttribute('src') || '';
         const sciMatch = thumbSrc.match(/\/cp\/([^/]+)\//);
         const sci = sciMatch ? sciMatch[1] : '';
@@ -4413,10 +3472,6 @@
     const statNum = (s) => { if (!s) return ''; let m = /\$?([\d,]+)$/.exec(s); if (m) return m[1].replace(/,/g,''); m = /(\d[\d,]*)/.exec(s); return m ? m[1].replace(/,/g,'') : ''; };
     const hpInline = (s) => { if (!s) return ''; const t = s.replace(/\s+/g,' ').trim(); const m = /(\d[\d,]*)\s*\/\s*(\d[\d,]*)/.exec(t); return m ? `${m[1].replace(/,/g,'')} / ${m[2].replace(/,/g,'')}` : t; };
 
-    /* ===== Mini QuickRef settings — which info lines / images show
-       inside #npQrActive. All toggleable via the ⚙ button injected
-       next to the pet name; persisted to LS so the choices stick
-       across sessions. */
     const QR_SETTINGS_LS = 'npqol_qr_settings_v1';
     const DEFAULT_QR_SETTINGS = {
       colour: true, species: true, gender: false, age: false,
@@ -4497,7 +3552,6 @@
       backdrop.querySelector('.cancel').addEventListener('click', close);
       backdrop.querySelector('.save').addEventListener('click', () => {
         saveQrSettings(draft);
-        // Re-render the active card with the new field choices.
         if (state.data?.active) renderActive(state.data.active);
         close();
       });
@@ -4513,8 +3567,6 @@
       const mv = statNum(a.move), intel = statNum(a.intelligence);
       const hp = hpInline(a.health);
 
-      // Badges row — short-form info (colour, species, gender, age,
-      // level, mood). Each one is gated on its setting.
       const badgeHTML = [];
       if (qs.colour && a.colour)   badgeHTML.push(`<div class="qrBadge">${a.colour}</div>`);
       if (qs.species && a.species) badgeHTML.push(`<div class="qrBadge">${a.species}</div>`);
@@ -4523,7 +3575,6 @@
       if (qs.level && lv)          badgeHTML.push(`<div class="qrBadge">Level ${lv}</div>`);
       if (qs.mood && a.mood)       badgeHTML.push(`<div class="qrBadge">${a.mood}</div>`);
 
-      // Stats grid — numeric stats. Same gating.
       const statHTML = [];
       if (qs.health && hp)            statHTML.push(`<div>Health</div><div><b>${hp}</b></div>`);
       if (qs.strength && str)         statHTML.push(`<div>Strength</div><div>${str}</div>`);
@@ -4547,7 +3598,6 @@
         const urls = [showPP ? a.petpet : null, showPPP ? a.petpetpet : null].filter(Boolean);
         imgs.forEach((im, i) => cleanImg(urls[i], im));
       }
-      // Wire the gear + refresh buttons (innerHTML wiped the previous ones).
       const gear = cardQr.querySelector('#npQrGear');
       if (gear) gear.addEventListener('click', (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -4560,19 +3610,11 @@
       });
     }
 
-    /* Cut out the white background via a canvas, in two passes:
-       1) FLOOD-FILL from the edges: only removes white pixels CONNECTED
-          to the background → preserves INTERNAL white (e.g. striped paws).
-       2) ANTI-HALO: along the contour, fade LIGHT pixels (halo) based on
-          their lightness while keeping dark strokes and fine details.
-       Depends on CORS from images.neopets.com: if blocked, falls back to
-       the original image. */
     function removeWhiteBg(id){
       const d = id.data, w = id.width, h = id.height;
-      const BG_MIN = 216, BG_CHROMA = 44; // background candidate: light AND low chroma
+      const BG_MIN = 216, BG_CHROMA = 44;
       const isBg = (i) => { const r=d[i],g=d[i+1],b=d[i+2], mn=Math.min(r,g,b), mx=Math.max(r,g,b); return d[i+3] > 0 && mn >= BG_MIN && (mx - mn) <= BG_CHROMA; };
 
-      // 1) 4-connected flood-fill from the edges
       const seen = new Uint8Array(w*h), st = [];
       const push = (x,y) => { if (x>=0 && y>=0 && x<w && y<h){ const p=y*w+x; if (!seen[p]) st.push(p); } };
       for (let x=0;x<w;x++){ push(x,0); push(x,h-1); }
@@ -4586,11 +3628,8 @@
         push(x+1,y); push(x-1,y); push(x,y+1); push(x,y-1);
       }
 
-      // 2) Remove ENCLOSED white voids — only those whose border is mostly
-      //    DARK/BLACK (= object outline). Highlights bordered by LIGHT color
-      //    are preserved.
-      const DARK = 110;        // max(r,g,b) < DARK → "dark/black" pixel
-      const DARK_FRAC = 0.55;  // fraction of dark border to qualify as a void
+      const DARK = 110;
+      const DARK_FRAC = 0.55;
       const seen2 = new Uint8Array(w*h);
       for (let p0=0;p0<w*h;p0++){
         if (seen2[p0]) continue;
@@ -4614,7 +3653,6 @@
           for (const p of region) d[p*4+3] = 0;
       }
 
-      // 3) Anti-halo: 1-pixel ring, opaque pixels touching transparent
       const a0 = new Uint8ClampedArray(w*h);
       for (let p=0;p<w*h;p++) a0[p] = d[p*4+3];
       const LO = 120, HI = 238;
@@ -4634,15 +3672,8 @@
       }
     }
 
-    /* White sticker outline around the silhouette, on the OUTSIDE only.
-       Thin + smoothed: 8-neighborhood (rounder contour) + alpha ramp
-       (anti-aliasing). */
     function addWhiteOutline(id, ss){
       const d = id.data, w = id.width, h = id.height, OPAQUE = 128;
-      // Alpha by outside-distance ring. At 2× supersampling (see cleanImg)
-      // the ramp is longer with a soft falloff: after the browser downsamples
-      // the data-URL for display, the edge reads as anti-aliased instead of
-      // the jagged 3-hard-rings sticker border. 1× keeps the legacy ramp.
       const RAMP = (ss === 2)
         ? [0, 255, 255, 230, 190, 140, 90, 45, 15]
         : [0, 255, 130, 45];
@@ -4650,7 +3681,6 @@
       const A = new Uint8Array(w*h);
       for (let p=0;p<w*h;p++) A[p] = d[p*4+3] >= OPAQUE ? 1 : 0;
 
-      // outside = non-object pixels reachable from the image border
       const ext = new Uint8Array(w*h), q = [];
       const seed = (x,y) => { const p=y*w+x; if (!A[p] && !ext[p]){ ext[p]=1; q.push(p); } };
       for (let x=0;x<w;x++){ seed(x,0); seed(x,h-1); }
@@ -4664,7 +3694,6 @@
         if (y<h-1 && !A[p+w] && !ext[p+w]){ ext[p+w]=1; q.push(p+w); }
       }
 
-      // outside distance to object boundary (8-neighborhood = rounder)
       const dist = new Int16Array(w*h), q2 = [];
       const near8 = (x,y) => {
         for (let dy=-1;dy<=1;dy++) for (let dx=-1;dx<=1;dx++){
@@ -4692,13 +3721,6 @@
       }
     }
 
-    // Bounded cache for canvas-cleaned petpet/pet PNGs. Each entry is a base64
-    // dataURL (~10-40KB), so without eviction the LS quota gets eaten quickly
-    // (every outfit change creates a new URL). Keep at most 30 entries, FIFO.
-    // One-time purge when the render pipeline changes: v2 = supersampled
-    // smooth outlines — cached v1 renders (jagged edges) must not be served.
-    // Covers npqol_pp_png:<url> entries, the index, and the raw active-pet
-    // cache (same prefix; it just re-populates on next load).
     const PP_VER_KEY = 'npqol_pp_ver';
     try {
       if (localStorage.getItem(PP_VER_KEY) !== '2'){
@@ -4743,11 +3765,6 @@
         try {
           const PAD = 4;
           const w = probe.naturalWidth, h = probe.naturalHeight;
-          // 2× SUPERSAMPLING for small sources (years shield, petpets…):
-          // the mask + sticker outline are computed on a doubled bitmap and
-          // the browser downsamples at paint time → smooth edge instead of
-          // jagged 1px stair-steps. Large sources stay 1× (canvas + LS cost
-          // would quadruple for no visible gain at their display size).
           const SS = (w * h <= 60000) ? 2 : 1;
           const cw = (w + PAD*2) * SS, ch = (h + PAD*2) * SS;
           const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
@@ -4762,30 +3779,19 @@
           const out = cv.toDataURL('image/png');
           ppCachePut(KEY, out);
           imgEl.src = out;
-        } catch { imgEl.src = url; } // canvas tainted (CORS) → original image
+        } catch { imgEl.src = url; }
       };
       probe.onerror = () => { imgEl.src = url; };
       probe.src = url;
     }
-    // Expose cleanImg so other modules (userModule, etc.) can reuse the
-    // same white-bg removal pipeline without re-implementing the canvas
-    // flood-fill + halo cleanup.
     try { PW.__npCleanImg = cleanImg; } catch {}
 
-    /* Render the dock as a vertical column of ALL pets — active pet at
-       the BOTTOM (so it visually anchors at the position where
-       #npActivePet sits in the HUD stack), inactive pets stacked above
-       in their original quickref order. Flex 1/1/0 distributes the dock
-       height equally; each tile is (HUD_width × HUD_height/N). Pet
-       portraits use background-size:cover → cropped to fit, never
-       distorted. */
     function renderDock(data){
       const TXT_RE = /(make\s*active|set\s*(?:as\s*)?active|make\s*this\s*pet\s*active|set\s*active)/i;
       const URL_RE = /(process_changetpet|new_active_pet=|setactive|makeactive|active_pet)/i;
       const pets = (data.pets || []).slice(0, PETS_MAX);
       const inactive = pets.filter(p => !p.isActive);
       const active   = pets.find(p => p.isActive);
-      // Order: inactive on top, active at the bottom of the column.
       const ordered = active ? [...inactive, active] : inactive;
       dock.innerHTML = '';
       if (!ordered.length) return;
@@ -4804,7 +3810,6 @@
         overlay.appendChild(nameEl);
 
         if (p.isActive){
-          // Active pet tile: link goes straight to Quick Reference.
           const link = document.createElement('a');
           link.href = 'https://www.neopets.com/quickref.phtml';
           link.textContent = 'Quick Ref';
@@ -4820,37 +3825,18 @@
             link.textContent = 'Make Active';
             link.target = '_self';
             link.rel = 'nofollow';
-            // Plain click → fire the "make active" request silently (in
-            // the background) and refresh the HUD data, instead of
-            // letting the browser navigate to the process URL (which
-            // would redirect to /quickref.phtml and yank the user off
-            // their current page).
-            // Ctrl/Shift/⌘/middle-click → fall through to native anchor
-            // behaviour (opens in a new tab), useful if the user does
-            // want the quickref page.
             link.addEventListener('click', async (e) => {
               if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
               e.preventDefault();
               e.stopPropagation();
               const href = make.href;
               try {
-                // Server-side switch. Same-origin so credentials are
-                // attached automatically; we ignore the response body
-                // (it's the quickref redirect).
                 const mkRes = await fetch(href, { credentials: 'include', cache: 'no-store' });
                 npNote403(mkRes);
-                // Invalidate the QR fetch cooldown so the very next
-                // refresh actually goes to the network for fresh data.
                 try { localStorage.removeItem(LS_DATA + '_lastFetch'); } catch {}
-                // Refetch HUD data so the new active pet shows up
-                // immediately in the stats card and the dock.
                 try { await refresh({ force: true }); } catch {}
-                // Close the dock so the user sees the new active pet
-                // settle in #npActivePet's slot.
                 try { setOpen(false); } catch {}
               } catch {
-                // If something blocks the silent fetch, fall back to
-                // the natural navigation so the action still happens.
                 window.location.assign(href);
               }
             });
@@ -4862,15 +3848,6 @@
         dock.appendChild(el);
       }
     }
-    // Build the active pet image URL. Prefer the /cp/<sci>/<mood>/9.png
-    // form — that's the exact URL script 5's dollhouse and the home page
-    // carousel use, so the browser HTTP cache is SHARED across all three
-    // surfaces. The /9 pose returns the pet character WITHOUT its custom
-    // background (transparent PNG), matching what the user sees in the
-    // dollhouse scene. Resolution order for SCI:
-    //   1) explicit param (most recent — straight from qr parse)
-    //   2) jb_np_homedata_v2 (script 5's home snapshot, reliable across pages)
-    //   3) fallback to /cpn/<name>/ if no SCI is known
     function petImgUrl(name, sci){
       if (!name) return '';
       let mood = '1';
@@ -4892,9 +3869,6 @@
         saveLastGoodPetImg(name, url);
         return url;
       }
-      // No SCI anywhere (e.g. script 5's sandbox refresh just wiped
-      // jb_np_homedata_v2) → reuse the last known-good /cp/ URL for this
-      // pet instead of regressing to the cpn customised render.
       try {
         const lg = readLastGoodPetImg();
         if (lg && lg.name === name && /\/cp\//.test(lg.url)) return lg.url;
@@ -4907,15 +3881,12 @@
       const url = petImgUrl(name, sci);
       let img = cardActivePet.querySelector('img');
 
-      // PRIORITY PATH: if we created a real <img> at document-start
-      // (preloadActivePet, top of the main IIFE) and it's for THIS pet
-      // with THIS exact url, adopt it directly into #npActivePet.
       if (!img && _earlyActivePetImg
           && _earlyActivePetImg.dataset.forName === name
           && _earlyActivePetImg.dataset.cpnUrl === url){
         img = _earlyActivePetImg;
         _earlyActivePetImg = null;
-        cardActivePet.appendChild(img);
+        cardActivePet.prepend(img);
         return;
       }
 
@@ -4926,10 +3897,8 @@
         try { img.fetchPriority = 'high'; } catch {}
         img.addEventListener('load', () => img.classList.add('loaded'));
         img.addEventListener('error', () => img.classList.remove('loaded'));
-        cardActivePet.appendChild(img);
+        cardActivePet.prepend(img);
       }
-      // SAME PET + SAME URL? Don't touch src — avoids the flicker
-      // (src swap → re-decode) when refresh() re-renders identical data.
       if (img.dataset.forName === name && img.dataset.cpnUrl === url && img.src){
         return;
       }
@@ -4939,7 +3908,6 @@
       img.classList.remove('loaded');
       img.src = url;
 
-      // Background-cache the data URL for next visit's instant paint.
       setTimeout(() => _cacheRawPetImage(url), 1200);
     }
 
@@ -4948,9 +3916,6 @@
       state.data = data;
       if (data.active){
         renderActive(data.active);
-        // Find the active pet in the list to get its SCI (extracted by
-        // parse() from the thumbnail src). Falls back to '' which makes
-        // renderActivePetImage use the cpn-by-name URL.
         const activePet = (data.pets || []).find(p => p.isActive);
         renderActivePetImage(data.active.name, activePet?.sci || '');
       }
@@ -4984,8 +3949,6 @@
     function setOpen(on){
       dock.classList.toggle('open', !!on);
       dockWrap.classList.toggle('open', !!on);
-      // Body class drives the fade-out of the OTHER HUD cards while the
-      // dock is open (handled in CSS, see body.npDockActive rules).
       try { document.body.classList.toggle('npDockActive', !!on); } catch {}
     }
     function wantOpen(on){
@@ -4993,16 +3956,10 @@
       if (on){ setOpen(true); loadImagesNow(); return; }
       state.closeT = setTimeout(() => { if (!state.wantOpen && !dock.matches(':hover')) setOpen(false); }, 110);
     }
-    // Hover lives on the active-pet image at the bottom (closer to the rail).
-    // The stats card above still refreshes on click.
     cardActivePet.addEventListener('mouseenter', () => wantOpen(true));
     cardActivePet.addEventListener('mouseleave', () => wantOpen(false));
     dock.addEventListener('mouseenter', () => wantOpen(true));
     dock.addEventListener('mouseleave', () => wantOpen(false));
-    // Stats card + active pet card: plain click → Quick Reference; Alt+click
-    // → force refresh; Ctrl/Shift/⌘ click, middle-click and right-click → open
-    // /quickref.phtml in a NEW TAB. Both cards share the same behavior so the
-    // whole pet area feels like one consistent shortcut.
     const QR_URL = 'https://www.neopets.com/quickref.phtml';
     function navQuickRef(e){
       if (e.altKey){ refresh({ force: true }); return; }
@@ -5027,14 +3984,8 @@
     cardActivePet.addEventListener('click', navQuickRef);
     cardActivePet.addEventListener('auxclick', navQuickRefMiddle);
     cardActivePet.addEventListener('contextmenu', navQuickRefMenu);
-    // No resize handler needed — the dock now sizes itself purely from CSS
-    // (100vh and the --qrColWidth custom property set per pet-count).
 
     const snap = readCache(); if (snap?.data){ try { applyData(snap.data); } catch {} }
-    // Trigger a background refresh on every page load. Respects COOLDOWN
-    // (5 min) so it doesn't fetch on every navigation, but if the
-    // "Make Active" click invalidated the cooldown, this fires fresh and
-    // the active pet image / stats update right away.
     npWhenBgAllowed(() => refresh({ force: false }));
     window.addEventListener('pageshow', (e) => {
       if (!e.persisted) return;
@@ -5044,13 +3995,6 @@
     });
   })();
 
-  /* The GIF module was replaced by the active-pet image rendered above
-     inside qrModule (renderActivePetImage). Hover on that image opens the
-     pet rail for switching the active pet. */
-
-  /* =========================================================
-     NP MODULE — reads the native NP counter, no fetching.
-  ========================================================= */
   (function npModule(){
     const LS_KEY = 'npqol_np_last';
     const SELECTORS = ['#npanchor', '.navsub-np-meter__2020 #npanchor', '.navsub-np-meter__2020 .np-text__2020', 'span.np-text__2020'];
@@ -5076,7 +4020,6 @@
       st.obs = new MutationObserver(() => refresh());
       st.obs.observe(watch, { childList:true, subtree:true, characterData:true });
       refresh();
-      // Anchor found → we no longer need the documentElement-wide observer.
       try { st.docObs?.disconnect(); st.docObs = null; } catch {}
     }
     function startFast(ms=4500){
@@ -5084,15 +4027,12 @@
       if (st.fastTimer) return;
       st.fastTimer = window.setInterval(() => { bindWatcher(); refresh(); if (now() > st.fastUntil){ clearInterval(st.fastTimer); st.fastTimer = 0; } }, 80);
     }
-    // Wide observer for the case where the NP anchor lands LATE (slow page
-    // init). Self-disconnects in bindWatcher() once an anchor is found, so
-    // it doesn't run forever on subtree:true (= major perf hit).
     if (!findAnchor()){
       st.docObs = new MutationObserver((muts) => {
         for (const m of muts){
           if (m.type === 'childList' && [...m.addedNodes].some(n => n.nodeType === 1)){
             bindWatcher();
-            if (!st.docObs) return; // bindWatcher disconnects on success
+            if (!st.docObs) return;
             break;
           }
         }
@@ -5102,9 +4042,6 @@
     const fire = () => startFast(4500);
     window.addEventListener('focus', fire, true);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) fire(); }, true);
-    // Patch the PAGE's history (PW), not the sandbox wrapper — we want to
-    // detect the page's own SPA navigations, and the page only ever calls
-    // its own history object.
     const _hist = PW.history;
     const _push = _hist.pushState, _rep = _hist.replaceState;
     _hist.pushState = function(){ const r = _push.apply(this, arguments); fire(); return r; };
@@ -5130,11 +4067,6 @@
     window.setInterval(bindWatcher, 8000);
   })();
 
-  /* =========================================================
-     CENTRAL ICON COLUMNS — two columns of shortcut icons that
-     follow the current button theme (set in the BG picker).
-     Editable via the bottom-center handle (see editor below).
-  ========================================================= */
   (function colsModule(){
     if (document.getElementById('btnOverlay')) return;
 
@@ -5155,11 +4087,6 @@
     };
     const fallbackUrl = (iconName) => FALLBACK_PATTERN.replace('{icon}', iconName);
 
-    /* Cascade fallback for icons — DELEGATED to PART ①'s implementation
-       (__npAttachBtnFallback). The full duplicate that lived here when the
-       HUD shipped as a standalone script (and couldn't rely on Core's load
-       order) was removed by the fusion: PART ① always runs first in this
-       file, so the API is guaranteed to exist. */
     function attachIconFallback(img, name){
       const fn = PW.__npAttachBtnFallback;
       if (typeof fn === 'function') fn(img, name);
@@ -5182,27 +4109,15 @@
       if (id) applyBtnTheme(id);
     });
 
-    /* Re-arm icons after bfcache restore, visibility regain, and on
-       load. Tampermonkey re-runs the script on a fresh navigation,
-       but the browser's back/forward cache can restore the previous
-       DOM with <img> nodes in a "pending" state (their original load
-       was interrupted by the navigation). Setting img.src to the
-       same URL is a no-op for the browser, so we clear src first to
-       force a fresh fetch — and only on icons that are actually
-       broken (complete with naturalWidth=0) or never started, so
-       already-loaded icons don't flash. */
     const reapplyBrokenIcons = () => {
       try {
         const overlay = document.getElementById('btnOverlay');
         if (!overlay) return;
         const tid = getTheme();
         overlay.querySelectorAll('img[data-icon]').forEach(img => {
-          // Already loaded successfully → leave alone.
           if (img.complete && img.naturalWidth > 0) return;
           const name = img.dataset.icon || '';
           if (!name) return;
-          // Re-arm the cascade fallback (fresh `tried` Set inside)
-          // and force the browser to re-fetch via a src round-trip.
           attachIconFallback(img, name);
           const url = iconUrl(name, tid);
           img.src = '';
@@ -5216,28 +4131,13 @@
       if (document.visibilityState === 'visible') reapplyBrokenIcons();
     });
 
-    /* Icon catalog — slugs mirror the H5 profile dropdown (nav-XXX-icon).
-       `id` is the persistent key in user configs — DO NOT rename it lightly
-       or saved configs break. `icon` overrides the slug when the displayed
-       name differs from the Neopets file name on images.neopets.com.
-       `fixedSrc` = immutable URL (ignores theme switching).
-       Cross-theme behaviour: when a theme is missing an icon, the cascade
-       fallback in Core (basic/v3/*.svg → basic/images/*.svg → *.png) takes
-       over. That's how chamber/bookshelf/neopass keep showing on themes
-       that don't ship them. */
     const ICON_CATALOG = [
       { id:'profile',        label:'My Profile',         link:'https://www.neopets.com/settings/profile/' },
-      // neopass lives only at basic/images/ (root), so v3-pattern themes
-      // (basic, etc.) miss it. The cascade fallback handles it.
       { id:'neopass',        label:'My NeoPass',         link:'https://account.neopets.com/' },
-      // Real slug is 'mypets' — 'petcentral' was a leftover from the H5 menu
-      // ID and never matched a real icon file.
       { id:'petcentral',     icon:'mypets',         label:'My Pets',            link:'https://www.neopets.com/home/index.phtml' },
       { id:'customise',      label:'Customise',          link:'https://www.neopets.com/customise/' },
-      // chamber is at basic/images/ (root), not basic/v3/. Cascade handles it.
       { id:'stylingchamber', icon:'chamber',        label:'Styling Chamber',    link:'https://www.neopets.com/stylingchamber/' },
       { id:'createpet',      label:'Create a Pet',       link:'https://www.neopets.com/reg/page4.phtml' },
-      // Real slug is 'adoptpet' — 'adopt' (and 'pound') return 404.
       { id:'adopt',          icon:'adoptpet',       label:'Adopt a Pet',        link:'https://www.neopets.com/pound/' },
       { id:'inventory',      label:'Inventory',          link:'https://www.neopets.com/inventory.phtml' },
       { id:'sdb',            icon:'safetydeposit',  label:'Safety Deposit Box', link:'https://www.neopets.com/safetydeposit.phtml' },
@@ -5245,20 +4145,13 @@
       { id:'transferlog',    label:'Item Transfer Log',  link:'https://www.neopets.com/items/transfer_list.phtml' },
       { id:'gallery',        label:'Gallery',            link:'https://www.neopets.com/gallery/index.phtml' },
       { id:'stamps',         label:'Stamps',             link:'https://www.neopets.com/stamps.phtml?type=album' },
-      // Real slug is 'tradingcards'.
       { id:'tcg',            icon:'tradingcards',   label:'Trading Cards',      link:'https://www.neopets.com/tcg/album.phtml' },
       { id:'ncalbum',        label:'NC Mall Album',      link:'https://www.neopets.com/ncma/' },
-      // bookshelf is at basic/images/ (root), not basic/v3/. Cascade handles it.
       { id:'bookshelf',      label:'Archived Books',     link:'https://www.neopets.com/bookshelf/archive-bookshelf.phtml' },
       { id:'settings',       label:'Settings',           link:'https://www.neopets.com/settings/' },
       { id:'signout',        label:'Sign Out',           link:'https://www.neopets.com/logout.phtml' },
       { id:'shopwizard',     label:'Shop Wizard',        link:'https://www.neopets.com/shops/wizard.phtml',
         fixedSrc:'https://images.neopets.com/themes/h5/basic/images/shopwizard-icon.png' },
-      // Super Shop Wizard — premium-only OVERLAY panel (#ssw__2020 / old
-      // #ssw_tabs_pane), present on every page for premium accounts, not a
-      // standalone URL. Clicking tries to open that panel via the premium
-      // toolbar button; non-premium accounts fall through to the anchor's
-      // href = the classic Shop Wizard.
       { id:'ssw',            label:'Super Shop Wizard (premium)', link:'https://www.neopets.com/shops/wizard.phtml',
         fixedSrc:'https://images.neopets.com/premium/shopwizard/ssw-icon.svg', premiumSSW:true },
     ];
@@ -5271,9 +4164,6 @@
     const LS_BTNS_KEY = 'npqol_side_btns_v2';
 
     function resolveItem(entry){
-      // entry can be either:
-      //   - string (catalog id)
-      //   - {id, label, link, fixedSrc?} (user custom)
       if (typeof entry === 'string'){
         return CATALOG_BY_ID[entry] || null;
       }
@@ -5303,12 +4193,6 @@
       try { localStorage.setItem(LS_BTNS_KEY, JSON.stringify(cfg)); } catch {}
     }
 
-    /* ===== Column spread offset =====
-       User-tunable horizontal offset (px) pushing the two icon columns
-       AWAY from the frame edges (positive) or INTO the content (negative).
-       Applied as a CSS var inside the same calc() that anchors the columns
-       to the frame edges, so the fluid/zoom-adaptive tracking is untouched —
-       the offset just shifts the anchor point symmetrically. */
     const COL_OFFSET_LS = 'npqol_col_offset_v1';
     const COL_OFFSET_MIN = -60, COL_OFFSET_MAX = 300, COL_OFFSET_STEP = 6;
     function getColOffset(){
@@ -5329,11 +4213,6 @@
     }
     applyColOffset(getColOffset());
 
-    /* ===== Shortcut icon size =====
-       Same shape as the column offset above: a plain CSS var consumed by
-       the #btnOverlay .iconBtn img rule, so resizing costs one custom
-       property write and never touches the layout code. 60px is the
-       historical size and stays the default. */
     const ICON_SIZE_LS = 'npqol_side_icon_size_v1';
     const ICON_SIZE_MIN = 36, ICON_SIZE_MAX = 84, ICON_SIZE_STEP = 6, ICON_SIZE_DEFAULT = 60;
     function getIconSize(){
@@ -5356,34 +4235,16 @@
 
     const st = document.createElement('style');
     st.textContent = `
-      /* !important everywhere: on some pages (SDB Vue + Tailwind runtime),
-         the Tailwind preflight applies generic resets to * (transform:
-         translate(var(--tw-translate-x,0),...)) that neutralize our
-         transforms/positions. Force it to stay immune. */
       #btnOverlay{
         position:fixed !important; inset:0 !important;
-        /* 4.2.0 — one notch ABOVE #npHudResizer (z-index 1001). At the
-           frame widths where the frame docks against the side rail, that
-           16px drag strip lands right on the left icon column and used to
-           swallow every click meant for those icons ("the ability to
-           adjust the sidebar size by dragging the edge interferes with
-           clicking the left column of shortcut icons"). The overlay is
-           pointer-events:none, so the strip stays grabbable in the 14px
-           gaps between icons and everywhere above/below the column. */
         z-index:calc(var(--np-z-hud, 1000) + 2) !important;
         pointer-events:none !important;
-        /* Frame's actual left edge in viewport px — mirrors the Core's
-           margin-left calc EXACTLY so the icon columns track the frame
-           even when the frame is docked against the HUD on narrow
-           viewports. Fallback values keep things sane if Core isn't loaded. */
         --frame-left: max(
           calc((100vw - var(--np-frame-width, 1100px)) / 2),
           var(--np-frame-shift, 0px)
         ) !important;
         --frame-right: calc(var(--frame-left) + var(--np-frame-width, 1100px)) !important;
       }
-      /* Legacy wrapper from previous positioning scheme — neutralize it
-         so the cols size to their content and position from #btnOverlay. */
       #btnOverlay .center{ display:contents !important; }
       #btnOverlay .col{
         position:absolute !important;
@@ -5392,47 +4253,19 @@
         flex-direction:column !important;
         align-items:center !important;
         gap:14px !important;
-        /* The column CONTAINER lets pointer events through (the 14px gaps
-           between icons must reach the frame's resize handle underneath);
-           only the icon buttons themselves are interactive. */
         pointer-events:none !important;
-        /* Safety net for long lists — a strip taller than the screen wraps
-           into a second column instead of running off the top and bottom.
-           Below that height nothing changes. */
         flex-wrap:wrap !important;
         max-height:calc(100vh - 96px) !important;
         align-content:center !important;
-        /* --np-side-col-shift (editor → "Height") nudges the whole block
-           up or down from its natural anchor, in every layout mode. */
         transform: translate(-50%, calc(-50% + var(--np-side-col-shift, 0px))) !important;
       }
       #btnOverlay .col .iconBtn{ pointer-events:auto !important; }
-      /* Anchored to the frame's left/right edges (centered on the edge,
-         so half the icon sits inside the frame margin and half outside).
-         --np-side-col-offset (user setting, editor panel) spreads the two
-         columns symmetrically: positive = apart, negative = into content.
-         Because it lives INSIDE the same calc(), zoom/resize tracking of
-         the frame edges keeps working exactly as before. */
       #btnOverlay .col.left{ left: calc(var(--frame-left) - var(--np-side-col-offset, 0px)) !important; }
       #btnOverlay .col.right{ left: calc(var(--frame-right) + var(--np-side-col-offset, 0px)) !important; }
 
-      /* ===== LAYOUT MODES — data-mode / data-side on #btnOverlay =====
-           cols   : the historical two columns hugging the frame edges.
-           single : one vertical column, on either side.
-           row    : one horizontal row centred on the frame, under the bar.
-         Only the ANCHORING changes between modes — the buttons, the icon
-         theme and the size token are shared, and the stored two-list
-         config is never rewritten, so switching back to "cols" restores
-         the previous setup untouched. The two other modes simply render
-         both lists concatenated into the left strip (see rebuildColumns). */
       #btnOverlay[data-mode="single"] .col.right,
       #btnOverlay[data-mode="row"] .col.right{ display:none !important; }
 
-      /* The single-strip layouts get their OWN horizontal setting
-         (--np-side-col-x, a plain rightward offset) instead of borrowing
-         the two-column spread: "push the columns apart" and "slide this
-         strip sideways" are different gestures, and a user who tunes one
-         shouldn't lose the other. */
       #btnOverlay[data-mode="single"] .col.left{
         left: calc(var(--frame-left) + var(--np-side-col-x, 0px)) !important;
       }
@@ -5445,19 +4278,8 @@
         flex-wrap:wrap !important;
         justify-content:center !important;
         width:max-content !important;
-        /* The centre is computed against the VISIBLE span of the frame —
-           min(--frame-right, 100vw) — not its nominal right edge: below
-           ~1400px the 1100px-wide frame runs past the viewport, and
-           centring on its true middle would push the row off-screen. On a
-           wide screen the frame is viewport-centred anyway, so this is the
-           plain centre there. */
         --row-center: calc((var(--frame-left) + min(var(--frame-right), 100vw)) / 2 + var(--np-side-col-x, 0px));
-        /* The row is centred on --row-center, so its half-width can never
-           exceed the gap to the NEARER viewport edge — otherwise a long
-           list wraps to a width that still overflows on one side. */
         max-width:min(94vw, calc(2 * min(var(--row-center), 100vw - var(--row-center)) - 8px)) !important;
-        /* Just under the 60px top bar. "Offset" shifts it sideways,
-           "Height" moves it up or down. */
         left: var(--row-center) !important;
         top: 76px !important;
         transform: translate(-50%, var(--np-side-col-shift, 0px)) !important;
@@ -5467,10 +4289,6 @@
       #btnOverlay .iconBtn:hover img{ transform:scale(1.08) !important; }
       #btnOverlay .iconBtn:active img{ transform:scale(1.02) !important; }
 
-      /* The icon columns stay visible at every viewport size: they're the
-         primary nav for the site. The 900px HUD-hide media query no longer
-         hides them — only the user/bank/np HUD cards collapse below 900px,
-         the nav stays so the user can keep navigating. */
     `;
     (document.head || document.documentElement).appendChild(st);
 
@@ -5481,10 +4299,6 @@
     center.append(leftCol, rightCol);
     overlay.appendChild(center);
 
-    /* Open the premium Super Shop Wizard overlay if it exists on this page.
-       Tried in order: the premium toolbar opener button, then forcing the
-       panel itself visible. Returns false when no SSW is present (non-
-       premium account) so the caller can fall back to normal navigation. */
     function tryOpenSSW(){
       const openers = ['#sswmenu .imgmenu', '#sswmenu img', '#sswmenu', '.navsub-ssw-icon__2020', '#ssw-tab-button'];
       for (const sel of openers){
@@ -5506,22 +4320,11 @@
       if (item && item.premiumSSW){
         a.title = 'Super Shop Wizard (premium) — falls back to the Shop Wizard';
         a.addEventListener('click', (e) => {
-          // Modified clicks keep native anchor behavior (open in new tab).
           if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
           if (tryOpenSSW()){ e.preventDefault(); e.stopPropagation(); }
-          // else: plain navigation to href (classic Shop Wizard).
         });
       }
       const img = new Image();
-      // EAGER loading. These are 60×60 nav icons (a few KB each) so
-      // there's no benefit to deferring. The previous `loading='lazy'`
-      // caused intermittent "broken icon" symptoms: the <img> was built
-      // detached, src was assigned, then it was attached to #btnOverlay
-      // — and the browser's IntersectionObserver sometimes resolved to
-      // "not visible yet" before first paint and never fetched. Opening
-      // the BG sidebar forced a layout shift that re-triggered the IO
-      // check, which is why icons "appeared" after opening it. Eager
-      // skips that race entirely.
       img.decoding='async'; img.loading='eager';
       if (fixedSrc){
         img.src = fixedSrc;
@@ -5534,12 +4337,6 @@
       return a;
     };
 
-    /* ===== Layout mode =====
-       'cols' (two columns — the historical layout, and the default),
-       'single' (one vertical column) or 'row' (one horizontal row).
-       Mode and side live on #btnOverlay as data attributes, so switching
-       is one attribute write plus a rebuild; every position rule keys off
-       them. The vertical nudge is a plain CSS var, like the spread. */
     const LAYOUT_LS = 'npqol_side_layout_v1';
     const SIDE_LS   = 'npqol_side_side_v1';
     const SHIFT_LS  = 'npqol_side_shift_v1';
@@ -5547,9 +4344,6 @@
     const LAYOUTS = ['cols', 'single', 'row'];
     const SHIFT_MIN = -400, SHIFT_MAX = 400, SHIFT_STEP = 10;
     const XPOS_MIN = -700, XPOS_MAX = 700, XPOS_STEP = 6;
-    // Where the horizontal row sits before the Height nudge, and the
-    // frame's own default top margin — both needed to work out how far
-    // the page has to drop to clear the row.
     const ROW_TOP = 76, FRAME_TOP = 100, DROP_MAX = 360;
     function getLayout(){
       try { const v = localStorage.getItem(LAYOUT_LS); if (LAYOUTS.indexOf(v) >= 0) return v; } catch {}
@@ -5573,10 +4367,6 @@
       } catch {}
       return 0;
     }
-    /* The horizontal row is the only layout that sits ON the page rather
-       than in its margins, so the content frame has to start below it.
-       Measured rather than assumed: the row wraps to two or three lines on
-       a narrow screen, and the icon size is user-tunable. */
     function syncContentDrop(){
       const rs = document.documentElement.style;
       if (getLayout() !== 'row'){ rs.setProperty('--np-content-drop', '0px'); return; }
@@ -5594,8 +4384,6 @@
         rs.setProperty('--np-side-col-shift', getColShift() + 'px');
         rs.setProperty('--np-side-col-x', getColX() + 'px');
       } catch {}
-      // The row's height depends on the layout that was just applied, so
-      // measure on the next frame rather than this one.
       try { requestAnimationFrame(syncContentDrop); } catch { syncContentDrop(); }
     }
     function setLayout(v){
@@ -5622,7 +4410,6 @@
       applyLayout();
       return v;
     }
-    // A viewport change can re-wrap the row onto another line.
     let dropT = 0;
     window.addEventListener('resize', () => {
       clearTimeout(dropT);
@@ -5634,23 +4421,15 @@
       const t = getTheme();
       leftCol.innerHTML = '';
       rightCol.innerHTML = '';
-      // Two columns → one list each. One column / one row → a single strip,
-      // so the two lists are concatenated (left first, then right) rather
-      // than half the icons silently disappearing. loadConfig() is left
-      // alone, which is what makes switching back lossless.
       const first  = (getLayout() === 'cols') ? cfg.left  : [...cfg.left, ...cfg.right];
       const second = (getLayout() === 'cols') ? cfg.right : [];
       first .forEach(it => leftCol .appendChild(makeBtn(it.icon || it.id, it.link, t, it.fixedSrc, it)));
       second.forEach(it => rightCol.appendChild(makeBtn(it.icon || it.id, it.link, t, it.fixedSrc, it)));
-      // Icon count changed → the row may have gained or lost a line.
       try { requestAnimationFrame(syncContentDrop); } catch { syncContentDrop(); }
     }
     applyLayout();
     rebuildColumns();
 
-    /* Mount + body watcher: on some "modern" pages (SDB in Vue/Tailwind),
-       the overlay is inserted early but vanishes after Vue re-renders or
-       teleports to <body>. If #btnOverlay leaves the DOM, re-mount it. */
     const mountOv = () => { if (!document.body) return false; if (!overlay.isConnected) document.body.appendChild(overlay); return true; };
     let bodyObs = null;
     const watchBody = () => {
@@ -5661,7 +4440,6 @@
     if (mountOv()) watchBody();
     else new MutationObserver((_, o) => { if (mountOv()){ watchBody(); o.disconnect(); } }).observe(document.documentElement, { childList:true, subtree:true });
 
-    // Public API used by the editor below.
     PW.__npSideBtns = {
       catalog: ICON_CATALOG,
       catalogById: CATALOG_BY_ID,
@@ -5685,11 +4463,6 @@
     };
   })();
 
-  /* =========================================================
-     SIDE-BUTTON EDITOR — bottom-center handle + slide-up panel
-     Click the handle to add / remove / move (left↔right) the
-     central column buttons. Persisted via __npSideBtns.
-  ========================================================= */
   (function sideBtnEditor(){
     if (document.getElementById('npxSideBtnHost')) return;
     const API = PW.__npSideBtns;
@@ -5702,8 +4475,6 @@
     host.id = 'npxSideBtnHost';
     Object.assign(host.style, {
       position:'fixed', left:'0', right:'0', bottom:'0',
-      // Above #btnOverlay (+2): the icon columns are vertically centred
-      // and would otherwise fall across the open editor panel.
       zIndex: 'calc(var(--np-z-hud, 1000) + 3)',
       pointerEvents:'none',
     });
@@ -5732,9 +4503,6 @@
       .tab:hover{ background: rgba(20,14,32,.7); }
       .tab span{ transform: translateY(-1px); display:inline-block; }
 
-      /* Panel slides up from the handle.
-         box-shadow off while closed (otherwise it bleeds below the viewport
-         since the panel is only translated, not unmounted). */
       .panel{
         position:absolute; left:50%; bottom:${TAB_H}px;
         transform:translateX(-50%) translateY(${PANEL_H + 40}px);
@@ -5757,8 +4525,6 @@
       .head{
         display:flex; align-items:center; justify-content:flex-end;
         gap:6px; padding:6px 8px 4px;
-        /* Four control groups + Reset + × don't fit on one 560px row at
-           every zoom level — let them wrap instead of squashing. */
         flex-wrap:wrap;
       }
       .head button{
@@ -5770,10 +4536,6 @@
       .head button:hover{ background:var(--np-accent-bg); border-color:var(--np-accent-line); color:#fff; }
       .head .close{ background:transparent; border:0; color:rgba(255,255,255,.65); font-size:16px; padding:0 6px; }
       .head .close:hover{ color:#fff; }
-      /* ONE flat toolbar: the layout switch, then three identical
-         steppers. Every numeric setting has the same shape — label, −,
-         value, + — so there is a single control to learn, and clicking
-         the value resets it (which removed four ↺ buttons from the row). */
       .head .grp{
         display:flex; align-items:center; gap:3px;
         padding:3px 7px;
@@ -5807,7 +4569,6 @@
       .head .sideBtn{ width:22px; height:20px; padding:0; font-size:12px; line-height:1; }
       .head .sideBtn[hidden]{ display:none; }
 
-      /* Segmented layout switch: three mutually exclusive pictograms. */
       .modeSeg{
         display:flex; gap:2px; padding:2px;
         border-radius:7px;
@@ -5834,8 +4595,6 @@
       }
       .modeSeg .modeBtn svg{ display:block; }
 
-      /* Shown in the body whenever the two lists render as one strip, so
-         nobody thinks their icons were dropped. */
       .modeNote{
         grid-column:1 / -1;
         margin:0 0 2px;
@@ -5850,8 +4609,6 @@
 
       .body{
         flex:1 1 auto; min-height:0;
-        /* overflow-x:hidden — a long label used to widen the grid and add
-           a horizontal scrollbar under the panel; it ellipsises now. */
         overflow-y:auto; overflow-x:hidden;
         display:grid; grid-template-columns: 1fr 1fr; gap:10px;
         padding:4px 12px 12px;
@@ -5870,9 +4627,6 @@
       }
       .item:hover{ background:var(--np-accent-soft); }
       .item .ico{ width:24px; height:24px; background:center/contain no-repeat; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
-      /* The destination URL moved to the row's tooltip: every one of them
-         started with the same "https://www.neopets.com" and the second
-         line was what pushed the panel into a scrollbar. */
       .item .lbl{ min-width:0; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .iconBtnMini{
         width:22px; height:22px; padding:0; border:0;
@@ -5916,8 +4670,6 @@
     tab.innerHTML = `<span>˄</span>`;
     root.appendChild(tab);
 
-    /* Pictograms for the layout switch: a content frame plus the icon
-       strips around it, so the three options read at a glance. */
     const SVG_COLS = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">' +
       '<rect x="4.6" y="2.5" width="6.8" height="11" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.1" opacity=".5"/>' +
       '<line x1="2" y1="4.5" x2="2" y2="11.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>' +
@@ -6034,16 +4786,6 @@
       }
     });
 
-    /* ===== Toolbar =====
-       One handler for the layout switch and the three steppers. Each
-       stepper reads and writes through the colsModule API, so every
-       change applies live while the panel stays open, and clicking a
-       value resets that one setting.
-
-       "Spread" and "Position" share a slot but NOT a stored value: in the
-       two-column layout it spreads the columns apart (--np-side-col-offset),
-       in the single-strip layouts it slides the strip sideways
-       (--np-side-col-x). Tuning one no longer destroys the other. */
     (function wireToolbar(){
       const seg  = panel.querySelector('#modeSeg');
       const note = panel.querySelector('#modeNote');
@@ -6058,7 +4800,6 @@
 
       const isCols = () => API.getLayout() === 'cols';
       const signed = (v) => (v > 0 ? '+' : '') + v + 'px';
-      // Each stepper: current value, setter, step, reset target, label.
       const CTL = {
         pos: {
           get:  () => isCols() ? API.getColOffset() : API.getColX(),
@@ -6083,7 +4824,6 @@
         seg.querySelectorAll('.modeBtn').forEach(b => b.classList.toggle('isOn', b.dataset.layout === mode));
         if (note) note.hidden = (mode === 'cols');
         if (flip){
-          // Only a single vertical column has a side to choose.
           flip.hidden = (mode !== 'single');
           flip.title = (API.getSide() === 'right')
             ? 'Column is on the right — click to move it left'
@@ -6111,7 +4851,7 @@
         const t = e.target.closest && e.target.closest('.stepBtn, .stepVal');
         if (!t) return;
         if (t.classList.contains('stepVal')){
-          const k = t.id.slice(0, 3);            // posVal → pos, hgtVal → hgt…
+          const k = t.id.slice(0, 3);
           if (CTL[k]) CTL[k].set(CTL[k].zero);
         } else {
           const k = t.dataset.k, d = +t.dataset.d || 0;
@@ -6176,171 +4916,35 @@
 
 })();
 
-  /* ╔══════════════════════════════════════════════════════════════╗
-     ║  PART ③ — BACKGROUND & DECOR (bg picker, accent/theme UI)    ║
-     ╚══════════════════════════════════════════════════════════════╝ */
 (() => {
   'use strict';
-  // (iframe + host gates hoisted to the fusion prelude)
   if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
 
-  // Cross-part access: PART ① exposes the theme/accent APIs on the page
-  // window (PW) — same bridge here, kept as `W` (historical local name).
   const W = PW;
 
-  // ---------- Layout ----------
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
 
-  // ---------- Storage keys ----------
   const LS = {
-    mainBgId:  'npqol_bg_main_v3',     // DTI URL or '' (transparent)
-    leftBarBg: 'npqol_bg_left_v3',     // DTI URL or '' (transparent)
-    favorites: 'npqol_bg_favs_v1',     // JSON array of DTI ids
-    hidden:    'npqol_bg_hidden_v1',   // JSON array of DTI ids
-    recolor:   'npqol_recolor_site_v1',// '1'/'0' — recolor native gold → accent
-    topbarBg:  'npqol_topbar_bg_v1',   // 'none' | 'tint' | 'blur' | 'solid'
-    invBar:    'npqol_inv_menubar_v1', // '1'/'0' — keep Neopets' inventory menu links
+    mainBgId:  'npqol_bg_main_v3',
+    leftBarBg: 'npqol_bg_left_v3',
+    recolor:   'npqol_recolor_site_v1',
+    topbarBg:  'npqol_topbar_bg_v1',
   };
+  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { try { localStorage.removeItem(k); } catch {} });
 
-  // ---------- Background base color ----------
   const BG_COLOR = '#000';
 
-  // ---------- Right-side picker UI ----------
   const UI_Z = 2147483000;
   const HANDLE_W = 20;
   const HANDLE_H = 90;
   const SIDEBAR_W = 320;
 
-  // ---------- Utils ----------
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
-  const clamp01 = (x) => Math.max(0, Math.min(1, x));
   const LSget = (k, fallback = '') => { try { return localStorage.getItem(k) ?? fallback; } catch { return fallback; } };
   const LSset = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
 
-  // ---------- DTI background list (GraphQL on impress-2020.openneo.net) ----------
-  const DTI_CACHE_KEY = 'npqol_dti_bgs_v6';
-  const DTI_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
-  const DTI_PAGE_SIZE = 30;
-  // Hard safety cap — the loop in fetchDTIBackgrounds breaks naturally when a
-  // page returns fewer items than DTI_PAGE_SIZE (last page reached), so this
-  // value is only here to prevent an infinite loop if the DTI API ever
-  // misbehaves. 30 × 5000 = 150 000 backgrounds, way above what DTI hosts.
-  const DTI_MAX_PAGES = 5000;
-  const DTI_ENDPOINT  = 'https://impress-2020.openneo.net/api/graphql';
-
-  const gqlQuery = (query, variables = {}) => new Promise((resolve, reject) => {
-    const body = JSON.stringify({ query, variables });
-    if (typeof GM_xmlhttpRequest === 'function') {
-      GM_xmlhttpRequest({
-        method: 'POST',
-        url: DTI_ENDPOINT,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        data: body,
-        timeout: 20000,
-        onload: (r) => {
-          try { resolve(JSON.parse(r.responseText)); }
-          catch (e) { reject(new Error('JSON parse: ' + e.message)); }
-        },
-        onerror: () => reject(new Error('network')),
-        ontimeout: () => reject(new Error('timeout')),
-      });
-    } else {
-      fetch(DTI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
-        .then(r => r.json()).then(resolve).catch(reject);
-    }
-  });
-
-  const DTI_QUERY = `
-    query SearchBgs($query: String!, $offset: Int!, $limit: Int!) {
-      itemSearch(query: $query, offset: $offset, limit: $limit) {
-        items {
-          id
-          name
-          thumbnailUrl
-          appearanceOn(speciesId: 1, colorId: 8) {
-            layers {
-              id
-              zone { id label }
-              imageUrl(size: SIZE_600)
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  async function fetchDTIBackgrounds(progressCb){
-    const all = [];
-    const seen = new Set();
-    let skippedNoImage = 0;
-    for (let p = 0; p < DTI_MAX_PAGES; p++){
-      progressCb?.(p + 1, all.length);
-      const offset = p * DTI_PAGE_SIZE;
-      let resp;
-      try {
-        resp = await gqlQuery(DTI_QUERY, { query: 'background', offset, limit: DTI_PAGE_SIZE });
-      } catch (e) {
-        if (p === 0) throw e;
-        break;
-      }
-      if (resp?.errors?.length){
-        throw new Error('GraphQL: ' + (resp.errors[0]?.message || JSON.stringify(resp.errors[0])));
-      }
-      const items = resp?.data?.itemSearch?.items || [];
-      if (!items.length) break;
-      for (const it of items){
-        if (seen.has(it.id)) continue;
-        seen.add(it.id);
-        const layers = it.appearanceOn?.layers || [];
-        const pickBg = layers.find(l => (l?.zone?.label || '').toLowerCase().includes('background')) || layers[0];
-        const url = pickBg?.imageUrl || '';
-        if (!url){ skippedNoImage++; continue; }
-        all.push({
-          id: String(it.id),
-          name: it.name,
-          thumbnailUrl: it.thumbnailUrl || '',
-          url,
-        });
-      }
-      if (items.length < DTI_PAGE_SIZE) break;
-    }
-    if (skippedNoImage) console.info(`[BG] DTI fetch: ${all.length} usable backgrounds, ${skippedNoImage} skipped (no PNG render).`);
-    return all;
-  }
-
-  function readDTICached(){
-    try {
-      const raw = localStorage.getItem(DTI_CACHE_KEY);
-      if (!raw) return null;
-      const obj = JSON.parse(raw);
-      if (!obj || !Array.isArray(obj.items) || (Date.now() - obj.ts) > DTI_CACHE_TTL) return null;
-      return obj.items;
-    } catch { return null; }
-  }
-  function writeDTICached(items){
-    try { localStorage.setItem(DTI_CACHE_KEY, JSON.stringify({ ts: Date.now(), items })); } catch {}
-  }
-
-  // ---------- Favorites + hidden (DTI id sets) ----------
-  function readIdSet(key){
-    try {
-      const raw = LSget(key, '');
-      if (!raw) return new Set();
-      const arr = JSON.parse(raw);
-      return new Set(Array.isArray(arr) ? arr.map(String) : []);
-    } catch { return new Set(); }
-  }
-  function writeIdSet(key, set){
-    try { LSset(key, JSON.stringify([...set])); } catch {}
-  }
-  const readFavs    = () => readIdSet(LS.favorites);
-  const writeFavs   = (s) => writeIdSet(LS.favorites, s);
-  const readHidden  = () => readIdSet(LS.hidden);
-  const writeHidden = (s) => writeIdSet(LS.hidden, s);
-
-  // ---------- Apply (bare URLs — no opacity/tint) ----------
   function applyMainBg(url){
     if (!url){
       document.documentElement.style.setProperty('--npWallImage', 'none');
@@ -6362,13 +4966,9 @@
     document.documentElement.style.setProperty('--npLeftBarShadeA', '1');
   }
 
-  // Apply saved values right away, before any rendering.
   applyMainBg(LSget(LS.mainBgId, ''));
   applyLeftBg(LSget(LS.leftBarBg, ''));
 
-  // ---------- Site recolor (native gold → accent) ----------
-  // Tag the current page family so the recolor rules can be scoped tightly
-  // (generic classes like `.container` must not leak to other pages).
   function pageClass(){
     const p = location.pathname.toLowerCase();
     if (p.includes('/inventory.phtml'))     return 'np-page-inventory';
@@ -6379,52 +4979,8 @@
   }
   const _pc = pageClass();
   if (_pc) document.documentElement.classList.add(_pc);
-  // Toggle state: a single class on <html> flips the whole module on/off.
   document.documentElement.classList.toggle('np-recolor-site', LSget(LS.recolor, '0') === '1');
 
-  /* ---------- Top-bar surface ----------
-     The bar lives in a shadow root, so it can't be reached by a class on
-     <html> — but custom properties DO inherit across the shadow boundary,
-     so four tokens set on the root restyle it. 'none' is the historical
-     see-through bar and stays the default.
-
-     The bar is a 60px fixed strip across the whole viewport, so a painted
-     one would sit over the top of the side rail and the user card. Rather
-     than push the HUD down (which would waste the top of the rail), the
-     painted surface simply STARTS after the rail: the bar passes behind
-     the sidebar, the rail's own decor and the user card stay in front. */
-  const TOPBAR_INSET = 'var(--np-col-width, 330px)';
-  const TOPBAR_STYLES = {
-    none:  { bg:'transparent',          backdrop:'none',                        line:'transparent',            shadow:'none',                        inset:'0px' },
-    tint:  { bg:'rgba(20,14,32,.55)',   backdrop:'none',                        line:'rgba(255,255,255,.10)',  shadow:'none',                        inset:TOPBAR_INSET },
-    blur:  { bg:'rgba(20,14,32,.30)',   backdrop:'blur(10px) saturate(1.1)',    line:'rgba(255,255,255,.12)',  shadow:'0 4px 18px rgba(0,0,0,.32)',  inset:TOPBAR_INSET },
-    solid: { bg:'rgba(20,14,32,.97)',   backdrop:'none',                        line:'rgba(255,255,255,.14)',  shadow:'0 4px 18px rgba(0,0,0,.45)',  inset:TOPBAR_INSET },
-  };
-  function applyTopbarBg(id){
-    const v = TOPBAR_STYLES[id] ? id : 'none';
-    const st = TOPBAR_STYLES[v];
-    try {
-      const rs = document.documentElement.style;
-      rs.setProperty('--np-bar-bg', st.bg);
-      rs.setProperty('--np-bar-backdrop', st.backdrop);
-      rs.setProperty('--np-bar-line', st.line);
-      rs.setProperty('--np-bar-shadow', st.shadow);
-      rs.setProperty('--np-bar-inset-left', st.inset);
-      // 4.2.0 shipped an earlier approach that pushed the HUD down instead;
-      // clear it so an upgrading profile doesn't keep the gap.
-      rs.removeProperty('--np-hud-top');
-    } catch {}
-    return v;
-  }
-  applyTopbarBg(LSget(LS.topbarBg, 'none'));
-
-  /* ---------- Inventory menu bar ---------- */
-  function applyInvMenubar(on){
-    try { document.documentElement.classList.toggle('np-inv-menubar-full', !!on); } catch {}
-  }
-  applyInvMenubar(LSget(LS.invBar, '0') === '1');
-
-  // ---------- CSS (early) ----------
   const style = document.createElement('style');
   style.textContent = `
     :root{
@@ -6444,7 +5000,6 @@
     :root::before{
       content:"";
       position:fixed;
-      /* Anchored to the (user-resizable) decor column right edge. */
       inset:${TOP_BAR_PX}px 0 0 var(--np-col-width, ${LEFT_BAR_PX}px);
       z-index:-2147483647;
       pointer-events:none;
@@ -6461,11 +5016,8 @@
       background-image:none!important;
     }
 
-    /* Left decor column. visibility:visible escapes a body{visibility:hidden}
-       anti-FOUC injected by some other extensions (e.g. Stylus). */
     #npLeftBar{
       position:fixed!important; top:0; left:0;
-      /* Tracks --np-col-width set by the HUD resize handle. */
       width: var(--np-col-width, ${LEFT_BAR_PX}px); height:100vh;
       z-index:18;
       pointer-events:none;
@@ -6493,15 +5045,11 @@
       visibility:visible!important;
     }
 
-    /* The decor column tracks --np-col-width (user-controlled via the HUD
-       resize handle), so no automatic shrink rules — only hide on tiny
-       screens where the HUD itself is hidden. */
     @media (max-width: 900px){
       #npLeftBar{ display:none; }
       :root::before{ inset:${TOP_BAR_PX}px 0 0 0; }
     }
 
-    /* Right-side BG picker — slide-in panel */
     #npBgHandle{
       position:fixed;
       right:0;
@@ -6607,43 +5155,15 @@
     .npThemeSelect:focus{ outline:2px solid var(--np-accent, #dcb8ff); }
     .npThemeSelect option{ background:#1a1330; color:#fff; }
 
-    .npAccentBlock{ margin:0 0 12px 0; }
-    .npAccentPastilles{
-      display:grid;
-      grid-template-columns:repeat(8, 1fr);
-      gap:8px;
-      justify-items:center;
-      padding:6px 2px 2px;
-    }
-    .npAccentDot{
-      width:24px; height:24px;
-      border-radius:50%; cursor:pointer;
-      border:2px solid rgba(255,255,255,.18);
-      box-shadow: 0 1px 3px rgba(0,0,0,.5), inset 0 0 0 1px rgba(0,0,0,.2);
-      transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
-      padding:0;
-    }
-    .npAccentDot:hover{
-      transform: scale(1.12);
-      border-color: rgba(255,255,255,.55);
-    }
-    .npAccentDot.isActive{
-      border-color: #fff;
-      box-shadow: 0 0 0 2px rgba(0,0,0,.55), 0 1px 6px rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.2);
-      transform: scale(1.1);
-    }
-
     .npRecolorBlock{ margin:0 0 12px 0; }
     .npRecolorBtn{
       width:100%;
       height:46px;
       border-radius:12px;
       cursor:pointer;
-      /* Typical Neopets typography (Cafeteria), loaded by the site's own CSS. */
       font-family:"Cafeteria","TP Cafeteria","CafeteriaBlack","Museo Sans Rounded Bold",system-ui,sans-serif;
       font-size:20px;
       font-weight:400;
-      /* Inactive: greyed out */
       background:rgba(255,255,255,.07);
       color:rgba(255,255,255,.42);
       border:1px solid rgba(255,255,255,.16);
@@ -6651,7 +5171,6 @@
     }
     .npRecolorBtn:hover{ filter:brightness(1.1); }
     .npRecolorBtn:active{ transform:translateY(1px); }
-    /* Active: soft PASTEL rainbow drawn from the accent palette, gently animated */
     .npRecolorBtn.isOn{
       color:#4a3d55;
       border-color:transparent;
@@ -6687,24 +5206,15 @@
       background:rgba(0,0,0,.18); color:#fff;
       border-radius:8px; cursor:pointer; font-size:14px;
     }
-    .npBgSearch button.isOn{
-      background:var(--np-accent, #dcb8ff); color:#1a1330;
-      border-color:transparent;
-    }
     #npBgList{
       display:flex; flex-direction:column; gap:6px; margin-top:8px;
     }
     .npBgItem{
-      display:grid; grid-template-columns:44px 1fr auto auto auto auto;
+      display:grid; grid-template-columns:44px 1fr auto auto;
       gap:6px; align-items:center;
       padding:4px 6px; border-radius:10px;
       background:rgba(0,0,0,.12);
       border:1px solid rgba(255,255,255,.12);
-    }
-    .npBgItem.isHidden{
-      opacity:.55;
-      background:rgba(255,80,80,.06);
-      border-color:rgba(255,80,80,.18);
     }
     .npBgThumb{
       width:44px; height:44px; border-radius:6px;
@@ -6724,20 +5234,6 @@
     }
     .npBgBtn:hover{ filter:brightness(1.08); }
     .npBgBtn.isActive{ outline:2px solid var(--np-accent, #dcb8ff); }
-    .npFavBtn, .npHideBtn{
-      width:24px; height:28px; padding:0;
-      border:none; background:transparent;
-      color:rgba(255,255,255,.45); cursor:pointer; font-size:14px;
-      line-height:1;
-    }
-    .npFavBtn:hover, .npHideBtn:hover{ color:rgba(255,255,255,.85); }
-    .npFavBtn.isOn{ color:#ffd166; }
-    .npHideBtn.isOn{ color:#ff6b6b; }
-    .npFavBtn{ font-size:16px; }
-    #npBgStatus{
-      padding:6px 4px; font-size:11px; color:rgba(255,255,255,.7);
-    }
-
     .npSmall{
       font:800 10px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
       color:rgba(255,255,255,.82);
@@ -6745,46 +5241,12 @@
       margin-bottom:6px;
     }
 
-    /* Plain on/off rows for the interface options that don't deserve a
-       whole block of their own. */
-    .npOptBlock{ margin:0 0 12px 0; }
-    .npOptRow{
-      display:flex; align-items:flex-start; gap:8px;
-      padding:8px 10px;
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:10px;
-      background:rgba(255,255,255,.04);
-      cursor:pointer;
-    }
-    .npOptRow:hover{ background:rgba(255,255,255,.07); border-color:var(--np-accent-line, rgba(255,255,255,.3)); }
-    .npOptRow input[type="checkbox"]{
-      width:15px; height:15px; margin:1px 0 0 0;
-      accent-color:var(--np-accent, #dcb8ff);
-      flex:0 0 auto; cursor:pointer;
-    }
-    .npOptText{
-      font:700 11px/1.25 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      color:rgba(255,255,255,.9);
-    }
-    .npOptText small{
-      display:block; margin-top:3px;
-      font:500 10px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      color:rgba(255,255,255,.55);
-    }
   `;
   (document.head || document.documentElement).appendChild(style);
 
-  // ---------- Site recolor stylesheet ----------
-  // All rules gated behind `html.np-recolor-site` (flipped by the picker
-  // toggle) AND a per-page class, so generic selectors never leak across
-  // pages. Shade vars come from Core (--np-accent-l*/--np-accent-huerot);
-  // each fallback equals the ORIGINAL Neopets value, so with Core absent (or
-  // the toggle off) nothing changes. Scoped per page family — start: INVENTORY.
   const recolorStyle = document.createElement('style');
   recolorStyle.id = 'npRecolorSite';
   recolorStyle.textContent = `
-    /* ===== INVENTORY (/inventory.phtml) ===== */
-    /* Tab bar + its scrollbar */
     html.np-recolor-site.np-page-inventory .inv-tabs-container{
       background-color: var(--np-accent-l60, #e8a41d) !important;
     }
@@ -6797,36 +5259,21 @@
     html.np-recolor-site.np-page-inventory .inv-tabs-container::-webkit-scrollbar-thumb:hover{
       background: var(--np-accent-l75, #FFB529) !important;
     }
-    /* Selected tab (darker step) */
     html.np-recolor-site.np-page-inventory ul.invTabs li.invTab-selected,
     html.np-recolor-site.np-page-inventory .invTabsCarousel .invTab-selected{
       background-color: var(--np-accent-l45, #c18000) !important;
     }
-    /* Quantity badge + menu strip */
     html.np-recolor-site.np-page-inventory .item-count{
       background-color: var(--np-accent-l60, #de911a) !important;
     }
     html.np-recolor-site.np-page-inventory .inv-menulinks{
       background: var(--np-accent-l45, #9F9786) !important;
     }
-    /* Page container gradient (tan → white) */
     html.np-recolor-site.np-page-inventory .container{
       background: linear-gradient(0deg,
         var(--np-accent-l90, rgba(197,182,155,1)) 0%, #fff 100%) !important;
     }
-    /* Category icon sprites are white glyphs — they read fine on any accent,
-       so leave them untouched. */
 
-    /* Filter toggle pills (NP/NC, time/A-Z, stack) — a SHARED inv-filter widget
-       that appears on inventory AND other item pages, so this is global (not
-       page-scoped). Their gold is baked into SVG border-images (toggle-backing
-       / toggle-button.svg), so CSS can't recolor them. Run a luminance→accent
-       filter pipeline that tracks the accent's HUE, SATURATION and LIGHTNESS
-       (plain hue-rotate couldn't: it left muted accents over-saturated and
-       turned black/white pills red). grayscale→sepia normalises to a neutral
-       gold base (~hue 40, same NEO_GOLD reference), hue-rotate swings it to the
-       accent hue, saturate scales chroma (0 = grey for black/white), brightness
-       tracks lightness. */
     html.np-recolor-site .nptoggle,
     html.np-recolor-site .filtertoggle,
     html.np-recolor-site .stacktoggle{
@@ -6837,10 +5284,6 @@
         brightness(var(--np-accent-bright, 1));
     }
 
-    /* ===== SITE-WIDE (not page-scoped) — shared components from template.css ===== */
-    /* 2020 yellow button — CSS gradient + warm insets, used across the whole
-       site (inventory "Submit", claim buttons, popups…). Recolor all three
-       states + warm shadow rings; keep the cream top highlight + black outline. */
     html.np-recolor-site .button-yellow__2020{
       background: linear-gradient(
         var(--np-accent-l75, #f6e250), var(--np-accent-l60, #ebb233)) !important;
@@ -6859,30 +5302,17 @@
       background: linear-gradient(
         var(--np-accent-l60, #ebb233), var(--np-accent-l75, #f6e250)) !important;
     }
-    /* Popup header/footer bars (item-info + generic __2020 popups) — solid #fed123 */
     html.np-recolor-site .popup-header__2020,
     html.np-recolor-site .popup-footer__2020{
       background: var(--np-accent-l60, #fed123) !important;
     }
 
-    /* ===== ECONOMY PAGES — shared warm palette =====
-       Self-scoped by unique class prefixes (.sdb-* Safety Deposit, .bsp-* shop
-       browsing, .mkt-* your shop / market), so these can be global without
-       leaking. All warm values are CSS (no images). Grouped by NATIVE color so
-       each fallback stays exactly native when Core is absent. Recurring hexes:
-       #e8a41d→#c18000 (amber bars), #f5c030 (gold pills), #faa819 (orange),
-       #fed123 (golden), #ffeeaf/#fcee95/#ffe9b8 (pales). */
-
-    /* Amber nav BARS (gradient #e8a41d→#c18000). Shared across the whole shop
-       cluster: .mkt-navlist (hub) + .mkt-subnav ("Jump to:" bar on market /
-       quickstock / SDB / gallery / …) + .bsp-* (shop browsing). */
     html.np-recolor-site .bsp-navlist,
     html.np-recolor-site .bsp-subnav,
     html.np-recolor-site .mkt-navlist,
     html.np-recolor-site .mkt-subnav{
       background: linear-gradient(var(--np-accent-l60,#e8a41d), var(--np-accent-l45,#c18000)) !important;
     }
-    /* Gold nav PILLS (gradient #f5c030→#e8a41d) + hover (#fdd040→#f5c030) */
     html.np-recolor-site .bsp-navlist a,
     html.np-recolor-site .bsp-subnav__link,
     html.np-recolor-site .mkt-navlist a,
@@ -6895,7 +5325,6 @@
     html.np-recolor-site .mkt-subnav__link:hover{
       background: linear-gradient(var(--np-accent-l90,#fdd040), var(--np-accent-l75,#f5c030)) !important;
     }
-    /* Active nav pill (dark amber #7a5500→#5a3d00), incl. hover (#8a6200→#6a4800) */
     html.np-recolor-site .mkt-navlist a.is-active,
     html.np-recolor-site .mkt-subnav__link.is-active,
     html.np-recolor-site .bsp-subnav__link.is-active{
@@ -6907,21 +5336,12 @@
       background: linear-gradient(var(--np-accent-l45,#8a6200), var(--np-accent-l30,#6a4800)) !important;
     }
 
-    /* ===== GENERALIZED ITEM-PAGE COMPONENTS =====
-       The item pages (inventory, safety deposit, quick stock, closet, …) share
-       ONE design system with page-PREFIXED classes: [prefix]-menulinks,
-       -stats-bar, -header-bar, -pagination-btn, -count-badge, -tick-icon,
-       -pin-btn, -drawer… Target the FAMILY via [class*=…] so a single rule
-       covers every current AND future page that reuses this markup. */
-
-    /* Tan menu bar (#9f9786) + its hover link (#fde68a) — inv/sdb/qs/closet/… */
     html.np-recolor-site [class*="menulinks"]{
       background: var(--np-accent-l45, #9f9786) !important;
     }
     html.np-recolor-site [class*="menulinks"] a:hover{
       color: var(--np-accent-l75, #fde68a) !important;
     }
-    /* Orange stat/header bars (#faa819) + quantity steppers */
     html.np-recolor-site [class*="stats-bar"],
     html.np-recolor-site [class*="header-bar"],
     html.np-recolor-site [class*="headerbar"],
@@ -6929,18 +5349,13 @@
     html.np-recolor-site .mkt-stepper .mkt-stepper__btn{
       background: var(--np-accent-l60, #faa819) !important;
     }
-    /* Count badge (#e8a41d) — e.g. quick stock ×3 */
     html.np-recolor-site [class*="count-badge"]{
       background: var(--np-accent-l60, #e8a41d) !important;
     }
-    /* Selection tick (#ffd700/#faa819) + pinned pin (#ffaa00) */
     html.np-recolor-site [class*="tick-icon"].selected,
     html.np-recolor-site [class*="pin-btn"].is-pinned{
       background: var(--np-accent-l60, #faa819) !important;
     }
-    /* Pagination pills — default (#ffeeaf/#fff8e7) + active/hover (#fed123/#c8a951).
-       Covers page-prefixed .xxx-pagination-btn AND the shared .np-pagination-btn
-       library (incl. .np-pagination-btn-active). */
     html.np-recolor-site [class*="pagination-btn"]{
       background: var(--np-accent-l90, #ffeeaf) !important;
       border-color: var(--np-accent-l60, #c8a951) !important;
@@ -6952,13 +5367,11 @@
       background: var(--np-accent-l60, #fed123) !important;
       border-color: var(--np-accent-l45, #a07828) !important;
     }
-    /* Pale drawers / PIN banners (#fcee95) */
     html.np-recolor-site [class*="-drawer"],
     html.np-recolor-site [class*="pin-inactive-text"]{
       background: var(--np-accent-l90, #fcee95) !important;
     }
 
-    /* --- SDB-specific bits (unique classes, kept explicit) --- */
     html.np-recolor-site .sdb-item-star.is-fav,
     html.np-recolor-site .sdb-grid-fav.is-fav{
       color: var(--np-accent-l60, #faa819) !important;
@@ -6976,7 +5389,6 @@
     html.np-recolor-site .sdb-as-item.is-selected{
       background: var(--np-accent-l90, #ffe9b8) !important;
     }
-    /* Market shop-card header (mustard #dddd77) + gold accents (#f5c400) */
     html.np-recolor-site .shop__head{
       background: var(--np-accent-l75, #dddd77) !important;
     }
@@ -6987,11 +5399,6 @@
       border-bottom-color: var(--np-accent-l60, #f5c400) !important;
     }
 
-    /* Quick Stock (quickstock.phtml) — gold table defined in a page-inline
-       style block (SDB-style palette), classes quickstock- + qs- (unique). The
-       header uses !important; our html.np-recolor-site prefix raises specificity
-       so our !important wins. */
-    /* Amber header (#e8a41d) — incl. sticky first cell */
     html.np-recolor-site .quickstock-thead tr,
     html.np-recolor-site .quickstock-table.np-table thead th,
     html.np-recolor-site .quickstock-table.np-table thead th:first-child{
@@ -7000,17 +5407,14 @@
     html.np-recolor-site .quickstock-table.np-table thead th{
       border-bottom-color: var(--np-accent-l45, #c48a10) !important;
     }
-    /* Even rows (#fef0ba pale) */
     html.np-recolor-site .quickstock-table.np-table .np-table-row-even{
       background-color: var(--np-accent-l90, #fef0ba) !important;
     }
-    /* "Check All" row (#fde68a) + its top separator (#c48a10) */
     html.np-recolor-site .quickstock-table.np-table tbody tr:last-child,
     html.np-recolor-site .quickstock-table.np-table tbody tr:last-child.np-table-row-even{
       background-color: var(--np-accent-l75, #fde68a) !important;
       border-top-color: var(--np-accent-l45, #c48a10) !important;
     }
-    /* Menulink hover (#fde68a) + radio accent (#c48a10) */
     html.np-recolor-site .qs-menulinks a:hover{
       color: var(--np-accent-l75, #fde68a) !important;
     }
@@ -7020,7 +5424,6 @@
   `;
   (document.head || document.documentElement).appendChild(recolorStyle);
 
-  // ---------- Left decor column mount ----------
   function mountLeftBar(){
     if (document.getElementById('npLeftBar')) return;
     const bar = document.createElement('div');
@@ -7032,7 +5435,6 @@
   else new MutationObserver((_, o) => { if (document.body){ mountLeftBar(); o.disconnect(); } })
     .observe(document.documentElement, { childList:true, subtree:true });
 
-  // ---------- Right-side picker (slide-in) ----------
   function onReady(fn){
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
     else fn();
@@ -7058,37 +5460,19 @@
         <div class="npThemeBlock">
           <div class="npSmall" style="margin-bottom:4px">Top bar</div>
           <select id="npTopbarBg" class="npThemeSelect">
-            <option value="none">Transparent (default)</option>
+            <option value="none">Transparent</option>
             <option value="tint">Tinted</option>
-            <option value="blur">Frosted</option>
+            <option value="blur">Frosted (default)</option>
             <option value="solid">Solid</option>
           </select>
-        </div>
-
-        <div class="npAccentBlock">
-          <div class="npSmall" style="margin-bottom:4px">Accent color</div>
-          <div class="npAccentPastilles" id="npAccentPastilles"></div>
         </div>
 
         <div class="npRecolorBlock">
           <button type="button" id="npRecolorSite" class="npRecolorBtn" aria-pressed="false">Recolor Site</button>
         </div>
 
-        <div class="npOptBlock">
-          <label class="npOptRow">
-            <input type="checkbox" id="npInvMenubar">
-            <span class="npOptText">Full inventory bar
-              <small>Keep Neopets' own Quick Stock / Transfer Log links beside the NP·NC filters.</small>
-            </span>
-          </label>
-        </div>
-
-        <div class="npSmall" id="npBgStatus">Empty list — please wait while it loads…</div>
         <div class="npBgSearch">
-          <input id="npBgQuery" type="text" placeholder="Filter by name…" />
-          <button id="npBgFavOnly" type="button" title="Show favorites only">★</button>
-          <button id="npBgHiddenOnly" type="button" title="Show hidden backgrounds (to restore them)">🗑</button>
-          <button id="npBgReload" type="button" title="Reload from DTI">↻</button>
+          <input id="npBgQuery" type="text" placeholder="Search backgrounds…" />
         </div>
         <div id="npBgList"></div>
       </div>
@@ -7105,8 +5489,8 @@
 
     let built = false;
     let isOpen = false;
-    let snapshot = null; // LS state captured on open
-    let session  = null; // live preview state during editing
+    let snapshot = null;
+    let session  = null;
 
     function openBar(){
       if (isOpen) return;
@@ -7115,14 +5499,11 @@
         mainBg:   LSget(LS.mainBgId, ''),
         leftBg:   LSget(LS.leftBarBg, ''),
         btnTheme: (typeof W.__npGetBtnTheme === 'function') ? W.__npGetBtnTheme() : '',
-        accent:   (typeof W.__npGetAccent === 'function') ? W.__npGetAccent() : '#dcb8ff',
       };
       session = { ...snapshot };
       sidebar.style.transform = OPEN_X;
       if (!built) buildUI();
-      refreshActives();
       refreshThemeSelect();
-      refreshAccentPastilles();
     }
 
     function closeBar(){
@@ -7133,14 +5514,8 @@
     }
 
     function saveAndClose(){
-      if (!session) { closeBar(); return; }
-      LSset(LS.mainBgId,  session.mainBg);
-      LSset(LS.leftBarBg, session.leftBg);
-      if (session.btnTheme && typeof W.__npSaveBtnTheme === 'function'){
+      if (session && session.btnTheme && typeof W.__npSaveBtnTheme === 'function'){
         W.__npSaveBtnTheme(session.btnTheme);
-      }
-      if (session.accent && typeof W.__npSaveAccent === 'function'){
-        W.__npSaveAccent(session.accent);
       }
       closeBar();
     }
@@ -7152,9 +5527,6 @@
         if (snapshot.btnTheme && typeof W.__npApplyBtnTheme === 'function'){
           W.__npApplyBtnTheme(snapshot.btnTheme);
         }
-        if (snapshot.accent && typeof W.__npApplyAccent === 'function'){
-          W.__npApplyAccent(snapshot.accent);
-        }
       }
       closeBar();
     }
@@ -7164,7 +5536,6 @@
       openBar();
     });
 
-    // Click anywhere outside the panel (and not on the handle) reverts + closes.
     document.addEventListener('pointerdown', (ev) => {
       if (!isOpen) return;
       const t = ev.target;
@@ -7173,18 +5544,6 @@
       cancelAndClose();
     }, true);
 
-    function refreshActives(){
-      if (!session) return;
-      sidebar.querySelectorAll('.npBgR').forEach(b => {
-        b.classList.toggle('isActive', b.getAttribute('data-url') === session.mainBg);
-      });
-      sidebar.querySelectorAll('.npBgL').forEach(b => {
-        b.classList.toggle('isActive', b.getAttribute('data-url') === session.leftBg);
-      });
-    }
-
-    // (Re)populate the button-theme <select> — runs on each open so we pick up
-    // the API in case the HUD script wasn't loaded yet on first build.
     function refreshThemeSelect(){
       const sel = sidebar.querySelector('#npBtnTheme');
       if (!sel) return;
@@ -7203,39 +5562,12 @@
       if (cur) sel.value = cur;
     }
 
-    function refreshAccentPastilles(){
-      const box = sidebar.querySelector('#npAccentPastilles');
-      if (!box) return;
-      const palette = Array.isArray(W.__npAccentPalette) ? W.__npAccentPalette : [];
-      if (!palette.length){
-        box.innerHTML = `<div class="npSmall" style="opacity:.6">(Core script not loaded)</div>`;
-        return;
-      }
-      if (box.children.length !== palette.length){
-        box.innerHTML = palette.map(p =>
-          `<button type="button" class="npAccentDot" data-hex="${p.hex}" title="${p.label}" style="background:${p.hex}"></button>`
-        ).join('');
-      }
-      const cur = (session && session.accent)
-        || (typeof W.__npGetAccent === 'function' ? W.__npGetAccent() : '#dcb8ff');
-      box.querySelectorAll('.npAccentDot').forEach(el => {
-        el.classList.toggle('isActive', el.getAttribute('data-hex').toLowerCase() === String(cur).toLowerCase());
-      });
-    }
-
     function buildUI(){
       built = true;
 
-      const bgList       = sidebar.querySelector('#npBgList');
-      const bgStatus     = sidebar.querySelector('#npBgStatus');
-      const bgQuery      = sidebar.querySelector('#npBgQuery');
-      const bgReload     = sidebar.querySelector('#npBgReload');
-      const bgFavOnly    = sidebar.querySelector('#npBgFavOnly');
-      const bgHiddenOnly = sidebar.querySelector('#npBgHiddenOnly');
-      const saveBtn      = sidebar.querySelector('#npBgSave');
-      const cancelBtn    = sidebar.querySelector('#npBgCancel');
-      const bodyEl       = sidebar.querySelector('#npBgBody');
-      const themeSel     = sidebar.querySelector('#npBtnTheme');
+      const saveBtn   = sidebar.querySelector('#npBgSave');
+      const cancelBtn = sidebar.querySelector('#npBgCancel');
+      const themeSel  = sidebar.querySelector('#npBtnTheme');
 
       themeSel?.addEventListener('change', () => {
         if (!session) return;
@@ -7244,44 +5576,10 @@
       });
       refreshThemeSelect();
 
-      const accentBox = sidebar.querySelector('#npAccentPastilles');
-      accentBox?.addEventListener('click', (e) => {
-        const btn = e.target.closest('.npAccentDot');
-        if (!btn || !session) return;
-        const hex = btn.getAttribute('data-hex');
-        if (!hex) return;
-        session.accent = hex;
-        if (typeof W.__npApplyAccent === 'function') W.__npApplyAccent(hex);
-        accentBox.querySelectorAll('.npAccentDot').forEach(el => {
-          el.classList.toggle('isActive', el === btn);
-        });
-      });
-      refreshAccentPastilles();
-
-      // Site-recolor toggle — global on/off, applied + persisted instantly
-      // (independent of the panel's Save/Cancel; it only flips a body class).
-      // The button shows an animated rainbow when active, greyed when off.
-      /* Top-bar surface — applied + persisted instantly, like the recolor
-         toggle below and unlike the background/accent picks, which go
-         through the panel's Save/Cancel. */
       const topbarSel = sidebar.querySelector('#npTopbarBg');
       if (topbarSel){
-        topbarSel.value = LSget(LS.topbarBg, 'none');
-        topbarSel.addEventListener('change', () => {
-          const v = applyTopbarBg(topbarSel.value);
-          topbarSel.value = v;
-          LSset(LS.topbarBg, v);
-        });
-      }
-
-      // Inventory menu bar — same instant contract.
-      const invBox = sidebar.querySelector('#npInvMenubar');
-      if (invBox){
-        invBox.checked = LSget(LS.invBar, '0') === '1';
-        invBox.addEventListener('change', () => {
-          applyInvMenubar(invBox.checked);
-          LSset(LS.invBar, invBox.checked ? '1' : '0');
-        });
+        topbarSel.value = LSget(LS.topbarBg, '') || 'blur';
+        topbarSel.addEventListener('change', () => LSset(LS.topbarBg, topbarSel.value));
       }
 
       const recolorBtn = sidebar.querySelector('#npRecolorSite');
@@ -7302,189 +5600,6 @@
 
       saveBtn  .addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); saveAndClose(); });
       cancelBtn.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); cancelAndClose(); });
-
-      let dtiAll = [];
-      let dtiFiltered = [];
-      let renderCount = 0;
-      const RENDER_STEP = 30;
-      let favs   = readFavs();
-      let hidden = readHidden();
-      let favOnly    = false;
-      let hiddenOnly = false;
-
-      function syncFilterBtns(){
-        bgFavOnly.classList.toggle('isOn', favOnly);
-        bgHiddenOnly.classList.toggle('isOn', hiddenOnly);
-      }
-
-      function renderMore(){
-        const slice = dtiFiltered.slice(renderCount, renderCount + RENDER_STEP);
-        for (const it of slice){
-          const row = document.createElement('div');
-          row.className = 'npBgItem';
-          const isFav = favs.has(it.id);
-          const isHid = hidden.has(it.id);
-          if (isHid) row.classList.add('isHidden');
-          row.innerHTML = `
-            <div class="npBgThumb" style="background-image:url('${safeUrl(it.thumbnailUrl)}')"></div>
-            <div class="npBgName" title="${it.name.replace(/"/g,'&quot;')}">${it.name}</div>
-            <button type="button" class="npFavBtn ${isFav?'isOn':''}" title="Favorite">★</button>
-            <button type="button" class="npBgBtn npBgL" data-url="${safeUrl(it.url)}" title="Use on LEFT decor column">L</button>
-            <button type="button" class="npBgBtn npBgR" data-url="${safeUrl(it.url)}" title="Use as MAIN background">M</button>
-            <button type="button" class="npHideBtn ${isHid?'isOn':''}" title="${isHid?'Restore':'Hide this background'}">🗑</button>
-          `;
-          const favBtn  = row.querySelector('.npFavBtn');
-          const btnL    = row.querySelector('.npBgL');
-          const btnR    = row.querySelector('.npBgR');
-          const hideBtn = row.querySelector('.npHideBtn');
-          /* Fav/hide toggles update IN PLACE (row removed/adjusted, filtered
-             list spliced) instead of re-running applyFilter() — the full
-             re-render reset the list to the top 30 rows, which made the
-             sidebar visually "scroll through" backgrounds before settling
-             whenever an item far down the list was hidden. */
-          const dropRowInPlace = () => {
-            const idx = dtiFiltered.indexOf(it);
-            if (idx >= 0){
-              dtiFiltered.splice(idx, 1);
-              if (idx < renderCount) renderCount--;
-            }
-            row.remove();
-            updateStatus();
-          };
-          favBtn.addEventListener('click', (ev) => {
-            ev.preventDefault(); ev.stopPropagation();
-            if (favs.has(it.id)) favs.delete(it.id); else favs.add(it.id);
-            writeFavs(favs);
-            favBtn.classList.toggle('isOn', favs.has(it.id));
-            // In favorites-only view, unfavoriting removes the row.
-            if (favOnly && !favs.has(it.id)) dropRowInPlace();
-          });
-          hideBtn.addEventListener('click', (ev) => {
-            ev.preventDefault(); ev.stopPropagation();
-            if (hidden.has(it.id)) hidden.delete(it.id); else hidden.add(it.id);
-            writeHidden(hidden);
-            const nowHidden = hidden.has(it.id);
-            // The row leaves the CURRENT view when: hidden in normal view,
-            // or restored in trash view. Otherwise just repaint its state.
-            const leavesView = hiddenOnly ? !nowHidden : nowHidden;
-            if (leavesView){
-              dropRowInPlace();
-            } else {
-              row.classList.toggle('isHidden', nowHidden);
-              hideBtn.classList.toggle('isOn', nowHidden);
-              hideBtn.title = nowHidden ? 'Restore' : 'Hide this background';
-            }
-          });
-          btnL.addEventListener('click', (ev) => {
-            ev.preventDefault(); ev.stopPropagation();
-            if (!session) return;
-            session.leftBg = it.url;
-            applyLeftBg(it.url);
-            refreshActives();
-          });
-          btnR.addEventListener('click', (ev) => {
-            ev.preventDefault(); ev.stopPropagation();
-            if (!session) return;
-            session.mainBg = it.url;
-            applyMainBg(it.url);
-            refreshActives();
-          });
-          bgList.appendChild(row);
-        }
-        renderCount += slice.length;
-        refreshActives();
-      }
-
-      function applyFilter(){
-        const q = (bgQuery.value || '').trim().toLowerCase();
-        dtiFiltered = dtiAll.filter(it => {
-          const isHid = hidden.has(it.id);
-          if (hiddenOnly){
-            if (!isHid) return false;
-          } else {
-            if (isHid) return false;
-            if (favOnly && !favs.has(it.id)) return false;
-          }
-          if (q && !it.name.toLowerCase().includes(q)) return false;
-          return true;
-        });
-        bgList.innerHTML = '';
-        renderCount = 0;
-        renderMore();
-        updateStatus();
-      }
-
-      function updateStatus(){
-        if (!dtiAll.length){
-          bgStatus.textContent = 'No backgrounds loaded. Click ↻ to fetch from DTI.';
-        } else if (!dtiFiltered.length){
-          if (hiddenOnly) bgStatus.textContent = '0 hidden backgrounds (trash is empty).';
-          else if (favOnly) bgStatus.textContent = `0 favorite${favs.size ? ' matching' : ''} (out of ${dtiAll.length} backgrounds).`;
-          else bgStatus.textContent = `No results (out of ${dtiAll.length} cached backgrounds).`;
-        } else {
-          const note = hiddenOnly ? ' (trash)' : (favOnly ? ' (favorites)' : '');
-          bgStatus.textContent = `${dtiFiltered.length} background${dtiFiltered.length > 1 ? 's' : ''}${note} shown (${Math.min(renderCount, dtiFiltered.length)} rendered).`;
-        }
-      }
-
-      bodyEl.addEventListener('scroll', () => {
-        if (renderCount >= dtiFiltered.length) return;
-        if (bodyEl.scrollTop + bodyEl.clientHeight >= bodyEl.scrollHeight - 120) renderMore();
-      });
-
-      bgQuery.addEventListener('input', applyFilter);
-      bgFavOnly.addEventListener('click', (ev) => {
-        ev.preventDefault(); ev.stopPropagation();
-        favOnly = !favOnly;
-        if (favOnly) hiddenOnly = false;
-        syncFilterBtns();
-        applyFilter();
-      });
-      bgHiddenOnly.addEventListener('click', (ev) => {
-        ev.preventDefault(); ev.stopPropagation();
-        hiddenOnly = !hiddenOnly;
-        if (hiddenOnly) favOnly = false;
-        syncFilterBtns();
-        applyFilter();
-      });
-
-      async function loadDTI(force = false){
-        if (!force){
-          const cached = readDTICached();
-          if (cached && cached.length){
-            dtiAll = cached;
-            applyFilter();
-            return;
-          }
-        }
-        bgStatus.textContent = 'Loading from DTI…';
-        try {
-          const items = await fetchDTIBackgrounds((page, count) => {
-            bgStatus.textContent = `Loading from DTI… (page ${page}, ${count} backgrounds)`;
-          });
-          if (items.length){
-            dtiAll = items;
-            writeDTICached(items);
-            applyFilter();
-            bgStatus.textContent = `${items.length} backgrounds loaded from DTI.`;
-          } else {
-            bgStatus.textContent = 'No backgrounds returned by DTI.';
-          }
-        } catch (err) {
-          bgStatus.textContent = 'DTI fetch failed: ' + (err.message || err);
-        }
-      }
-
-      bgReload.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); loadDTI(true); });
-
-      const cached = readDTICached();
-      if (cached && cached.length){
-        dtiAll = cached;
-        applyFilter();
-      } else {
-        updateStatus();
-        setTimeout(() => loadDTI(false), 60);
-      }
     }
   });
 

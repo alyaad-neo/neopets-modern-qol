@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.32
+// @version      4.1.33
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -23,10 +23,6 @@
 // @connect      impress.openneo.net
 // @match        *://items.jellyneo.net/*
 // ==/UserScript==
-
-// JellyNeo price popup. On Neopets, the JellyNeo icon a browser extension adds to item panels (a.iph-icon--jellyneo)
-// opens a small popup at the mouse. Inside that popup (window.name nppJN) only the first result's card shows:
-// image, name, price. Normal JellyNeo visits are untouched.
 (function () {
   'use strict';
   if (window.top !== window) return;
@@ -51,7 +47,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       const card = document.createElement('div'); card.id = 'nppJnCard';
       const inner = document.createElement('div'); inner.className = 'in';
       inner.appendChild(res.cloneNode(true));
-      inner.querySelectorAll('input, label:empty').forEach(n => n.remove());   // JellyNeo's select-items checkbox
+      inner.querySelectorAll('input, label:empty').forEach(n => n.remove());
       inner.querySelectorAll('br').forEach(b => b.replaceWith(document.createElement('div')));
       inner.querySelectorAll('a[href]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
       card.innerHTML = '<button class="x" type="button" title="Close (Esc)">×</button>';
@@ -62,7 +58,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       try { window.resizeBy(0, inner.offsetHeight + 8 - window.innerHeight); } catch {}
     };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
-    window.addEventListener('blur', () => window.close());   // click back on Neopets: the popup goes away
+    window.addEventListener('blur', () => window.close());
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once: true }); else show();
     return;
   }
@@ -78,7 +74,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     jn = window.open(a.href, POP, `popup,width=${w},height=${h},left=${x},top=${y}`);
     if (!jn) window.open(a.href, '_blank', 'noopener');
   }, true);
-  // Clicking back on Neopets closes the popup too (works even when the script isn't running inside it). Local only.
   const closeJn = () => { try { if (jn && !jn.closed) jn.close(); } catch {} jn = null; };
   window.addEventListener('focus', closeJn);
   document.addEventListener('pointerdown', closeJn, true);
@@ -101,9 +96,8 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
-  /* ─── Settings sync (www → NC Mall) ─── */
-  const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1', 'npqol_inv_menubar_v1',
-    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_side_btns_v2', 'npqol_side_layout_v1',
+  const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1',
+    'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_layout_v1',
     'npqol_side_side_v1', 'npqol_side_shift_v1', 'npqol_side_x_v1', 'npqol_col_offset_v1', 'npqol_side_icon_size_v1',
     'npqol_topbar_custom_v1', 'npqol_user_settings_v1', 'npqol_qr_settings_v1', 'npqol_bank_btn_settings_v1',
     'npp_color_main', 'npp_color_left', 'npp_color_head', 'npp_defaults_v3'];
@@ -145,7 +139,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
   let handleEl = null, tabEl = null, panelEl = null, dockOpen = false;
 
-  /* ─── Ad-block popup guard ─── */
   (function noAdblockPopup() {
     try { sessionStorage.setItem('ta_session_pv', '0'); } catch {}
     const st = document.createElement('style');
@@ -158,7 +151,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     setTimeout(() => mo.disconnect(), 90000);
   })();
 
-  /* ═══════════════════════════════ CSS ═══════════════════════════════ */
   const PAGE_CSS = `
 html[data-np-modern-interface] {
   --np-col-width: 240px !important;
@@ -247,7 +239,6 @@ html[data-np-modern-interface] {
 
   #npBgBody { color: #fff; }
   #npBgSidebar .npSmall { color: rgba(255,255,255,.92); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
-  #npBgSidebar #npBgStatus { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.78); }
   #npBgSidebar .npThemeSelect { height: 36px; font-size: 13px; background-color: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #fff; }
   #npBgSidebar .npThemeSelect:hover { background-color: rgba(255,255,255,.16); }
   #npBgSidebar .npRecolorBtn:not(.isOn) { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); }
@@ -271,19 +262,11 @@ html[data-np-modern-interface] {
   #nppDiscBar.loading::after { content: ""; position: absolute; left: 0; bottom: 0; width: 38%; height: 3px; border-radius: 2px; background: var(--np-accent, #fff); animation: nppSlide 1s ease-in-out infinite; }
   #npBgBody > #nppDiscBar { order: 6; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: -6px; padding: 0 2px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.8); }
   #nppDiscBar[hidden] { display: none !important; }
-  #nppDiscBar button { flex: none; padding: 4px 10px; border: 1px solid rgba(255,255,255,.28); border-radius: 8px; background: transparent; color: rgba(255,255,255,.88); font-size: 11px; font-weight: 600; cursor: pointer; }
-  #nppDiscBar button:hover { background: rgba(255,255,255,.16); color: #fff; }
   #nppShuffle svg { display: block; }
-  #npBgSidebar .npBgSearch button.isOn { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1330); border-color: transparent; text-shadow: var(--npp-accent-fg-shadow, none); }
   #npBgSidebar .npBgItem { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.16); }
-  #npBgSidebar .npBgItem.isHidden { background: rgba(255,80,80,.1); border-color: rgba(255,80,80,.3); }
   #npBgSidebar .npBgName { color: #fff; font-size: 12px; font-weight: 600; }
   #npBgSidebar .npBgBtn { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.3); }
   #npBgSidebar .npBgBtn:hover { background: rgba(255,255,255,.26); filter: none; }
-  #npBgSidebar .npFavBtn, #npBgSidebar .npHideBtn { color: rgba(255,255,255,.7); }
-  #npBgSidebar .npFavBtn:hover, #npBgSidebar .npHideBtn:hover { color: #fff; }
-  #npBgSidebar .npFavBtn.isOn { color: #ffd166; }
-  #npBgSidebar .npHideBtn.isOn { color: #ff6b6b; }
   #npBgSidebar #npBgFooter { background: rgba(0,0,0,.28); border-top-color: rgba(255,255,255,.18); }
   #npBgSidebar .npFooterBtn { font-size: 13px; background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.34); }
   #npBgSidebar .npFooterBtn:hover { background: rgba(255,255,255,.2); filter: none; }
@@ -293,16 +276,11 @@ html[data-np-modern-interface] {
   #npBgBody { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 10px; align-content: start; padding: 14px; }
   #npBgBody > * { grid-column: 1 / -1; margin: 0; min-width: 0; }
   #npBgBody > .npThemeBlock { grid-column: auto; }
-  #npBgBody > .npOptBlock { display: none !important; }
   #npBgBody > #nppColors { order: 4; }
   #npBgBody > .npBgSearch { order: 5; }
-  #npBgBody > #npBgStatus { order: 6; padding: 0 2px; margin-top: -6px; }
   #npBgBody > #npBgList { order: 7; margin-top: -4px; gap: 6px; max-height: clamp(260px, 52vh, 560px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(255,255,255,.03); scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.3) transparent; }
   #npBgList::-webkit-scrollbar { width: 8px; }
   #npBgList::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
-  #npBgList .npBgItem.nppHidden { display: none !important; }
-  #npBgSidebar .npAccentPastilles, #npBgSidebar .npSmall:has(+ .npAccentPastilles) { display: none !important; }
-  #npBgBody > *:has(.npAccentPastilles):not(:has(select)) { display: none !important; }
   #npBgSidebar .npRecolorBtn { display: flex; align-items: center; justify-content: space-between; gap: 10px; height: auto; min-height: 42px; padding: 8px 12px 8px 14px; text-align: left; font-size: 17px; font-weight: 600; }
   #npBgSidebar .npRecolorBtn::after { content: 'OFF'; font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; padding: 5px 9px; border-radius: 999px; background: rgba(255,255,255,.16); color: rgba(255,255,255,.88); text-shadow: none; }
   #npBgSidebar .npRecolorBtn.isOn { color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.5), 0 0 0 rgba(0,0,0,.35); }
@@ -330,7 +308,7 @@ html[data-np-modern-interface] {
   #nppColors input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 6px; }
   #nppColors input[type="color"]::-moz-color-swatch { border: 0; border-radius: 6px; }
   #npBgSidebar .npBgSearch { padding: 0; }
-  #npBgSidebar .npBgItem { grid-template-columns: 48px minmax(0, 1fr) auto auto auto auto; gap: 6px; padding: 5px 8px; }
+  #npBgSidebar .npBgItem { grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 6px; padding: 5px 8px; }
   #npBgSidebar .npBgThumb { width: 48px; height: 48px; }
   #npBgSidebar #npBgFooter { padding: 12px 14px; gap: 10px; }
 
@@ -432,7 +410,6 @@ html[data-np-modern-interface] {
   &.npp-shop-lock .shop-bg { cursor: not-allowed !important; opacity: .6; transition: opacity .3s; }
   .nppBigPrice { font-size: 1.7em !important; font-weight: 800 !important; line-height: 1.1; color: #9900b3 !important; }
 
-
   #btnOverlay .iconBtn { padding: 6px !important; margin: -6px !important; }
   #nppTools .nppSearch button { min-width: 36px; min-height: 36px; }
   .nppGrpHead { margin: 6px 4px 2px; font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.6); }
@@ -469,7 +446,6 @@ html[data-np-modern-interface] {
   #nppBell #navnewsdropdown__2020 { position: fixed !important; top: calc(var(--npp-header-h, 54px) + 8px) !important; right: 10px !important; left: auto !important; bottom: auto !important; z-index: 2100 !important; }
   #nppBell > img { width: calc(var(--npp-ic, 44px) * .85); height: calc(var(--npp-ic, 44px) * .85); object-fit: contain; filter: var(--npp-ico-shadow); }
   #nppBell .nppBellDot { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
-
 
   #nppBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
   #nppNst { display: inline-block; padding: 0; font-size: 20px !important; color: #fff !important; background: none !important; border: 0 !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -572,22 +548,18 @@ html[data-np-modern-interface] {
   #nppIcons #nppNestPop.open .col > * { animation: nppTrayIn .42s cubic-bezier(.34, 1.56, .5, 1) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
   @media (prefers-reduced-motion: reduce) { #nppIcons #nppNestPop, #nppIcons #nppNestPop.open { transition: none; } #nppIcons #nppNestPop.open .col > * { animation: none; } }
 
-  /* NP / NC stat pills */
   #npNp .np-top-row .np-amount, #npNp .np-top-row .np-nc { flex-direction: row; overflow: visible; white-space: nowrap; }
   #npNp .np-top-row .np-amount img, #npNp .np-top-row .np-nc img { flex: 0 0 auto; order: -1; }
   #npNp .np-top-row .npVal, #npNp .np-top-row .ncVal { flex: 0 0 auto; white-space: nowrap !important; letter-spacing: 0; }
   #npNp .np-top-row .np-chevron { flex: 0 0 auto; }
 
-  /* user card: avatar + name on one centred row */
   #npUser .rightSide { align-items: center !important; }
   #npUser #nppAvatar { align-self: center !important; }
 
-  /* never overlap: pins module above, shortcuts below */
   html #npHud #nppFoot { position: relative !important; z-index: 0; flex: 0 0 auto !important; min-height: 0; }
   #nppPinsMod { position: relative; }
   #nppIcons { z-index: 1; flex: 0 0 auto !important; padding-top: 12px; }
 
-  /* ===== sidebar v4.1.2: identical frosted cards, 10px gaps, icons pinned to the bottom ===== */
   #npHud { --pn-pad: 12px; --pn-r: 16px; --pn-t2: rgba(255,255,255,.72); --pn-t3: rgba(255,255,255,.55); font-family: 'Outfit', system-ui, sans-serif; }
   #npHud#npHud, #npHud#npHud * { text-shadow: none !important; }
   #npHud#npHud { padding: 0 6px 8px !important; gap: 10px !important; justify-content: flex-start !important; background: none !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; color: #fff; }
@@ -600,7 +572,6 @@ html[data-np-modern-interface] {
   #npHud > #nppIcons { order: 8; flex: 0 0 auto !important; margin: auto 0 0 !important; position: sticky; bottom: 0; z-index: 6; padding: 6px 0 2px !important; border: 0; background: none; }
   #npHud > #nppIcons:not(:has(.col > *)) { display: none; }
 
-  /* profile card */
   #npHud #npUser .rightSide { row-gap: 3px !important; }
   #npHud #npUser #nppAvatar { grid-column: 1 !important; grid-row: 1 / span 2 !important; font: 700 17px/1 'Outfit', system-ui, sans-serif; border: 2px solid var(--np-accent, #fff) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--np-accent, #fff) 28%, transparent); }
   #npHud #npUser .name { grid-column: 2 !important; grid-row: 1 / span 2 !important; align-self: center !important; min-width: 0; }
@@ -612,7 +583,6 @@ html[data-np-modern-interface] {
   #npHud #npUser #npLogoutBtn span, #npHud #npUser #npSwapBtn span { display: none !important; }
   #npHud #npUser #npLogoutBtn:hover, #npHud #npUser #npSwapBtn:hover { background: rgba(255,255,255,.12) !important; color: #fff !important; }
 
-  /* NP / NC card */
   #npHud #npNp .np-top-row { gap: 6px !important; }
   #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc { grid-template-columns: auto minmax(0, 1fr); transition: background .15s; }
   #npHud #npNp .np-top-row .np-amount::before { content: none; }
@@ -624,7 +594,6 @@ html[data-np-modern-interface] {
   #npHud #npNp .np-chevron:hover { color: #fff !important; background: rgba(255,255,255,.12) !important; }
   #npHud #npNp .np-bank-drawer { padding: 10px 0 0; margin-top: 10px; border-top: 1px solid rgba(255,255,255,.10); }
 
-  /* pet card */
   #npHud #npActivePet > img { -webkit-mask-image: none; mask-image: none; }
   #npHud #npPetDockBtn { top: 18px; right: 18px; height: 28px; border-radius: 999px; background: rgba(255,255,255,.85) !important; color: #1a1626 !important; border: 1px solid rgba(255,255,255,.6) !important; box-shadow: 0 2px 8px rgba(0,0,0,.28) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font: 600 11px/1 'Outfit', system-ui, sans-serif; z-index: 2; } #npHud #npPetDockBtn svg { width: 13px; height: 13px; flex: none; color: inherit; transition: transform .35s cubic-bezier(.3,.7,.3,1); } #npHud #npPetDockBtn:hover { background: #fff !important; box-shadow: 0 3px 10px rgba(0,0,0,.34) !important; } #npHud #npPetDockBtn:hover svg { transform: rotate(180deg); } @media (prefers-reduced-motion: reduce) { #npHud #npPetDockBtn svg { transition: none; } }
   #npHud #npPetDockBtn { width: 28px; padding: 0; gap: 0; justify-content: center; overflow: hidden; transition: width .3s cubic-bezier(.3,.7,.3,1), padding .3s, gap .3s, background .15s, box-shadow .15s; } #npHud #npPetDockBtn span { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; transition: max-width .3s cubic-bezier(.3,.7,.3,1), opacity .2s; } #npHud #npPetDockBtn:hover, #npHud #npPetDockBtn:focus-visible { width: 112px; padding: 0 11px 0 9px; gap: 6px; } #npHud #npPetDockBtn:hover span, #npHud #npPetDockBtn:focus-visible span { max-width: 80px; opacity: 1; } #npHud #npPetDockBtn:focus-visible svg { transform: rotate(180deg); } @media (prefers-reduced-motion: reduce) { #npHud #npPetDockBtn, #npHud #npPetDockBtn span { transition: none; } }
@@ -646,7 +615,6 @@ html[data-np-modern-interface] {
   @keyframes nppShimmer { to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { #npHud #npActivePet:not(:has(.nppTitle))::before { animation: none; } }
 
-  /* nav card */
   #npHud #nppListsMod { display: grid; }
   #npHud #nppListsMod .nppLt { flex-wrap: nowrap; white-space: nowrap; }
   #npHud #nppListsMod .nppLt + .nppLt { position: relative; } #npHud #nppListsMod .nppLt + .nppLt::before { content: ""; position: absolute; left: -2px; top: 8px; bottom: 8px; width: 1px; background: rgba(255,255,255,.10); pointer-events: none; }
@@ -655,7 +623,6 @@ html[data-np-modern-interface] {
   #npHud #nppListsMod .nppLt em { flex: none; text-align: center; }
   #npHud #nppListsMod .nppLt { transition: background .18s, transform .18s, box-shadow .18s; } #npHud #nppListsMod .nppLt:hover, #npHud #nppListsMod .nppLt:focus-visible { transform: translateY(-2px); background: rgba(255,255,255,.14); box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); } #npHud #nppListsMod .nppLt:hover svg, #npHud #nppListsMod .nppLt:focus-visible svg { animation: nppLtWiggle .5s ease; } #npHud #nppListsMod .nppLt em { animation: nppLtPop .5s cubic-bezier(.3,1.6,.5,1) .15s both; } @keyframes nppLtWiggle { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-14deg) translateY(-2px); } 55% { transform: rotate(10deg) translateY(-1px); } 80% { transform: rotate(-4deg); } } @keyframes nppLtPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { #npHud #nppListsMod .nppLt, #npHud #nppListsMod .nppLt em, #npHud #nppListsMod .nppLt svg { animation: none !important; transition: none !important; transform: none !important; } }
 
-  /* recent / pinned card */
   #npHud #nppPinsMod { border: 0; background: none; border-radius: 0; overflow: visible; height: auto; min-height: 0; flex: 0 0 auto; -webkit-backdrop-filter: none; backdrop-filter: none; }
   #npHud #nppPinsMod .pTabs { position: relative; display: flex; gap: 2px; padding: 3px; margin: 0 0 8px; border-radius: 10px; background: rgba(255,255,255,.08); }
   #npHud #nppPinsMod .pTabs button { flex: 1 1 0; padding: 6px 4px; border-radius: 8px; background: none; color: var(--pn-t2); border-bottom: 0; }
@@ -667,7 +634,6 @@ html[data-np-modern-interface] {
   #npHud #nppPinsMod .rList a:hover { background: rgba(255,255,255,.14) !important; }
   #npHud #nppPinsMod .rList b { color: #fff; }
 
-  /* round 3: display font, pet name, NP/NC without labels, theme button */
   #npHud #npUser #npUserTitle { font: 400 18px/1.15 'CafeteriaBlack', Georgia, serif !important; letter-spacing: 0; }
   #npHud #nppListsMod .nppLt b { font: 400 16px/1 'CafeteriaBlack', Georgia, serif; }
   #npHud #nppPetInfo .nppTitle a { min-width: 0; overflow: hidden; }
@@ -675,7 +641,6 @@ html[data-np-modern-interface] {
   #npHud #npNp .np-top-row .np-amount::before, #npHud #npNp .np-top-row .np-nc::before { display: none !important; }
   #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { grid-row: 1 !important; align-self: center; }
   #npHud #npNp .np-top-row .np-amounts { grid-template-columns: none !important; } #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { display: block; min-width: 0; overflow: hidden !important; text-overflow: clip !important; }
-  /* round 3: pet meta row */
   #npHud #nppPetInfo .nppChips { flex: 1 1 auto; min-width: max-content; flex-wrap: nowrap; align-items: center; gap: 6px; }
   #npHud #nppPetInfo .nppChip { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.1); font-size: 12px; line-height: 1; white-space: nowrap; flex: 0 0 auto; }
   #npHud #nppPetInfo .nppLinks { align-items: center; gap: 6px !important; }
@@ -683,7 +648,6 @@ html[data-np-modern-interface] {
   &.npp-side-light #npHud #nppPetInfo .nppChip, &.npp-side-light #npHud #nppPetInfo .nppLinks a, &.npp-side-light #npHud #nppPetInfo .nppLinks button { background: #fff; border-color: rgba(0,0,0,.10); color: #1c1830 !important; }
   &.npp-side-light #npHud #nppPetInfo .nppLinks a:hover, &.npp-side-light #npHud #nppPetInfo .nppLinks button:hover { background: #f1eff7; }
   &.npp-side-light #npHud #nppPetInfo .nppLinks button.on { background: color-mix(in srgb, var(--np-accent, #888) 35%, rgba(255,255,255,.6)); }
-  /* round 3: light mode */
   &.npp-side-light #npHud { --pn-t2: rgba(28,24,48,.68); --pn-t3: rgba(28,24,48,.5); }
   &.npp-side-light #npHud > #npUser, &.npp-side-light #npHud > #npNp, &.npp-side-light #npHud > #npActivePet, &.npp-side-light #npHud > #nppListsMod, &.npp-side-light #npHud > #nppFoot { background: rgba(255,255,255,.72) !important; -webkit-backdrop-filter: blur(18px) !important; backdrop-filter: blur(18px) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 8px 24px rgba(40,30,80,.14) !important; color: #1c1830; }
   &.npp-side-light #npHud #npUserTitle, &.npp-side-light #npHud #nppPetInfo .nppTitle a, &.npp-side-light #npHud #nppPetInfo .nppName { color: #1c1830 !important; text-shadow: none !important; }
@@ -701,21 +665,18 @@ html[data-np-modern-interface] {
   &.npp-side-light #npHud #nppPinsMod .rEmpty { color: rgba(28,24,48,.6) !important; }
   &.npp-side-light #npHud #nppPinsMod .rList b { color: #1c1830; } &.npp-side-light #npHud #nppPinsMod .rList:empty::before { color: rgba(28,24,48,.5); }
   &.npp-side-light #npHud #nppPinsMod li.isPinned .rPin { color: #d89a00; }
-  /* round 4 */
   #npHud #npNp .np-top-row { align-items: center; min-height: 0; }
   #nppIcons #nppNestPop { border: 0 !important; }
   #nppIcons #nppNestPop::before { content: ""; position: absolute; left: -6px; right: -6px; top: 100%; height: 16px; }
   #nppIcons #nppNestPop .col, #nppIcons #nppNestPop .col > *, #nppIcons #nppNestPop .col > * * { border: 0 !important; }
   #nppColors .nppSideRow .nppLogoDot { display: none; }
 
-  /* shortcut icons: on no card, centred, evenly spaced; hover opens nested links */
   #npHud #nppIcons #btnOverlay .col { justify-content: space-evenly !important; flex-wrap: nowrap !important; gap: 8px !important; }
   #npHud #nppIcons #btnOverlay .col img { max-width: 36px; max-height: 36px; width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.45)); }
   #npHud #nppIcons #btnOverlay .col > * { transition: transform .18s ease, filter .18s ease; }
   #npHud #nppIcons #btnOverlay .col > *:hover { transform: translateY(-2px); filter: brightness(1.12); }
   @media (prefers-reduced-motion: reduce) { #npHud #nppIcons #btnOverlay .col > * { transition: none; } #npHud #nppIcons #btnOverlay .col > *:hover { transform: none; } }
 
-  /* pet-swap dock */
   #qrDockWrap { scrollbar-width: none !important; -ms-overflow-style: none; }
   #qrDockWrap::-webkit-scrollbar, #qrDock::-webkit-scrollbar { display: none !important; }
   #qrDock { scrollbar-width: none !important; }
@@ -761,8 +722,7 @@ html[data-np-modern-interface] {
   @media (max-width: 1100px) and (max-height: 820px) { #npHud { top: 48px !important; } }
   @media (max-width: 640px) { #nppNavMod { display: block; } }
   @keyframes nppTrayIn { from { opacity: 0; transform: translateY(16px) scale(.4); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { #npLeftBar, #npHud, #nppScrim { transition: none !important; } }  /* polish 4.1.8 */ #npHud #npActivePet #nppPetInfo { container-type: inline-size; flex-wrap: wrap !important; } #npHud #npActivePet #nppPetInfo .nppChips { gap: 0 !important; justify-content: flex-start !important; flex-wrap: nowrap !important; } #npHud #npActivePet #nppPetInfo .nppChip { height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; line-height: 1.2 !important; white-space: nowrap !important; flex: 0 0 auto !important; } #npHud #npActivePet #nppPetInfo .nppChip:not(.gF):not(.gM) { color: var(--pn-t2, rgba(255,255,255,.7)) !important; } #npHud #npActivePet #nppPetInfo .nppChip + .nppChip::before { content: "·"; margin: 0 6px; } #npHud #npActivePet #nppPetInfo .nppLinks { justify-content: flex-end !important; } #npHud #npActivePet #nppPetInfo .nppLinks a, #npHud #npActivePet #nppPetInfo .nppLinks button { flex: 0 0 auto !important; padding: 0 !important; } #npHud #nppListsMod { grid-template-columns: 1fr auto 1fr !important; gap: 0 !important; } #npHud #nppListsMod::before { content: ""; grid-column: 2; grid-row: 1; width: 1px; margin: 8px 0; background: rgba(255,255,255,.10); pointer-events: none; } #npHud #nppListsMod .nppLt + .nppLt::before { display: none !important; } #npHud #nppListsMod .nppLt b { font-family: 'CafeteriaBlack', Georgia, serif !important; letter-spacing: normal !important; flex: 0 0 auto !important; overflow: visible !important; text-overflow: clip !important; white-space: nowrap !important; } #npHud #nppListsMod .nppLt em { box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 16px !important; min-width: 16px !important; padding: 0 5px !important; line-height: 1 !important; } #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { font-family: 'CafeteriaBlack', Georgia, serif !important; } #npHud #nppPinsMod .pTabs button { font: 400 13px/1.1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: normal !important; text-transform: none !important; }
-  /* sidebar type scale 4.1.10: every sidebar font size + weight in one place. Headers/buttons boosted, small text unchanged. */
+  @media (prefers-reduced-motion: reduce) { #npLeftBar, #npHud, #nppScrim { transition: none !important; } } #npHud #npActivePet #nppPetInfo { container-type: inline-size; flex-wrap: wrap !important; } #npHud #npActivePet #nppPetInfo .nppChips { gap: 0 !important; justify-content: flex-start !important; flex-wrap: nowrap !important; } #npHud #npActivePet #nppPetInfo .nppChip { height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; line-height: 1.2 !important; white-space: nowrap !important; flex: 0 0 auto !important; } #npHud #npActivePet #nppPetInfo .nppChip:not(.gF):not(.gM) { color: var(--pn-t2, rgba(255,255,255,.7)) !important; } #npHud #npActivePet #nppPetInfo .nppChip + .nppChip::before { content: "·"; margin: 0 6px; } #npHud #npActivePet #nppPetInfo .nppLinks { justify-content: flex-end !important; } #npHud #npActivePet #nppPetInfo .nppLinks a, #npHud #npActivePet #nppPetInfo .nppLinks button { flex: 0 0 auto !important; padding: 0 !important; } #npHud #nppListsMod { grid-template-columns: 1fr auto 1fr !important; gap: 0 !important; } #npHud #nppListsMod::before { content: ""; grid-column: 2; grid-row: 1; width: 1px; margin: 8px 0; background: rgba(255,255,255,.10); pointer-events: none; } #npHud #nppListsMod .nppLt + .nppLt::before { display: none !important; } #npHud #nppListsMod .nppLt b { font-family: 'CafeteriaBlack', Georgia, serif !important; letter-spacing: normal !important; flex: 0 0 auto !important; overflow: visible !important; text-overflow: clip !important; white-space: nowrap !important; } #npHud #nppListsMod .nppLt em { box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 16px !important; min-width: 16px !important; padding: 0 5px !important; line-height: 1 !important; } #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { font-family: 'CafeteriaBlack', Georgia, serif !important; } #npHud #nppPinsMod .pTabs button { font: 400 13px/1.1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: normal !important; text-transform: none !important; }
   #npHud #npUser #npUserTitle { font-size: 21px !important; font-weight: 400 !important; line-height: 1.15 !important; }
   #npHud #nppListsMod .nppLt b { font-size: 16px !important; font-weight: 400 !important; }
   #npHud #nppListsMod .nppLt em { font-size: 10px !important; font-weight: 600 !important; }
@@ -772,10 +732,8 @@ html[data-np-modern-interface] {
   #npHud #npActivePet #nppPetInfo .nppChip { font-size: 11px !important; font-weight: 500 !important; }
   #npHud #nppPinsMod .pTabs button { font-size: 16px !important; font-weight: 400 !important; }
   #npHud #nppPinsMod .rList b { font-size: 12px !important; font-weight: 500 !important; }
-  /* white display-font headers get a shadow; light mode (dark text) gets none */
   #npHud #npUser #npUserTitle, #npHud #nppListsMod .nppLt b, #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal, #npHud #nppPetInfo .nppName, #npHud #nppPinsMod .pTabs button { text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6) !important; }
   &.npp-side-light #npHud #npUser #npUserTitle, &.npp-side-light #npHud #nppListsMod .nppLt b, &.npp-side-light #npHud #npNp .np-top-row .npVal, &.npp-side-light #npHud #npNp .np-top-row .ncVal, &.npp-side-light #npHud #nppPetInfo .nppName, &.npp-side-light #npHud #nppPinsMod .pTabs button { text-shadow: none !important; }
-  /* top half tidy 4.1.11: user, Accounts/Pets and NP/NC cards share one padding, one pill height and one pill style */
   #npHud { --npp-pill-h: 36px; --npp-pill-r: 10px; --npp-pill-bg: rgba(255,255,255,.08); --npp-pill-bg-h: rgba(255,255,255,.15); }
   &.npp-side-light #npHud { --npp-pill-bg: rgba(0,0,0,.05); --npp-pill-bg-h: rgba(0,0,0,.09); }
   #npHud > #npUser { padding: 10px 12px !important; }
@@ -791,7 +749,6 @@ html[data-np-modern-interface] {
   #npHud #nppListsMod .nppLt svg { width: 16px !important; height: 16px !important; flex: none; }
   #npHud #nppListsMod .nppLt em { border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: inherit !important; }
   #npHud #npNp .np-chevron { width: var(--npp-pill-h) !important; height: var(--npp-pill-h) !important; border-radius: var(--npp-pill-r) !important; }
-  /* light mode: dark text everywhere. Extra IDs so these outrank the 3-ID white rules above. */
   &.npp-side-light #npHud #npUser #npUserTitle, &.npp-side-light #npHud #npUser .name, &.npp-side-light #npHud #npUser .name * { color: #1c1830 !important; text-shadow: none !important; }
   &.npp-side-light #npHud #npUser[data-main="1"] .rightSide::after { color: #1c1830 !important; }
   &.npp-side-light #npHud #npUser #npLogoutBtn, &.npp-side-light #npHud #npUser #npSwapBtn, &.npp-side-light #npHud #npUser #npSwapBtn:hover { color: #1c1830 !important; }
@@ -802,7 +759,6 @@ html[data-np-modern-interface] {
   &.npp-side-light #npHud #npActivePet #nppPetInfo .nppTitle a, &.npp-side-light #npHud #npActivePet #nppPetInfo .nppName, &.npp-side-light #npHud #npActivePet #nppPetInfo .nppLinks a, &.npp-side-light #npHud #npActivePet #nppPetInfo .nppLinks button { color: #1c1830 !important; text-shadow: none !important; }
   &.npp-side-light #npHud #npActivePet #nppPetInfo .nppChip:not(.gF):not(.gM) { color: rgba(28,24,48,.68) !important; }
 
-  /* sidebar round 5 (4.1.12) */
   #npHud #npUser #nppAcctBtns { gap: 2px !important; }
   #npHud #npUser #npLogoutBtn, #npHud #npUser #npSwapBtn { width: 26px !important; height: 26px !important; border-radius: 8px !important; }
   #npHud #npUser #npLogoutBtn svg, #npHud #npUser #npSwapBtn svg { width: 14px !important; height: 14px !important; }
@@ -829,7 +785,6 @@ html[data-np-modern-interface] {
   #nppIcons #nppNestPop::before { background: none !important; }
   #nppIcons #nppNestPop::after { transform: none !important; width: 14px !important; height: 7px !important; top: 100% !important; bottom: auto !important; margin-left: -7px !important; border: 0 !important; clip-path: polygon(0 0, 100% 0, 50% 100%); background: rgba(255,255,255,.14) !important; -webkit-backdrop-filter: blur(18px) saturate(160%) !important; backdrop-filter: blur(18px) saturate(160%) !important; }
   &.npp-side-light #nppIcons #nppNestPop, &.npp-side-light #nppIcons #nppNestPop::after { background: rgba(255,255,255,.45) !important; }
-  /* sidebar round 6 (4.1.13) */
   #npHud > #npUser { padding-bottom: 22px !important; }
   #npHud > #npNp { box-sizing: border-box !important; width: calc(100% - 24px) !important; max-width: none !important; align-self: flex-start !important; margin: -15px 12px 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; min-height: 30px !important; }
   #npHud > #npNp .np-top-row { display: block !important; box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; flex: none !important; background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
@@ -859,7 +814,6 @@ html[data-np-modern-interface] {
   #npHud #npActivePet #nppPetInfo .nppLinks a, #npHud #npActivePet #nppPetInfo .nppLinks button { width: 26px !important; height: 26px !important; }
   #npHud #npActivePet #nppPetInfo .nppLinks a svg, #npHud #npActivePet #nppPetInfo .nppLinks button svg { width: 14px !important; height: 14px !important; }
   #npHud #npActivePet #nppPetInfo .nppDetails { order: 4 !important; }
-  /* sidebar round 7 (4.1.14) */
   #npHud > #npActivePet { padding-bottom: 0 !important; gap: 0 !important; }
   #npHud #npActivePet > img { vertical-align: top !important; }
   #npHud #npActivePet #nppPetInfo { position: static !important; gap: 0 !important; margin: 0 !important; }
@@ -876,7 +830,6 @@ html[data-np-modern-interface] {
   #npHud #npActivePet #nppPetInfo .nppTitle a, #npHud #npActivePet #nppPetInfo .nppName, #npHud #npActivePet #nppPetInfo .nppTitle .nppCopy { transition: opacity .15s; }
   #npHud #npActivePet.npp-tone-pending #nppPetInfo .nppTitle a, #npHud #npActivePet.npp-tone-pending #nppPetInfo .nppName, #npHud #npActivePet.npp-tone-pending #nppPetInfo .nppTitle .nppCopy { opacity: 0 !important; }
   #npHud #npActivePet.npp-name-light #nppPetInfo .nppTitle a, #npHud #npActivePet.npp-name-light #nppPetInfo .nppName, #npHud #npActivePet.npp-name-light #nppPetInfo .nppTitle .nppCopy { color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.6) !important; }
-  /* stats panel (4.1.18): centred, full-width rows, 6px gap */
   #npHud #npActivePet #nppPetInfo .nppStats { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; }
   #npHud #npActivePet #nppPetInfo .nppStats.open { padding: 10px 0 var(--pn-pad, 12px) !important; }
   #npHud #npActivePet #nppPetInfo .nppStatsBody, #npHud #npActivePet #nppPetInfo .nppStatsBody .nppDetails { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
@@ -1094,7 +1047,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .nppSizeGrp .nppSizeVal { min-width: 44px; text-align: center; font: 700 11px/1 'Outfit', system-ui, sans-serif; color: #fff; font-variant-numeric: tabular-nums; }
 `;
 
-  /* ═══════════════════════════════ Colours & painters ═══════════════════════════════ */
   const darken = (hex, f) => {
     const n = parseInt(hex.slice(1), 16);
     return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(v * f).toString(16).padStart(2, '0')).join('');
@@ -1160,7 +1112,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     contrast: { main: '#000000', left: '#000000', head: '#ffff00', accent: '#ffff00' },
   };
 
-  /* ═══════════════════════════════ Colour picker ═══════════════════════════════ */
   function injectPicker(sb) {
     const anchor = $('.npBgSearch', sb);
     if (!anchor || $('#nppColors')) return;
@@ -1240,7 +1191,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     });
   }
 
-  /* ═══════════════════════════════ DTI shuffle & keyword search ═══════════════════════════════ */
   const DTI_URL = 'https://impress-2020.openneo.net/api/graphql';
   const DTI_Q = 'query SearchBgs($query: String!, $offset: Int!, $limit: Int!) { itemSearch(query: $query, offset: $offset, limit: $limit) { items { id name thumbnailUrl appearanceOn(speciesId: 1, colorId: 8) { layers { id zone { id label } imageUrl(size: SIZE_600) } } } } }';
   const dtiPage = (offset, query = 'background', limit = 30) => new Promise((resolve, reject) => {
@@ -1262,7 +1212,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const BG_SKIP = [/altador cup/i, /advent/i, /birthday|anniversar|\b\d+[- ]?years?\b/i];
   async function discoverBgs() {
     let end = parseInt(LSget('npp_disc_end'), 10) || 0;
-    let hidden = []; try { hidden = JSON.parse(LSget('npqol_bg_hidden_v1') || '[]').map(String); } catch {}
     const seenOff = new Set(), seenId = new Set(), got = [];
     for (let attempt = 0; attempt < 10 && got.length < 24; attempt++) {
       const slots = Math.max(1, Math.floor((end ? end : 2400) / 30));
@@ -1276,7 +1225,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         const layer = layers.find(l => ((l.zone || {}).label || '').toLowerCase().includes('background')) || layers[0];
         const url = layer && layer.imageUrl;
         const id = String(it.id);
-        if (!url || seenId.has(id) || hidden.includes(id) || BG_SKIP.some(re => re.test(it.name || ''))) return;
+        if (!url || seenId.has(id) ||BG_SKIP.some(re => re.test(it.name || ''))) return;
         seenId.add(id);
         got.push({ id, name: it.name || 'Background', thumb: it.thumbnailUrl || url, url });
       });
@@ -1286,7 +1235,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
   const cssUrl = (u) => `url("${String(u).replace(/["\\\n\r]/g, '')}")`;
 
-  /* ═══════════════════════════════ Right picker wiring ═══════════════════════════════ */
   function wireSidebar() {
     const sb = $('#npBgSidebar'), h = $('#npBgHandle');
     if (!sb || !h || sb.dataset.npp) return;
@@ -1298,131 +1246,53 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (barSel) barSel.addEventListener('change', () => applyBarStyle(barSel.value));
     const rb = $('#npRecolorSite', sb);
     if (rb) rb.title = 'Turn Neopets’ built-in gold buttons, tabs and bars into your accent color';
-    const bgList = $('#npBgList', sb), bgBody = $('#npBgBody', sb), bgQuery = $('#npBgQuery', sb);
-    const loadMore = () => {
-      if (bgList && bgList.dataset.disc) return;
-      const keep = bgBody.scrollTop;
-      bgBody.scrollTop = bgBody.scrollHeight;
-      bgBody.dispatchEvent(new Event('scroll'));
-      bgBody.scrollTop = keep;
-    };
-    if (bgList && bgBody) {
-      bgList.addEventListener('scroll', () => {
-        if (bgList.scrollTop + bgList.clientHeight >= bgList.scrollHeight - 160) loadMore();
-      }, { passive: true });
-
+    const bgList = $('#npBgList', sb), bgQuery = $('#npBgQuery', sb), bar = $('.npBgSearch', sb);
+    let runShuffle = () => {};
+    if (bgList && bgQuery && bar) {
       const HIDE_RULES = [
         [/altador cup/i, /altador|cup/i],
         [/advent/i, /advent/i],
         [/birthday|anniversar|\b\d+[- ]?years?\b/i, /birthday|anniversar|year|\d+(st|nd|rd|th)/i],
       ];
-      const applyBgFilter = () => {
-        const q = (bgQuery && bgQuery.value || '').toLowerCase();
-        bgList.querySelectorAll('.npBgItem').forEach(row => {
-          const el = row.querySelector('.npBgName');
-          const name = ((el && (el.title || el.textContent)) || row.textContent || '');
-          const hide = HIDE_RULES.some(([nameRe, queryRe]) => nameRe.test(name) && !queryRe.test(q));
-          row.classList.toggle('nppHidden', hide);
-          if (hide) row.style.setProperty('display', 'none', 'important'); else row.style.removeProperty('display');
-        });
-      };
-      let busy = false;
-      const fill = () => {
-        if (busy) return;
-        busy = true;
-        try {
-          for (let i = 0; i < 25; i++) {
-            if (bgList.scrollHeight > bgList.clientHeight + 160) break;
-            const before = bgList.children.length;
-            loadMore();
-            if (bgList.children.length === before) break;
-            applyBgFilter();
-          }
-        } finally { busy = false; }
-      };
-      let queued = false;
-      new MutationObserver(() => {
-        if (queued) return;
-        queued = true;
-        requestAnimationFrame(() => { queued = false; if (bgList.dataset.disc && !bgList.querySelector('[data-disc]')) { delete bgList.dataset.disc; const db = $('#nppDiscBar', sb); if (db) db.hidden = true; } applyBgFilter(); fill(); });
-      }).observe(bgList, { childList: true });
-      const bar = $('.npBgSearch', sb);
       const dbar = document.createElement('div');
       dbar.id = 'nppDiscBar'; dbar.hidden = true;
-      dbar.innerHTML = '<span id="nppDiscMsg"></span><button type="button" id="nppDiscBack">Full list</button>';
-      const statusEl = $('#npBgStatus', sb);
-      if (statusEl) statusEl.after(dbar); else bgBody.appendChild(dbar);
+      dbar.innerHTML = '<span id="nppDiscMsg"></span>';
+      bar.after(dbar);
       const dmsg = $('#nppDiscMsg', dbar);
-      const endDisc = () => { delete bgList.dataset.disc; dbar.hidden = true; };
-      $('#nppDiscBack', dbar).addEventListener('click', (e) => {
-        e.preventDefault(); e.stopPropagation();
-        endDisc(); ++kwToken;
-        if (bgQuery) { bgQuery.value = ''; bypassInput = true; try { bgQuery.dispatchEvent(new Event('input', { bubbles: true })); } finally { bypassInput = false; } }
-      });
+      const SHUFFLE_MSG = 'Random selection · click Shuffle again for more';
+      const busyOn = (msg) => { bgList.classList.add('nppFetching'); dbar.classList.add('loading'); dbar.hidden = false; dmsg.textContent = msg; };
+      const busyOff = () => { bgList.classList.remove('nppFetching'); dbar.classList.remove('loading'); };
       const safeUrl = (u) => String(u || '').replace(/["'\\\n\r]/g, '');
+      let lastShuffle = [];
       const renderDisc = (items) => {
-        bgList.dataset.disc = '1';
         bgList.innerHTML = items.map((it, i) =>
-          `<div class="npBgItem nppRowIn" data-disc="1" style="--i:${i}"><div class="npBgThumb" style="background-image:url('${safeUrl(it.thumb)}')"></div><div class="npBgName" title="${esc(it.name)}">${esc(it.name)}</div><span></span>` +
-          `<button type="button" class="npBgBtn npBgL" data-disc="1" data-url="${esc(it.url)}" title="Use on LEFT decor column">L</button>` +
-          `<button type="button" class="npBgBtn npBgR" data-disc="1" data-url="${esc(it.url)}" title="Use as MAIN background">M</button><span></span></div>`).join('');
+          `<div class="npBgItem nppRowIn" style="--i:${i}"><div class="npBgThumb" style="background-image:url('${safeUrl(it.thumb)}')"></div><div class="npBgName" title="${esc(it.name)}">${esc(it.name)}</div>` +
+          `<button type="button" class="npBgBtn npBgL" data-url="${esc(it.url)}" title="Use on LEFT decor column">L</button>` +
+          `<button type="button" class="npBgBtn npBgR" data-url="${esc(it.url)}" title="Use as MAIN background">M</button></div>`).join('');
         bgList.scrollTop = 0;
       };
       bgList.addEventListener('click', (e) => {
-        const b = e.target.closest && e.target.closest('.npBgBtn[data-disc]');
+        const b = e.target.closest && e.target.closest('.npBgBtn');
         if (!b) return;
         e.preventDefault(); e.stopPropagation();
-        const url = b.dataset.url, isMain = b.classList.contains('npBgR');
-        if (isMain) { rs.setProperty('--npMainSolid', '#000'); rs.setProperty('--npWallImage', cssUrl(url)); pendingImg.main = url; }
-        else { rs.setProperty('--npLeftBarImg', cssUrl(url)); rs.setProperty('--npLeftBarSolid', '#000'); rs.setProperty('--npLeftBarShadeA', '1'); pendingImg.left = url; }
+        const url = b.dataset.url, isMain = b.classList.contains('npBgR'), k = isMain ? 'main' : 'left';
+        draft[k] = null; clearImg[k] = false; pendingImg[k] = url;
+        if (isMain) { rs.setProperty('--npMainSolid', '#000'); rs.setProperty('--npWallImage', cssUrl(url)); }
+        else { rs.setProperty('--npLeftBarImg', cssUrl(url)); rs.setProperty('--npLeftBarSolid', '#000'); rs.setProperty('--npLeftBarShadeA', '1'); }
         bgList.querySelectorAll(isMain ? '.npBgR' : '.npBgL').forEach(x => x.classList.toggle('isActive', x === b));
       });
-      const shuffleLoaded = () => {
-        for (let i = 0; i < 60; i++) { const before = bgList.children.length; loadMore(); if (bgList.children.length === before) break; }
-        const rows = [...bgList.children];
-        for (let i = rows.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [rows[i], rows[j]] = [rows[j], rows[i]]; }
-        rows.forEach(r => bgList.appendChild(r));
-        bgList.scrollTop = 0;
-        applyBgFilter();
-      };
-      if (bar && !$('#nppShuffle', bar)) {
-        const sh = document.createElement('button');
-        sh.type = 'button'; sh.id = 'nppShuffle'; sh.title = 'Shuffle: a fresh random selection of backgrounds'; sh.innerHTML = SHUFFLE;
-        bar.appendChild(sh);
-        let busyDisc = false;
-        sh.addEventListener('click', async (e) => {
-          e.preventDefault(); e.stopPropagation();
-          if (busyDisc) return;
-          busyDisc = true; sh.classList.add('busy'); sh.disabled = true;
-          bgList.classList.add('nppFetching');
-          dbar.classList.add('loading'); dbar.hidden = false; dmsg.textContent = 'Finding new backgrounds…';
-          try {
-            if ((bgQuery && bgQuery.value || '').trim().length >= 2) { await runKw(true); return; }
-            const items = await discoverBgs();
-            if (!items.length) throw new Error('nothing usable came back');
-            renderDisc(items);
-            dmsg.textContent = 'Random selection · click Shuffle again for more';
-            dbar.hidden = false;
-          } catch (err) {
-            shuffleLoaded();
-            dmsg.textContent = 'Couldn’t reach DTI (' + (err && err.message || 'error') + ') — mixed the loaded list instead';
-            dbar.hidden = false;
-          } finally { busyDisc = false; sh.classList.remove('busy'); sh.disabled = false; bgList.classList.remove('nppFetching'); dbar.classList.remove('loading'); }
-        });
-      }
       const KW_MAX = 100, kwEnd = {};
-      let kwToken = 0, kwTimer = 0, bypassInput = false;
-      const kwHidden = () => { try { return JSON.parse(LSget('npqol_bg_hidden_v1') || '[]').map(String); } catch { return []; } };
-      const bgFromItem = (it, hiddenIds, q) => {
+      let kwToken = 0, kwTimer = 0;
+      const bgFromItem = (it, q) => {
         const layer = (((it.appearanceOn || {}).layers) || []).find(l => ((l.zone || {}).label || '').toLowerCase().includes('background'));
         if (!layer || !layer.imageUrl) return null;
         const id = String(it.id), name = it.name || 'Background';
-        if (hiddenIds.includes(id) || HIDE_RULES.some(([nameRe, queryRe]) => nameRe.test(name) && !queryRe.test(q))) return null;
+        if (HIDE_RULES.some(([nameRe, queryRe]) => nameRe.test(name) && !queryRe.test(q))) return null;
         return { id, name, thumb: it.thumbnailUrl || layer.imageUrl, url: layer.imageUrl };
       };
       async function kwSearch(q, shuffle) {
-        const key = q.toLowerCase(), hid = kwHidden(), got = [], seen = new Set();
-        const take = (items) => items.forEach(it => { const b = bgFromItem(it, hid, q); if (b && !seen.has(b.id)) { seen.add(b.id); got.push(b); } });
+        const key = q.toLowerCase(), got = [], seen = new Set();
+        const take = (items) => items.forEach(it => { const b = bgFromItem(it, q); if (b && !seen.has(b.id)) { seen.add(b.id); got.push(b); } });
         const term = key.includes('background') ? q : q + ' background';
         if (!shuffle) {
           for (let page = 0; page < 6 && got.length < KW_MAX; page++) {
@@ -1447,31 +1317,49 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
       const runKw = async (shuffle) => {
         const q = (bgQuery.value || '').trim(), tok = ++kwToken;
-        dbar.classList.add('loading'); dbar.hidden = false; dmsg.textContent = `Searching for “${q}”…`; bgList.classList.add('nppFetching');
+        busyOn(`Searching for “${q}”…`);
         try {
           const items = await kwSearch(q, shuffle);
           if (tok !== kwToken) return;
-          if (!items.length) { bgList.dataset.disc = '1'; bgList.innerHTML = '<div class="nppDiscEmpty" data-disc="1">No backgrounds found for “' + esc(q) + '”.</div>'; dmsg.textContent = `No backgrounds found for “${q}”.`; }
+          if (!items.length) { bgList.innerHTML = '<div class="nppDiscEmpty">No backgrounds found for “' + esc(q) + '”.</div>'; dmsg.textContent = `No backgrounds found for “${q}”.`; }
           else { renderDisc(items); dmsg.textContent = `${items.length}${items.length >= KW_MAX ? '+' : ''} for “${q}” · Shuffle for other matches`; }
         } catch (err) { if (tok === kwToken) dmsg.textContent = 'Couldn’t search DTI (' + (err && err.message || 'error') + ')'; }
-        finally { if (tok === kwToken) { bgList.classList.remove('nppFetching'); dbar.classList.remove('loading'); } }
+        finally { if (tok === kwToken) busyOff(); }
       };
-      if (bgQuery) {
-        bgQuery.addEventListener('input', (e) => {
-          if (bypassInput) return;
-          e.stopImmediatePropagation();
-          clearTimeout(kwTimer);
-          const q = bgQuery.value.trim();
-          if (q.length < 2) {
-            if (!q) { ++kwToken; endDisc(); bypassInput = true; try { bgQuery.dispatchEvent(new Event('input', { bubbles: true })); } finally { bypassInput = false; } }
-            return;
-          }
-          kwTimer = setTimeout(() => runKw(false), 500);
-        }, true);
-        bgQuery.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(kwTimer); if (bgQuery.value.trim().length >= 2) runKw(false); } });
-      }
-      setInterval(() => { if (sb.style.transform.includes('translateX(0')) applyBgFilter(); }, 500);
-      applyBgFilter();
+      const sh = document.createElement('button');
+      sh.type = 'button'; sh.id = 'nppShuffle'; sh.title = 'Shuffle: a fresh random selection of backgrounds'; sh.innerHTML = SHUFFLE;
+      bar.appendChild(sh);
+      let busyDisc = false;
+      runShuffle = async () => {
+        if (busyDisc) return;
+        busyDisc = true; sh.classList.add('busy'); sh.disabled = true;
+        try {
+          if (bgQuery.value.trim().length >= 2) { await runKw(true); return; }
+          const tok = ++kwToken;
+          busyOn('Finding new backgrounds…');
+          try {
+            const items = await discoverBgs();
+            if (tok !== kwToken) return;
+            if (!items.length) throw new Error('nothing usable came back');
+            lastShuffle = items;
+            renderDisc(items);
+            dmsg.textContent = SHUFFLE_MSG;
+          } catch (err) {
+            if (tok === kwToken) dmsg.textContent = 'Couldn’t reach DTI (' + (err && err.message || 'error') + ')';
+          } finally { if (tok === kwToken) busyOff(); }
+        } finally { busyDisc = false; sh.classList.remove('busy'); sh.disabled = false; }
+      };
+      sh.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); runShuffle(); });
+      bgQuery.addEventListener('input', () => {
+        clearTimeout(kwTimer);
+        const q = bgQuery.value.trim();
+        if (q.length >= 2) { kwTimer = setTimeout(() => runKw(false), 500); return; }
+        if (q || busyDisc) return;
+        ++kwToken; busyOff();
+        if (lastShuffle.length) { renderDisc(lastShuffle); dmsg.textContent = SHUFFLE_MSG; }
+        else runShuffle();
+      });
+      bgQuery.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); clearTimeout(kwTimer); if (bgQuery.value.trim().length >= 2) runKw(false); } });
     }
     let wasOpen = false;
     new MutationObserver(() => {
@@ -1480,6 +1368,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         draft = saved(); clearImg = { main: false, left: false }; saving = false; pendingImg = { main: null, left: null };
         accentPick = null; accentBase = LSget('npqol_accent_v1');
         const r = $('#nppColors'); if (r && r._sync) r._sync();
+        if (bgList && !bgList.children.length) runShuffle();
       } else if (!open && wasOpen) {
         if (saving) commit();
         else if (accentPick) {
@@ -1495,7 +1384,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }).observe(sb, { attributes: true, attributeFilter: ['style'] });
   }
 
-  /* ═══════════════════════════════ Header / shadow DOM ═══════════════════════════════ */
   function fixNcNavLinks() {
     if (!isNc) return;
     const sr = shadow();
@@ -1515,7 +1403,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (/[?&]type=shop\b/i.test(location.search)) st.textContent += '\n.menu { display: none !important; }';
     sr.appendChild(st);
 
-
     ['community', 'games', 'explore', 'shop'].forEach(id => {
       const menu = sr.getElementById('menu-' + id);
       if (!menu) return;
@@ -1529,7 +1416,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
           menu.appendChild(b);
         }
         const eb = menu.querySelector('.np-menu-edit-btn');
-        if (eb && menu.lastElementChild !== eb) menu.appendChild(eb);   // always the last row
+        if (eb && menu.lastElementChild !== eb) menu.appendChild(eb);
         if (id === 'community' && !menu.querySelector('[data-np-news]')) {
           const a = document.createElement('a');
           a.href = 'https://www.neopets.com/nf.phtml'; a.dataset.npNews = '1';
@@ -1600,7 +1487,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     return true;
   }
 
-  /* ═══════════════════════════════ Premium dropdown ═══════════════════════════════ */
   const QASALAN_ITEM = ['Qasalan Expellibox', 'https://ncmall.neopets.com/games/giveaway/process_giveaway.phtml'];
   const PREMIUM_ITEMS = [
     '# Premium',
@@ -1659,7 +1545,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const MAIN_KEY = 'npp_main_account';
   const curUser = () => String(W.appInsightsUserName || LSget('npqol_hud_username') || '').trim();
   const mainAcct = () => LSget(MAIN_KEY);
-  // Dailies sections of the premium menu only show on the main account (no main set: always show).
   const onMainAcct = () => { const m = mainAcct().toLowerCase(); let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {} return !m || u.toLowerCase() === m; };
 
   function nativePremium() {
@@ -1727,7 +1612,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     sr.appendChild(menu);
     if (W.__nppDailies) W.__nppDailies.decoratePremium(menu);
     { const caret = document.createElement('div'); caret.className = 'npp-premcaret'; menu.insertAdjacentElement('afterend', caret);
-      // Premium scrolls, so its frosted image can't be .menu::before (it would scroll away): a sibling layer sits behind it.
       const bg = document.createElement('div'); bg.className = 'npp-prembg'; menu.insertAdjacentElement('beforebegin', bg);
       const csync = () => {
         const cs = getComputedStyle(menu), open = cs.display !== 'none', vis = open && cs.getPropertyValue('--npp-menu-caret').trim() === 'block';
@@ -1769,7 +1653,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     window.addEventListener('blur', closeMenu);
     btn.addEventListener('pointerenter', () => {
       sr.querySelectorAll('.menu').forEach(m => { if (m !== menu) m.style.display = 'none'; });
-      if (menuMain !== onMainAcct()) menu.innerHTML = build();   // username arrives late, or main changed
+      if (menuMain !== onMainAcct()) menu.innerHTML = build();
       if (W.__nppDailies) W.__nppDailies.decoratePremium(menu);
       let tall = 0;
       sr.querySelectorAll('.menu:not(#menu-premium)').forEach(m => {
@@ -1784,7 +1668,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     });
   }
 
-  /* ═══════════════════════════════ Shortcut icons, tools, nest ═══════════════════════════════ */
   let shortcutsLocked = false;
   function lockShortcuts() {
     const A = W.__npSideBtns;
@@ -2124,10 +2007,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     scan();
   }
 
-  /* ═══════════════════════════════ Bell (Neopets' own) ═══════════════════════════════ */
-  // Modern pages: Neopets' bell (.nav-bell-icon__2020) and its dropdown (#navnewsdropdown__2020) live in #navtop__2020,
-  // which the Modern Interface hides. Both move into #nppBell, so they work exactly as on the normal site.
-  // Retired pages have no alert list, so the bell is a plain link to the events page. No requests either way.
   const EVENTS_URL = 'https://www.neopets.com/allevents.phtml';
   const BELL_ICON = 'https://images.neopets.com/themes/h5/basic/images/v3/bell-icon.svg';
   function setupBell() {
@@ -2187,7 +2066,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     clockTimer = setInterval(tick, 1000);
   }
 
-  /* ═══════════════════════════════ Account list helpers ═══════════════════════════════ */
   const ACCTS_KEY = 'npp_accounts';
   const validName = (n) => /^[A-Za-z0-9_]{3,20}$/.test(n);
   const readAccts = () => { try { const a = JSON.parse(LSget(ACCTS_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
@@ -2208,7 +2086,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const readManual = () => { try { const a = JSON.parse(LSget(MAN_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const autoAccts = () => { const a = readAccts().slice(); [curUser(), ...seenAccounts()].forEach(n => { if (validName(n) && !a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
   const allAccts = () => { const a = autoAccts(); readManual().forEach(n => { if (!a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
-  /* ═══════════════════════════════ Pet card ═══════════════════════════════ */
   let petSig = null;
   function renderPetInfo() {
     const card = $('#npActivePet');
@@ -2262,7 +2139,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
   let petImgRO = null, nameToneSrc = '';
   function npLoadBlob(src, cb) {
-    // Fetch bytes via GM (no CORS needed) and hand back a same-origin blob URL; cb(null) on any failure.
     try {
       if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
       GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
@@ -2279,7 +2155,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     } catch {}
   }
   function nppToneProbe(src, cb) {
-    // cb(dark, ok): ok=false on failure/timeout (resolves light, not persisted).
     let fin = false, burl = null, tm = 0;
     const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
     tm = setTimeout(() => done(false, false), 3000);
@@ -2382,7 +2257,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, true);
   }
 
-  /* ═══════════════════════════════ Daily notices fold, scroll-top ═══════════════════════════════ */
   const FOLD_KEY = 'npp_fold_v1';
   function setupDailyFold() {
     if (isNc || isPopup) return;
@@ -2415,7 +2289,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     sync();
   }
 
-  /* ═══════════════════════════════ Shop prices ═══════════════════════════════ */
   function highlightShopPrices() {
     if (!/[?&]type=shop\b/i.test(location.search) || !document.body) return;
     const targets = new Set(['10,000', '25,000']);
@@ -2426,7 +2299,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     });
   }
 
-  // Shopkeeper image (.shop-bg) reloads the shop on click. Ignore clicks on it for the first 5s after page load.
   const SHOP_LOCK_MS = 5000;
   let shopLockSet = false;
   function lockShopkeeper() {
@@ -2443,7 +2315,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     setTimeout(() => document.documentElement.classList.remove('npp-shop-lock'), SHOP_LOCK_MS - performance.now());
   }
 
-  /* ═══════════════════════════════ Keys, keyboard shortcuts ═══════════════════════════════ */
   function openHeaderMenu(id) {
     const sr = shadow(); if (!sr) return;
     const b = sr.querySelector(`.btn.cat[data-id="${id}"]`);
@@ -2468,7 +2339,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, true);
   }
 
-  /* ═══════════════════════════════ Bank / NC / NP card ═══════════════════════════════ */
   function abbrNum(el) {
     const t = el.textContent.trim();
     if (!/^[\d,]+$/.test(t)) return;
@@ -2508,7 +2378,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     [top].forEach(el => ['click', 'auxclick', 'contextmenu'].forEach(t => el.addEventListener(t, e => e.stopPropagation())));
   }
 
-  /* ═══════════════════════════════ Global listeners ═══════════════════════════════ */
   function globalListeners() {
     ['mouseenter', 'mouseleave'].forEach(t => document.addEventListener(t, (e) => {
       const id = e.target && e.target.id;
@@ -2517,8 +2386,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     document.addEventListener('pointerdown', (e) => {
       if (dockOpen && !e.target.closest('#qrDockWrap, #npActivePet')) setDock(false);
       if (e.target.closest && e.target.closest('#npBgSave')) saving = true;
-      const m = e.target.closest && e.target.closest('.npBgR, .npBgL');
-      if (m) { const k = m.classList.contains('npBgR') ? 'main' : 'left'; draft[k] = null; clearImg[k] = false; if (!m.dataset.disc) pendingImg[k] = null; }
     }, true);
 
     document.addEventListener('click', (e) => {
@@ -2551,22 +2418,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
       setTimeout(() => { const i = $('#nppTools input'); if (i) i.focus(); }, 40);
     }, true);
-
-    document.addEventListener('click', (e) => {
-      const b = e.target.closest && e.target.closest('#npRecolorSite');
-      if (!b) return;
-      const key = 'npqol_recolor_site_v1', before = LSget(key) === '1';
-      setTimeout(() => {
-        if ((LSget(key) === '1') !== before) return;
-        const on = !before;
-        LSset(key, on ? '1' : '0');
-        root.classList.toggle('np-recolor-site', on);
-        b.classList.toggle('isOn', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
-      }, 0);
-    }, true);
   }
 
-  /* ═══════════════════════════════ Account guard ═══════════════════════════════ */
   const ACCT_KEYS = ['npqol_bank_state_v2', 'npqol_bank_daily_v1', 'npqol_bank_history_v1', 'npqol_bank_pin_v1',
     'npqol_np_last', 'npqol_qr_data', 'npqol_qr_data_lastFetch', 'npqol_active_pet_img_v1', 'npqol_user_stub', 'npqol_hud_username', 'npp_cd_v1', 'npp_cd_seen_v1', 'npp_ack_v1', 'npp_nc_last'];
   const THEME_KEYS = ['npqol_accent_v1', 'npp_color_main', 'npp_color_left', 'npp_color_head', 'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npp_logo_white', 'npqol_topbar_bg_v1'];
@@ -2627,7 +2480,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   accountGuard();
   ['visibilitychange', 'focus', 'pageshow', 'storage'].forEach(ev => window.addEventListener(ev, (e) => { if (staleTab()) e.stopImmediatePropagation(); }, true));
 
-  /* ═══════════════════════════════ Auth screens ═══════════════════════════════ */
   const AUTH_RE = /^\/(log(in|out)[^/]*|loginpage\.phtml|signin|neopass|hub\/login|index\.phtml)(\/|\.|$)/i;
   const isAuth = AUTH_RE.test(location.pathname);
   function stripUi() {
@@ -2656,7 +2508,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
   checkLoggedOutHome();
 
-  /* ═══════════════════════════════ Boot ═══════════════════════════════ */
   function ensureDefaults() {
     if (LSget('npp_defaults_v3')) return;
     const put = (k, v) => { if (LSget(k)) return false; LSset(k, v); return true; };
@@ -2689,7 +2540,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }, 300);
   }
 
-  /* ═══════════════════════════════ Responsive sidebar: icon module, drawer, mobile nav ═══════════════════════════════ */
   const ICONS_KEY = 'npp_side_icons_v1';
   const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
   let hudMo = null;
@@ -2715,7 +2565,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (isNc || isPopup) return;
     const hud = $('#npHud');
     if (!hud) {
-      // #npHud can appear after boot; without this the footer (pins) stays fixed over the shortcuts.
       if (!hudWait) { hudWait = new MutationObserver(() => { if ($('#npHud')) { hudWait.disconnect(); layoutSidebar(); } }); hudWait.observe(document.documentElement, { childList: true, subtree: true }); }
       return;
     }
@@ -2810,7 +2659,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (mq.addEventListener) mq.addEventListener('change', wide); else if (mq.addListener) mq.addListener(wide);
   }
 
-  // Early guard (document-start, before the vendor script mounts): hide sidebar modules and cap the pet image until the patcher CSS is in.
   if (!isAuth && !isNc && !isPopup) {
     root.classList.add('npp-pre');
     try { if (localStorage.getItem('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
@@ -2860,7 +2708,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     try { if (!rs.getPropertyValue('--np-accent-l60') && typeof W.__npApplyAccent === 'function') W.__npApplyAccent((typeof W.__npGetAccent === 'function' && W.__npGetAccent()) || '#ffffff'); } catch {}
     applyAccentContrast();
     document.addEventListener('np:accent', (e) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(e && e.detail && e.detail.hex); applySearchContrast(); });
-    LSset('npqol_inv_menubar_v1', '1'); root.classList.add('np-inv-menubar-full');
     paintAll(saved());
     applySynced();
     document.addEventListener('DOMContentLoaded', () => { paintAll(saved()); setTimeout(() => paintAll(saved()), 800); }, { once: true });

@@ -17,18 +17,19 @@ Bundle header `@match` lines. Its own gates (top of the file) return early on: i
 
 ## Feature map
 
-Search the `/* ===` section banners. Three IIFEs: core & layout (~line 157), HUD (~2520), background & decor (~6760).
+No comments in the code (stripped 4.2.5). Section banners are only in `vendor/`. Three IIFEs: core & layout, HUD, background & decor (`npBgBoot`).
 
 | Feature | Search for |
 | --- | --- |
 | Shared gates | `Bundle gate`, `PHONE GUARD` |
 | Top bar bell | removed 4.2.1 (Neopets bell via patcher `setupBell`) |
 | Sidebar HUD | `#npHud`, `PET_IMG_STYLE` |
-| Backgrounds | `#npBgSidebar`, `#npBgHandle` |
+| Backgrounds picker shell (handle, panel, button style, top bar select, recolor, save/cancel) | `#npBgSidebar`, `#npBgHandle`, `buildUI` |
+| Inventory menu bar | always full (`html:root body .inv-menubar`) |
 
 ## Depends on
 
-`GM_xmlhttpRequest` + `@connect impress*.openneo.net` (DTI backgrounds), `unsafeWindow` (exposes `W.__np*` APIs used by the patcher and dailies). Sets `data-np-modern-interface`.
+`unsafeWindow` (exposes `W.__np*` APIs used by the patcher and dailies). Sets `data-np-modern-interface`.
 
 ## Don't touch
 
