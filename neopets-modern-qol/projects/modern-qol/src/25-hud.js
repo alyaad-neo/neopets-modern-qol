@@ -1,6 +1,5 @@
-(function () {
-  'use strict';
-  if (!NQ.base || document.getElementById('npHud')) return;
+function startHud() {
+  if (document.getElementById('npHud')) return;
 
   const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
   function readLastGoodPetImg(){
@@ -2513,4 +2512,4 @@
     })();
   })();
 
-})();
+}

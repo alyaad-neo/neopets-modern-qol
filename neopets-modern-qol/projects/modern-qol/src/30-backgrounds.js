@@ -1,9 +1,6 @@
-(() => {
-  'use strict';
-  if (!NQ.base || document.documentElement.dataset.npBgBoot === '1') return;
+function startBackgrounds() {
+  if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
-
-  const W = PW;
 
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
@@ -24,8 +21,6 @@
   const SIDEBAR_W = 320;
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
-  const LSget = (k, fallback = '') => { try { return localStorage.getItem(k) ?? fallback; } catch { return fallback; } };
-  const LSset = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
 
   function applyMainBg(url){
     if (!url){
@@ -48,8 +43,8 @@
     document.documentElement.style.setProperty('--npLeftBarShadeA', '1');
   }
 
-  applyMainBg(LSget(LS.mainBgId, ''));
-  applyLeftBg(LSget(LS.leftBarBg, ''));
+  applyMainBg(LSget(LS.mainBgId));
+  applyLeftBg(LSget(LS.leftBarBg));
 
   function pageClass(){
     const p = location.pathname.toLowerCase();
@@ -61,7 +56,7 @@
   }
   const _pc = pageClass();
   if (_pc) document.documentElement.classList.add(_pc);
-  document.documentElement.classList.toggle('np-recolor-site', LSget(LS.recolor, '0') === '1');
+  document.documentElement.classList.toggle('np-recolor-site', LSget(LS.recolor) === '1');
 
   const style = document.createElement('style');
   style.textContent = `
@@ -578,8 +573,8 @@
       if (isOpen) return;
       isOpen = true;
       snapshot = {
-        mainBg:   LSget(LS.mainBgId, ''),
-        leftBg:   LSget(LS.leftBarBg, ''),
+        mainBg:   LSget(LS.mainBgId),
+        leftBg:   LSget(LS.leftBarBg),
         btnTheme: NQ.getBtnTheme(),
       };
       session = { ...snapshot };
@@ -649,7 +644,7 @@
 
       const topbarSel = sidebar.querySelector('#npTopbarBg');
       if (topbarSel){
-        topbarSel.value = LSget(LS.topbarBg, '') || 'blur';
+        topbarSel.value = LSget(LS.topbarBg) || 'blur';
         topbarSel.addEventListener('change', () => LSset(LS.topbarBg, topbarSel.value));
       }
 
@@ -659,10 +654,10 @@
           recolorBtn.classList.toggle('isOn', on);
           recolorBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
         };
-        paintRecolorBtn(LSget(LS.recolor, '0') === '1');
+        paintRecolorBtn(LSget(LS.recolor) === '1');
         recolorBtn.addEventListener('click', (ev) => {
           ev.preventDefault(); ev.stopPropagation();
-          const on = LSget(LS.recolor, '0') !== '1';
+          const on = LSget(LS.recolor) !== '1';
           document.documentElement.classList.toggle('np-recolor-site', on);
           LSset(LS.recolor, on ? '1' : '0');
           paintRecolorBtn(on);
@@ -674,4 +669,4 @@
     }
   });
 
-})();
+}

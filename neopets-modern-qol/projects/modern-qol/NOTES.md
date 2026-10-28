@@ -10,7 +10,7 @@ The Modern Interface skin (based on "Neopets - Modern Interface" by marius@clrai
 
 - Split. Edit files in `src/`. `node bundle.js` builds it (it runs `node build.js modern-qol`). Upload only the bundle: `dist/Neopets - Modern QOL.user.js`.
 - `src/00-header.js` is only used by `build.js`; the real header is `projects/_bundle/00-header.js`.
-- `original/` holds the two single-file scripts this was split from (stage 3 of `HANDOFF-merge.md`). Delete it once Aly confirms the split works.
+- The two single-file scripts this was split from are in git history (commit `de59c3b`, `projects/modern-qol/original/`).
 - Line endings: LF.
 
 ## Pages it runs on
@@ -20,7 +20,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 ## Load order
 
 1. `05-utils` top-frame guard, `10-jellyneo` (popup on JellyNeo, click handler on neopets), `15-core` host guard.
-2. `15-core` sets `NQ.base = true` unless `npBaseOff()` (excluded paths `/`, `/~*`, faeriefragments, talesofdacardia, games with query; phones). Base files `20/25/30` return early without `NQ.base`. Patcher code (40+) runs either way, but `boot()` only with `NQ.base`.
+2. `15-core` sets `NQ.base = true` unless `npBaseOff()` (excluded paths `/`, `/~*`, faeriefragments, talesofdacardia, games with query; phones). Its last line then calls `startLayout()`, `startHud()`, `startBackgrounds()` (the base files `20/25/30`, each one function). Patcher code (40+) runs either way, but `boot()` only with `NQ.base`.
 3. `90-main` defines `NQ.boot`. `bundle.js` calls `NQ.boot()` after `dailies-qol`, so `NQ.dailies` exists when the Premium menu and daily card are set up.
 
 ## Feature map
@@ -52,8 +52,8 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 ## Don't touch
 
 - Keep the MIT credit line in `05-utils.js` and the bundle header.
-- The three base files keep their own IIFE scopes (names like `W`, `root`, `LSget` exist inside them and in 15-core). Unwrap them only when renaming the duplicates.
+- The base start functions use the 15-core helpers (`W`, `root`, `LSget`, `LSset`). Inside `startLayout`, the top-bar shadow root is `barRoot`.
 
 ## Lessons learned
 
-- Old per-project notes: `original/modern-interface/NOTES.md`, `original/modern-interface-patcher/NOTES.md` and `HANDOFF.md`.
+- Old per-project notes and the patcher HANDOFF.md: git history, commit `de59c3b`, under `projects/modern-qol/original/`.

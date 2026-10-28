@@ -1,6 +1,5 @@
-(function () {
-  'use strict';
-  if (!NQ.base || document.getElementById('np-core-layout')) return;
+function startLayout() {
+  if (document.getElementById('np-core-layout')) return;
 
   const KEEP_NATIVE_BG_PATHS = [
     '/inventory.phtml',
@@ -522,7 +521,7 @@
   const host = document.createElement('div');
   host.id = 'npx-host';
   Object.assign(host.style, { position:'fixed', top:'0', left:'0', right:'0', zIndex:'2000', pointerEvents:'none' });
-  const root = host.attachShadow({ mode:'open' });
+  const barRoot = host.attachShadow({ mode:'open' });
 
   const barStyle = document.createElement('style');
   barStyle.textContent = `
@@ -674,7 +673,7 @@
     @media (max-width: 1250px) { .btn { padding: 8px 7px !important; } .btn, .btn span { font-size: 19px !important; } }
     @media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } }
   `;
-  root.appendChild(barStyle);
+  barRoot.appendChild(barStyle);
 
   const TOPBAR_ICON_NAMES = {
     community: 'community',
@@ -762,11 +761,11 @@
       </div>
     </div>
   `;
-  root.appendChild(bar);
+  barRoot.appendChild(bar);
 
   function armTopbarIcons(scope){
     const attachFb = NQ.attachBtnFallback;
-    const target = scope || root;
+    const target = scope || barRoot;
     target.querySelectorAll('img[data-icon]').forEach(img => {
       const name = img.dataset.icon;
       if (!name) return;
@@ -940,7 +939,7 @@
     m.id = `menu-${id}`;
     m.innerHTML = buildMenuHTML(id);
     dd[id] = m;
-    root.appendChild(m);
+    barRoot.appendChild(m);
     wireMenuActions(id);
     armTopbarIcons(m);
   });
@@ -950,7 +949,7 @@
   function applyTopbarTheme(themeId){
     const iconUrl      = NQ.btnIconUrl;
     const attachFb     = NQ.attachBtnFallback;
-    const all = root.querySelectorAll('img[data-icon]');
+    const all = barRoot.querySelectorAll('img[data-icon]');
     all.forEach(img => {
       const name = img.dataset.icon;
       if (!name) return;
@@ -966,7 +965,7 @@
     if (id) applyTopbarTheme(id);
   });
 
-  const rearmTopbar = () => { try { armTopbarIcons(root); } catch {} };
+  const rearmTopbar = () => { try { armTopbarIcons(barRoot); } catch {} };
   window.addEventListener('pageshow', rearmTopbar);
   window.addEventListener('load',     rearmTopbar);
   document.addEventListener('visibilitychange', () => {
@@ -1013,7 +1012,7 @@
       });
     }
   }
-  root.querySelectorAll('.btn.cat').forEach(bindHover);
+  barRoot.querySelectorAll('.btn.cat').forEach(bindHover);
   window.addEventListener('resize', () => closeAll());
   document.addEventListener('pointerdown', (ev) => {
     const path = ev.composedPath ? ev.composedPath() : [];
@@ -1180,4 +1179,4 @@
     window.addEventListener('load', schedule);
     document.addEventListener('DOMContentLoaded', schedule, { once: true });
   })();
-})();
+}

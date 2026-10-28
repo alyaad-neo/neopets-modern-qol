@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.11
+// @version      5.5.12
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -230,10 +230,11 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     setTimeout(() => mo.disconnect(), 90000);
   })();
 
+  if (NQ.base) { startLayout(); startHud(); startBackgrounds(); }
+
 // ---------- src/20-layout.js ----------
-(function () {
-  'use strict';
-  if (!NQ.base || document.getElementById('np-core-layout')) return;
+function startLayout() {
+  if (document.getElementById('np-core-layout')) return;
 
   const KEEP_NATIVE_BG_PATHS = [
     '/inventory.phtml',
@@ -755,7 +756,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const host = document.createElement('div');
   host.id = 'npx-host';
   Object.assign(host.style, { position:'fixed', top:'0', left:'0', right:'0', zIndex:'2000', pointerEvents:'none' });
-  const root = host.attachShadow({ mode:'open' });
+  const barRoot = host.attachShadow({ mode:'open' });
 
   const barStyle = document.createElement('style');
   barStyle.textContent = `
@@ -907,7 +908,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     @media (max-width: 1250px) { .btn { padding: 8px 7px !important; } .btn, .btn span { font-size: 19px !important; } }
     @media (max-width: 1400px) { .left { gap: 0 !important; } .btn { gap: 6px !important; } .btn img { width: 24px !important; height: 24px !important; } }
   `;
-  root.appendChild(barStyle);
+  barRoot.appendChild(barStyle);
 
   const TOPBAR_ICON_NAMES = {
     community: 'community',
@@ -995,11 +996,11 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       </div>
     </div>
   `;
-  root.appendChild(bar);
+  barRoot.appendChild(bar);
 
   function armTopbarIcons(scope){
     const attachFb = NQ.attachBtnFallback;
-    const target = scope || root;
+    const target = scope || barRoot;
     target.querySelectorAll('img[data-icon]').forEach(img => {
       const name = img.dataset.icon;
       if (!name) return;
@@ -1173,7 +1174,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     m.id = `menu-${id}`;
     m.innerHTML = buildMenuHTML(id);
     dd[id] = m;
-    root.appendChild(m);
+    barRoot.appendChild(m);
     wireMenuActions(id);
     armTopbarIcons(m);
   });
@@ -1183,7 +1184,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   function applyTopbarTheme(themeId){
     const iconUrl      = NQ.btnIconUrl;
     const attachFb     = NQ.attachBtnFallback;
-    const all = root.querySelectorAll('img[data-icon]');
+    const all = barRoot.querySelectorAll('img[data-icon]');
     all.forEach(img => {
       const name = img.dataset.icon;
       if (!name) return;
@@ -1199,7 +1200,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     if (id) applyTopbarTheme(id);
   });
 
-  const rearmTopbar = () => { try { armTopbarIcons(root); } catch {} };
+  const rearmTopbar = () => { try { armTopbarIcons(barRoot); } catch {} };
   window.addEventListener('pageshow', rearmTopbar);
   window.addEventListener('load',     rearmTopbar);
   document.addEventListener('visibilitychange', () => {
@@ -1246,7 +1247,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       });
     }
   }
-  root.querySelectorAll('.btn.cat').forEach(bindHover);
+  barRoot.querySelectorAll('.btn.cat').forEach(bindHover);
   window.addEventListener('resize', () => closeAll());
   document.addEventListener('pointerdown', (ev) => {
     const path = ev.composedPath ? ev.composedPath() : [];
@@ -1413,12 +1414,11 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     window.addEventListener('load', schedule);
     document.addEventListener('DOMContentLoaded', schedule, { once: true });
   })();
-})();
+}
 
 // ---------- src/25-hud.js ----------
-(function () {
-  'use strict';
-  if (!NQ.base || document.getElementById('npHud')) return;
+function startHud() {
+  if (document.getElementById('npHud')) return;
 
   const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
   function readLastGoodPetImg(){
@@ -3931,15 +3931,12 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     })();
   })();
 
-})();
+}
 
 // ---------- src/30-backgrounds.js ----------
-(() => {
-  'use strict';
-  if (!NQ.base || document.documentElement.dataset.npBgBoot === '1') return;
+function startBackgrounds() {
+  if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
-
-  const W = PW;
 
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
@@ -3960,8 +3957,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const SIDEBAR_W = 320;
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
-  const LSget = (k, fallback = '') => { try { return localStorage.getItem(k) ?? fallback; } catch { return fallback; } };
-  const LSset = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
 
   function applyMainBg(url){
     if (!url){
@@ -3984,8 +3979,8 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     document.documentElement.style.setProperty('--npLeftBarShadeA', '1');
   }
 
-  applyMainBg(LSget(LS.mainBgId, ''));
-  applyLeftBg(LSget(LS.leftBarBg, ''));
+  applyMainBg(LSget(LS.mainBgId));
+  applyLeftBg(LSget(LS.leftBarBg));
 
   function pageClass(){
     const p = location.pathname.toLowerCase();
@@ -3997,7 +3992,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   }
   const _pc = pageClass();
   if (_pc) document.documentElement.classList.add(_pc);
-  document.documentElement.classList.toggle('np-recolor-site', LSget(LS.recolor, '0') === '1');
+  document.documentElement.classList.toggle('np-recolor-site', LSget(LS.recolor) === '1');
 
   const style = document.createElement('style');
   style.textContent = `
@@ -4514,8 +4509,8 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       if (isOpen) return;
       isOpen = true;
       snapshot = {
-        mainBg:   LSget(LS.mainBgId, ''),
-        leftBg:   LSget(LS.leftBarBg, ''),
+        mainBg:   LSget(LS.mainBgId),
+        leftBg:   LSget(LS.leftBarBg),
         btnTheme: NQ.getBtnTheme(),
       };
       session = { ...snapshot };
@@ -4585,7 +4580,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
 
       const topbarSel = sidebar.querySelector('#npTopbarBg');
       if (topbarSel){
-        topbarSel.value = LSget(LS.topbarBg, '') || 'blur';
+        topbarSel.value = LSget(LS.topbarBg) || 'blur';
         topbarSel.addEventListener('change', () => LSset(LS.topbarBg, topbarSel.value));
       }
 
@@ -4595,10 +4590,10 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
           recolorBtn.classList.toggle('isOn', on);
           recolorBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
         };
-        paintRecolorBtn(LSget(LS.recolor, '0') === '1');
+        paintRecolorBtn(LSget(LS.recolor) === '1');
         recolorBtn.addEventListener('click', (ev) => {
           ev.preventDefault(); ev.stopPropagation();
-          const on = LSget(LS.recolor, '0') !== '1';
+          const on = LSget(LS.recolor) !== '1';
           document.documentElement.classList.toggle('np-recolor-site', on);
           LSset(LS.recolor, on ? '1' : '0');
           paintRecolorBtn(on);
@@ -4610,7 +4605,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     }
   });
 
-})();
+}
 
 // ---------- src/40-styles.js ----------
   const PAGE_CSS = `
