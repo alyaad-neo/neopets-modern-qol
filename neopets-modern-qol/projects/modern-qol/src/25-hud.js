@@ -192,8 +192,8 @@
     grid-column:2;
     text-align:center;
     opacity:.95;
+    cursor:pointer;
   }
-  #nqBank .title{ cursor:pointer; }
   #nqBank .title:hover{
     text-decoration:underline;
     text-decoration-color:var(--nq-accent, #dcb8ff);
@@ -550,13 +550,11 @@
   .qrPet.active{
     flex-grow: 1;
     opacity: 1;
+    box-shadow: inset 0 0 0 2px var(--nq-accent, #dcb8ff);
   }
   #qrDockWrap.open .qrPet{
     flex-grow: 1;
     opacity: 1;
-  }
-  .qrPet.active{
-    box-shadow: inset 0 0 0 2px var(--nq-accent, #dcb8ff);
   }
   .qrPet + .qrPet{ border-top: 2px solid #000; }
   .qrPet:hover{ filter: brightness(1.10); }
