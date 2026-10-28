@@ -39,6 +39,7 @@ vendor/              pristine copies of other people's scripts. READ ONLY. NEVER
    - Replace the smallest piece of text that is unique in the file. Include 2–3 surrounding lines so it matches only once.
    - NEVER rewrite or re-create an existing file with the write tool. Only edit.
    - NEVER write placeholders like `// ...rest of code` or `// existing code here`.
+   - Do NOT add code comments. Only add one if the code would be wrong or confusing without it, and keep it to one short line. No version-history or "round N" comments.
 6. **Bump the version.** In the userscript header, raise the last number of `@version` by 1 (for example `1.4.2` → `1.4.3`). In a split project the header is in `src/00-header.js`.
 7. **Check your work.**
    - Read back the lines you changed.

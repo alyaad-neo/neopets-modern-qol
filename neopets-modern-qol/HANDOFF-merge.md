@@ -59,7 +59,7 @@ Do these one group at a time. Run `node bundle.js` after each, and check for lef
 
 **Header CSS.** DONE (bundle 5.5.3: base-selector rules folded into base barStyle with their !important flags kept; SHADOW_CSS now holds only npp-*/edit-row/hamburger rules; Quests link restored in base .left). The patcher's `SHADOW_CSS` overrides the base top-bar CSS inside the shadow root (`.btn`, `.menu`, `.left`, `.inner`, carets, media queries). Fold the winning values into the base CSS, then delete both the losing rules and the override.
 
-**Sidebar and HUD.** Patcher NOTES say many `#npHud` rules exist 3 to 5 times: the base CSS, then overrides including "sidebar v4.1.2", "top half tidy 4.1.11" and "sidebar round 5/6/7". Keep only the final computed result for each element. Watch for the base's inline `!important` styles, such as the `PET_IMG_STYLE` constant.
+**Sidebar and HUD.** DONE (bundle 5.5.4: `tools/css-dedupe.js` deleted 389 declarations that can never win: 49 spans in base HUD_CSS, 285 in patcher PAGE/LAYOUT/BAR_CSS, incl. everything PET_IMG_STYLE overrides inline; re-run reports 0). Not done, needs Aly: base cards/parts that are only hidden by patcher CSS (`#npBank`, `#npQrActive`, `#npUser .shieldSlot/.avatarSlot/.meta`). QuickRef may feed the pet card, so check before deleting. Patcher NOTES say many `#npHud` rules exist 3 to 5 times: the base CSS, then overrides including "sidebar v4.1.2", "top half tidy 4.1.11" and "sidebar round 5/6/7". Keep only the final computed result for each element. Watch for the base's inline `!important` styles, such as the `PET_IMG_STYLE` constant.
 
 **Backgrounds and colors.** The patcher has its own color picker (`injectPicker`, `#nppColors`) and DTI shuffle/search (`discoverBgs`, `kwSearch`). Find the base's right-sidebar theme and background picker (`#npBgSidebar`, `#npBgHandle`). Ask Aly which parts she still uses, then delete what's replaced.
 
@@ -101,9 +101,10 @@ After stage 2, tell Aly what to test (list below). Report and stop.
 
 ## Current state (2026-10-28)
 
-- Stage 0 and 1 done. Stage 2: Alerts bell, Header right side, Header CSS are DONE and tested. Next: **Sidebar and HUD**.
-- Bundle 5.5.3: modern-interface 4.2.3, patcher 4.1.31, dailies 1.0.6, account-drawer 1.3.20, page-pins 1.0.6.
-- Start a new chat with: "Read neopets-modern-qol/HANDOFF-merge.md and AGENTS.md, then do the Sidebar and HUD group of stage 2."
+- Stage 0 and 1 done. Stage 2: Alerts bell, Header right side, Header CSS are DONE and tested. Sidebar and HUD DONE (5.5.4), waiting on Aly's test. Next: **Backgrounds and colors**.
+- Bundle 5.5.4: modern-interface 4.2.4, patcher 4.1.32, dailies 1.0.6, account-drawer 1.3.20, page-pins 1.0.6.
+- Start a new chat with: "Read neopets-modern-qol/HANDOFF-merge.md and AGENTS.md, then do the Backgrounds and colors group of stage 2."
+- CSS dedupe tool: `node tools/css-dedupe.js <base.js> <patcher.js> --report out.txt` lists dead declarations (add `--apply` to delete them). It only removes a declaration when a rule matching the same element always beats it (same media or broader, importance, specificity, order, shorthands). Its facts are hardcoded: the HUD cards are direct children of `#npHud`, `npp-css` is present wherever `#npHud` shows, and PET_IMG_STYLE is inline. Check those still hold before you re-use it. A comment heading a group gets deleted with the group's first rule if that rule is dead, so restore it by hand.
 - Lessons from this run:
   - Before deleting base markup, grep the patcher for code that MOVES it (e.g. patchShadow moved the Quest Log link into .left). Quests was lost in 5.5.2 and restored in 5.5.3.
   - Folded CSS keeps the patcher's !important flags so precedence is unchanged. Strip them in stage 3.

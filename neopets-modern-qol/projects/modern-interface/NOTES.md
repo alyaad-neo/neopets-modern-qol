@@ -37,3 +37,4 @@ Search the `/* ===` section banners. Three IIFEs: core & layout (~line 157), HUD
 ## Lessons learned
 
 - 2026-10-27: stage 1 of `HANDOFF-merge.md`: copied from vendor unchanged except the credit comment and the `Bundle gate` block. Line endings: LF.
+- 2026-10-28 (4.2.4): HUD_CSS lost every declaration the patcher always overrides (see `tools/css-dedupe.js`). What is left in HUD_CSS for #npHud cards is only what still applies. `#npBank` and `#npQrActive` are still built but hidden by patcher PAGE_CSS.

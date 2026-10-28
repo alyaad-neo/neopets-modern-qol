@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.3
+// @version      4.2.4
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -2234,23 +2234,7 @@
   ========================================================= */
   const HUD_CSS = `
   #npHud{
-    position:fixed;
-    top:var(--np-hud-top, 10px);
-    bottom:var(--np-hud-bottom, 10px);
-    /* +6px on the left so the Dailies sidebar tab (left screen edge) never
-       touches the cards — the right edge of the cards stays where it was. */
-    left: calc(var(--np-hud-left, 20px) + 6px);
-    /* HUD card width = decor column width minus left+right margins inside it
-       (minus the 6px Dailies-tab clearance). Width updates live when the
-       user drags the resize handle below. */
-    width: calc(var(--np-col-width, 330px) - 2 * var(--np-hud-left, 20px) - 6px);
     z-index:var(--np-z-hud, 1000);
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    gap:var(--np-gap, 10px);
-    font-family:var(--np-font, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif);
-    color:var(--np-ink, #fff);
     -webkit-font-smoothing:antialiased;
     pointer-events:none;
     isolation:isolate;
@@ -2265,7 +2249,6 @@
        back to full width. !important beats the inline value that
        applyTopbarBg() writes on the root. */
     :root{ --np-bar-inset-left:0px !important; }
-    #npHud{ display: none; }
   }
 
   /* Resize handle — sits ON the decor bar's right border (the black 2px
@@ -2300,11 +2283,6 @@
   #npHudResizer.dragging::after{
     background:var(--np-accent, rgba(255,255,255,.6));
     box-shadow:0 0 8px var(--np-accent, rgba(255,255,255,.4));
-  }
-  /* Hide the handle when the HUD is hidden — no point dragging an
-     invisible column. */
-  @media (max-width: 900px){
-    #npHudResizer{ display:none; }
   }
 
   .npCard{
@@ -2355,11 +2333,9 @@
      fetched from /userlookup.phtml and cleaned via the same canvas
      pipeline used for petpets (transparent bg + soft outline). */
   #npUser{
-    padding:10px;
     display:flex;
     align-items:stretch;
     gap:12px;
-    min-height:110px;
     position:relative;
   }
   /* When the Years shield is hidden via Mini User settings, the card
@@ -2389,7 +2365,7 @@
   #npUser.hide-avatars.hide-stamps .meta{ display:none; }
   #npUser .shieldSlot{
     flex:0 0 33%;
-    display:flex; align-items:center; justify-content:center;
+    align-items:center; justify-content:center;
     min-width:0;
   }
   #npUser .shield{
@@ -2410,12 +2386,12 @@
   #npUser .rightSide{
     flex:1 1 0;
     min-width:0;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    flex-direction:column; justify-content:center;
     gap:6px;
   }
   #npUser .avatarSlot{
     width:36px; height:36px;
-    display:flex; align-items:center; justify-content:center;
+    align-items:center; justify-content:center;
     flex-shrink:0;
   }
   #npUser .avatar{
@@ -2429,10 +2405,8 @@
   #npUser .name{
     display:block;
     width:100%;
-    text-align:center;
     text-decoration:none !important; color:#fff !important;
     font-size:14px; font-weight:700;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     cursor:pointer !important;
     /* Defensive: ensure clicks land on this anchor even on beta pages
        where Vue overlays might sit at higher z-index than the HUD card. */
@@ -2446,7 +2420,7 @@
     text-underline-offset:3px;
   }
   #npUser .meta{
-    display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;
+    align-items:baseline; gap:6px; flex-wrap:wrap;
     justify-content:center;
     font-size:11px; font-weight:500; line-height:1.1;
     min-width:0;
@@ -2459,9 +2433,8 @@
     align-items:baseline;
     gap:4px;
   }
-  #npUser .meta .k{ opacity:.62; }
   #npUser .meta .sep{ opacity:.40; padding:0 1px; }
-  #npUser .spinner{ position:absolute; top:6px; right:6px; display:none; }
+  #npUser .spinner{ position:absolute; top:6px; right:6px; }
   #npUser.loading{ cursor:progress; }
   #npUser.loading .spinner{ display:block; }
 
@@ -2479,7 +2452,7 @@
   #npBank .title{
     grid-column:2;
     text-align:center;
-    font-size:14px; font-weight:600; line-height:1; opacity:.95;
+    opacity:.95;
   }
   /* ⚙ + ↻ use the shared absolute top-right .cardGear/.cardRefresh pair
      (same placement as the User and QuickRef cards — the head grid keeps
@@ -2581,7 +2554,6 @@
     padding:0;
     display:flex; align-items:center; justify-content:center;
     background:var(--np-accent, #dcb8ff);
-    color:#1a1330;
     border:0; border-radius:var(--np-radius-sm, 10px);
     font-weight:800; font-size:13px;
     cursor:pointer;
@@ -2830,10 +2802,10 @@
      pet image absorbs the slack via flex:1 1 auto + min-height:0. */
   #npQrActive{
     min-height:150px; padding:10px 12px;
-    display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center;
+    flex-direction:column; align-items:center; justify-content:flex-start; text-align:center;
     gap:4px;
   }
-  #npQrActive h3{ margin:0 0 6px 0; font-size:14px; font-weight:600; width:100%; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  #npQrActive h3{ margin:0 0 6px 0; width:100%; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
   /* Pet name = link affordance, like the username: hover underline, and
      the card click already opens /quickref.phtml. */
   #npQrActive h3:hover{
@@ -3009,7 +2981,7 @@
   }
 
   /* ============ NP (neopoints) ============ */
-  #npNp{ padding:8px 12px; display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
+  #npNp{ display:flex; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
   #npNp .npVal{ font-variant-numeric:tabular-nums; }
   #npNp img{ width:24px; height:24px; display:block; flex:0 0 24px; }
   #npNp.dim{ opacity:.6; }
@@ -3026,27 +2998,11 @@
      grow past its natural pixels. The parent is a flex centering
      container so the image stays centered regardless of size. */
   #npActivePet{
-    flex: 1 1 auto;
-    min-height: 0;
-    padding:0;
-    overflow:hidden;
     cursor:pointer;
-    position:relative;
-    display:flex;
-    align-items:center;
     justify-content:center;
-    /* Strip .npCard inherited chrome — pet is transparent, it should
-       float on the decor sidebar, not sit in a glass box. */
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
   #npActivePet:hover{
     background: transparent;
-    border-color: transparent;
   }
   #npActivePet img{
     /* width/height:auto + max-w/h:100% = "shrink to fit, never grow
