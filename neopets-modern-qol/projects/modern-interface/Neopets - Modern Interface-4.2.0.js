@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.6
+// @version      4.2.7
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -59,6 +59,7 @@
   }
 
   try { document.documentElement.dataset.npModernInterface = '1'; } catch {}
+  NQ.base = true;
 
   const NP_BACKOFF_KEY = 'npqol_403_backoff_until_v1';
   const NP_STRIKE_KEY  = 'npqol_403_strikes_v1';
@@ -107,8 +108,6 @@
   }
 
   (function exposeBtnThemes(){
-    if (PW.__npBtnThemesData) return;
-
     const BTN_THEMES = [
       { id:'winterholiday',     label:'Winter Holiday',     pattern:'https://images.neopets.com/themes/h5/winterholiday/images/{icon}-icon.png' },
       { id:'basic',             label:'Basic',              pattern:'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg' },
@@ -133,33 +132,34 @@
     const LS_KEY = 'npqol_btn_theme_v1';
     const DEFAULT = 'constellations';
 
-    PW.__npBtnThemesData = { BTN_THEMES, FALLBACK_PATTERN, LS_KEY, DEFAULT };
-    PW.__npBtnThemes = BTN_THEMES.map(t => ({ id: t.id, label: t.label }));
+    NQ.btnThemesData = { BTN_THEMES, FALLBACK_PATTERN, LS_KEY, DEFAULT };
+    NQ.btnThemes = BTN_THEMES.map(t => ({ id: t.id, label: t.label }));
 
-    PW.__npGetBtnTheme = () => {
+    NQ.getBtnTheme = () => {
       try { return localStorage.getItem(LS_KEY) || DEFAULT; }
       catch { return DEFAULT; }
     };
-    PW.__npApplyBtnTheme = (id) => {
-      document.dispatchEvent(new CustomEvent('np:btn-theme', { detail: { themeId: id } }));
+    const themeListeners = [];
+    NQ.onBtnTheme = (fn) => { themeListeners.push(fn); };
+    NQ.applyBtnTheme = (id) => {
+      themeListeners.forEach(fn => { try { fn(id); } catch {} });
     };
-    PW.__npSaveBtnTheme = (id) => {
+    NQ.saveBtnTheme = (id) => {
       try { localStorage.setItem(LS_KEY, id); } catch {}
-      document.dispatchEvent(new CustomEvent('np:btn-theme', { detail: { themeId: id } }));
+      NQ.applyBtnTheme(id);
     };
 
-    PW.__npBtnIconUrl = (iconName, themeId) => {
+    NQ.btnIconUrl = (iconName, themeId) => {
       const t = BTN_THEMES.find(x => x.id === themeId) || BTN_THEMES.find(x => x.id === DEFAULT);
       return (t || { pattern: FALLBACK_PATTERN }).pattern.replace('{icon}', iconName);
     };
-    PW.__npBtnFallbackUrl = (iconName) => FALLBACK_PATTERN.replace('{icon}', iconName);
 
-    PW.__npBtnFallbackChain = [
+    NQ.btnFallbackChain = [
       'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg',
       'https://images.neopets.com/themes/h5/basic/images/{icon}-icon.svg',
       'https://images.neopets.com/themes/h5/basic/images/{icon}-icon.png',
     ];
-    PW.__npAttachBtnFallback = (img, iconName) => {
+    NQ.attachBtnFallback = (img, iconName) => {
       if (!img || !iconName) return;
       const tried = new Set();
       let extSwapped = false;
@@ -181,7 +181,7 @@
           }
         }
 
-        const chain = PW.__npBtnFallbackChain || [];
+        const chain = NQ.btnFallbackChain || [];
         while (chainStep < chain.length){
           const next = chain[chainStep++].replace('{icon}', iconName);
           if (!tried.has(next)){
@@ -195,8 +195,6 @@
   })();
 
   (function exposeAccent(){
-    if (PW.__npAccentApi) return;
-
     const LS_KEY = 'npqol_accent_v1';
     const DEFAULT_HEX = '#dcb8ff';
 
@@ -264,47 +262,15 @@
     function applyAccent(hex){
       hex = (/^#[0-9a-fA-F]{3,8}$/.test(hex||'')) ? hex : DEFAULT_HEX;
       setCSSVars(hex);
-      document.dispatchEvent(new CustomEvent('np:accent', { detail: { hex } }));
-    }
-    function saveAccent(hex){
-      try { localStorage.setItem(LS_KEY, hex); } catch {}
-      applyAccent(hex);
-    }
-    function resetAccent(){
-      try { localStorage.removeItem(LS_KEY); } catch {}
-      applyAccent(DEFAULT_HEX);
+      accentListeners.forEach(fn => { try { fn(hex); } catch {} });
     }
 
-    PW.__npAccentApi     = true;
-    PW.__npAccentDefault = DEFAULT_HEX;
-    PW.__npGetAccent     = getAccent;
-    PW.__npApplyAccent   = applyAccent;
-    PW.__npSaveAccent    = saveAccent;
-    PW.__npResetAccent   = resetAccent;
+    const accentListeners = [];
+    NQ.onAccent = (fn) => { accentListeners.push(fn); };
+    NQ.getAccent = getAccent;
+    NQ.applyAccent = applyAccent;
 
     applyAccent(getAccent());
-  })();
-
-  (function exposeTabsAPI(){
-    if (PW.__npTabConfig) return;
-    PW.__npTabConfig = {
-      H: 110,
-      W: 220,
-      PEEK: 80,
-      HOVER_PEEK: 220,
-      BORDER: 3,
-      GAP: 18,
-      BASE_BOTTOM: 30,
-      ACCENT: '#dcb8ff',
-      ZINDEX: 100000,
-    };
-    PW.__npTabs = PW.__npTabs || [];
-    PW.__npRegisterTab = function(id){
-      const cfg = PW.__npTabConfig;
-      if (!PW.__npTabs.includes(id)) PW.__npTabs.push(id);
-      const idx = PW.__npTabs.indexOf(id);
-      return cfg.BASE_BOTTOM + idx * (cfg.H + cfg.GAP);
-    };
   })();
 
   const THEME = `
@@ -819,10 +785,8 @@
     search:    'search',
   };
 
-  const _initialTheme = (typeof PW.__npGetBtnTheme === 'function') ? PW.__npGetBtnTheme() : 'constellations';
-  const _iconUrl = (typeof PW.__npBtnIconUrl === 'function')
-    ? PW.__npBtnIconUrl
-    : (name, theme) => `https://images.neopets.com/themes/h5/${theme}/images/${name}-icon.svg`;
+  const _initialTheme = NQ.getBtnTheme();
+  const _iconUrl = NQ.btnIconUrl;
   const icons = Object.fromEntries(
     Object.entries(TOPBAR_ICON_NAMES).map(([key, iconName]) => [key, _iconUrl(iconName, _initialTheme)])
   );
@@ -899,7 +863,7 @@
   root.appendChild(bar);
 
   function armTopbarIcons(scope){
-    const attachFb = PW.__npAttachBtnFallback;
+    const attachFb = NQ.attachBtnFallback;
     const target = scope || root;
     target.querySelectorAll('img[data-icon]').forEach(img => {
       const name = img.dataset.icon;
@@ -1082,9 +1046,8 @@
   document.documentElement.appendChild(host);
 
   function applyTopbarTheme(themeId){
-    const iconUrl      = PW.__npBtnIconUrl;
-    const attachFb     = PW.__npAttachBtnFallback;
-    if (typeof iconUrl !== 'function') return;
+    const iconUrl      = NQ.btnIconUrl;
+    const attachFb     = NQ.attachBtnFallback;
     const all = root.querySelectorAll('img[data-icon]');
     all.forEach(img => {
       const name = img.dataset.icon;
@@ -1097,8 +1060,7 @@
       img.src = newUrl;
     });
   }
-  document.addEventListener('np:btn-theme', (ev) => {
-    const id = ev?.detail?.themeId;
+  NQ.onBtnTheme((id) => {
     if (id) applyTopbarTheme(id);
   });
 
@@ -2636,7 +2598,7 @@
           if (sh.src !== shSrc) sh.src = shSrc;
           sh.addEventListener('load', () => sh.classList.add('loaded'), { once:true });
           const tryClean = (n=0) => {
-            const fn = PW.__npCleanImg;
+            const fn = NQ.cleanImg;
             if (typeof fn === 'function'){ try { fn(shSrc, sh); } catch {} return; }
             if (n < 30) setTimeout(() => tryClean(n+1), 60);
           };
@@ -3784,7 +3746,7 @@
       probe.onerror = () => { imgEl.src = url; };
       probe.src = url;
     }
-    try { PW.__npCleanImg = cleanImg; } catch {}
+    try { NQ.cleanImg = cleanImg; } catch {}
 
     function renderDock(data){
       const TXT_RE = /(make\s*active|set\s*(?:as\s*)?active|make\s*this\s*pet\s*active|set\s*active)/i;
@@ -4070,7 +4032,7 @@
   (function colsModule(){
     if (document.getElementById('btnOverlay')) return;
 
-    const SHARED = PW.__npBtnThemesData || {};
+    const SHARED = NQ.btnThemesData;
     const BTN_THEMES = SHARED.BTN_THEMES || [];
     const FALLBACK_PATTERN = SHARED.FALLBACK_PATTERN || 'https://images.neopets.com/themes/h5/basic/images/v3/{icon}-icon.svg';
     const LS_BTN_THEME = SHARED.LS_KEY || 'npqol_btn_theme_v1';
@@ -4087,10 +4049,7 @@
     };
     const fallbackUrl = (iconName) => FALLBACK_PATTERN.replace('{icon}', iconName);
 
-    function attachIconFallback(img, name){
-      const fn = PW.__npAttachBtnFallback;
-      if (typeof fn === 'function') fn(img, name);
-    }
+    const attachIconFallback = NQ.attachBtnFallback;
 
     function applyBtnTheme(themeId){
       const overlay = document.getElementById('btnOverlay');
@@ -4104,8 +4063,7 @@
       });
     }
 
-    document.addEventListener('np:btn-theme', (ev) => {
-      const id = ev?.detail?.themeId;
+    NQ.onBtnTheme((id) => {
       if (id) applyBtnTheme(id);
     });
 
@@ -4440,7 +4398,7 @@
     if (mountOv()) watchBody();
     else new MutationObserver((_, o) => { if (mountOv()){ watchBody(); o.disconnect(); } }).observe(document.documentElement, { childList:true, subtree:true });
 
-    PW.__npSideBtns = {
+    NQ.sideBtns = {
       catalog: ICON_CATALOG,
       catalogById: CATALOG_BY_ID,
       defaults: DEFAULT_CFG,
@@ -4465,7 +4423,7 @@
 
   (function sideBtnEditor(){
     if (document.getElementById('npxSideBtnHost')) return;
-    const API = PW.__npSideBtns;
+    const API = NQ.sideBtns;
     if (!API) return;
 
     const TAB_W = 96, TAB_H = 22;
@@ -4905,7 +4863,7 @@
       setOpen(false);
     }, true);
 
-    document.addEventListener('np:btn-theme', () => { if (open) paint(); });
+    NQ.onBtnTheme(() => { if (open) paint(); });
 
     (function mount(){
       if (document.body) document.body.appendChild(host);
@@ -5498,7 +5456,7 @@
       snapshot = {
         mainBg:   LSget(LS.mainBgId, ''),
         leftBg:   LSget(LS.leftBarBg, ''),
-        btnTheme: (typeof W.__npGetBtnTheme === 'function') ? W.__npGetBtnTheme() : '',
+        btnTheme: NQ.getBtnTheme(),
       };
       session = { ...snapshot };
       sidebar.style.transform = OPEN_X;
@@ -5514,9 +5472,7 @@
     }
 
     function saveAndClose(){
-      if (session && session.btnTheme && typeof W.__npSaveBtnTheme === 'function'){
-        W.__npSaveBtnTheme(session.btnTheme);
-      }
+      if (session && session.btnTheme) NQ.saveBtnTheme(session.btnTheme);
       closeBar();
     }
 
@@ -5524,9 +5480,7 @@
       if (snapshot){
         applyMainBg(snapshot.mainBg);
         applyLeftBg(snapshot.leftBg);
-        if (snapshot.btnTheme && typeof W.__npApplyBtnTheme === 'function'){
-          W.__npApplyBtnTheme(snapshot.btnTheme);
-        }
+        if (snapshot.btnTheme) NQ.applyBtnTheme(snapshot.btnTheme);
       }
       closeBar();
     }
@@ -5547,18 +5501,11 @@
     function refreshThemeSelect(){
       const sel = sidebar.querySelector('#npBtnTheme');
       if (!sel) return;
-      const themes = Array.isArray(W.__npBtnThemes) ? W.__npBtnThemes : [];
-      if (!themes.length){
-        sel.innerHTML = `<option value="">(HUD script not loaded)</option>`;
-        sel.disabled = true;
-        return;
-      }
-      sel.disabled = false;
-      if (sel.options.length !== themes.length || sel.options[0]?.value === ''){
+      const themes = NQ.btnThemes;
+      if (sel.options.length !== themes.length){
         sel.innerHTML = themes.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
       }
-      const cur = (session && session.btnTheme)
-        || (typeof W.__npGetBtnTheme === 'function' ? W.__npGetBtnTheme() : '');
+      const cur = (session && session.btnTheme) || NQ.getBtnTheme();
       if (cur) sel.value = cur;
     }
 
@@ -5572,7 +5519,7 @@
       themeSel?.addEventListener('change', () => {
         if (!session) return;
         session.btnTheme = themeSel.value;
-        if (typeof W.__npApplyBtnTheme === 'function') W.__npApplyBtnTheme(themeSel.value);
+        NQ.applyBtnTheme(themeSel.value);
       });
       refreshThemeSelect();
 

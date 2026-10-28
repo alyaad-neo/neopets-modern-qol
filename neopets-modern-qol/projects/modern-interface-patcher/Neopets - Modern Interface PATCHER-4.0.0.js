@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.33
+// @version      4.1.34
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -855,7 +855,7 @@ html[data-np-modern-interface] {
   const BAR_STYLES = ['none', 'tint', 'blur', 'solid'];
   function applyAccentContrast(hexIn) {
     let hex = hexIn || '';
-    try { if (!hex) hex = (typeof W.__npGetAccent === 'function' ? W.__npGetAccent() : '') || LSget('npqol_accent_v1'); } catch {}
+    try { if (!hex) hex = NQ.getAccent() || LSget('npqol_accent_v1'); } catch {}
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
     if (!m) { rs.setProperty('--npp-accent-fg', '#1a1330'); rs.setProperty('--npp-accent-fg-shadow', 'none'); return; }
     const n = parseInt(m[1], 16);
@@ -869,7 +869,7 @@ html[data-np-modern-interface] {
     const style = root.dataset.nppBar || 'blur';
     let hex = '';
     try {
-      if (style === 'none') hex = (typeof W.__npGetAccent === 'function' ? W.__npGetAccent() : '') || LSget('npqol_accent_v1');
+      if (style === 'none') hex = NQ.getAccent() || LSget('npqol_accent_v1');
       else hex = LSget('npp_color_head') || DEF.head;
     } catch {}
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
@@ -1101,7 +1101,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (pendingImg.left) LSset(K.leftImg, pendingImg.left);
     if (accentPick) {
       LSset('npqol_accent_v1', accentPick);
-      try { ownAccent = true; if (typeof W.__npApplyAccent === 'function') W.__npApplyAccent(accentPick); } catch {} finally { ownAccent = false; }
+      try { ownAccent = true; NQ.applyAccent(accentPick); } catch {} finally { ownAccent = false; }
       applyAccentContrast(accentPick); applySearchContrast();
     }
   }
@@ -1126,10 +1126,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       + '<div class="nppRow nppLogoRow"><i class="nppLogoDot"></i><span>Logo</span><div class="nppSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>'
       + '<div class="nppRow nppLogoRow nppSideRow"><i class="nppLogoDot"></i><span>Sidebar style</span><div class="nppSeg"><button type="button" data-side="0">Dark</button><button type="button" data-side="1">Light</button></div></div>';
     anchor.before(row);
-    const curAccent = () => { let a = ''; try { a = (typeof W.__npGetAccent === 'function' && W.__npGetAccent()) || LSget('npqol_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
+    const curAccent = () => { let a = ''; try { a = NQ.getAccent() || LSget('npqol_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
     const setAccent = (hex) => {
       if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
-      try { ownAccent = true; if (typeof W.__npApplyAccent === 'function') W.__npApplyAccent(hex); } catch {} finally { ownAccent = false; }
+      try { ownAccent = true; NQ.applyAccent(hex); } catch {} finally { ownAccent = false; }
       accentPick = hex;
       applyAccentContrast(hex); applySearchContrast();
       sync();
@@ -1372,7 +1372,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       } else if (!open && wasOpen) {
         if (saving) commit();
         else if (accentPick) {
-          try { ownAccent = true; if (typeof W.__npApplyAccent === 'function') W.__npApplyAccent(accentBase || NP_ORANGE); } catch {} finally { ownAccent = false; }
+          try { ownAccent = true; NQ.applyAccent(accentBase || NP_ORANGE); } catch {} finally { ownAccent = false; }
           applyAccentContrast(accentBase || NP_ORANGE); applySearchContrast();
         }
         accentPick = null;
@@ -1593,7 +1593,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     };
     const existing = sr.getElementById('menu-premium');
     if (existing) {
-      if (!existing.dataset.up && nativePremium().length >= 4) { existing.innerHTML = build(); existing.dataset.up = '1'; if (W.__nppDailies) W.__nppDailies.decoratePremium(existing); }
+      if (!existing.dataset.up && nativePremium().length >= 4) { existing.innerHTML = build(); existing.dataset.up = '1'; if (NQ.dailies) NQ.dailies.decoratePremium(existing); }
       return;
     }
     const menu = document.createElement('div');
@@ -1610,7 +1610,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
     });
     sr.appendChild(menu);
-    if (W.__nppDailies) W.__nppDailies.decoratePremium(menu);
+    if (NQ.dailies) NQ.dailies.decoratePremium(menu);
     { const caret = document.createElement('div'); caret.className = 'npp-premcaret'; menu.insertAdjacentElement('afterend', caret);
       const bg = document.createElement('div'); bg.className = 'npp-prembg'; menu.insertAdjacentElement('beforebegin', bg);
       const csync = () => {
@@ -1627,7 +1627,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       new MutationObserver(() => requestAnimationFrame(csync)).observe(menu, { attributes: true, attributeFilter: ['style', 'class'] });
       new ResizeObserver(csync).observe(menu);
       setInterval(csync, 400); }
-    if (W.__nppDailies) setInterval(() => W.__nppDailies.updateSnow(menu, btn), 1000);
+    if (NQ.dailies) setInterval(() => NQ.dailies.updateSnow(menu, btn), 1000);
     btn.classList.add('cat'); btn.dataset.id = 'premium';
 
     const recenter = () => {
@@ -1654,7 +1654,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     btn.addEventListener('pointerenter', () => {
       sr.querySelectorAll('.menu').forEach(m => { if (m !== menu) m.style.display = 'none'; });
       if (menuMain !== onMainAcct()) menu.innerHTML = build();
-      if (W.__nppDailies) W.__nppDailies.decoratePremium(menu);
+      if (NQ.dailies) NQ.dailies.decoratePremium(menu);
       let tall = 0;
       sr.querySelectorAll('.menu:not(#menu-premium)').forEach(m => {
         const was = m.style.display;
@@ -1670,7 +1670,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
   let shortcutsLocked = false;
   function lockShortcuts() {
-    const A = W.__npSideBtns;
+    const A = NQ.sideBtns;
     if (!A || shortcutsLocked || isNc) return;
     shortcutsLocked = true;
     try {
@@ -1681,8 +1681,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
 
   const SEARCH_URL = 'https://www.neopets.com/search.phtml';
-  const themeOf = () => { try { return (typeof W.__npGetBtnTheme === 'function' && W.__npGetBtnTheme()) || 'basic'; } catch { return 'basic'; } };
-  const iconUrl = (name) => { try { return typeof W.__npBtnIconUrl === 'function' ? W.__npBtnIconUrl(name, themeOf()) : ''; } catch { return ''; } };
+  const themeOf = () => NQ.getBtnTheme() || 'basic';
+  const iconUrl = (name) => NQ.btnIconUrl(name, themeOf());
   function setupTools() {
     if (isNc || isPopup || $('#nppTools') || !document.body) return;
     const col = $('#btnOverlay .col.left');
@@ -1709,7 +1709,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const live = [...col.children].filter(k => !k.hasAttribute('data-npp-nested') && k.getBoundingClientRect().width > 8);
       if (!live.length) return;
       let size = 0;
-      try { const A = W.__npSideBtns, v = A && A.getIconSize ? parseFloat(A.getIconSize()) : NaN; if (v >= 24 && v <= 96) size = Math.round(v); } catch {}
+      try { const A = NQ.sideBtns, v = A && A.getIconSize ? parseFloat(A.getIconSize()) : NaN; if (v >= 24 && v <= 96) size = Math.round(v); } catch {}
       if (!size) {
         const imgs = live.map(k => k.querySelector('img')).filter(Boolean);
         const boxes = imgs.length ? imgs : live, factor = imgs.length ? 1 : 0.88;
@@ -1729,21 +1729,18 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       } catch {}
     };
     measure();
-    let lastIcSize = '';
     const remeasure = () => { measure(); };
-    const A0 = () => W.__npSideBtns;
     rs.setProperty('--npp-tools-h', '0px');
     new MutationObserver(remeasure).observe(col, { childList: true });
+    new ResizeObserver(remeasure).observe(col);
 
     const paintIcons = () => {
       const su = iconUrl('search'); if (su && sImg.getAttribute('src') !== su) sImg.src = su;
     };
-    document.addEventListener('np:btn-theme', () => paintIcons());
-    setInterval(measure, 300);
+    NQ.onBtnTheme(() => paintIcons());
     sImg.addEventListener('error', () => { sImg.style.display = 'none'; sImg.parentElement.classList.add('noimg'); });
     setTimeout(remeasure, 700); setTimeout(remeasure, 2500);
     paintIcons();
-    setInterval(() => { paintIcons(); try { const A = A0(), cur = String(A && A.getIconSize ? A.getIconSize() : ''); if (cur !== lastIcSize) { if (lastIcSize) remeasure(); lastIcSize = cur; } } catch {} }, 2000);
 
     const setSearch = (open) => {
       form.classList.toggle('nppOpen', open);
@@ -1965,8 +1962,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     tabEl = tab; panelEl = panel;
 
     const head = panel.querySelector('.head');
-    if (head && W.__npSideBtns && !head.querySelector('.nppSizeGrp')) {
-      const A = W.__npSideBtns;
+    if (head && NQ.sideBtns && !head.querySelector('.nppSizeGrp')) {
+      const A = NQ.sideBtns;
       const grp = document.createElement('div');
       grp.className = 'nppSizeGrp';
       grp.innerHTML = '<span class="nppSizeLbl">Size</span><button type="button" data-d="-1" title="Smaller icons" aria-label="Smaller icons">−</button><span class="nppSizeVal"></span><button type="button" data-d="1" title="Bigger icons" aria-label="Bigger icons">+</button>';
@@ -1989,7 +1986,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const name = m && (m[1].match(/\/([^\/]+)-icon\.(svg|png)/) || [])[1];
       if (!name) return;
       const url = m[1];
-      const cands = [url.replace(/\.(svg|png)$/, (e) => e === '.svg' ? '.png' : '.svg'), ...(W.__npBtnFallbackChain || []).map(u => u.replace('{icon}', name))];
+      const cands = [url.replace(/\.(svg|png)$/, (e) => e === '.svg' ? '.png' : '.svg'), ...(NQ.btnFallbackChain || []).map(u => u.replace('{icon}', name))];
       const next = (i) => {
         if (i >= cands.length) return;
         const im = new Image();
@@ -2514,30 +2511,27 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const t = put('npqol_btn_theme_v1', 'premium'), a = put('npqol_accent_v1', NP_ORANGE);
     put('npqol_topbar_bg_v1', 'blur');
     LSset('npp_defaults_v3', '1');
-    try { if (t && W.__npApplyBtnTheme) W.__npApplyBtnTheme('premium'); if (a && W.__npApplyAccent) W.__npApplyAccent(NP_ORANGE); } catch {}
+    if (t) NQ.applyBtnTheme('premium');
+    if (a) NQ.applyAccent(NP_ORANGE);
   }
   function applySynced() {
     if (!isNc) return;
-    let n = 0;
-    const iv = setInterval(() => {
-      const A = W.__npSideBtns;
-      try {
-        if (W.__npApplyAccent) W.__npApplyAccent(LSget('npqol_accent_v1') || NP_ORANGE);
-        const t = LSget('npqol_btn_theme_v1');
-        if (t && W.__npApplyBtnTheme) W.__npApplyBtnTheme(t);
-        const clean = (u) => String(u).replace(/["\\\n\r]/g, '');
-        const mi = LSget(K.mainImg), li = LSget(K.leftImg);
-        if (mi) { rs.setProperty('--npMainSolid', '#000'); rs.setProperty('--npWallImage', `url("${clean(mi)}")`); }
-        if (li) { rs.setProperty('--npLeftBarImg', `url("${clean(li)}")`); rs.setProperty('--npLeftBarSolid', '#000'); rs.setProperty('--npLeftBarShadeA', '1'); }
-        root.classList.remove('np-recolor-site');
-        paintAll(saved());
-        if (A) {
-          A.setLayout(A.getLayout()); A.setSide(A.getSide()); A.setColOffset(A.getColOffset()); A.setIconSize(A.getIconSize());
-          A.setColShift(A.getColShift()); A.setColX(A.getColX()); A.rebuild();
-        }
-      } catch {}
-      if (A || ++n > 12) clearInterval(iv);
-    }, 300);
+    const A = NQ.sideBtns;
+    try {
+      NQ.applyAccent(LSget('npqol_accent_v1') || NP_ORANGE);
+      const t = LSget('npqol_btn_theme_v1');
+      if (t) NQ.applyBtnTheme(t);
+      const clean = (u) => String(u).replace(/["\\\n\r]/g, '');
+      const mi = LSget(K.mainImg), li = LSget(K.leftImg);
+      if (mi) { rs.setProperty('--npMainSolid', '#000'); rs.setProperty('--npWallImage', `url("${clean(mi)}")`); }
+      if (li) { rs.setProperty('--npLeftBarImg', `url("${clean(li)}")`); rs.setProperty('--npLeftBarSolid', '#000'); rs.setProperty('--npLeftBarShadeA', '1'); }
+      root.classList.remove('np-recolor-site');
+      paintAll(saved());
+      if (A) {
+        A.setLayout(A.getLayout()); A.setSide(A.getSide()); A.setColOffset(A.getColOffset()); A.setIconSize(A.getIconSize());
+        A.setColShift(A.getColShift()); A.setColX(A.getColX()); A.rebuild();
+      }
+    } catch {}
   }
 
   const ICONS_KEY = 'npp_side_icons_v1';
@@ -2705,9 +2699,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     applyBarStyle(LSget('npqol_topbar_bg_v1'));
     applyLogo();
     if (isNc) root.classList.remove('np-recolor-site'); else root.classList.toggle('np-recolor-site', LSget('npqol_recolor_site_v1') === '1');
-    try { if (!rs.getPropertyValue('--np-accent-l60') && typeof W.__npApplyAccent === 'function') W.__npApplyAccent((typeof W.__npGetAccent === 'function' && W.__npGetAccent()) || '#ffffff'); } catch {}
+    try { if (!rs.getPropertyValue('--np-accent-l60') ) NQ.applyAccent(NQ.getAccent() || '#ffffff'); } catch {}
     applyAccentContrast();
-    document.addEventListener('np:accent', (e) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(e && e.detail && e.detail.hex); applySearchContrast(); });
+    NQ.onAccent((hex) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(hex); applySearchContrast(); });
     paintAll(saved());
     applySynced();
     document.addEventListener('DOMContentLoaded', () => { paintAll(saved()); setTimeout(() => paintAll(saved()), 800); }, { once: true });
@@ -2724,19 +2718,11 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     setInterval(() => { if (staleTab()) return; renderPetInfo(); fixPetImg(); updateNc(); }, 1500);
   }
 
-  W.__nppCore = { LSget, LSset, LSdel, curUser, mainAcct, paintAll, applyAccentContrast, applySearchContrast, applyLogo, applyBarStyle };
-
   if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {
     const fixHomeBg = () => { try { if (typeof W.bodyHeightAdjust2020 === 'function') W.bodyHeightAdjust2020(); } catch {} };
     let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(fixHomeBg, 150); });
     window.addEventListener('load', () => { [200, 900, 2200, 4500].forEach(t => setTimeout(fixHomeBg, t)); });
   }
 
-  const claimed = () => root.dataset.npModernInterface === '1';
-  if (claimed()) boot();
-  else {
-    const mo = new MutationObserver(() => { if (claimed()) { mo.disconnect(); boot(); } });
-    mo.observe(root, { attributes: true, attributeFilter: ['data-np-modern-interface'] });
-    setTimeout(() => mo.disconnect(), 15000);
-  }
+  if (NQ.base) boot();
 })();

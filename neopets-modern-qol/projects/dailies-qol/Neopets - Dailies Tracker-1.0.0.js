@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.6
+// @version      1.0.7
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -546,15 +546,12 @@
   /* ─── Standalone dailies panel ─── */
   const SUN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 
-  function isModernInterface() {
-    return root.dataset.npModernInterface === '1';
-  }
   function mountStandalonePanel() {
     if (document.getElementById('nppDailiesRoot')) return;
     if (!document.body) return;
     const wrap = document.createElement('div');
     wrap.id = 'nppDailiesRoot';
-    wrap.dataset.modern = isModernInterface() ? '1' : '0';
+    wrap.dataset.modern = NQ.base ? '1' : '0';
     wrap.innerHTML = `
       <button type="button" id="nppDailiesToggle">${SUN_SVG}<span>Dailies</span></button>
       <div id="nppDailiesMenu">
@@ -576,7 +573,6 @@
       setTimeout(refreshAllMenus, 200);
     });
     setInterval(() => {
-      wrap.dataset.modern = isModernInterface() ? '1' : '0';
       if (wrap.classList.contains('open')) { refreshCd(menu); updateSnow(menu, null); }
     }, 1000);
   }
@@ -635,7 +631,7 @@
   }
 
   /* ─── Public API for the core to consume ─── */
-  W.__nppDailies = {
+  NQ.dailies = {
     PREMIUM_CD, cdLoad, cdSet, cdLeft, cdText, seenLoad, ackLoad, ackSet, isAcked,
     snowagerState, snowAcked, ackSnow, snowText, snowBadge, snowRowHTML, SNOWFLAKE,
     symolLoad, tarlaLoad, symolState, symolEnsure, parseSymol, parseTarla,
@@ -650,7 +646,7 @@
       whenUser(() => {
         if (!onMain()) return;
         mountStandalonePanel();
-        if (isModernInterface()) sidebarDailyCard();
+        if (NQ.base) sidebarDailyCard();
         bootWatch();
       });
     } else {
@@ -659,11 +655,4 @@
   }
   mount();
 
-  // If the Modern Interface shows up later (its boot mutates `data-np-modern-interface`), hide the standalone panel and mount the sidebar card.
-  new MutationObserver(() => {
-    if (!onMain()) return;
-    const modern = isModernInterface();
-    if (modern && !document.getElementById('nppDaily')) sidebarDailyCard();
-    const w = document.getElementById('nppDailiesRoot'); if (w) w.dataset.modern = modern ? '1' : '0';
-  }).observe(root, { attributes: true, attributeFilter: ['data-np-modern-interface'] });
 })();
