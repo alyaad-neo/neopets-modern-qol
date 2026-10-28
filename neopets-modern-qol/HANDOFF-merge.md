@@ -51,7 +51,7 @@ The patcher spends most of its code fighting the base script from outside. It ov
 
 Do these one group at a time. Run `node bundle.js` after each, and check for leftovers with `grep -n` on the IDs listed. For each item, delete the base side and the patcher's fight against it.
 
-**Alerts bell.** Aly uses Neopets' own bell (patcher `setupBell`, `#nppBell`).
+**Alerts bell.** DONE (bundle 5.5.1, removed base bell + bellNotif fetches, muteVendorAlerts, clearNotifCaches in patcher and drawer, dead .npp-bell CSS, MAIL_SVG/BELL_SVG, #nppNotifHead). Aly uses Neopets' own bell (patcher `setupBell`, `#nppBell`).
 - Base: the `bellNotif()` IIFE (search `BELL DROPDOWN`), `#npxBell`, `#npxBellDot`, `.bellMenu`, `#npxBellList`, the `.bell*` CSS, and its fetches of `/nf.phtml` and `/`. Also storage keys `npqol_notifs_v2` and `npqol_notifs_hidden_v1`.
 - Patcher: `muteVendorAlerts` and its calls, the `.npp-bell*` shadow CSS (dead), and the unused `MAIL_SVG` and `BELL_SVG` constants. Check whether `clearNotifCaches`, which exists in both the patcher and account-drawer, is still needed once those keys are gone.
 

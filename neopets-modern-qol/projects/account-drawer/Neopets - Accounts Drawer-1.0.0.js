@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.19
+// @version      1.3.20
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -278,18 +278,10 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
 
   /* ───────────────────────────────── swap session ───────────────────────────────── */
   let swapBusy = false;
-  function clearNotifCaches() {
-    try {
-      const keys = [];
-      for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); if (k && /notif/i.test(k)) keys.push(k); }
-      keys.forEach(k => sessionStorage.removeItem(k));
-    } catch {}
-  }
   function swapAccount(onBusy, onDone) {
     apCollect();   // save this account's pets before leaving it
     if (swapBusy) return;
     swapBusy = true;
-    clearNotifCaches();
     if (onBusy) onBusy();
     let w = null; try { w = window.open('about:blank', '_blank'); } catch {}
     const go = () => {
@@ -1080,14 +1072,12 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
         swapAccount(() => { swapLink.lastElementChild.textContent = 'Swapping…'; swapLink.classList.add('busy'); }, () => { swapLink.lastElementChild.textContent = 'Swap'; swapLink.classList.remove('busy'); });
       });
     } else {
-      const logoutLink = q('.nppAcctStandaloneFoot a.nppLogout');
       const swapLink = q('.nppAcctStandaloneFoot a.nppSwap');
       if (swapLink) swapLink.addEventListener('click', (e) => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
         e.preventDefault();
         swapAccount(() => { swapLink.classList.add('busy'); }, () => { swapLink.classList.remove('busy'); });
       });
-      if (logoutLink) logoutLink.addEventListener('click', () => clearNotifCaches());
     }
 
     const syncBtn = q('.nppAcctSync:not(.nppAcctAllPets)');

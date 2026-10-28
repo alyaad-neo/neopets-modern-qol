@@ -22,7 +22,7 @@ Search the `/* ===` section banners. Three IIFEs: core & layout (~line 157), HUD
 | Feature | Search for |
 | --- | --- |
 | Shared gates | `Bundle gate`, `PHONE GUARD` |
-| Top bar bell | `BELL DROPDOWN`, `#npxBell` |
+| Top bar bell | removed 4.2.1 (Neopets bell via patcher `setupBell`) |
 | Sidebar HUD | `#npHud`, `PET_IMG_STYLE` |
 | Backgrounds | `#npBgSidebar`, `#npBgHandle` |
 

@@ -23,7 +23,7 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 | Account list helpers | lines 154–172 | `readAccts`, `writeAccts`, `noteAccount`, `seenAccounts`, `readNP`, `readManual`, `allAccts` |
 | Avatar cache | lines 175 | `readProf` |
 | NeoPass sync | lines 178–206 | `parseNeoPass`, `neoPassFetch`, `syncNeoPass` |
-| Swap session | lines 209–234 | `swapAccount`, `clearNotifCaches` |
+| Swap session | lines 209–234 | `swapAccount` |
 | Drawer build/wire | lines 244–400 | `buildDrawer`, `wireDrawer`, `nppAcctRow`, `nppAcctStar`, `nppAcctX` |
 | Modern mode mount | lines 403–462 | `mountModern`, `#npUser`, `#nppAcctTab`, `#nppAvatar`, `#npLogoutBtn`, `#npSwapBtn` |
 | Standalone mode mount | lines 464–491 | `mountStandalone`, `#nppStandaloneAcct`, `#nppStandaloneAcctToggle` |

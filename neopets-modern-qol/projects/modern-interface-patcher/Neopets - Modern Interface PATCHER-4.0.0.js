@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.28
+// @version      4.1.29
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -101,11 +101,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
-  // The Modern Interface's own bell is hidden (Neopets' bell is used, see setupBell), but its bellNotif() still
-  // fetches /nf.phtml or / whenever its 5-minute cache is empty. A cache stamped far in the future never expires.
-  const muteVendorAlerts = () => { try { sessionStorage.setItem('npqol_notifs_v2', JSON.stringify({ t: 9e15, alerts: [] })); } catch {} };
-  muteVendorAlerts();
-
   /* ─── Settings sync (www → NC Mall) ─── */
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1', 'npqol_inv_menubar_v1',
     'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_side_btns_v2', 'npqol_side_layout_v1',
@@ -146,8 +141,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const SHUFFLE = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h2.2c3 0 4 7 7.1 7H14M2 11.5h2.2c1 0 1.8-.6 2.5-1.4M9.3 5.9c.6-.8 1.2-1.4 2.2-1.4H14M12 2.5l2 2-2 2M12 9.5l2 2-2 2"/></svg>';
   const SWAP = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13"/></svg>';
   const STATS_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 13V8.5M8 13V3M13 13V6"/></svg>';
-  const MAIL_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="#ffd54a" stroke="#6b4a12" stroke-width="1.5"/><path d="M3.5 7l8.5 6.2L20.5 7" fill="none" stroke="#6b4a12" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-  const BELL_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.2 16.5h15.6L18 12.5V9a6 6 0 0 0-6-6zM9.8 19.5a2.4 2.4 0 0 0 4.4 0" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>');
 
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
   let handleEl = null, tabEl = null, panelEl = null, dockOpen = false;
@@ -180,7 +173,7 @@ html[data-np-modern-interface] {
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
   .qrOverlay a, .qrPetName, .bankSettingsHead h3, #npUserTitle, #npBank .title,
-  #nppNotifHead span, #nppNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+  #nppNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
   div#boardTopic { border: 0 !important; }
@@ -548,8 +541,6 @@ html[data-np-modern-interface]:not(.np-keep-native-bg) body .theme-bg {
   font-display: swap;
 }
 @keyframes nppIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
-@keyframes nppPop { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
-@keyframes nppRing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } }
 @keyframes nppSpin { to { transform: rotate(360deg); } }
 @keyframes nppCopyPop { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
 @keyframes nppFlash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .2; transform: scale(.7); } }
@@ -1049,14 +1040,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 #menu-premium::before { content: none; }
 .npp-prembg { display: none; position: absolute; overflow: hidden; box-sizing: border-box; border-radius: var(--npp-menu-radius, 0 0 16px 16px); pointer-events: none; }
 .npp-prembg::before { content: ""; position: absolute; inset: -24px; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--npLeftBarImg, none) center / cover no-repeat, var(--npLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); }
-.npp-bell { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); z-index: 2; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; pointer-events: auto; transition: background .2s; }
-.npp-bell:hover, .npp-bell[aria-expanded="true"] { background: rgba(255,255,255,.2); }
-.npp-bell svg { width: 24px; height: 24px; display: block; filter: var(--npp-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.5))); }
-.npp-bell-cnt { display: none; position: absolute; top: -1px; right: -1px; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; align-items: center; justify-content: center; border-radius: 9px; background: #ff5a5a; color: #fff; font: normal 700 10.5px/1 'Outfit', system-ui, sans-serif; text-shadow: none; box-shadow: 0 0 0 2px rgba(0,0,0,.3); }
-.npp-bell.has .npp-bell-cnt { display: flex; animation: nppPop .35s cubic-bezier(.3, 1.6, .5, 1); }
-.npp-bell.has svg { animation: nppRing 1.2s ease 1; transform-origin: 50% 10%; }
-@keyframes nppPop { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
-@keyframes nppRing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } }
 .npp-logo { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); z-index: 2; display: flex; align-items: center; text-decoration: none; pointer-events: auto; }
 .npp-logo img { height: 43px; max-width: 215px; display: block; filter: var(--npp-logo-filter, none); }
 .npp-logo span { display: none; font: 400 32px 'CafeteriaBlack', Georgia, serif; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
@@ -2673,14 +2656,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (owner) LSset('npp_theme_' + owner, JSON.stringify(readTheme()));
     try { const t = JSON.parse(LSget('npp_theme_' + u) || 'null'); if (t) writeTheme(t); } catch {}
   }
-  function clearNotifCaches() {
-    try {
-      const keys = [];
-      for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); if (k && /notif/i.test(k)) keys.push(k); }
-      keys.forEach(k => sessionStorage.removeItem(k));
-    } catch {}
-    muteVendorAlerts();
-  }
   let petSyncUntil = 0;
   let acctChecked = false;
   let petSettled = true;
@@ -2711,7 +2686,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         return;
       }
       try { sessionStorage.setItem('npp_swapped', u); } catch {}
-      clearNotifCaches();
       if (owner) {
         const snap = {};
         ACCT_KEYS.forEach(k => { const v = LSget(k); if (v) snap[k] = v; });

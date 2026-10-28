@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.0
+// @version      5.5.1
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1051,7 +1051,7 @@
        stay transparent to the cursor, which is what gives the HUD cards
        under the bar their top-right corner back. */
     .inner, .left, .right{ pointer-events:none; }
-    .left > *, .right > *, .menu, .bellMenu{ pointer-events:auto; }
+    .left > *, .right > *, .menu{ pointer-events:auto; }
     .inner{
       display:grid;
       grid-template-columns: 1fr auto 1fr;
@@ -1220,100 +1220,6 @@
     }
     .nst .nstLabel{ font-size:11px; opacity:.7; }
 
-    /* Bell button + notification badge */
-    .bellBtn{ position:relative; cursor:pointer; }
-    .bellBtn .bellDot{
-      position:absolute; top:-2px; right:-2px;
-      min-width:18px; height:18px; padding:0 5px;
-      border-radius:10px; background:#ff5a5a; color:#fff;
-      font-size:10px; font-weight:900; line-height:18px;
-      text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.6);
-    }
-    .bellBtn .bellDot[hidden]{ display:none !important; }
-
-    /* Bell dropdown */
-    .bellMenu{
-      position:fixed; top:${BAR_H + 6}px; right:10px; display:none;
-      background:rgba(20,14,32,.96);
-      backdrop-filter: blur(var(--np-blur, 8px));
-      -webkit-backdrop-filter: blur(var(--np-blur, 8px));
-      border:1px solid var(--np-line, rgba(255,255,255,.16));
-      border-radius:var(--np-radius, 14px);
-      box-shadow:0 10px 28px rgba(0,0,0,.45);
-      padding:8px; width:340px; max-width:92vw; max-height:60vh; overflow:auto;
-      z-index:2000;
-    }
-    .bellMenu .bellHead{
-      display:flex; justify-content:space-between; align-items:center;
-      padding:4px 8px 8px 8px;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      margin-bottom:6px;
-    }
-    .bellMenu .bellHead h3{
-      margin:0; font:900 12px/1 system-ui,sans-serif;
-      letter-spacing:.05em; text-transform:uppercase;
-      color:rgba(255,255,255,.7);
-    }
-    .bellMenu .bellHead a{
-      font-size:11px; color:var(--np-accent-text, var(--np-accent, #dcb8ff));
-      text-decoration:none; padding:2px 6px; border-radius:6px;
-    }
-    .bellMenu .bellHead a:hover{ background:var(--np-accent-bg); }
-    .bellMenu .bellList{ display:flex; flex-direction:column; gap:4px; }
-    .bellMenu .bellItem{
-      position:relative;
-      display:grid;
-      grid-template-columns: 32px 1fr;
-      grid-template-rows: auto auto;
-      grid-column-gap:10px;
-      align-items:start;
-      padding:8px 28px 8px 10px; border-radius:10px;
-      text-decoration:none; color:#fff;
-    }
-    .bellMenu .bellItem:hover{ background:var(--np-accent-soft); }
-    .bellMenu .bellItem .bellIcon{
-      grid-row: 1 / span 2;
-      width:32px; height:32px; align-self:center;
-      background:center/contain no-repeat;
-      filter: drop-shadow(0 1px 2px rgba(0,0,0,.5));
-    }
-    .bellMenu .bellItem .bellTitle{
-      font-size:13px; font-weight:800; color:#fff;
-      line-height:1.2;
-      margin:0;
-    }
-    .bellMenu .bellItem .bellText{
-      font-size:11px; color:rgba(255,255,255,.78);
-      line-height:1.3; margin:2px 0 0;
-    }
-    .bellMenu .bellItem .bellTime{
-      grid-column: 2; margin:3px 0 0;
-      font-size:10px; font-weight:600;
-      color:var(--np-accent-text, var(--np-accent));
-      letter-spacing:.02em;
-    }
-    .bellMenu .bellItem .bellX{
-      position:absolute; top:6px; right:6px;
-      width:22px; height:22px; padding:0; border:0;
-      background:rgba(255,255,255,.06);
-      color:rgba(255,255,255,.75);
-      border-radius:6px; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      opacity:.55; transition:opacity .12s ease, background .12s ease, color .12s ease;
-    }
-    .bellMenu .bellItem:hover .bellX{ opacity:1; }
-    .bellMenu .bellItem .bellX:hover{
-      background:#ff5a5a; color:#fff;
-    }
-    .bellMenu .bellItem .bellX svg{
-      width:13px; height:13px; display:block;
-      pointer-events:none;
-    }
-    .bellMenu .bellEmpty{
-      padding:18px 8px; text-align:center;
-      color:rgba(255,255,255,.55); font-size:12px;
-    }
-
     /* Smaller top bar on narrow screens */
     @media (max-width: 900px){
       .left{ gap:6px; }
@@ -1435,10 +1341,6 @@
         </form>
         <div class="nst" id="npxNst"><span class="nstTime">--:--:--</span> <span class="nstLabel">NST</span></div>
         <a class="btn" href="https://www.neopets.com/questlog/" title="Quest Log"><img src="${icons.quests}" data-icon="quests" alt="Quests"></a>
-        <div class="btn bellBtn" id="npxBell" title="Alerts">
-          <img src="${icons.bell}" data-icon="bell" alt="Alerts">
-          <span class="bellDot" id="npxBellDot" hidden>0</span>
-        </div>
         <a class="btn" id="npxNews" href="https://www.neopets.com/nf.phtml" title="New Features">
           <img src="https://images.neopets.com/themes/h5/basic/images/v3/news-icon.svg" alt="News">
         </a>
@@ -1725,301 +1627,6 @@
       e.preventDefault();
       setOpen(true);
     }, true);
-  })();
-
-  /* =========================================================
-     BELL DROPDOWN — beta-style icon + title + text + time + X.
-     Sources tried in order:
-       1) Current DOM: #alerts li / #alertstab__2020 ul li (META — reliable)
-       2) Fetch /nf.phtml (sometimes empty depending on context)
-       3) Fetch / (H5 homepage, contains #alerts if logged in)
-     5-minute cache in sessionStorage. Up to 8 alerts. X = local dismiss
-     + tries to click the native .alert-x if present.
-  ========================================================= */
-  (function bellNotif(){
-    const CACHE_KEY  = 'npqol_notifs_v2';
-    const HIDDEN_KEY = 'npqol_notifs_hidden_v1';
-    const CACHE_TTL  = 5 * 60 * 1000;
-    const MAX_ITEMS  = 8;
-    const FALLBACK_ICON = 'https://images.neopets.com/themes/h5/basic/images/bell-icon.svg';
-    const bell = root.querySelector('#npxBell');
-    const dot  = root.querySelector('#npxBellDot');
-    if (!bell || !dot) return;
-
-    const menu = document.createElement('div');
-    menu.className = 'bellMenu';
-    menu.innerHTML = `
-      <div class="bellHead">
-        <h3>Alerts</h3>
-        <a href="https://www.neopets.com/allevents.phtml">See all</a>
-      </div>
-      <div class="bellList" id="npxBellList">
-        <div class="bellEmpty">Loading…</div>
-      </div>
-    `;
-    root.appendChild(menu);
-
-    function cleanText(t){
-      return (t||'')
-        .replace(/»\s*See all alerts\s*«/i,'')
-        .replace(/\s+/g,' ').trim();
-    }
-    function esc(s){
-      return String(s||'').replace(/[&<>"']/g, c => (
-        { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]
-      ));
-    }
-    function readHidden(){
-      try { return new Set(JSON.parse(sessionStorage.getItem(HIDDEN_KEY) || '[]')); }
-      catch { return new Set(); }
-    }
-    function writeHidden(set){
-      try { sessionStorage.setItem(HIDDEN_KEY, JSON.stringify([...set])); } catch {}
-    }
-    function alertKey(a){
-      return a.delid || a.href || (a.title + '|' + a.text);
-    }
-    /* Adds &delevent=yes (or ?delevent=yes) to a Neopets href —
-       that's the native CLASSIC mechanism to delete the event when
-       the user follows the link. */
-    function withDelevent(href){
-      if (!href || /[?&]delevent=yes\b/i.test(href)) return href;
-      const sep = href.includes('?') ? '&' : '?';
-      return href + sep + 'delevent=yes';
-    }
-    /* Dismiss an alert server-side — best-effort.
-       Strategies tried in parallel (cheap, silent):
-        - GET <href>&delevent=yes  (classic — also works on META)
-        - If data-delid is present: click the native
-          .alert-x[data-delid=...] element (on META, that triggers
-          the official AJAX handler) */
-    function dismissOnServer(a){
-      try {
-        const rawHref = a.href.startsWith('http') ? a.href : ('https://www.neopets.com' + (a.href.startsWith('/') ? '' : '/') + a.href);
-        // Only fire the dismiss request against neopets.com itself — otherwise
-        // a malformed/injected href could be turned into an outbound request
-        // against an arbitrary domain.
-        const u = new URL(rawHref);
-        if (/(^|\.)neopets\.com$/i.test(u.hostname)){
-          fetch(withDelevent(rawHref), { credentials:'same-origin', cache:'no-store', method:'GET' })
-            .then(r => npNote403(r))
-            .catch(() => {});
-        }
-      } catch {}
-      if (a.delid){
-        try {
-          // CSS.escape guards against attribute injection if delid contains quotes.
-          const native = document.querySelector(`.alert-x[data-delid="${CSS.escape(a.delid)}"]`);
-          if (native) native.click();
-        } catch {}
-      }
-    }
-    const TRASH_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9 3h6a1 1 0 0 1 1 1v1h4a1 1 0 1 1 0 2h-1.08l-1.2 12.03A3 3 0 0 1 14.74 22H9.26a3 3 0 0 1-2.98-2.97L5.08 7H4a1 1 0 1 1 0-2h4V4a1 1 0 0 1 1-1Zm1 2h4V4h-4v1Zm-2.92 2l1.17 11.77A1 1 0 0 0 9.26 20h5.48a1 1 0 0 0 1-1.03L16.92 7H7.08ZM10 9a1 1 0 0 1 1 1v7a1 1 0 1 1-2 0v-7a1 1 0 0 1 1-1Zm4 0a1 1 0 0 1 1 1v7a1 1 0 1 1-2 0v-7a1 1 0 0 1 1-1Z"/></svg>';
-
-    /* Extract a <li> into an alert object.
-       `live=true` → we're reading the current page: we can use
-       getComputedStyle to grab the real icon URL (beta icons
-       come from background-image on the element). */
-    function extractAlertFromLi(li, live){
-      const a    = li.querySelector('a[href]');
-      const h4   = li.querySelector('h4');
-      const p    = li.querySelector('p');
-      const h5   = li.querySelector('h5');
-      const iconEl = li.querySelector('.alerts-tab-item-icon__2020, [class*="alerts-tab-eventcode-"]');
-      const xEl  = li.querySelector('.alert-x');
-
-      let iconUrl = '';
-      if (iconEl && live){
-        const bg = getComputedStyle(iconEl).backgroundImage || '';
-        const m  = bg.match(/url\((['"]?)(.*?)\1\)/);
-        if (m && m[2] && m[2] !== 'none') iconUrl = m[2];
-      }
-      if (!iconUrl && iconEl){
-        const titleStr = (h4?.textContent || '').trim().toLowerCase();
-        const known = ['neomail','events','battledome','guild','trade','auction','council'];
-        const hit = known.find(k => titleStr.includes(k));
-        if (hit) iconUrl = `https://images.neopets.com/alerts/${hit}.png`;
-      }
-
-      return {
-        href:  a?.getAttribute('href') || 'https://www.neopets.com/allevents.phtml',
-        title: (h4?.textContent || 'Notification').trim(),
-        text:  cleanText(p?.textContent || ''),
-        time:  (h5?.textContent || '').trim(),
-        icon:  iconUrl || FALLBACK_ICON,
-        delid: xEl?.getAttribute('data-delid') || '',
-      };
-    }
-
-    function readFromCurrentPage(){
-      const lis = document.querySelectorAll('#alerts li, #alertstab__2020 ul li');
-      if (!lis.length) return null;
-      return [...lis].slice(0, MAX_ITEMS).map(li => extractAlertFromLi(li, true));
-    }
-    function readFromClassicPage(){
-      // CLASSIC only exposes a single alert (the last one) via td.eventIcon.
-      const td = document.querySelector('td.eventIcon, td.eventIcon.sf');
-      if (!td) return null;
-      const a   = td.querySelector('a[href]');
-      const img = td.querySelector('img');
-      const bld = td.querySelector('b');
-      const raw = (td.innerText || '');
-      const title = (bld?.textContent || '').trim();
-      const text = cleanText(raw.replace(bld?.textContent || '', '').replace(/»\s*See all events\s*«/i,''));
-      // Some classic pages ship an EMPTY td.eventIcon cell even with zero
-      // events. Rendering it produced a phantom red dot for the 1-2s until
-      // the network refresh replaced it with the real (empty) list. Only
-      // treat the cell as an alert when it carries actual content.
-      if (!title && !text) return null;
-      return [{
-        href:  a?.getAttribute('href') || 'https://www.neopets.com/allevents.phtml',
-        title: title || 'Notification',
-        text:  text,
-        time:  '',
-        icon:  img?.getAttribute('src') || FALLBACK_ICON,
-        delid: '',
-      }];
-    }
-    function parseHtmlForAlerts(html){
-      const dom = new DOMParser().parseFromString(html, 'text/html');
-      const lis = dom.querySelectorAll('#alerts li, #alertstab__2020 ul li');
-      if (!lis.length){
-        // Distinguish "alerts module present but EMPTY" (a definitive
-        // "no alerts" answer → []) from "alerts markup absent from this
-        // page" (null → the caller may probe another page).
-        const container = dom.querySelector('#alerts, #alertstab__2020');
-        return container ? [] : null;
-      }
-      return [...lis].slice(0, MAX_ITEMS).map(li => extractAlertFromLi(li, false));
-    }
-    async function fetchUrl(url){
-      if (np403BackoffActive()) return null;
-      try {
-        const res = await fetch(url, { credentials:'same-origin', cache:'no-store' });
-        npNote403(res);
-        if (!res.ok) return null;
-        return await res.text();
-      } catch { return null; }
-    }
-    async function fetchNotifs(){
-      let html = await fetchUrl('/nf.phtml');
-      let alerts = html ? parseHtmlForAlerts(html) : null;
-      // [] is truthy here — the alerts module was found and it is empty.
-      // That's a real answer: do NOT burn a second request on '/'.
-      if (alerts) return alerts;
-      html = await fetchUrl('/');
-      alerts = html ? parseHtmlForAlerts(html) : null;
-      return alerts || [];
-    }
-
-    function readCache(){
-      try {
-        const raw = sessionStorage.getItem(CACHE_KEY);
-        if (!raw) return null;
-        const j = JSON.parse(raw);
-        if (!j?.t || (Date.now() - j.t) > CACHE_TTL) return null;
-        return j.alerts;
-      } catch { return null; }
-    }
-    function writeCache(alerts){
-      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), alerts })); } catch {}
-    }
-
-    function render(alerts){
-      const list = menu.querySelector('#npxBellList');
-      const hidden = readHidden();
-      const visible = (alerts || []).filter(a => !hidden.has(alertKey(a)));
-
-      if (!visible.length){
-        list.innerHTML = `<div class="bellEmpty">No notifications.</div>`;
-        dot.hidden = true;
-        return;
-      }
-      list.innerHTML = visible.map((a, i) => `
-        <a class="bellItem" href="${esc(withDelevent(a.href))}" data-idx="${i}">
-          <div class="bellIcon" style="background-image:url('${esc(a.icon)}')"></div>
-          <h4 class="bellTitle">${esc(a.title)}</h4>
-          <p class="bellText">${esc(a.text)}</p>
-          ${a.time ? `<h5 class="bellTime">${esc(a.time)}</h5>` : ''}
-          <button type="button" class="bellX" title="Dismiss this notification" aria-label="Dismiss">${TRASH_SVG}</button>
-        </a>
-      `).join('');
-      dot.textContent = String(visible.length);
-      dot.hidden = false;
-
-      list.querySelectorAll('.bellItem').forEach(item => {
-        const idx = +item.dataset.idx;
-        const alert = visible[idx];
-        item.querySelector('.bellX').addEventListener('click', (e) => {
-          e.preventDefault(); e.stopPropagation();
-          dismissOnServer(alert);
-          const h = readHidden();
-          h.add(alertKey(alert));
-          writeHidden(h);
-          try { sessionStorage.removeItem(CACHE_KEY); } catch {}
-          item.remove();
-          if (!list.querySelector('.bellItem')){
-            render(alerts);
-          } else {
-            const left = list.querySelectorAll('.bellItem').length;
-            if (left > 0){ dot.textContent = String(left); }
-            else { dot.hidden = true; }
-          }
-        });
-      });
-    }
-
-    async function refresh(force = false){
-      // 1) Current page (META)
-      const fromPage = readFromCurrentPage();
-      if (fromPage && fromPage.length){
-        writeCache(fromPage);
-        render(fromPage);
-        return;
-      }
-      // 2) Current page (CLASSIC, single top alert)
-      const fromClassic = readFromClassicPage();
-      if (fromClassic && fromClassic.length){
-        // Not written to cache (incomplete), just rendered.
-        render(fromClassic);
-        // Continue in the background to fetch the full list.
-      }
-      // 3) Cache — an EMPTY cached list is a valid result ("no alerts").
-      // Treating [] as a miss made zero-alert users hit the network on
-      // every single page load (up to 2 page fetches each time) — enough
-      // extra traffic to trip Neopets' per-IP rate limiter, which then
-      // serves 403 "You don't have permission to access" pages.
-      if (!force){
-        const cached = readCache();
-        if (cached){
-          if (!fromClassic) render(cached);
-          return;
-        }
-      }
-      // 4) Network
-      const alerts = await fetchNotifs();
-      writeCache(alerts);
-      render(alerts);
-    }
-
-    let open = false;
-    function setOpen(o){
-      open = !!o;
-      menu.style.display = open ? 'block' : 'none';
-      if (open) refresh(false);
-    }
-    bell.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      setOpen(!open);
-    });
-    document.addEventListener('pointerdown', (ev) => {
-      if (!open) return;
-      const path = ev.composedPath ? ev.composedPath() : [];
-      if (path.some(n => n === bell || n === menu)) return;
-      setOpen(false);
-    }, true);
-
-    refresh(false);
   })();
 
   /* =========================================================
@@ -8809,11 +8416,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
-  // The Modern Interface's own bell is hidden (Neopets' bell is used, see setupBell), but its bellNotif() still
-  // fetches /nf.phtml or / whenever its 5-minute cache is empty. A cache stamped far in the future never expires.
-  const muteVendorAlerts = () => { try { sessionStorage.setItem('npqol_notifs_v2', JSON.stringify({ t: 9e15, alerts: [] })); } catch {} };
-  muteVendorAlerts();
-
   /* ─── Settings sync (www → NC Mall) ─── */
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1', 'npqol_inv_menubar_v1',
     'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_side_btns_v2', 'npqol_side_layout_v1',
@@ -8854,8 +8456,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const SHUFFLE = '<svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.5h2.2c3 0 4 7 7.1 7H14M2 11.5h2.2c1 0 1.8-.6 2.5-1.4M9.3 5.9c.6-.8 1.2-1.4 2.2-1.4H14M12 2.5l2 2-2 2M12 9.5l2 2-2 2"/></svg>';
   const SWAP = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13"/></svg>';
   const STATS_ICON = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 13V8.5M8 13V3M13 13V6"/></svg>';
-  const MAIL_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="3" fill="#ffd54a" stroke="#6b4a12" stroke-width="1.5"/><path d="M3.5 7l8.5 6.2L20.5 7" fill="none" stroke="#6b4a12" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-  const BELL_SVG = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.2 16.5h15.6L18 12.5V9a6 6 0 0 0-6-6zM9.8 19.5a2.4 2.4 0 0 0 4.4 0" fill="#fff" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>');
 
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
   let handleEl = null, tabEl = null, panelEl = null, dockOpen = false;
@@ -8888,7 +8488,7 @@ html[data-np-modern-interface] {
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
   .qrOverlay a, .qrPetName, .bankSettingsHead h3, #npUserTitle, #npBank .title,
-  #nppNotifHead span, #nppNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+  #nppNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
   div#boardTopic { border: 0 !important; }
@@ -9256,8 +8856,6 @@ html[data-np-modern-interface]:not(.np-keep-native-bg) body .theme-bg {
   font-display: swap;
 }
 @keyframes nppIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
-@keyframes nppPop { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
-@keyframes nppRing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } }
 @keyframes nppSpin { to { transform: rotate(360deg); } }
 @keyframes nppCopyPop { 0% { transform: scale(.6); } 100% { transform: scale(1); } }
 @keyframes nppFlash { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .2; transform: scale(.7); } }
@@ -9757,14 +9355,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 #menu-premium::before { content: none; }
 .npp-prembg { display: none; position: absolute; overflow: hidden; box-sizing: border-box; border-radius: var(--npp-menu-radius, 0 0 16px 16px); pointer-events: none; }
 .npp-prembg::before { content: ""; position: absolute; inset: -24px; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--npLeftBarImg, none) center / cover no-repeat, var(--npLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); }
-.npp-bell { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); z-index: 2; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; pointer-events: auto; transition: background .2s; }
-.npp-bell:hover, .npp-bell[aria-expanded="true"] { background: rgba(255,255,255,.2); }
-.npp-bell svg { width: 24px; height: 24px; display: block; filter: var(--npp-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.5))); }
-.npp-bell-cnt { display: none; position: absolute; top: -1px; right: -1px; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; align-items: center; justify-content: center; border-radius: 9px; background: #ff5a5a; color: #fff; font: normal 700 10.5px/1 'Outfit', system-ui, sans-serif; text-shadow: none; box-shadow: 0 0 0 2px rgba(0,0,0,.3); }
-.npp-bell.has .npp-bell-cnt { display: flex; animation: nppPop .35s cubic-bezier(.3, 1.6, .5, 1); }
-.npp-bell.has svg { animation: nppRing 1.2s ease 1; transform-origin: 50% 10%; }
-@keyframes nppPop { 0% { transform: scale(.4); } 100% { transform: scale(1); } }
-@keyframes nppRing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(16deg); } 30% { transform: rotate(-14deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-6deg); } }
 .npp-logo { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); z-index: 2; display: flex; align-items: center; text-decoration: none; pointer-events: auto; }
 .npp-logo img { height: 43px; max-width: 215px; display: block; filter: var(--npp-logo-filter, none); }
 .npp-logo span { display: none; font: 400 32px 'CafeteriaBlack', Georgia, serif; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
@@ -11381,14 +10971,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (owner) LSset('npp_theme_' + owner, JSON.stringify(readTheme()));
     try { const t = JSON.parse(LSget('npp_theme_' + u) || 'null'); if (t) writeTheme(t); } catch {}
   }
-  function clearNotifCaches() {
-    try {
-      const keys = [];
-      for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); if (k && /notif/i.test(k)) keys.push(k); }
-      keys.forEach(k => sessionStorage.removeItem(k));
-    } catch {}
-    muteVendorAlerts();
-  }
   let petSyncUntil = 0;
   let acctChecked = false;
   let petSettled = true;
@@ -11419,7 +11001,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         return;
       }
       try { sessionStorage.setItem('npp_swapped', u); } catch {}
-      clearNotifCaches();
       if (owner) {
         const snap = {};
         ACCT_KEYS.forEach(k => { const v = LSget(k); if (v) snap[k] = v; });
@@ -11964,18 +11545,10 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk
 
   /* ───────────────────────────────── swap session ───────────────────────────────── */
   let swapBusy = false;
-  function clearNotifCaches() {
-    try {
-      const keys = [];
-      for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); if (k && /notif/i.test(k)) keys.push(k); }
-      keys.forEach(k => sessionStorage.removeItem(k));
-    } catch {}
-  }
   function swapAccount(onBusy, onDone) {
     apCollect();   // save this account's pets before leaving it
     if (swapBusy) return;
     swapBusy = true;
-    clearNotifCaches();
     if (onBusy) onBusy();
     let w = null; try { w = window.open('about:blank', '_blank'); } catch {}
     const go = () => {
@@ -12766,14 +12339,12 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
         swapAccount(() => { swapLink.lastElementChild.textContent = 'Swapping…'; swapLink.classList.add('busy'); }, () => { swapLink.lastElementChild.textContent = 'Swap'; swapLink.classList.remove('busy'); });
       });
     } else {
-      const logoutLink = q('.nppAcctStandaloneFoot a.nppLogout');
       const swapLink = q('.nppAcctStandaloneFoot a.nppSwap');
       if (swapLink) swapLink.addEventListener('click', (e) => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
         e.preventDefault();
         swapAccount(() => { swapLink.classList.add('busy'); }, () => { swapLink.classList.remove('busy'); });
       });
-      if (logoutLink) logoutLink.addEventListener('click', () => clearNotifCaches());
     }
 
     const syncBtn = q('.nppAcctSync:not(.nppAcctAllPets)');
