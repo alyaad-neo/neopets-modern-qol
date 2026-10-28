@@ -124,5 +124,3 @@
     mo.observe(root, { childList: true, subtree: true });
     setTimeout(() => mo.disconnect(), 90000);
   })();
-
-  if (NQ.base) { startLayout(); startHud(); startBackgrounds(); }

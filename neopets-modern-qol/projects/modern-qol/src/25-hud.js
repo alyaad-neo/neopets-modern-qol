@@ -1,6 +1,3 @@
-function startHud() {
-  if (document.getElementById('npHud')) return;
-
   const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
   function readLastGoodPetImg(){
     try { return JSON.parse(localStorage.getItem(ACTIVE_IMG_LS) || 'null'); }
@@ -10,7 +7,6 @@ function startHud() {
     if (!name || !url || !/\/cp\//.test(url)) return;
     try { localStorage.setItem(ACTIVE_IMG_LS, JSON.stringify({ name, url })); } catch {}
   }
-
   function _cacheRawPetImage(url){
     try {
       const cacheKey = 'npqol_pp_png:' + url;
@@ -32,7 +28,6 @@ function startHud() {
       probe.src = url;
     } catch {}
   }
-
   function _resolveActivePet(){
     try {
       const homeRaw = localStorage.getItem('jb_np_homedata_v2');
@@ -74,58 +69,7 @@ function startHud() {
     } catch {}
     return { name: '', sci: '', mood: '1' };
   }
-
-  try {
-    const qr = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
-    if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
-      localStorage.removeItem('npqol_qr_data_lastFetch');
-    }
-  } catch {}
-
   let _earlyActivePetImg = null;
-  (function preloadActivePet(){
-    try {
-      const { name, sci, mood } = _resolveActivePet();
-      if (!name) return;
-      const url = sci
-        ? `https://pets.neopets.com/cp/${sci}/${mood}/9.png`
-        : `https://pets.neopets.com/cpn/${encodeURIComponent(name)}/1/4.png`;
-      if (sci) saveLastGoodPetImg(name, url);
-      const cacheKey = 'npqol_pp_png:' + url;
-
-      const cached = localStorage.getItem(cacheKey);
-      const initialSrc = cached || url;
-
-      const img = document.createElement('img');
-      img.alt = '';
-      img.decoding = 'async';
-      try { img.fetchPriority = 'high'; } catch {}
-      img.addEventListener('load', () => img.classList.add('loaded'));
-      img.addEventListener('error', () => img.classList.remove('loaded'));
-      img.dataset.forName = name;
-      img.dataset.cpnUrl = url;
-      img.src = initialSrc;
-      if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
-      _earlyActivePetImg = img;
-
-      if (!cached){
-        setTimeout(() => _cacheRawPetImage(url), 1200);
-      }
-
-      const link = document.createElement('link');
-      link.rel = 'preload'; link.as = 'image'; link.href = url; link.crossOrigin = 'anonymous';
-      (document.head || document.documentElement).appendChild(link);
-
-      const qrSnap = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
-      const a = qrSnap?.data?.active || {};
-      [a.petpet, a.petpetpet].filter(Boolean).forEach(src => {
-        const l = document.createElement('link');
-        l.rel = 'preload'; l.as = 'image'; l.href = src; l.crossOrigin = 'anonymous';
-        (document.head || document.documentElement).appendChild(l);
-      });
-    } catch {}
-  })();
-
   const BANK_PIN = "";
   const BANK_PIN_LS = 'npqol_bank_pin_v1';
   function getBankPin(){
@@ -152,9 +96,7 @@ function startHud() {
   function clearBankPin(){
     try { localStorage.removeItem(BANK_PIN_LS); } catch {}
   }
-
   const now = () => Date.now();
-
   const HUD_CSS = `
   #npHud{
     z-index:var(--np-z-hud, 1000);
@@ -552,7 +494,6 @@ function startHud() {
   .bankSettingsRow.toggleOnly{ padding:6px 10px; }
   .bankSettingsRow.toggleOnly .topLine{ gap:10px; }
 
-
   @font-face {
     font-family: 'CafeteriaBlack';
     src: url('https://images.neopets.com/js/fonts/cafeteria-black.otf') format('opentype');
@@ -703,6 +644,59 @@ function startHud() {
     flex: 0 0 auto;
   }
   `;
+
+function startHud() {
+  if (document.getElementById('npHud')) return;
+
+  try {
+    const qr = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
+    if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
+      localStorage.removeItem('npqol_qr_data_lastFetch');
+    }
+  } catch {}
+
+  (function preloadActivePet(){
+    try {
+      const { name, sci, mood } = _resolveActivePet();
+      if (!name) return;
+      const url = sci
+        ? `https://pets.neopets.com/cp/${sci}/${mood}/9.png`
+        : `https://pets.neopets.com/cpn/${encodeURIComponent(name)}/1/4.png`;
+      if (sci) saveLastGoodPetImg(name, url);
+      const cacheKey = 'npqol_pp_png:' + url;
+
+      const cached = localStorage.getItem(cacheKey);
+      const initialSrc = cached || url;
+
+      const img = document.createElement('img');
+      img.alt = '';
+      img.decoding = 'async';
+      try { img.fetchPriority = 'high'; } catch {}
+      img.addEventListener('load', () => img.classList.add('loaded'));
+      img.addEventListener('error', () => img.classList.remove('loaded'));
+      img.dataset.forName = name;
+      img.dataset.cpnUrl = url;
+      img.src = initialSrc;
+      if (img.complete && img.naturalWidth > 0) img.classList.add('loaded');
+      _earlyActivePetImg = img;
+
+      if (!cached){
+        setTimeout(() => _cacheRawPetImage(url), 1200);
+      }
+
+      const link = document.createElement('link');
+      link.rel = 'preload'; link.as = 'image'; link.href = url; link.crossOrigin = 'anonymous';
+      (document.head || document.documentElement).appendChild(link);
+
+      const qrSnap = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
+      const a = qrSnap?.data?.active || {};
+      [a.petpet, a.petpetpet].filter(Boolean).forEach(src => {
+        const l = document.createElement('link');
+        l.rel = 'preload'; l.as = 'image'; l.href = src; l.crossOrigin = 'anonymous';
+        (document.head || document.documentElement).appendChild(l);
+      });
+    } catch {}
+  })();
 
   const styleEl = document.createElement('style');
   styleEl.id = 'npHudStyle';
@@ -2513,3 +2507,5 @@ function startHud() {
   })();
 
 }
+
+if (NQ.base) startHud();

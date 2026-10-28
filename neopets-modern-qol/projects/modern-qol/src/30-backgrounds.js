@@ -1,24 +1,41 @@
-function startBackgrounds() {
-  if (document.documentElement.dataset.npBgBoot === '1') return;
-  document.documentElement.dataset.npBgBoot = '1';
-
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
-
   const LS = {
     mainBgId:  'npqol_bg_main_v3',
     leftBarBg: 'npqol_bg_left_v3',
     recolor:   'npqol_recolor_site_v1',
     topbarBg:  'npqol_topbar_bg_v1',
   };
-  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { try { localStorage.removeItem(k); } catch {} });
-
   const BG_COLOR = '#000';
-
   const UI_Z = 2147483000;
   const HANDLE_W = 20;
   const HANDLE_H = 90;
   const SIDEBAR_W = 320;
+  function pageClass(){
+    const p = location.pathname.toLowerCase();
+    if (p.includes('/inventory.phtml'))     return 'np-page-inventory';
+    if (p.includes('/safetydeposit.phtml')) return 'np-page-sdb';
+    if (p.includes('/shop.phtml') || p.includes('/market.phtml')) return 'np-page-shop';
+    if (p.includes('/quickstock.phtml'))    return 'np-page-quickstock';
+    return '';
+  }
+  function mountLeftBar(){
+    if (document.getElementById('npLeftBar')) return;
+    const bar = document.createElement('div');
+    bar.id = 'npLeftBar';
+    bar.innerHTML = `<div id="npLeftBarBg"></div><div id="npLeftBarShade"></div>`;
+    (document.body || document.documentElement).appendChild(bar);
+  }
+  function onReady(fn){
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
+    else fn();
+  }
+
+function startBackgrounds() {
+  if (document.documentElement.dataset.npBgBoot === '1') return;
+  document.documentElement.dataset.npBgBoot = '1';
+
+  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { try { localStorage.removeItem(k); } catch {} });
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 
@@ -46,14 +63,6 @@ function startBackgrounds() {
   applyMainBg(LSget(LS.mainBgId));
   applyLeftBg(LSget(LS.leftBarBg));
 
-  function pageClass(){
-    const p = location.pathname.toLowerCase();
-    if (p.includes('/inventory.phtml'))     return 'np-page-inventory';
-    if (p.includes('/safetydeposit.phtml')) return 'np-page-sdb';
-    if (p.includes('/shop.phtml') || p.includes('/market.phtml')) return 'np-page-shop';
-    if (p.includes('/quickstock.phtml'))    return 'np-page-quickstock';
-    return '';
-  }
   const _pc = pageClass();
   if (_pc) document.documentElement.classList.add(_pc);
   document.documentElement.classList.toggle('np-recolor-site', LSget(LS.recolor) === '1');
@@ -501,21 +510,9 @@ function startBackgrounds() {
   `;
   (document.head || document.documentElement).appendChild(recolorStyle);
 
-  function mountLeftBar(){
-    if (document.getElementById('npLeftBar')) return;
-    const bar = document.createElement('div');
-    bar.id = 'npLeftBar';
-    bar.innerHTML = `<div id="npLeftBarBg"></div><div id="npLeftBarShade"></div>`;
-    (document.body || document.documentElement).appendChild(bar);
-  }
   if (document.body) mountLeftBar();
   else new MutationObserver((_, o) => { if (document.body){ mountLeftBar(); o.disconnect(); } })
     .observe(document.documentElement, { childList:true, subtree:true });
-
-  function onReady(fn){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
-    else fn();
-  }
 
   onReady(() => {
     if (document.getElementById('npBgHandle')) return;
@@ -670,3 +667,5 @@ function startBackgrounds() {
   });
 
 }
+
+if (NQ.base) startBackgrounds();

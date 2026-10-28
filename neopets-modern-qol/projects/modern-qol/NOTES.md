@@ -20,7 +20,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 ## Load order
 
 1. `05-utils` top-frame guard, `10-jellyneo` (popup on JellyNeo, click handler on neopets), `15-core` host guard.
-2. `15-core` sets `NQ.base = true` unless `npBaseOff()` (excluded paths `/`, `/~*`, faeriefragments, talesofdacardia, games with query; phones). Its last line then calls `startLayout()`, `startHud()`, `startBackgrounds()` (the base files `20/25/30`, each one function). Patcher code (40+) runs either way, but `boot()` only with `NQ.base`.
+2. `15-core` sets `NQ.base = true` unless `npBaseOff()` (excluded paths `/`, `/~*`, faeriefragments, talesofdacardia, games with query; phones). Each base file `20/25/30` declares its constants and pure functions at file level, then one `start*` function (`startLayout`, `startHud`, `startBackgrounds`) with the DOM-building steps, and ends with `if (NQ.base) start*();`. Patcher code (40+) runs either way, but `boot()` only with `NQ.base`.
 3. `90-main` defines `NQ.boot`. `bundle.js` calls `NQ.boot()` after `dailies-qol`, so `NQ.dailies` exists when the Premium menu and daily card are set up.
 
 ## Feature map
