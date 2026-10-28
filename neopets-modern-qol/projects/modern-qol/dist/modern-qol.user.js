@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.7
+// @version      5.0.8
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -6521,6 +6521,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
+  NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
     if (toneCache.has(src)) return set(toneCache.get(src));

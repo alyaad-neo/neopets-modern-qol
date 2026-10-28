@@ -111,6 +111,7 @@
       loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
+  NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
     if (toneCache.has(src)) return set(toneCache.get(src));

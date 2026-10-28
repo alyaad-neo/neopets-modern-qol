@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.19
+// @version      5.5.20
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -6587,6 +6587,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
+  NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
     if (toneCache.has(src)) return set(toneCache.get(src));
@@ -8238,48 +8239,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
   }
 
   // Name colour per card: white over art, dark when the pet image has a plain white background (mirrors the sidebar).
-function loadBlob(src, cb) {
-  // Fetch bytes via GM (no CORS needed) and hand back a same-origin blob URL; cb(null) on any failure.
-  try {
-    if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
-    GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
-  } catch { cb(null); }
-}
-  const TONE_KEY = 'nq_pet_tone_v1';
-  function toneRead() { try { const o = JSON.parse(localStorage.getItem(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
-  function toneSave(src, dark) {
-    try {
-      const o = toneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
-      const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      localStorage.setItem(TONE_KEY, JSON.stringify(o));
-    } catch {}
-  }
-  function toneProbe(src, cb) {
-    // cb(dark, ok): ok=false on failure/timeout (resolves light, not persisted).
-    let fin = false, burl = null, tm = 0;
-    const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
-    tm = setTimeout(() => done(false, false), 3000);
-    try {
-      const im = new Image();
-      im.onerror = () => done(false, false);
-      im.onload = () => {
-        try {
-          const W0 = 48, cv = document.createElement('canvas'); cv.width = cv.height = W0;
-          const cx = cv.getContext('2d', { willReadFrequently: true });
-          cx.fillStyle = '#fff'; cx.fillRect(0, 0, W0, W0); cx.drawImage(im, 0, 0, W0, W0);
-          const p = 6, q = Math.round(W0 * 0.25), regs = [[0, 0], [W0 - p, 0], [0, W0 - p], [W0 - p, W0 - p], [0, W0 - q, p * 2, p * 2]];
-          let white = true;
-          for (const g of regs) {
-            const d = cx.getImageData(g[0], g[1], g[2] || p, g[3] || p).data; let rs = 0, gs = 0, bs = 0, n = 0;
-            for (let i = 0; i < d.length; i += 4) { rs += d[i]; gs += d[i + 1]; bs += d[i + 2]; n++; }
-            if (!n || rs / n < 240 || gs / n < 240 || bs / n < 240) { white = false; break; }
-          }
-          done(white, true);
-        } catch { done(false, false); }
-      };
-      loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
-    } catch { done(false, false); }
-  }
+  const { read: toneRead, save: toneSave, probe: toneProbe } = NQ.tone;
   const apToneCache = new Map(), apInflight = new Map(), apQueue = [];
   let apToneIO = null, apActive = 0;
   function apPump() {

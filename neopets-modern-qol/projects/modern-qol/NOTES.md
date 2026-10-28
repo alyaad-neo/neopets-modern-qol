@@ -40,7 +40,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 | Premium menu | 60-premium.js | `setupPremium`, `PREMIUM_ITEMS` |
 | Search tools, icon nesting, editor patches | 65-tools.js | `setupTools`, `setupNest`, `patchEditor` |
 | Neopets bell, footer, clock | 70-bell-clock.js | `setupBell`, `setupClock` |
-| Accounts list, pet card, pet image, name tone, dock | 75-pet.js | `renderPetInfo`, `syncPetImg`, `fixPetImg`, `petUI` |
+| Accounts list, pet card, pet image, name tone, dock | 75-pet.js | `renderPetInfo`, `syncPetImg`, `fixPetImg`, `petUI`, `NQ.tone` (also used by the drawer) |
 | Daily fold, scroll-top, shop prices, shopkeeper lock, keys, NC, bank | 80-page-tweaks.js | `setupDailyFold`, `highlightShopPrices`, `lockShopkeeper` |
 | Global listeners, per-account theme, account guard, login/logout stripping | 85-account.js | `accountGuard`, `swapTheme`, `stripUi` |
 | Defaults, synced settings, sidebar layout, nav, drawer, `boot()`, `build()`, home bg fix | 90-main.js | `boot`, `build`, `layoutSidebar` |

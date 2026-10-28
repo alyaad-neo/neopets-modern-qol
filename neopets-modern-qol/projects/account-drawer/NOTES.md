@@ -73,6 +73,7 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 - Lesson (duplicate pets): the same pet name was stored under two accounts (pet transfer / stale per-account snapshot) and the render listed every account, so it showed twice; the home carousel also has slick-cloned slides. Fix: collection skips .slick-cloned, apDedupe() runs on save and once on load (per-account by lowercase name; cross-account keeps the newest-collected account), render dedupes again.
 
 - 1.3.13: All Pets name tone via GM blob fetch (default light); CafeteriaBlack !important on card name/info and h2 (30px).
+- 1.3.25: tone helpers (`loadBlob`, `toneRead/Save/Probe`) come from modern-qol 75-pet via `NQ.tone`.
 
 ## 1.3.16-1.3.17
 - Lesson (pets lost after logout/swap): apDedupe moved pets to the newest-collected account, so one stale nq_qr_data save erased the real owner. Now apDedupe only dedupes inside an account; apRender alone picks the newest owner for display. apCollect also skips saves where half or more of the pets belong to another account (unless the home carousel confirms them).
