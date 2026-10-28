@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.3.4
+// @version      5.4.34
 // @description  Modern Interface patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
+// @match        *://items.jellyneo.net/*
 // @run-at       document-start
 // @exclude      *://www.neopets.com/
 // @exclude      *://www.neopets.com/index.phtml*
@@ -17,6 +18,8 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
+// @connect      pets.neopets.com
+// @connect      images.neopets.com
 // @connect      impress-2020.openneo.net
 // @connect      impress.openneo.net
 // @connect      account.neopets.com

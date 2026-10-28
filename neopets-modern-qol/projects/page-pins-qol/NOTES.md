@@ -46,3 +46,7 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 - `#nppPinned` has its own gold tint, border and inset left bar so it reads differently from `#nppRecent`.
 - The patcher's footer clock moved to the header, so `#nppBottom` no longer exists; the cards just append to `#nppFoot`.
+- 1.0.5: pin button is hidden (opacity 0, pointer-events none) until row hover/focus in both tabs, even when pinned; it overlays the text end, so rows no longer reserve right padding.
+
+## 1.0.6
+- Every page is recorded now: pageLabel strips a leading "Neopets - " from the title, then falls back to mainHeading() (first h1/h2 outside the MI UI) and pathLabel() (URL file name). labelFromUrl names browseshop (Shop: owner), market type=your (My Shop) and type=till (Shop Till).

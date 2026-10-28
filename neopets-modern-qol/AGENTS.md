@@ -13,7 +13,7 @@ Read this whole file before every task. Follow it exactly.
 ```
 AGENTS.md            this file
 build.js             combines split projects into one file
-bundle.js            builds the final combined upload from three projects
+bundle.js            builds the final combined upload from four projects
 projects/<name>/     one folder per script project
   NOTES.md           the map of that project. READ IT FIRST.
   <name>.user.js     single-file project: the script itself
@@ -82,7 +82,7 @@ vendor/              other people's scripts. READ ONLY. NEVER EDIT.
 
 ## Final bundle
 
-`modern-interface-patcher`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the three projects; never edit the bundle output. After any change to one of the three, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the three separate scripts must be disabled.
+`dailies-qol`, `modern-interface-patcher`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the four projects; never edit the bundle output. After any change to one of the four, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the four separate scripts must be disabled.
 
 ## Splitting a project
 
@@ -123,3 +123,37 @@ These are the folders in `projects/`. Each project's NOTES.md has the details. I
 - `page-pins-qol` — recently viewed pages and pinned pages.
 - `pet-trading-qol` — Pet Trading boards helper: a tradelist of UFT (Up For Trade) pets, plus Pet Auction House listing and bidding helpers. Never auto-bid or auto-submit.
 - `pound-qol`
+
+## Lessons learned (save tokens, avoid rework)
+
+Aly's priorities: 1) account safety, 2) minimal tokens. Read `projects/modern-interface-patcher/HANDOFF.md` for the current state.
+
+**You can't see the page. Don't guess.**
+- Before changing behaviour that depends on Neopets or vendor markup, give Aly ONE console snippet that returns the exact HTML or data needed (outerHTML sliced to about 1500 chars, or JSON.stringify of a storage key). Guessing cost many rounds this session (Quick Ref data shape, home carousel, pound page confusion).
+- For CSS that "doesn't apply", ask for `getComputedStyle(el).<prop>` plus the winning rule from DevTools before editing.
+- If Aly reports text that isn't in the code (`grep -r` on `projects` and `dist`), she's running an OLD script. Tell her to check the Tampermonkey version and disable duplicates.
+
+**CSS in the patcher is layered.**
+- Many sidebar rules exist 3–5 times (original, then a redesign override, then another override), plus vendor inline `!important` styles (e.g. the `PET_IMG_STYLE` constant). A new rule silently loses.
+- Before styling an element, grep EVERY rule for its selector and edit or delete the existing ones instead of appending another override block.
+
+**Design work.**
+- Ask Aly to pick a direction first (AskUserQuestion with 2–3 concrete options) before any redesign. Several blind full redesigns were rejected.
+- Wallpapers can be any colour, so text must sit on its own surface (frosted card), never directly on the wallpaper.
+- Iterate in small, screenshot-verified steps.
+
+**Shell and editing on this Windows machine (Git Bash).**
+- `sed -i` converts CRLF to LF. Never use it.
+- Backslashes and apostrophes inside shell-quoted JS get mangled; a heredoc `\\b` arrived as `\b`. Use the Edit tool, or a node script that reads its replacement text from a file. Prefer regexes without backslashes (e.g. `[^A-Za-z0-9_]` instead of `\b`).
+- patcher, account-drawer and dailies use CRLF; page-pins-qol is LF. Check with node after editing: count `\n` vs `\r\n`.
+
+**Token budget (measured 2026-10-27).** One long session cost ~$9 and hit the 5-hour limit: 15.7M cache-read tokens (the main chat re-reading its own long history every turn) vs subagents ~30%. Each subagent costs 55-90k tokens just to start cold and find its place. So:
+- **Keep chats short.** The biggest cost is a long main chat. After ~10-15 rounds, or when a feature is done, update HANDOFF.md and tell Aly to start a new chat.
+- **Do small edits inline, no agent.** A one-rule CSS change, a label rename, a version bump: grep the line, edit it, build. Cheaper than any agent.
+- **Use an agent only for multi-step work in a file you haven't read** (roughly >5 edits or real investigation). Default model `haiku` for mechanical edits with exact line numbers/selectors given; `sonnet` only when it must investigate or design. Never opus for subagents.
+- **Brief = pointers, not prose.** Give the file, line numbers or grep terms, the exact CSS/values wanted, "don't read whole files", and a reply limit (<=60 words). Batch everything for one file into ONE agent per round; queue late additions with SendMessage instead of a new agent.
+- **Don't relay agent reports at length.** Verify with `node bundle.js` + one grep, then answer Aly in a few lines.
+- **Ask for a screenshot + DevTools computed style before a third blind CSS attempt** on the same element. Blind rounds were the biggest waste (strips under username and pet image took 3 rounds).
+- Resuming an agent re-reads its whole history (100-160k tokens); prefer a fresh short brief.
+
+**Load order.** Elements appear late (the vendor builds `#npHud` after boot). Any mount or move code must wait or observe, never run-once-and-give-up. Two bugs this session came from that.

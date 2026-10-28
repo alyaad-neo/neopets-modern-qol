@@ -48,3 +48,10 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 ## Lessons learned
 
 <!-- Short notes the agent adds when something tricky comes up. Newest first. -->
+
+- 1.0.6: Trudy's Surprise is marked done (NST cooldown) on visiting trudys_surprise.phtml. Its prizes are drawn in the game canvas, so SUCCESS_RE and the button-click listener never saw a play.
+- 1.0.1: renderSidebar writes into #nppDaily > .nppDBody, never #nppDaily itself, because innerHTML on the card wiped the patcher eye/fold button every time the countdown text changed (eye flickered in and out).
+- 1.0.2: whenUser() returns at once on /games/giveaway (bare text page, no appInsightsUserName), so the Expellibox panel no longer waits the full 10s poll.
+- 1.0.3: Expellibox links open a small popup (qasPopupLinks, composedPath for the shadow-root menu); dailies runs in popups only on /games/giveaway, panel gets .pop (fills window, resizeBy to fit, Close/Inventory buttons). Panel keyframes are nppQasIn and keep translate(-50%,-50%); the shared nppIn ended at transform:none, so the panel started off-centre then snapped to the middle.
+- 1.0.4: Expellibox result page hides the Modern Interface chrome (#npx-host, #npHud, #nppFoot, #npBgSidebar, #btnOverlay, #npxSideBtnHost) inside QAS_CSS; panel centres at left 50%.
+- 1.0.5: qasPopupLinks keeps the popup ref (qp) and closes it on focus/pointerdown back on the opener page.

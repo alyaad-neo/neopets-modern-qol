@@ -61,3 +61,26 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 
 <!-- Add notes here as they come up. -->
 - All Pets details: colour/species/level come from data.active (active pet) and from /home/ `.hp-carousel-nameplate` data-* attributes, only for pets already in the account list. Quick Ref redirects to /home/; its petCare popup and pound `petN_table` are NOT the user's pets.
+
+- #nppListsMod (Accounts / Pets tiles under the user card) is built by mountLists(); All Pets button removed from the drawer; user card restyled compact, #nppAcctTab hidden.
+
+## 1.3.10
+- Sidebar tile renamed "All Pets". Every saved account except the logged-in one has an X; removing confirms, then clears it from accounts/manual/NeoPass/seen/main and deletes its All Pets data and orphaned tags.
+- All Pets: pet names link to petlookup.phtml?pet=, account names to userlookup.phtml?user= (plain links, no fetch). Pet name is now white CafeteriaBlack text over the image bottom-left (hidden while the hover overlay shows).
+
+## 1.3.12
+- All Pets: name colour per card (apNameDark via canvas corner sampling, cached, lazy IntersectionObserver), alt font on pet text, UFT/Permie/Maybe pill badges under the Active badge (.apBadges).
+- Lesson (duplicate pets): the same pet name was stored under two accounts (pet transfer / stale per-account snapshot) and the render listed every account, so it showed twice; the home carousel also has slick-cloned slides. Fix: collection skips .slick-cloned, apDedupe() runs on save and once on load (per-account by lowercase name; cross-account keeps the newest-collected account), render dedupes again.
+
+- 1.3.13: All Pets name tone via GM blob fetch (default light); CafeteriaBlack !important on card name/info and h2 (30px).
+
+## 1.3.16-1.3.17
+- Lesson (pets lost after logout/swap): apDedupe moved pets to the newest-collected account, so one stale npqol_qr_data save erased the real owner. Now apDedupe only dedupes inside an account; apRender alone picks the newest owner for display. apCollect also skips saves where half or more of the pets belong to another account (unless the home carousel confirms them).
+- All Pets data and tags are mirrored to localStorage (npp_allpets_v1_bak, npp_allpets_tags_v1_bak) and merged back on read (newer t per account wins), so a reinstall or second script copy does not lose them. Footer "Delete data" button (data-act=wipe, confirm) clears both copies.
+
+## 1.3.18
+- All Pets: trash icon on each card overlay (data-act=delpet) deletes that pet name from every account entry + its orphaned tag. Accounts popup rows (.apAcRow) have delete (acdel, not the logged-in account) and block (acblock) buttons. Shared removal code is removeAccount(nm) (also used by the drawer X).
+- Block list: localStorage npp_ap_block_v1 (lowercase). Blocked accounts are never collected (apCollect), listed (apOrdered) or auto-added (autoAccts/noteAccount). Footer shows Blocked: pills; click one to unblock. apBlocked/apSetBlock are function declarations because autoAccts/noteAccount (earlier in the file) call them.
+
+## 1.3.19
+- All Pets trade pick mode: toolbar "Pick pets" (.apPickBtn, data-act=pick) switches to the UFT tab and adds data-pick checkboxes on UFT cards; apState.picked; the copy button (apTradeLbl) then copies only picked pets. Edit mode turns pick mode off.

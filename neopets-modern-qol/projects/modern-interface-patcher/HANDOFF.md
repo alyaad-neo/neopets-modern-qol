@@ -1,72 +1,43 @@
-# HANDOFF: modern-interface-patcher
+# HANDOFF: Modern QOL bundle (updated 2026-10-27)
 
-## Goal
+Read this first in a new chat. Then read AGENTS.md ("Lessons learned" section).
 
-- Keep `modern-interface-patcher`, `account-drawer`, and `page-pins-qol` as separate source projects for agent editing.
-- Ship one combined Tampermonkey file: `dist/Neopets - Modern QOL.user.js`.
-- Rebuild that bundle after every change to any of the three.
+## State
 
-## What's done
+- Upload file: `dist/Neopets - Modern QOL.user.js`, bundle `@version 5.4.34` (patcher 4.1.28, account-drawer 1.3.19, page-pins 1.0.6). Built by `node bundle.js` from 4 projects, in order: `dailies-qol`, `modern-interface-patcher`, `account-drawer`, `page-pins-qol`.
+- Git: last pushed commit `c938592` (5.3.3). Local unpushed commits up to `36e8c4c` (5.3.4). **Everything from 5.3.5 to 5.4.19 is uncommitted.** Ask Aly before committing; commit before starting big new work.
+- Nothing after ~5.3.0 has been verified in a browser by an agent. Aly tests and sends screenshots.
+- Token rules: read AGENTS.md "Token budget" first. Keep this chat short; small edits inline; haiku/sonnet agents only for multi-step work.
 
-- `bundle.js` builds the final file: strips each source's userscript header, keeps each body as its own IIFE, concatenates in order (patcher -> account drawer -> page pins), and runs `node --check`.
-- Bundle header lives in `projects/_bundle/00-header.js` at version `5.0.0`.
-- Current sources: patcher `4.0.2`, account drawer `1.0.2`, page pins `1.0.1`.
-- Current output: `dist/Neopets - Modern QOL.user.js` (236.8 KB, 3393 lines).
-- Patcher cleanup done: account drawer, avatar, and recent/pinned code removed; clock moved to the header; NP/NC and pet folds removed; logout text white; pinned cards use the gold style.
-- Avatar fix done in account drawer: mount-time `detectMode()`, plus standalone -> modern observer upgrade.
-- `node --check` passes for all three sources and the bundle.
-- Docs updated: `AGENTS.md`, `projects/_bundle/NOTES.md`, this file, and the patcher `NOTES.md` lessons.
+## Done and working (per Aly)
 
-## What's left
+- Dailies bundled in and shown only on the main account (`npp_main_account`). Premium-menu dailies trimmed on side accounts (`onMainAcct()`).
+- Pins overlap fix: pins mount waits for `#nppFoot`; `layoutSidebar` waits for `#npHud` (`hudWait`).
+- All Pets (account-drawer): passive tracker, ZERO page requests. Data `npp_allpets_v1`, tags `npp_allpets_tags_v1`. Duplicates fixed in 1.3.12 (`apDedupe`: a pet name lives under the most recently collected account only). 1.3.16: apCollect skips saving when half or more of the collected pets belong to another account (stale `npqol_qr_data` snapshot after a swap would otherwise let apDedupe steal them), unless the live home carousel confirms them; one local collect pass on every page load again. 1.3.17: apDedupe never deletes across accounts; data mirrored to localStorage backup; footer Delete data button. 1.3.18: per-pet delete, per-account delete/block in the Accounts popup, unblock pills in footer.
+- Sidebar light mode works (4.1.10: nested-CSS `&.npp-side-light` fix).
 
-- Aly: upload `dist/Neopets - Modern QOL.user.js` to Tampermonkey.
-- Aly: disable or remove the separate "Neopets - Accounts Drawer" and "Neopets - Recently Viewed + Pin Pages" scripts. The bundle keeps the patcher's name, so it updates that entry.
-- Browser test was not done here. Verify:
-  - header clock sits top-right and matches the nav link colour
-  - sidebar avatar renders
-  - account drawer opens, switches accounts, and NeoPass sync works
-  - recent and pinned cards populate; pinned cards use the gold style
-  - logout text is white
-  - NP/NC and pet cards have no fold button; daily notices still fold
-- For any source change: bump `projects/_bundle/00-header.js` `@version`, run `node bundle.js`, then upload the new `dist` file.
+## Sidebar layout now (5.4.19)
 
-## Decisions
+- All sidebar CSS overrides live at the END of `LAYOUT_CSS` in labelled blocks: "sidebar type scale", "top half tidy 4.1.11", "sidebar round 5/6/7". Edit these in place; don't add new override blocks.
+- User card -> NP/NC/Bank segmented strip (half overlaps the card bottom) -> Accounts / All Pets tiles (white in light mode, no counts) -> pet card (image full-bleed via inline `PET_IMG_STYLE`; name over the image bottom-left, hover shows subtitle pill above it + copy button; Lv/age + eye/edit/stats strip under the image; stats panel) -> Recent/Pinned (left-aligned, pin shows on hover).
+- Pet name colour: `npp_pet_tone_v1` localStorage cache (shared by patcher + account-drawer). Image fetched via GM_xmlhttpRequest blob (needs `@connect pets.neopets.com`, `images.neopets.com`), 48px canvas, corners all >=240 => black name, else white + shadow; pending names hidden, 3s timeout -> white.
+- Bank: drawer removed; strip has a Bank link with an inline SVG icon. No real Neopets bank icon URL exists (~40 probed). The nav's own Bank entry shows a shop icon from Neopets itself; fix only if Aly supplies a real icon URL.
+- Accounts drawer: X removes any saved account except the current one (also its All Pets data). Accounts drawer + All Pets window follow the dark/light toggle.
+- All Pets window: title "All Pets" (30px CafeteriaBlack), Active + UFT/Permie/Maybe badges top-right of image, pet name white CafeteriaBlack (black on plain-white images), names link to petlookup/userlookup (links only, never fetch userlookup). Copied trade list has no "(username)".
 
-- The three separate projects are the source of truth. Do not copy code into `_bundle` or `dist`.
-- Keep the patcher's `@name` and `@namespace` in the bundle: Tampermonkey updates the existing entry and preserves GM storage/theme. The output filename can differ (`Modern QOL`).
-- Do not merge the three bodies into one IIFE. Keep separate IIFEs; names such as `MODE`, `curUser`, `readAccts`, `$`, `LSget`, and `esc` repeat.
-- The combined header must keep `@connect account.neopets.com` for account-drawer NeoPass. The patcher header alone no longer has it.
-- Bundle header version is independent of source versions. Bump `5.0.0` -> `5.0.1` etc. on every source/bundle change.
-- `bundle.js` requires exactly one `.js` per source project. It discovers the filename, so versioned filenames are okay.
+## Open / unverified (start here)
 
-## Files changed
+1. Aly to confirm on Neopets 5.4.19: the two strips (NP/NC/Bank under username; Lv/age under pet image) are no longer broken/gapped; name colour speed; stats panel centring in light mode; Cafeteria font on All Pets names.
+2. If any strip is still wrong: ask for a screenshot + DevTools computed style of that element BEFORE editing.
+3. Possible stale scripts: always confirm the Tampermonkey version first if a report doesn't match the code.
 
-- New: `bundle.js`
-- New: `projects/_bundle/00-header.js`
-- New: `projects/_bundle/NOTES.md`
-- New: `dist/Neopets - Modern QOL.user.js` (generated; never edit)
-- New: `projects/modern-interface-patcher/HANDOFF.md`
-- `AGENTS.md` — final bundle workflow
-- `projects/modern-interface-patcher/Neopets - Modern Interface PATCHER-4.0.0.js` — `4.0.2`: cleanup, clock, folds
-- `projects/modern-interface-patcher/NOTES.md` — feature map + lessons
-- `projects/account-drawer/Neopets - Accounts Drawer-1.0.0.js` — `1.0.2`: avatar fix, white logout
-- `projects/account-drawer/NOTES.md`
-- `projects/page-pins-qol/Neopets - Recently Viewed + Pin Pages-1.0.0.js` — `1.0.1`: gold pinned style
-- `projects/page-pins-qol/NOTES.md`
+## Page and data facts (verified from Aly's console output)
 
-## Tricky things to watch out for
-
-- Stale `dist` is the main risk. Any edit to any of the three must end with `node bundle.js`.
-- Bump the bundle header version, not just the source version, or Tampermonkey may not offer the update.
-- `bundle.js` strips through the first `// ==/UserScript==`; source headers must stay at byte 0. Do not add a BOM or preamble.
-- Page-pins is `@grant none` standalone but sandboxed in the bundle because the patcher grants `unsafeWindow`. It already uses `W = unsafeWindow`; verify localStorage/pins after changes.
-- Account drawer `MODE` must be detected at mount, not document-start. `#npUser` is absent at document-start; the observer upgrades standalone -> modern.
-- The clock is in the shadow header `.bar`, not the footer. `#nppBottom` no longer exists; page-pins appends to `#nppFoot`.
-- `setupFold()` is gone. Do not re-add a fold button to `#npNp` or `#npActivePet`. `setupDailyFold()` remains.
-- Keep the auth-page exclusions in the bundle header; all three sources skip login/logout.
-- Do not rename the bundle's `@name`/`@namespace` casually. It would create a new Tampermonkey entry and lose existing GM storage/theme.
-- The bundle is generated. Never hand-edit `dist/`.
-
-## First step for the next agent
-
-Read `AGENTS.md`, `projects/_bundle/NOTES.md`, and this file. For a feature fix, edit the owning source project, rebuild the bundle, and tell Aly the single file to upload.
+- `localStorage.npqol_qr_data` = `{ts, data:{pets:[{name, sci:'', actions:[…], isActive}], active:{name, colour, species, gender, level…}}}`. Only the active pet has colour/species.
+- The patcher swaps per-account localStorage keys on an account change (`ACCT_KEYS`, which includes `npqol_qr_data`), so right after a swap the Quick Ref data is the new account's OLD snapshot.
+- `/home/` carousel: `.hp-carousel-pet` and `.hp-carousel-nameplate` carry `data-name`, `data-species`, `data-color`, `data-gender`, `data-level`, `data-active`, `data-petimage`. Slides can be `slick-cloned` duplicates.
+- `quickref.phtml` redirects to `/home/`. The home page `petCare*` popup and the pound page's `petN_table` are NOT the user's pets.
+- Crisp pet image: `https://pets.neopets.com/cpn/<Name>/1/7.png` (600px). Dock `.qrPet` has `data-bg` and `data-name`.
+- `userlookup.phtml` shows a captcha. NEVER fetch it from scripts (ban risk; Aly's #1 priority is safety).
+- The vendor Modern Interface script is NOT in `vendor/` (only a README). Its markup is unseen; ask Aly for HTML via console snippets.
+4. Dailies (5.4.23): eye flicker fixed. STILL OPEN, waiting on Aly console output: move #nppDaily smaller + anchored right above the quick icons (no overlap when the window is short); premium dropdown shows every daily as available; Expellibox styling works; 5.4.24 removed its 10s delay. 5.4.25 (dailies 1.0.3): Expellibox opens in a small popup sized to the result panel; panel no longer jumps (own keyframes). 5.4.26: Expellibox page hides header/sidebar; JellyNeo icon on item panels opens a small price popup at the mouse (patcher top IIFE). 5.4.27: both popups close when Aly clicks back on Neopets. JN price confirmed correct by Aly. 5.4.28: card drops the JN checkbox (input, empty label). Unverified. Light-mode Recent/Pinned rows, pet link buttons now white; .rEmpty dark in light mode.

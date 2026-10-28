@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.4
+// @version      1.0.6
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -55,9 +55,8 @@
 #nppRecent .rHead, #nppPinned .rHead { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); padding: 0 2px 2px; }
 #nppRecent .rList, #nppPinned .rList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 106px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; padding-right: 3px; }
 #nppRecent .rList li, #nppPinned .rList li { min-width: 0; position: relative; }
-#nppRecent .rList a, #nppPinned .rList a { padding-right: 30px !important; }
-#nppRecent .rPin, #nppPinned .rPin { position: absolute; top: 50%; right: 5px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
-#nppRecent .rList li:hover .rPin, #nppRecent .rPin:focus, #nppRecent li.isPinned .rPin, #nppPinned .rList li:hover .rPin, #nppPinned .rPin:focus, #nppPinned li.isPinned .rPin { opacity: 1; }
+#nppRecent .rPin, #nppPinned .rPin { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 7px; background: rgba(40,36,56,.92); pointer-events: none; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
+#nppRecent .rList li:hover .rPin, #nppRecent .rPin:focus, #nppPinned .rList li:hover .rPin, #nppPinned .rPin:focus { opacity: 1; pointer-events: auto; }
 #nppRecent li.isPinned .rPin, #nppPinned li.isPinned .rPin { color: #ffd166; }
 #nppRecent .rPin:hover, #nppPinned .rPin:hover { background: rgba(255,255,255,.14); color: #fff; }
 #nppRecent .rPin svg, #nppPinned .rPin svg { width: 13px; height: 13px; }
@@ -83,7 +82,7 @@
 #nppPinsMod .rList { max-height: 90px; gap: 3px; overflow-y: auto; scrollbar-width: thin; }
 #nppPinsMod .rList:empty::before { content: "Nothing here yet"; font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.55); padding: 4px 2px; }
 #nppPinsMod .rList li { flex: 0 0 auto; }
-#nppPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 30px 0 8px !important; }
+#nppPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 8px !important; }
 #nppPinsMod .rList b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Fallback footer (modern interface without core) */
@@ -137,6 +136,26 @@
     if (/petlookup/.test(p) && q.get('pet')) return 'Pet lookup: ' + q.get('pet');
     if (/topic/.test(p) && q.get('topic')) return 'Neoboard topic ' + q.get('topic');
     if (/neoboard/.test(p) && q.get('board')) return boardName(q.get('board')) || 'Neoboard board ' + q.get('board');
+    if (/browseshop/.test(p) && q.get('owner')) return 'Shop: ' + q.get('owner');
+    if (/market/.test(p) && q.get('type') === 'your') return 'My Shop';
+    if (/market/.test(p) && q.get('type') === 'till') return 'Shop Till';
+    return '';
+  }
+  // Last-resort label from the URL path, e.g. /island/tradingpost.phtml -> "Tradingpost".
+  function pathLabel(href) {
+    let u; try { u = new URL(href, 'https://www.neopets.com/'); } catch { return ''; }
+    const seg = u.pathname.split('/').filter(Boolean), last = (seg.pop() || '').replace(/\.(phtml|php|html?)$/i, '');
+    const w = (last && last !== 'index' ? last : seg.pop() || '').replace(/[_-]+/g, ' ').trim();
+    return w ? w.charAt(0).toUpperCase() + w.slice(1) : '';
+  }
+  // First real page heading outside the Modern Interface UI (old pages often have the plain title "Neopets").
+  function mainHeading() {
+    const UI = '#npHud, #nppFoot, #npLeftBar, #btnOverlay, #npBgSidebar, #npx-host, #nppRecent, #nppPinned, #nppStandaloneRecent, #npxSideBtnHost, #nppAP, #nppAcctDrawer';
+    for (const el of document.querySelectorAll('h1, h2')) {
+      if (el.closest(UI)) continue;
+      const x = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (x.length >= 3 && x.length <= 60 && !GENERIC_NB.test(x) && !/hold on/i.test(x)) return x;
+    }
     return '';
   }
   function headingLabel() {
@@ -155,9 +174,10 @@
     if (h) return h;
     if (/neoboard/i.test(location.pathname) && fromUrl) return fromUrl;
     if (fromUrl && /userlookup|petlookup/i.test(location.pathname)) return fromUrl;
-    let t = (document.title || '').replace(/\s*[|\-–—]\s*Neopets.*$/i, '').trim();
-    if (/^hold on/i.test(t)) t = '';
-    return t || fromUrl;
+    if (fromUrl && /browseshop|market/i.test(location.pathname)) return fromUrl;
+    let t = (document.title || '').replace(/\s*[|\-–—]\s*Neopets.*$/i, '').replace(/^Neopets\s*[|\-–—:]\s*/i, '').trim();
+    if (/^(hold on|neopets)$/i.test(t) || /^hold on/i.test(t)) t = '';
+    return t || fromUrl || mainHeading() || pathLabel(location.href);
   }
   function recentLabel(href, t) {
     const fu = labelFromUrl(href), generic = !t || /^(hold on|neoboards?|neoboard (board|topic) \d)/i.test(t);
@@ -179,7 +199,7 @@
     }
     const title = pageLabel();
     if (!title) return;
-    if (!labelFromUrl(location.href) && /^neopets\b/i.test(title)) return;
+    if (/^neopets$/i.test(title)) return;
     let rec = []; try { rec = JSON.parse(LSget(RECENT_KEY) || '[]') || []; } catch {}
     const u = location.href;
     const p = (location.pathname + location.search).slice(0, 70);

@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.3.4
+// @version      5.4.34
 // @description  Modern Interface patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
+// @match        *://items.jellyneo.net/*
 // @run-at       document-start
 // @exclude      *://www.neopets.com/
 // @exclude      *://www.neopets.com/index.phtml*
@@ -17,6 +18,8 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
+// @connect      pets.neopets.com
+// @connect      images.neopets.com
 // @connect      impress-2020.openneo.net
 // @connect      impress.openneo.net
 // @connect      account.neopets.com
@@ -42,7 +45,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
-  if (isPopup) return;
+  if (isPopup && !/^\/games\/giveaway(\/|$)/i.test(path)) return;   // the Expellibox popup still gets its result panel
   const isNc = location.hostname.toLowerCase() === 'ncmall.neopets.com';
 
   /* ═══════════════════════════════ dailies data ═══════════════════════════════ */
@@ -164,6 +167,8 @@
   let acctUser = '';
   const onMain = () => { const m = LSget('npp_main_account').toLowerCase(); return !m || (!!acctUser && acctUser.toLowerCase() === m); };
   function whenUser(cb) {
+    // The Expellibox result page is bare text and never sets appInsightsUserName: don't wait 10s for it.
+    if (/^\/games\/giveaway(\/|$)/i.test(location.pathname)) { acctUser = LSget('npqol_hud_username'); cb(); return; }
     let tries = 0;
     const iv = setInterval(() => {
       let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {}
@@ -211,8 +216,12 @@
     done: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>',
     err: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   };
-  const QAS_CSS = `#nppQas { position: fixed; z-index: 1500; left: calc(50% + var(--np-col-width, 0px) / 2); top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 40px)); box-sizing: border-box; padding: 0 0 22px; overflow: hidden; border-radius: 22px; background: #fff; box-shadow: 0 22px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06); color: #1f2937; text-align: center; font: 500 15px/1.45 'Outfit', system-ui, sans-serif; animation: nppIn .35s ease; }
-@keyframes nppIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+  // The result page hides the Modern Interface header/sidebar, so the panel centres on the whole window.
+  const QAS_CSS = `#npx-host, #npHud, #nppFoot, #npBgSidebar, #btnOverlay, #npxSideBtnHost { display: none !important; }
+#nppQas { position: fixed; z-index: 1500; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 40px)); box-sizing: border-box; padding: 0 0 22px; overflow: hidden; border-radius: 22px; background: #fff; box-shadow: 0 22px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06); color: #1f2937; text-align: center; font: 500 15px/1.45 'Outfit', system-ui, sans-serif; animation: nppQasIn .35s ease; }
+@keyframes nppQasIn { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes nppQasFade { from { opacity: 0; } to { opacity: 1; } }
+#nppQas.pop { left: 0; top: 0; transform: none; width: 100%; border-radius: 0; box-shadow: none; animation: nppQasFade .25s ease; }
 #nppQas, #nppQas * { box-sizing: border-box; font-family: 'Outfit', system-ui, sans-serif; }
 #nppQas .top { padding: 28px 24px 18px; background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
 #nppQas.ok { --c1: #3cc774; --c2: #1f9e55; } #nppQas.done { --c1: #f6b73c; --c2: #e08a12; } #nppQas.err { --c1: #ef6b6b; --c2: #cf3b3b; }
@@ -231,14 +240,30 @@
     const done = !res.ok && /tomorrow|already|come back|back later/i.test(res.msg);
     const kind = res.ok ? 'ok' : done ? 'done' : 'err';
     const title = res.ok ? 'Success!' : done ? 'Done for today' : 'That didn’t work';
-    const st = document.createElement('style'); st.id = 'nppQasCss'; st.textContent = QAS_CSS; (document.head || root).appendChild(st);
-    const el = document.createElement('div'); el.id = 'nppQas'; el.className = kind;
+    const pop = isPopup;   // opened by qasPopupLinks(): fill the small window and size it to the panel
+    const st = document.createElement('style'); st.id = 'nppQasCss'; st.textContent = QAS_CSS + (pop ? '\nhtml, body { margin: 0; background: #fff; }' : ''); (document.head || root).appendChild(st);
+    const el = document.createElement('div'); el.id = 'nppQas'; el.className = kind + (pop ? ' pop' : '');
     const CD_MS = (7 * 60 + 7) * 60000;
     el.innerHTML = `<div class="top"><div class="ico">${QAS_ICONS[kind]}</div><h2>${esc(title)}</h2></div>`
       + (res.msg ? `<div class="msg">${esc(res.msg)}</div>` : '')
       + (res.ok ? `<div class="next">Next play in ${cdText(CD_MS)}</div>` : done ? `<div class="next">Next play within ${cdText(CD_MS)}</div>` : '')
-      + `<div class="btns"><a class="go" href="/games/giveaway/">Back to the Expellibox</a><a href="https://www.neopets.com/inventory.phtml">Inventory</a></div>`;
+      + (pop
+        ? `<div class="btns"><a class="go" href="#" data-act="close">Close</a><a href="https://www.neopets.com/inventory.phtml" data-act="inv">Inventory</a></div>`
+        : `<div class="btns"><a class="go" href="/games/giveaway/">Back to the Expellibox</a><a href="https://www.neopets.com/inventory.phtml">Inventory</a></div>`);
     document.body.appendChild(el);
+    if (pop) {
+      document.title = QAS;
+      el.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-act]');
+        if (!a) return;
+        e.preventDefault();
+        if (a.dataset.act === 'inv') { try { window.opener.location.href = a.href; } catch { location.href = a.href; return; } }
+        window.close();
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
+      const fit = () => { try { window.resizeBy(0, el.offsetHeight - window.innerHeight); } catch {} };
+      fit(); setTimeout(fit, 400);
+    }
     [...document.body.childNodes].forEach(n => {
       if (n === el) return;
       if ((n.nodeType === 3 || (n.nodeType === 1 && n.tagName === 'PRE')) && /success=\d/.test(n.textContent)) n.remove();
@@ -264,6 +289,24 @@
     window.addEventListener('load', soon, { once: true });
     const watch = () => { if (document.body) { const mo = new MutationObserver(soon); mo.observe(document.body, { childList: true, subtree: true, characterData: true }); setTimeout(() => mo.disconnect(), 90000); } else setTimeout(watch, 100); };
     watch();
+  }
+
+  // Expellibox links (Premium menu, dailies menu) open a small popup instead, so the current page keeps its header
+  // and Premium menu. composedPath() reaches links inside the Modern Interface's open shadow root.
+  function qasPopupLinks() {
+    let qp = null;
+    const closeQp = () => { try { if (qp && !qp.closed) qp.close(); } catch {} qp = null; };   // click back here: popup closes
+    window.addEventListener('focus', closeQp);
+    document.addEventListener('pointerdown', closeQp, true);
+    document.addEventListener('click', (e) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      const a = (e.composedPath ? e.composedPath() : [e.target]).find(n => n && n.tagName === 'A' && n.href);
+      if (!a || !/\/games\/giveaway\/process_giveaway\.phtml/i.test(a.href)) return;
+      e.preventDefault();
+      const w = 460, h = 440, x = Math.round(window.screenX + (window.outerWidth - w) / 2), y = Math.round(window.screenY + (window.outerHeight - h) / 3);
+      qp = window.open(a.href, 'nppQas', `popup,width=${w},height=${h},left=${x},top=${y}`);
+      if (!qp) location.href = a.href;
+    }, true);
   }
 
   /* ─── watchDaily: detect "done" on the daily's own page ─── */
@@ -324,6 +367,8 @@
     if (!hitName) return;
     if (PREMIUM_CD[hitName] == null) return;
     const mark = (approx) => { const t = cdLoad()[hitName]; if (!(t && cdLeft(hitName, t) > 0)) { cdSet(hitName, Date.now(), approx); refreshAllMenus(); } };
+    // Trudy's prizes are drawn in the game canvas, so no text or button tells us it was played: visiting the page counts.
+    if (hitName === TRUDY) mark(false);
     const scan = () => {
       const area = document.querySelector('#content, #main, main, #container__2020') || document.body;
       const txt = (area && area.innerText) || '';
@@ -440,6 +485,7 @@
 #nppDaily:not(:has(.nppDHero)) { display: none !important; }
 #nppDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 #nppDaily, #nppDaily * { box-sizing: border-box; text-shadow: none !important; }
+#nppDaily .nppDBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 #nppDaily .nppDHero { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 13px; background: rgba(255,255,255,.08); color: #fff !important; text-decoration: none !important; overflow: hidden; transition: background .15s, transform .15s, border-color .15s; }
 #nppDaily .nppDHero:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.34); transform: translateY(-1px); }
 #nppDaily .nppDHero .nppDIco { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
@@ -580,12 +626,15 @@
     const urlOf = {}; DAILY_LINKS.forEach(([n, u]) => { urlOf[n] = u; });
     function renderSidebar() {
       const m = dailyModel();
-      if (!(m.snow || m.symol || m.tarla)) { d.hidden = true; d.innerHTML = ''; d._html = ''; return; }
+      // Render into a body child so the patcher's eye (fold) button, prepended to #nppDaily, is never wiped.
+      let body = d.querySelector(':scope > .nppDBody');
+      if (!body) { body = document.createElement('div'); body.className = 'nppDBody'; d.appendChild(body); }
+      if (!(m.snow || m.symol || m.tarla)) { d.hidden = true; body.innerHTML = ''; d._html = ''; return; }
       d.hidden = false;
       const html = (m.snow ? hero('Snowager', m.snow, SNOWFLAKE, 'https://www.neopets.com/winter/snowager.phtml') : '')
         + (m.symol ? hero('Symol Hole', m.symol, HOLE_SVG, urlOf['Symol Hole']) : '')
         + (m.tarla ? hero("Tarla's Toolbar", m.tarla, GIFT, urlOf["Tarla's Toolbar"]) : '');
-      if (d._html !== html) { d.innerHTML = html; d._html = html; }
+      if (d._html !== html) { body.innerHTML = html; d._html = html; }
     }
     renderSidebar();
     setInterval(renderSidebar, 1000);
@@ -598,6 +647,7 @@
     if (typeof GM_xmlhttpRequest === 'function') setTimeout(symolEnsure, 2500);
     watchDaily();
     watchQasalan();
+    if (!isPopup) qasPopupLinks();
     if (!isNc) { ncPull(); setInterval(ncPull, 4000); }
   }
 
@@ -636,6 +686,66 @@
 })();
 
 // ---------- modern-interface-patcher / Neopets - Modern Interface PATCHER-4.0.0.js ----------
+// JellyNeo price popup. On Neopets, the JellyNeo icon a browser extension adds to item panels (a.iph-icon--jellyneo)
+// opens a small popup at the mouse. Inside that popup (window.name nppJN) only the first result's card shows:
+// image, name, price. Normal JellyNeo visits are untouched.
+(function () {
+  'use strict';
+  if (window.top !== window) return;
+  const POP = 'nppJN';
+  if (location.hostname === 'items.jellyneo.net') {
+    if (window.name !== POP) return;
+    const CSS = `#nppJnCard { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: #fff; color: #1f2937; font: 600 14px/1.35 system-ui, sans-serif; text-align: center; }
+#nppJnCard .in { padding: 14px 16px 16px; }
+#nppJnCard p { margin: 0; }
+#nppJnCard img { display: block; width: 80px; height: 80px; margin: 0 auto 6px; image-rendering: auto; }
+#nppJnCard a { color: inherit; text-decoration: none; }
+#nppJnCard .price-history-link { display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 999px; background: #f3f4f6; font-size: 15px; font-weight: 800; color: #111827; }
+#nppJnCard .x { position: fixed; top: 6px; right: 6px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: #f3f4f6; color: #374151; font: 700 16px/26px system-ui, sans-serif; cursor: pointer; padding: 0; }
+#nppJnCard .x:hover { background: #e5e7eb; }
+html.nppJn, html.nppJn body { overflow: hidden !important; }`;
+    let tries = 0;
+    const show = () => {
+      if (document.getElementById('nppJnCard')) return;
+      const img = document.querySelector('img.item-result-image'), res = img && img.closest('p');
+      if (!res) { if (++tries < 40) setTimeout(show, 150); return; }
+      const st = document.createElement('style'); st.textContent = CSS; (document.head || document.documentElement).appendChild(st);
+      const card = document.createElement('div'); card.id = 'nppJnCard';
+      const inner = document.createElement('div'); inner.className = 'in';
+      inner.appendChild(res.cloneNode(true));
+      inner.querySelectorAll('input, label:empty').forEach(n => n.remove());   // JellyNeo's select-items checkbox
+      inner.querySelectorAll('br').forEach(b => b.replaceWith(document.createElement('div')));
+      inner.querySelectorAll('a[href]').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+      card.innerHTML = '<button class="x" type="button" title="Close (Esc)">×</button>';
+      card.appendChild(inner);
+      document.body.appendChild(card);
+      document.documentElement.classList.add('nppJn');
+      card.querySelector('.x').addEventListener('click', () => window.close());
+      try { window.resizeBy(0, inner.offsetHeight + 8 - window.innerHeight); } catch {}
+    };
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
+    window.addEventListener('blur', () => window.close());   // click back on Neopets: the popup goes away
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once: true }); else show();
+    return;
+  }
+  if (!/^(www\.)?neopets\.com$/i.test(location.hostname)) return;
+  let jn = null;
+  document.addEventListener('click', (e) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    const a = (e.composedPath ? e.composedPath() : [e.target]).find(n => n && n.classList && n.classList.contains('iph-icon--jellyneo') && n.href);
+    if (!a) return;
+    e.preventDefault(); e.stopPropagation();
+    try { if (jn && !jn.closed) jn.close(); } catch {}
+    const w = 240, h = 230, x = Math.max(0, Math.round(e.screenX - w / 2)), y = Math.max(0, Math.round(e.screenY + 18));
+    jn = window.open(a.href, POP, `popup,width=${w},height=${h},left=${x},top=${y}`);
+    if (!jn) window.open(a.href, '_blank', 'noopener');
+  }, true);
+  // Clicking back on Neopets closes the popup too (works even when the script isn't running inside it). Local only.
+  const closeJn = () => { try { if (jn && !jn.closed) jn.close(); } catch {} jn = null; };
+  window.addEventListener('focus', closeJn);
+  document.addEventListener('pointerdown', closeJn, true);
+})();
+
 (function () {
   'use strict';
 
@@ -652,6 +762,11 @@
   const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
+
+  // The Modern Interface's own bell is hidden (Neopets' bell is used, see setupBell), but its bellNotif() still
+  // fetches /nf.phtml or / whenever its 5-minute cache is empty. A cache stamped far in the future never expires.
+  const muteVendorAlerts = () => { try { sessionStorage.setItem('npqol_notifs_v2', JSON.stringify({ t: 9e15, alerts: [] })); } catch {} };
+  muteVendorAlerts();
 
   /* ─── Settings sync (www → NC Mall) ─── */
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1', 'npqol_inv_menubar_v1',
@@ -910,7 +1025,8 @@ html[data-np-modern-interface] {
   #npUserTitle { color: #fff !important; text-shadow: 0 2px 6px rgba(0,0,0,.7) !important; }
   #npUser .meta .k { opacity: .85 !important; }
   #npUserGear, #npUserRefresh, #npUser .shieldSlot, #npUser .avatarSlot, #npUser .meta, #npUser .spinner { display: none !important; }
-  #npUser { min-height: 0 !important; padding: 12px 12px 24px !important; margin-bottom: 8px; }
+  #npUser { min-height: 0 !important; padding: 12px !important; margin-bottom: 8px; border-radius: 14px !important; }
+  #nppAcctTab { display: none !important; }
   #npUser .rightSide { display: grid !important; grid-template-columns: 48px minmax(0, 1fr); column-gap: 11px; row-gap: 5px; align-items: center; width: 100%; }
   #npUser .name { grid-column: 2; grid-row: 1; min-width: 0; max-width: 100%; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
   #npUserTitle { font-size: 24px !important; }
@@ -977,7 +1093,7 @@ html[data-np-modern-interface] {
   #nppPetInfo .nppChip.gF { color: #ffa6d2; }
   #nppPetInfo .nppChip.gM { color: #8cc4ff; }
 
-  #nppTools .nppSearch button img, #nppBellBtn img { width: calc(var(--npp-ic) * .85) !important; height: calc(var(--npp-ic) * .85) !important; object-fit: contain !important; filter: var(--npp-ico-shadow) !important; }
+  #nppTools .nppSearch button img { width: calc(var(--npp-ic) * .85) !important; height: calc(var(--npp-ic) * .85) !important; object-fit: contain !important; filter: var(--npp-ico-shadow) !important; }
   #btnOverlay .col [data-npp-nested] { display: none !important; }
   #btnOverlay .col.left { gap: 6px !important; row-gap: 6px !important; }
   #btnOverlay .col.left > * { margin-top: 0 !important; margin-bottom: 0 !important; }
@@ -989,25 +1105,12 @@ html[data-np-modern-interface] {
   #nppNestMenu button { display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 9px; background: transparent; color: #fff; text-align: left; font: 600 13px 'Outfit', system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); cursor: pointer; }
   #nppNestMenu button:hover { background: rgba(255,255,255,.14); }
 
+  &.npp-shop-lock .shop-bg { cursor: not-allowed !important; opacity: .6; transition: opacity .3s; }
   .nppBigPrice { font-size: 1.7em !important; font-weight: 800 !important; line-height: 1.1; color: #9900b3 !important; }
 
-  #nppWatch { position: fixed; right: 24px; z-index: 2200; width: 300px; max-height: 60vh; display: flex; flex-direction: column; padding: 12px; border-radius: 14px; background: #1a1722; color: #fff; border: 1px solid rgba(255,255,255,.16); box-shadow: 0 10px 30px rgba(0,0,0,.4); font: 500 13px 'Outfit', system-ui, sans-serif; }
-  #nppWatch[hidden] { display: none !important; }
-  #nppWatch .wHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: 700; }
-  #nppWatch .wClose { background: transparent; border: 0; color: #fff; font-size: 18px; cursor: pointer; }
-  #nppWatch form { display: flex; gap: 6px; margin-bottom: 8px; }
-  #nppWatch input { flex: 1; min-width: 0; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); color: #fff; font: inherit; }
-  #nppWatch form button { height: 30px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--np-accent, #dcb8ff); color: #1a1330; font-weight: 700; cursor: pointer; }
-  #nppWatch ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-  #nppWatch li { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; border-radius: 8px; background: rgba(255,255,255,.07); }
-  #nppWatch li button { background: transparent; border: 0; color: rgba(255,255,255,.6); cursor: pointer; font-size: 14px; }
-  #nppWatch li button:hover { color: #ff6b6b; }
-  #nppWatch .wEmpty { opacity: .6; font-size: 12px; padding: 4px 2px; }
-  #nppWatch { bottom: 84px !important; }
 
   #btnOverlay .iconBtn { padding: 6px !important; margin: -6px !important; }
-  #nppTools .nppSearch button, #nppBellBtn { min-width: 36px; min-height: 36px; }
-  #nppBellBtn { border-radius: 50%; }
+  #nppTools .nppSearch button { min-width: 36px; min-height: 36px; }
   .nppGrpHead { margin: 6px 4px 2px; font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.6); }
   .nppGrpHead:first-child { margin-top: 0; }
   #nppTop { position: fixed; right: 24px; bottom: 20px; z-index: 2150; width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: var(--npp-card, rgba(20,18,28,.7)); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .2s ease, background .15s; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
@@ -1024,57 +1127,28 @@ html[data-np-modern-interface] {
   .nppFold.up svg { transform: rotate(180deg); }
   #npNp.nppFolded > :not(.nppFold), #npActivePet.nppFolded > :not(.nppFold), #nppDaily.nppFolded > :not(.nppFold) { display: none !important; }
   #npNp.nppFolded, #npActivePet.nppFolded, #nppDaily.nppFolded { height: 36px !important; min-height: 36px !important; padding: 0 !important; overflow: hidden !important; }
-  #nppNotifDrawer .nppGrpHead { margin-top: 2px; }
 
-  #nppTools { position: fixed; right: 14px; top: var(--npp-tools-top, 27px); transform: translateY(-50%); z-index: 2010; display: flex; flex-direction: row; align-items: center; gap: var(--npp-ig, 10px); transition: opacity .25s ease; }
+  #nppTools { position: fixed; right: calc(14px + var(--npp-ic, 44px) + var(--npp-ig, 10px)); top: var(--npp-tools-top, 27px); transform: translateY(-50%); z-index: 2010; display: flex; flex-direction: row; align-items: center; gap: var(--npp-ig, 10px); transition: opacity .25s ease; }
   #nppTools .nppSep { display: none; }
   #nppTools .nppSearch { position: relative; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); margin: 0; transition: width .25s ease, height .25s ease; }
   #nppTools .nppSearch button { position: absolute; z-index: 2; left: 0; top: 0; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; cursor: pointer; transition: width .25s ease, height .25s ease; }
-  #nppTools .nppSearch button img, #nppBellBtn img { display: block; transition: transform .2s cubic-bezier(.3, 1.4, .5, 1), width .25s ease, height .25s ease; }
-  #nppBellBtn:hover img { transform: scale(1.1); }
+  #nppTools .nppSearch button img { display: block; transition: transform .2s cubic-bezier(.3, 1.4, .5, 1), width .25s ease, height .25s ease; }
   #nppTools .nppSearch.noimg::before, #nppTools .nppSearch button.noimg::before { content: "⌕"; font-size: 24px; color: #fff; }
   #nppTools .nppSearch input { position: absolute; z-index: 1; right: 0; top: 50%; transform: translateY(-50%); box-sizing: border-box; width: var(--npp-ic, 44px); height: calc(var(--npp-ic, 44px) * .8); padding: 0 calc(var(--npp-ic, 44px) + 6px) 0 16px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #fff; font: 400 17px 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); outline: 0; cursor: pointer; transition: width .42s cubic-bezier(.22, 1, .36, 1), background .25s, border-color .25s, box-shadow .25s; }
   #nppTools .nppSearch.nppOpen input { width: 252px; cursor: text; border-color: var(--npp-card-line); background: var(--npp-drawer-bg); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(0,0,0,.10); }
   #nppTools .nppSearch input:focus { border-color: var(--np-accent, #fff); }
   #nppTools .nppSearch input::placeholder { color: rgba(255,255,255,.75); opacity: 0; transition: opacity .12s; }
   #nppTools .nppSearch.nppOpen input::placeholder { opacity: 1; transition: opacity .3s .2s; }
-  #nppBellBtn { position: relative; transition: width .25s ease, height .25s ease; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; cursor: pointer; }
-  #nppBellBtn .nppBellSvg { display: none; width: 60%; height: 60%; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
-  #nppBellBtn.noimg .nppBellSvg { display: block; }
-  #nppBellBtn.noimg img { display: none; }
-  #nppBellBtn .nppTick { display: none; position: absolute; top: 3px; right: 3px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 0 9px rgba(255,59,59,.75); animation: nppFlash 1s ease-in-out infinite; pointer-events: none; }
-  #nppBellBtn.has img, #nppBellBtn.has .nppBellSvg { animation: nppRing 1.2s ease 1; transform-origin: 50% 10%; }
-  #nppBellBtn.has { border-radius: 50%; background: rgba(255,59,59,.22); animation: nppBellHalo 1.6s ease-in-out infinite; }
-  #nppBellBtn.has .nppTick { display: block; width: 16px; height: 16px; top: 0; right: 0; }
-  #nppBellBtn.has[aria-expanded="true"] { animation: none; background: rgba(255,255,255,.12); }
-  .nppN.busy { opacity: .6; pointer-events: none; }
-  &.npp-wait #nppTools { opacity: 0 !important; pointer-events: none; }
+  &.npp-wait #nppTools, &.npp-wait #nppBell { opacity: 0 !important; pointer-events: none; }
+  #nppBell { position: fixed; right: 14px; top: var(--npp-tools-top, 27px); transform: translateY(-50%); z-index: 2010; width: var(--npp-ic, 44px); height: var(--npp-ic, 44px); display: flex; align-items: center; justify-content: center; }
+  #nppBell .nav-bell-icon__2020 { position: relative !important; inset: auto !important; margin: 0 !important; width: calc(var(--npp-ic, 44px) * .85) !important; height: calc(var(--npp-ic, 44px) * .85) !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; cursor: pointer; }
+  #nppBell #navnewsdropdown__2020 { position: fixed !important; top: calc(var(--npp-header-h, 54px) + 8px) !important; right: 10px !important; left: auto !important; bottom: auto !important; z-index: 2100 !important; }
+  #nppBell > img { width: calc(var(--npp-ic, 44px) * .85); height: calc(var(--npp-ic, 44px) * .85); object-fit: contain; filter: var(--npp-ico-shadow); }
+  #nppBell .nppBellDot { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
 
-  #nppNotifDrawer::before { content: ""; position: absolute; inset: -24px; z-index: 0; background: var(--npp-drawer-layers), var(--npLeftBarImg, none) center / cover no-repeat; filter: blur(14px) saturate(1.1); pointer-events: none; }
-  #nppNotifDrawer::after { content: ""; position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 4 / 3; z-index: 0; background: var(--npp-drawer-layers), var(--npLeftBarImg, none) center / cover no-repeat; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); mask-image: linear-gradient(to bottom, #000 55%, transparent 100%); pointer-events: none; }
-  #nppNotifDrawer > * { position: relative; z-index: 1; }
 
   #nppBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
   #nppNst { display: inline-block; padding: 0; font-size: 20px !important; color: #fff !important; background: none !important; border: 0 !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  #nppNotifDrawer { position: fixed; overflow: hidden; top: calc(var(--npp-header-h, 54px) + 10px); right: 14px; bottom: auto; left: auto; z-index: 2099; box-sizing: border-box; width: 356px; max-height: min(540px, calc(100vh - var(--npp-header-h, 54px) - 32px)); display: flex; flex-direction: column; padding: 14px; border: 1px solid var(--npp-card-line); border-radius: 14px; background: var(--npLeftBarSolid, #3a3350);  box-shadow: 0 4px 14px rgba(0,0,0,.10); color: #fff; opacity: 0; transform: translateY(-10px) scale(.97); transform-origin: right top; pointer-events: none; transition: opacity .2s ease, transform .3s cubic-bezier(.22, 1, .36, 1); }
-  #nppNotifDrawer.open { opacity: 1; transform: none; pointer-events: auto; }
-  #nppNotifDrawer .nppNHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 4px 10px; }
-  #nppNotifDrawer .nppNTitle { font: 400 21px/1 'CafeteriaBlack', Georgia, serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  #nppNotifDrawer .nppNLink { flex: none; display: flex; align-items: center; height: 24px; padding: 0 11px; border: 1px solid var(--npp-card-line); border-radius: 999px; background: rgba(255,255,255,.14); color: #fff !important; text-decoration: none !important; font: 600 12px/1 'Outfit', system-ui, sans-serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); transition: background .15s, color .15s; }
-  #nppNotifDrawer .nppNLink:hover { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1330) !important; border-color: transparent; text-shadow: var(--npp-accent-fg-shadow, none); }
-  #nppNotifList { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-x: hidden; overflow-y: auto; padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.42) rgba(255,255,255,.07); }
-  .nppN { position: relative; display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; padding: 12px 34px 12px 12px; border: 1px solid var(--npp-card-line); border-radius: 14px; background: rgba(255,255,255,.1); transition: background .15s; }
-  .nppN:hover { background: rgba(255,255,255,.14); }
-  .nppN.isNew { animation: nppIn .35s ease; }
-  .nppIco { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.14) center / 70% no-repeat; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
-  .nppN a { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 2px; min-width: 0; color: #fff !important; text-decoration: none !important; }
-  .nppN a b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 13px/1.25 'Outfit', system-ui, sans-serif !important; color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  .nppN a i { grid-column: 2; grid-row: 1; white-space: nowrap; font: normal 500 11px/1.4 'Outfit', system-ui, sans-serif !important; color: rgba(255,255,255,.68) !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  .nppN a span { grid-column: 1 / -1; overflow-wrap: anywhere; font: 500 12px/1.35 'Outfit', system-ui, sans-serif !important; color: rgba(255,255,255,.9) !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-  .nppX { position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.3); color: rgba(255,255,255,.85); font-size: 14px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .12s, background .12s; }
-  .nppN:hover .nppX { opacity: 1; }
-  .nppX:hover { background: #ff5a5a; color: #fff; }
-  .nppEmpty { padding: 14px 8px; text-align: center; font: 500 12.5px/1.3 'Outfit', system-ui, sans-serif !important; color: rgba(255,255,255,.72) !important; }
 
   #npLeftBarBg { background-image: none !important; overflow: hidden; }
   &[data-npp-bar="none"] #npLeftBarBg::after { top: 0; }
@@ -1107,7 +1181,7 @@ html[data-np-modern-interface] {
   &.npp-popup::before { display: none !important; }
   &.npp-popup #npx-host, &.npp-popup #npHud, &.npp-popup #npLeftBar, &.npp-popup #btnOverlay,
   &.npp-popup #npxSideBtnHost, &.npp-popup #npBgHandle, &.npp-popup #npBgSidebar, &.npp-popup #nppFoot,
-  &.npp-popup #qrDockWrap, &.npp-popup #npxScrollTrack, &.npp-popup #nppNotifDrawer { display: none !important; }
+  &.npp-popup #qrDockWrap, &.npp-popup #npxScrollTrack, &.npp-popup #nppBell { display: none !important; }
   &.npp-popup body { background: #fff !important; }
   &.npp-popup body :where(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) {
     width: auto !important; max-width: none !important; min-height: 0 !important; margin: 0 !important; padding: 8px !important; border: 0 !important; border-radius: 0 !important;
@@ -1171,10 +1245,9 @@ html[data-np-modern-interface] {
   #nppIcons #btnOverlay .col:empty { display: none !important; }
   #nppIcons #btnOverlay .col > * { flex: 0 0 auto !important; position: relative; }
   #nppIcons #btnOverlay .col img { max-width: 40px; max-height: 40px; }
-  #nppIcons .nppHasNest::after { content: ""; position: absolute; left: 50%; top: -5px; width: 12px; height: 4px; margin-left: -6px; border-radius: 3px; background: rgba(255,255,255,.85); box-shadow: 0 1px 2px rgba(0,0,0,.5); pointer-events: none; }
-  #nppIcons #nppNestPop { position: absolute !important; left: 0 !important; right: 0 !important; bottom: calc(100% + 8px) !important; top: auto !important; width: auto !important; box-sizing: border-box; margin: 0 !important; padding: 10px 8px !important; display: flex !important; flex-wrap: wrap; justify-content: center; gap: 10px !important; border-radius: 16px !important; background: var(--npp-drawer-bg) !important; border: 1px solid var(--npp-card-line) !important; box-shadow: 0 10px 28px rgba(0,0,0,.4) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); z-index: 5; opacity: 0; visibility: hidden; pointer-events: none !important; transform: translateY(14px) scale(.92) !important; transform-origin: var(--tx, 50%) 100%; transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.4, .5, 1), visibility 0s .3s; }
+  #nppIcons #nppNestPop { position: absolute !important; left: clamp(0px, calc(var(--tx, 50%) - 28px), calc(100% - 56px)) !important; right: auto !important; bottom: calc(100% + 8px) !important; top: auto !important; width: 56px !important; flex-direction: column !important; align-items: center; transform-origin: 50% 100% !important; box-sizing: border-box; margin: 0 !important; padding: 10px 8px !important; display: flex !important; flex-wrap: nowrap; justify-content: center; gap: 8px !important; border-radius: 16px !important; background: var(--npp-drawer-bg) !important; border: 1px solid var(--npp-card-line) !important; box-shadow: 0 10px 28px rgba(0,0,0,.4) !important; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); z-index: 5; opacity: 0; visibility: hidden; pointer-events: none !important; transform: translateY(14px) scale(.92) !important; transform-origin: var(--tx, 50%) 100%; transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.4, .5, 1), visibility 0s .3s; }
   #nppIcons #nppNestPop.open { opacity: 1; visibility: visible; pointer-events: auto !important; transform: none !important; transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.4, .5, 1), visibility 0s; }
-  #nppIcons #nppNestPop::after { content: ""; position: absolute; bottom: -6px; left: var(--tx, 50%); width: 10px; height: 10px; margin-left: -5px; transform: rotate(45deg); background: inherit; border-right: 1px solid var(--npp-card-line); border-bottom: 1px solid var(--npp-card-line); }
+  #nppIcons #nppNestPop::after { content: ""; position: absolute; bottom: -6px; left: 50%; width: 10px; height: 10px; margin-left: -5px; transform: rotate(45deg); background: inherit; border-right: 1px solid var(--npp-card-line); border-bottom: 1px solid var(--npp-card-line); }
   #nppIcons #nppNestPop.open .col > * { animation: nppTrayIn .42s cubic-bezier(.34, 1.56, .5, 1) both; animation-delay: calc(var(--i, 0) * 45ms + 60ms); }
   @media (prefers-reduced-motion: reduce) { #nppIcons #nppNestPop, #nppIcons #nppNestPop.open { transition: none; } #nppIcons #nppNestPop.open .col > * { animation: none; } }
 
@@ -1197,6 +1270,154 @@ html[data-np-modern-interface] {
   html #npHud #nppFoot { position: relative !important; z-index: 0; flex: 0 0 auto !important; min-height: 0; }
   #nppPinsMod { position: relative; }
   #nppIcons { z-index: 1; flex: 0 0 auto !important; padding-top: 12px; }
+
+  /* ===== sidebar v4.1.2: identical frosted cards, 10px gaps, icons pinned to the bottom ===== */
+  #npHud { --pn-pad: 12px; --pn-r: 16px; --pn-t2: rgba(255,255,255,.72); --pn-t3: rgba(255,255,255,.55); font-family: 'Outfit', system-ui, sans-serif; }
+  #npHud#npHud, #npHud#npHud * { text-shadow: none !important; }
+  #npHud#npHud { padding: 0 6px 8px !important; gap: 10px !important; justify-content: flex-start !important; background: none !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; color: #fff; }
+  @media (min-width: 1101px) { #npHud { left: 4px !important; width: calc(var(--np-col-width, 240px) - 8px) !important; bottom: 8px !important; } }
+  @media (max-width: 1100px) { #npHud#npHud { padding: 0 12px 12px !important; } }
+  #npHud > #npUser, #npHud > #npNp, #npHud > #npActivePet, #npHud > #nppListsMod, #npHud > #nppFoot { box-sizing: border-box; margin: 0 !important; padding: var(--pn-pad) !important; background: rgba(18,16,28,.62) !important; -webkit-backdrop-filter: blur(18px) saturate(140%) !important; backdrop-filter: blur(18px) saturate(140%) !important; border: 1px solid rgba(255,255,255,.10) !important; border-radius: var(--pn-r) !important; box-shadow: 0 8px 24px rgba(0,0,0,.25) !important; color: #fff; }
+  #npHud > #nppNavMod { order: 5; margin: 0 !important; }
+  #npHud > #npUser { order: 1; }
+  #npHud > #npNp { order: 3; }
+  #npHud > #npActivePet { order: 4; position: relative !important; display: block !important; overflow: hidden !important; }
+  #npHud > #nppListsMod { order: 2; padding: 4px !important; }
+  #npHud > #nppFoot { order: 6; flex: 0 0 auto !important; }
+  #npHud > #nppIcons { order: 8; flex: 0 0 auto !important; margin: auto 0 0 !important; position: sticky; bottom: 0; z-index: 6; padding: 6px 0 2px !important; border: 0; background: none; }
+  #npHud > #nppIcons:not(:has(.col > *)) { display: none; }
+
+  /* profile card */
+  #npHud #npUser .rightSide { grid-template-columns: 40px minmax(0, 1fr) auto !important; column-gap: 10px !important; row-gap: 3px !important; }
+  #npHud #npUser #nppAvatar { grid-column: 1 !important; grid-row: 1 / span 2 !important; width: 40px; height: 40px; font: 700 17px/1 'Outfit', system-ui, sans-serif; border: 2px solid var(--np-accent, #fff) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--np-accent, #fff) 28%, transparent); }
+  #npHud #npUser .name { grid-column: 2 !important; grid-row: 1 / span 2 !important; align-self: center !important; min-width: 0; overflow: hidden; }
+  #npHud #npUser #npUserTitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff !important; font: 600 15px/1.2 'Outfit', system-ui, sans-serif !important; letter-spacing: 0; }
+  #npHud #npUser[data-main="1"] .name { grid-row: 1 !important; align-self: end !important; }
+  #npHud #npUser[data-main="1"] .rightSide::after { content: "MAIN"; grid-column: 2; grid-row: 2; justify-self: start; align-self: start; padding: 2px 7px; border-radius: 999px; font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .06em; color: #fff; background: color-mix(in srgb, var(--np-accent, #fff) 45%, transparent); }
+  #npHud #npUser #nppAcctBtns { grid-column: 3 !important; grid-row: 1 / span 2 !important; align-self: center; display: flex !important; gap: 2px; margin: 0 !important; }
+  #npHud #npUser #npLogoutBtn, #npHud #npUser #npSwapBtn { width: 30px; height: 30px; padding: 0 !important; justify-content: center; border: 0 !important; border-radius: 10px !important; background: transparent !important; color: var(--pn-t2) !important; }
+  #npHud #npUser #npLogoutBtn span, #npHud #npUser #npSwapBtn span { display: none !important; }
+  #npHud #npUser #npLogoutBtn svg, #npHud #npUser #npSwapBtn svg { width: 16px; height: 16px; }
+  #npHud #npUser #npLogoutBtn:hover, #npHud #npUser #npSwapBtn:hover { background: rgba(255,255,255,.12) !important; color: #fff !important; }
+
+  /* NP / NC card */
+  #npHud #npNp .np-top-row { padding: 0 !important; gap: 6px !important; }
+  #npHud #npNp .np-top-row .np-amounts { gap: 8px !important; }
+  #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc { display: grid !important; grid-template-columns: auto minmax(0, 1fr); column-gap: 7px; align-items: center; justify-content: stretch; min-height: 44px; margin: 0 !important; padding: 4px 8px !important; border: 0 !important; border-radius: 12px !important; background: rgba(255,255,255,.07) !important; box-shadow: none !important; transition: background .15s; }
+  #npHud #npNp .np-top-row .np-amount:hover, #npHud #npNp .np-top-row .np-nc:hover { background: rgba(255,255,255,.13) !important; }
+  #npHud #npNp .np-top-row .np-amount img, #npHud #npNp .np-top-row .np-nc img { grid-column: 1; grid-row: 1 / span 2; }
+  #npHud #npNp .np-top-row .np-amount::before { content: none; }
+  #npHud #npNp .np-top-row .np-nc::before { content: none; }
+  #npHud #npNp .np-top-row .np-amount::before, #npHud #npNp .np-top-row .np-nc::before { grid-column: 2; grid-row: 1; font: 600 11px/1 'Outfit', system-ui, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--pn-t3); }
+  #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { grid-column: 2; grid-row: 2; color: #fff !important; font: 700 17px/1.15 'Outfit', system-ui, sans-serif !important; font-variant-numeric: tabular-nums; }
+  #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc { position: relative; padding-left: 20px !important; column-gap: 0; } #npHud #npNp .np-top-row .np-amount img, #npHud #npNp .np-top-row .np-nc img { position: absolute !important; left: -8px; top: 50% !important; transform: translateY(-50%) !important; width: 24px !important; height: 24px !important; grid-column: auto; grid-row: auto; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); } #npHud #npNp .np-top-row .np-amount::before, #npHud #npNp .np-top-row .np-nc::before, #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { grid-column: 2; font-variant-numeric: tabular-nums; }
+  #npHud #npNp .np-chevron { width: 26px !important; height: 26px !important; border-radius: 8px !important; color: var(--pn-t2) !important; transition: transform .2s, color .15s, background .15s; }
+  #npHud #npNp .np-chevron:hover { color: #fff !important; background: rgba(255,255,255,.12) !important; }
+  #npHud #npNp .np-bank-drawer { padding: 10px 0 0; margin-top: 10px; border-top: 1px solid rgba(255,255,255,.10); }
+
+  /* pet card */
+  #npHud #npActivePet > img { display: block !important; width: 100% !important; height: 170px !important; aspect-ratio: auto !important; object-fit: contain !important; object-position: 50% 50% !important; max-width: none !important; margin: 0 !important; border-radius: 12px !important; background: #fff !important; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06) !important; -webkit-mask-image: none; mask-image: none; }
+  #npHud #npPetDockBtn { top: 18px; right: 18px; height: 28px; padding: 0 11px 0 9px; gap: 6px; border-radius: 999px; background: rgba(255,255,255,.85) !important; color: #1a1626 !important; border: 1px solid rgba(255,255,255,.6) !important; box-shadow: 0 2px 8px rgba(0,0,0,.28) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font: 600 11px/1 'Outfit', system-ui, sans-serif; z-index: 2; transition: background .15s, box-shadow .15s; } #npHud #npPetDockBtn svg { width: 13px; height: 13px; flex: none; color: inherit; transition: transform .35s cubic-bezier(.3,.7,.3,1); } #npHud #npPetDockBtn:hover { background: #fff !important; box-shadow: 0 3px 10px rgba(0,0,0,.34) !important; } #npHud #npPetDockBtn:hover svg { transform: rotate(180deg); } @media (prefers-reduced-motion: reduce) { #npHud #npPetDockBtn svg { transition: none; } }
+  #npHud #npPetDockBtn { width: 28px; padding: 0; gap: 0; justify-content: center; overflow: hidden; transition: width .3s cubic-bezier(.3,.7,.3,1), padding .3s, gap .3s, background .15s, box-shadow .15s; } #npHud #npPetDockBtn span { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; transition: max-width .3s cubic-bezier(.3,.7,.3,1), opacity .2s; } #npHud #npPetDockBtn:hover, #npHud #npPetDockBtn:focus-visible { width: 112px; padding: 0 11px 0 9px; gap: 6px; } #npHud #npPetDockBtn:hover span, #npHud #npPetDockBtn:focus-visible span { max-width: 80px; opacity: 1; } #npHud #npPetDockBtn:focus-visible svg { transform: rotate(180deg); } @media (prefers-reduced-motion: reduce) { #npHud #npPetDockBtn, #npHud #npPetDockBtn span { transition: none; } }
+  #npHud #npActivePet #nppPetInfo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; margin: 10px 0 0 !important; padding: 0; text-align: left; }
+  #npHud #nppPetInfo .nppTitle { order: 1; flex: 0 0 100%; justify-content: flex-start; text-align: left; position: relative; }
+  #npHud #nppPetInfo .nppTitle a { text-align: left; color: #fff !important; }
+  #npHud #nppPetInfo .nppName { font: 700 17px/1.2 'Outfit', system-ui, sans-serif; letter-spacing: 0; padding: 0 28px 0 0; }
+  #npHud #nppPetInfo .nppSub { font-size: 13px; color: var(--pn-t2); }
+  #npHud #nppPetInfo .nppTitle .nppCopy { right: 0; top: -2px; }
+  #npHud #nppPetInfo .nppChips { order: 2; position: static; flex: 1 1 auto; display: flex; gap: 5px; margin: 0; pointer-events: auto; }
+  #npHud #nppPetInfo .nppChip { padding: 3px 8px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.1); border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; color: #fff; }
+  #npHud #nppPetInfo .nppLinks { order: 3; flex: 0 0 auto; justify-content: flex-end; gap: 4px !important; margin: 0 !important; }
+  #npHud #nppPetInfo .nppLinks a, #npHud #nppPetInfo .nppLinks button { flex: 0 0 auto; width: 28px; height: 28px; padding: 0; border: 0; background: rgba(255,255,255,.1); }
+  #npHud #nppPetInfo .nppLinks a:hover, #npHud #nppPetInfo .nppLinks button:hover { background: rgba(255,255,255,.2); }
+  #npHud #nppPetInfo .nppLinks button.on { background: color-mix(in srgb, var(--np-accent, #fff) 45%, transparent); }
+  #npHud #nppPetInfo .nppDetails { order: 4; flex: 0 0 100%; }
+  #npHud #npActivePet:not(:has(.nppTitle))::before { content: ""; position: absolute; inset: 12px; border-radius: 12px; z-index: 0; background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.16) 50%, rgba(255,255,255,.04) 70%) 0 0 / 200% 100%; animation: nppShimmer 1.4s linear infinite; }
+  #npHud #npActivePet > img { position: relative; z-index: 1; }
+  #npHud #npActivePet:not(:has(.nppTitle)) { min-height: 194px; }
+  @keyframes nppShimmer { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { #npHud #npActivePet:not(:has(.nppTitle))::before { animation: none; } }
+
+  /* nav card */
+  #npHud #nppListsMod { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  #npHud #nppListsMod .nppLt { display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 4px; padding: 10px 4px; border: 0; border-radius: 12px; background: none; white-space: nowrap; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  #npHud #nppListsMod .nppLt:hover { background: rgba(255,255,255,.1); }
+  #npHud #nppListsMod .nppLt + .nppLt { position: relative; } #npHud #nppListsMod .nppLt + .nppLt::before { content: ""; position: absolute; left: -2px; top: 8px; bottom: 8px; width: 1px; background: rgba(255,255,255,.10); pointer-events: none; }
+  #npHud #nppListsMod .nppLt svg { width: 14px; height: 14px; flex: none; color: var(--pn-t2); }
+  #npHud #nppListsMod .nppLt b { flex: 0 0 auto; overflow: visible; text-overflow: clip; font-size: 13px; font-weight: 600; color: #fff; }
+  #npHud #nppListsMod .nppLt em { flex: none; min-width: 16px; padding: 1px 5px; border-radius: 999px; background: rgba(255,255,255,.14); color: #fff; font-size: 11px; font-weight: 700; line-height: 1.3; text-align: center; }
+  #npHud #nppListsMod .nppLt { transition: background .18s, transform .18s, box-shadow .18s; } #npHud #nppListsMod .nppLt:hover, #npHud #nppListsMod .nppLt:focus-visible { transform: translateY(-2px); background: rgba(255,255,255,.14); box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); } #npHud #nppListsMod .nppLt:hover svg, #npHud #nppListsMod .nppLt:focus-visible svg { animation: nppLtWiggle .5s ease; } #npHud #nppListsMod .nppLt em { animation: nppLtPop .5s cubic-bezier(.3,1.6,.5,1) .15s both; } @keyframes nppLtWiggle { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-14deg) translateY(-2px); } 55% { transform: rotate(10deg) translateY(-1px); } 80% { transform: rotate(-4deg); } } @keyframes nppLtPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { #npHud #nppListsMod .nppLt, #npHud #nppListsMod .nppLt em, #npHud #nppListsMod .nppLt svg { animation: none !important; transition: none !important; transform: none !important; } }
+
+  /* recent / pinned card */
+  #npHud #nppPinsMod { border: 0; background: none; border-radius: 0; overflow: visible; height: auto; min-height: 0; flex: 0 0 auto; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  #npHud #nppPinsMod .pTabs { position: relative; display: flex; gap: 2px; padding: 3px; margin: 0 0 8px; border-radius: 10px; background: rgba(255,255,255,.08); }
+  #npHud #nppPinsMod .pTabs button { flex: 1 1 0; padding: 6px 4px; border-radius: 8px; background: none; color: var(--pn-t2); font-size: 11px; letter-spacing: .06em; border-bottom: 0; }
+  #npHud #nppPinsMod .pTabs button { position: relative; z-index: 1; transition: color .2s; } #npHud #nppPinsMod .pTabs button.on, #npHud #nppPinsMod .pTabs button[data-t="pinned"].on { color: #fff; background: none; } #npHud #nppPinsMod .pTabs::before { content: ""; position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 8px) / 2); border-radius: 8px; background: color-mix(in srgb, var(--np-accent, #fff) 40%, rgba(255,255,255,.1)); transition: transform .3s cubic-bezier(.34, 1.3, .5, 1); } #npHud #nppPinsMod[data-tab="pinned"] .pTabs::before { transform: translateX(calc(100% + 2px)); } #npHud #nppPinsMod #nppRecent, #npHud #nppPinsMod #nppPinned { animation: nppTabIn .28s ease both; } @keyframes nppTabIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } } @media (prefers-reduced-motion: reduce) { #npHud #nppPinsMod .pTabs::before { transition: none; } #npHud #nppPinsMod #nppRecent, #npHud #nppPinsMod #nppPinned { animation: none; } }
+  #npHud #nppPinsMod #nppRecent, #npHud #nppPinsMod #nppPinned { padding: 0; height: auto; min-height: 0; flex: 0 0 auto; }
+  #npHud #nppPinsMod .rList { box-sizing: border-box; width: 100%; margin: 0 !important; padding: 0 !important; max-height: 92px; height: auto; flex: 0 0 auto; gap: 4px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; } #npHud #nppPinsMod .rList::-webkit-scrollbar { display: none; width: 0; height: 0; } #npHud #nppPinsMod .rList li { box-sizing: border-box; width: 100%; } #npHud #nppPinsMod .rPin { right: 6px; }
+  #npHud #nppPinsMod .rList:empty::before { color: var(--pn-t3); }
+  #npHud #nppPinsMod .rList a { height: 28px; justify-content: flex-start; background: rgba(255,255,255,.05) !important; border: 0 !important; border-radius: 8px; box-sizing: border-box; width: 100%; display: flex; flex-direction: column; justify-content: center; padding: 0 34px 0 10px !important; color: #fff; }
+  #npHud #nppPinsMod .rList a:hover { background: rgba(255,255,255,.14) !important; }
+  #npHud #nppPinsMod .rList b { font-size: 13px; font-weight: 500; color: #fff; }
+
+  /* round 3: display font, pet name, NP/NC without labels, theme button */
+  #npHud #npUser #npUserTitle { font: 400 18px/1.15 'CafeteriaBlack', Georgia, serif !important; letter-spacing: 0; }
+  #npHud #nppListsMod .nppLt { gap: 3px; } #npHud #nppListsMod .nppLt b { font: 400 16px/1 'CafeteriaBlack', Georgia, serif; letter-spacing: 0; }
+  #npHud #nppPinsMod .pTabs button { font: 400 15px/1.1 'CafeteriaBlack', Georgia, serif; letter-spacing: 0; text-transform: none; }
+  #npHud #nppPetInfo .nppTitle a { min-width: 0; overflow: hidden; }
+  #npHud #nppPetInfo .nppName { font: 400 24px/1.15 'CafeteriaBlack', Georgia, serif !important; font-size: 24px; line-height: 1.15; letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
+  #npHud #npNp .np-top-row .np-amount::before, #npHud #npNp .np-top-row .np-nc::before { display: none !important; }
+  #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { grid-row: 1 !important; align-self: center; }
+  #npHud #npNp .np-top-row .np-amounts { display: flex !important; grid-template-columns: none !important; gap: 8px !important; } #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc { flex: 1 1 0; min-width: 0; } #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { display: block; min-width: 0; overflow: hidden !important; text-overflow: clip !important; white-space: nowrap; }
+  /* round 3: pet meta row */
+  #npHud #npActivePet #nppPetInfo { gap: 6px !important; align-items: center; }
+  #npHud #nppPetInfo .nppChips { flex: 1 1 auto; min-width: max-content; flex-wrap: nowrap; align-items: center; gap: 6px; }
+  #npHud #nppPetInfo .nppChip { box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.1); font-size: 12px; line-height: 1; white-space: nowrap; flex: 0 0 auto; }
+  #npHud #nppPetInfo .nppLinks { align-items: center; gap: 6px !important; }
+  #npHud #nppPetInfo .nppLinks a, #npHud #nppPetInfo .nppLinks button { box-sizing: border-box; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; }
+  &.npp-side-light #npHud #nppPetInfo .nppChip, &.npp-side-light #npHud #nppPetInfo .nppLinks a, &.npp-side-light #npHud #nppPetInfo .nppLinks button { background: #fff; border-color: rgba(0,0,0,.10); color: #1c1830 !important; }
+  &.npp-side-light #npHud #nppPetInfo .nppLinks a:hover, &.npp-side-light #npHud #nppPetInfo .nppLinks button:hover { background: #f1eff7; }
+  &.npp-side-light #npHud #nppPetInfo .nppLinks button.on { background: color-mix(in srgb, var(--np-accent, #888) 35%, rgba(255,255,255,.6)); }
+  /* round 3: light mode */
+  &.npp-side-light #npHud { --pn-t2: rgba(28,24,48,.68); --pn-t3: rgba(28,24,48,.5); }
+  &.npp-side-light #npHud > #npUser, &.npp-side-light #npHud > #npNp, &.npp-side-light #npHud > #npActivePet, &.npp-side-light #npHud > #nppListsMod, &.npp-side-light #npHud > #nppFoot { background: rgba(255,255,255,.72) !important; -webkit-backdrop-filter: blur(18px) !important; backdrop-filter: blur(18px) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 8px 24px rgba(40,30,80,.14) !important; color: #1c1830; }
+  &.npp-side-light #npHud #npUserTitle, &.npp-side-light #npHud #nppPetInfo .nppTitle a, &.npp-side-light #npHud #nppPetInfo .nppName { color: #1c1830 !important; text-shadow: none !important; }
+  &.npp-side-light #npHud #npUser[data-main="1"] .rightSide::after { color: #1c1830; }
+  &.npp-side-light #npHud #npNp .np-top-row .np-amount, &.npp-side-light #npHud #npNp .np-top-row .np-nc { background: rgba(0,0,0,.05) !important; }
+  &.npp-side-light #npHud #npNp .np-top-row .np-amount:hover, &.npp-side-light #npHud #npNp .np-top-row .np-nc:hover { background: rgba(0,0,0,.09) !important; }
+  &.npp-side-light #npHud #npNp .np-top-row .npVal, &.npp-side-light #npHud #npNp .np-top-row .ncVal, &.npp-side-light #npHud #npNp, &.npp-side-light #npHud #npNp .np-amount, &.npp-side-light #npHud #npNp .np-nc { color: #1c1830 !important; }
+  &.npp-side-light #npHud #npNp .np-chevron { color: rgba(28,24,48,.68) !important; } &.npp-side-light #npHud #npNp .np-chevron:hover { color: #1c1830 !important; background: rgba(0,0,0,.07) !important; }
+  &.npp-side-light #npHud #npNp .np-bank-drawer { border-top-color: rgba(0,0,0,.08); } &.npp-side-light #npNp .bankGraph text { fill: rgba(28,24,48,.7); }
+  &.npp-side-light #npHud #nppPetInfo .nppSub, &.npp-side-light #npHud #nppPetInfo { color: rgba(28,24,48,.68); }
+  &.npp-side-light #npHud #nppPetInfo .nppTitle .nppCopy { color: rgba(28,24,48,.6); } &.npp-side-light #npHud #nppPetInfo .nppTitle .nppCopy:hover { background: rgba(0,0,0,.07); color: #1c1830; }
+  &.npp-side-light #npHud #nppListsMod .nppLt b { color: #1c1830; } &.npp-side-light #npHud #nppListsMod .nppLt:hover { background: rgba(0,0,0,.06); }
+  &.npp-side-light #npHud #nppListsMod .nppLt em { background: rgba(0,0,0,.08); color: #1c1830; }
+  &.npp-side-light #npHud #nppListsMod .nppLt + .nppLt::before { background: rgba(0,0,0,.10); }
+  &.npp-side-light #npHud #nppPinsMod .pTabs { background: rgba(0,0,0,.06); }
+  &.npp-side-light #npHud #nppPinsMod .pTabs button, &.npp-side-light #npHud #nppPinsMod .rPin { color: rgba(28,24,48,.6); }
+  &.npp-side-light #npHud #nppPinsMod .pTabs button.on, &.npp-side-light #npHud #nppPinsMod .pTabs button[data-t="pinned"].on { color: #1c1830; }
+  &.npp-side-light #npHud #nppPinsMod .rList a { background: #fff !important; color: #1c1830 !important; } &.npp-side-light #npHud #nppPinsMod .rList a:hover { background: #f1eff7 !important; }
+  &.npp-side-light #npHud #nppPinsMod .rEmpty { color: rgba(28,24,48,.6) !important; }
+  &.npp-side-light #npHud #nppPinsMod .rList b { color: #1c1830; } &.npp-side-light #npHud #nppPinsMod .rList:empty::before { color: rgba(28,24,48,.5); }
+  &.npp-side-light #npHud #nppPinsMod li.isPinned .rPin { color: #d89a00; }
+  /* round 4 */
+  #npHud > #npNp { padding: 8px 12px !important; }
+  #npHud #npNp .np-top-row { padding: 0 !important; align-items: center; min-height: 0; }
+  #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc { min-height: 26px !important; padding-top: 1px !important; padding-bottom: 1px !important; align-items: center; }
+  #nppIcons #nppNestPop { background: rgba(18,16,28,.6) !important; background-size: cover !important; background-repeat: no-repeat !important; background-position: center !important; -webkit-backdrop-filter: blur(16px) !important; backdrop-filter: blur(16px) !important; border: 0 !important; }
+  #nppIcons #nppNestPop::before { content: ""; position: absolute; left: -6px; right: -6px; top: 100%; height: 16px; background: transparent; }
+  #nppIcons #nppNestPop::after { background: rgba(18,16,28,.6) !important; border: 0 !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  #nppIcons #nppNestPop .col, #nppIcons #nppNestPop .col > *, #nppIcons #nppNestPop .col > * * { border: 0 !important; }
+  &.npp-side-light #nppIcons #nppNestPop, &.npp-side-light #nppIcons #nppNestPop::after { background: rgba(255,255,255,.7) !important; }
+  #nppColors .nppSideRow .nppLogoDot { display: none; }
+
+  /* shortcut icons: on no card, centred, evenly spaced; hover opens nested links */
+  #npHud #nppIcons #btnOverlay .col { justify-content: space-evenly !important; flex-wrap: nowrap !important; gap: 8px !important; }
+  #npHud #nppIcons #btnOverlay .col img { max-width: 36px; max-height: 36px; width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.45)); }
+  #npHud #nppIcons #btnOverlay .col > * { transition: transform .18s ease, filter .18s ease; }
+  #npHud #nppIcons #btnOverlay .col > *:hover { transform: translateY(-2px); filter: brightness(1.12); }
+  @media (prefers-reduced-motion: reduce) { #npHud #nppIcons #btnOverlay .col > * { transition: none; } #npHud #nppIcons #btnOverlay .col > *:hover { transform: none; } }
+  @media (max-height: 700px) { #npHud #npActivePet > img { height: 120px !important; } }
 
   /* pet-swap dock */
   #qrDockWrap { scrollbar-width: none !important; -ms-overflow-style: none; }
@@ -1228,7 +1449,7 @@ html[data-np-modern-interface] {
 
   @media (max-height: 820px) {
     --np-hud-top: 66px !important;
-    #npUser { padding: 8px 10px 20px !important; margin-bottom: 0; }
+    #npUser { padding: 8px 10px !important; margin-bottom: 6px; }
     #npActivePet { padding: 6px !important; gap: 6px; }
   }
   @media (max-height: 640px) {
@@ -1247,12 +1468,147 @@ html[data-np-modern-interface] {
     &.nppDrawerOpen body { overflow: hidden !important; }
     #nppMenuBtn { display: flex; }
     #nppTools .nppSearch.nppOpen input { width: min(252px, calc(100vw - 150px)); }
-    #nppNotifDrawer { width: min(356px, calc(100vw - 20px)); right: 10px; }
   }
   @media (max-width: 1100px) and (max-height: 820px) { #npHud { top: 48px !important; } }
   @media (max-width: 640px) { #nppNavMod { display: block; } }
   @keyframes nppTrayIn { from { opacity: 0; transform: translateY(16px) scale(.4); } to { opacity: 1; transform: none; } }
-  @media (prefers-reduced-motion: reduce) { #npLeftBar, #npHud, #nppScrim { transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { #npLeftBar, #npHud, #nppScrim { transition: none !important; } }  /* polish 4.1.8 */ #npHud #npActivePet > img { width: 100% !important; max-width: 100% !important; height: auto !important; max-height: none !important; aspect-ratio: auto !important; object-fit: fill !important; background: #fff !important; } @media (max-height: 700px) { #npHud #npActivePet > img { height: auto !important; } } #npHud #npActivePet #nppPetInfo { container-type: inline-size; flex-wrap: wrap !important; align-items: center !important; gap: 6px !important; } #npHud #npActivePet #nppPetInfo .nppChips { order: 2 !important; flex: 1 1 0 !important; min-width: 0 !important; gap: 0 !important; align-items: center !important; justify-content: flex-start !important; flex-wrap: nowrap !important; } #npHud #npActivePet #nppPetInfo .nppChip { height: auto !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; font-size: clamp(10px, 4.6cqw, 12px) !important; font-weight: 500 !important; line-height: 1.2 !important; white-space: nowrap !important; flex: 0 0 auto !important; } #npHud #npActivePet #nppPetInfo .nppChip:not(.gF):not(.gM) { color: var(--pn-t2, rgba(255,255,255,.7)) !important; } #npHud #npActivePet #nppPetInfo .nppChip + .nppChip::before { content: "·"; margin: 0 6px; } #npHud #npActivePet #nppPetInfo .nppLinks { order: 3 !important; flex: 0 0 auto !important; justify-content: flex-end !important; gap: 6px !important; margin: 0 !important; } #npHud #npActivePet #nppPetInfo .nppLinks a, #npHud #npActivePet #nppPetInfo .nppLinks button { flex: 0 0 auto !important; width: 28px !important; height: 28px !important; padding: 0 !important; } #npHud #nppListsMod { grid-template-columns: 1fr auto 1fr !important; gap: 0 !important; } #npHud #nppListsMod::before { content: ""; grid-column: 2; grid-row: 1; width: 1px; margin: 8px 0; background: rgba(255,255,255,.10); pointer-events: none; } #npHud #nppListsMod .nppLtAcct { grid-column: 1 !important; grid-row: 1 !important; } #npHud #nppListsMod .nppLtPets { grid-column: 3 !important; grid-row: 1 !important; } #npHud #nppListsMod .nppLt { min-width: 0 !important; justify-content: center !important; } #npHud #nppListsMod .nppLt + .nppLt::before { display: none !important; } #npHud #nppListsMod .nppLt b { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 13px !important; font-weight: 400 !important; letter-spacing: normal !important; flex: 0 0 auto !important; overflow: visible !important; text-overflow: clip !important; white-space: nowrap !important; } #npHud #nppListsMod .nppLt em { box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 16px !important; min-width: 16px !important; padding: 0 5px !important; font-size: 10px !important; line-height: 1 !important; } #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { font-family: 'CafeteriaBlack', Georgia, serif !important; font-weight: 400 !important; font-size: 14px !important; } #npHud #nppPinsMod .pTabs button { font: 400 13px/1.1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: normal !important; text-transform: none !important; }
+  /* sidebar type scale 4.1.10: every sidebar font size + weight in one place. Headers/buttons boosted, small text unchanged. */
+  #npHud #npUser #npUserTitle { font-size: 21px !important; font-weight: 400 !important; line-height: 1.15 !important; }
+  #npHud #nppListsMod .nppLt b { font-size: 16px !important; font-weight: 400 !important; }
+  #npHud #nppListsMod .nppLt em { font-size: 10px !important; font-weight: 600 !important; }
+  #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { font-size: 17px !important; font-weight: 400 !important; }
+  #npHud #nppPetInfo .nppName { font-size: 26px !important; font-weight: 400 !important; line-height: 1.15 !important; }
+  #npHud #nppPetInfo .nppSub { font-size: 12px !important; font-weight: 500 !important; line-height: 1.3 !important; }
+  #npHud #npActivePet #nppPetInfo .nppChip { font-size: 11px !important; font-weight: 500 !important; }
+  #npHud #nppPinsMod .pTabs button { font-size: 16px !important; font-weight: 400 !important; }
+  #npHud #nppPinsMod .rList b { font-size: 12px !important; font-weight: 500 !important; }
+  /* white display-font headers get a shadow; light mode (dark text) gets none */
+  #npHud #npUser #npUserTitle, #npHud #nppListsMod .nppLt b, #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal, #npHud #nppPetInfo .nppName, #npHud #nppPinsMod .pTabs button { text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6) !important; }
+  &.npp-side-light #npHud #npUser #npUserTitle, &.npp-side-light #npHud #nppListsMod .nppLt b, &.npp-side-light #npHud #npNp .np-top-row .npVal, &.npp-side-light #npHud #npNp .np-top-row .ncVal, &.npp-side-light #npHud #nppPetInfo .nppName, &.npp-side-light #npHud #nppPinsMod .pTabs button { text-shadow: none !important; }
+  /* pet image fills the card edge to edge (cancels the card padding) */
+  #npHud #npActivePet > img { width: calc(100% + 2 * var(--pn-pad, 12px)) !important; max-width: none !important; margin: calc(-1 * var(--pn-pad, 12px)) calc(-1 * var(--pn-pad, 12px)) 0 !important; border-radius: var(--pn-r, 16px) var(--pn-r, 16px) 0 0 !important; box-shadow: none !important; aspect-ratio: 1 / 1 !important; height: auto !important; object-fit: cover !important; }
+  /* top half tidy 4.1.11: user, Accounts/Pets and NP/NC cards share one padding, one pill height and one pill style */
+  #npHud { --npp-pill-h: 36px; --npp-pill-r: 10px; --npp-pill-bg: rgba(255,255,255,.08); --npp-pill-bg-h: rgba(255,255,255,.15); }
+  &.npp-side-light #npHud { --npp-pill-bg: rgba(0,0,0,.05); --npp-pill-bg-h: rgba(0,0,0,.09); }
+  #npHud > #npUser { padding: 10px 12px !important; }
+  #npHud #npUser .rightSide { grid-template-columns: 44px minmax(0, 1fr) auto !important; column-gap: 12px !important; }
+  #npHud #npUser #nppAvatar { width: 44px !important; height: 44px !important; }
+  #npHud #npUser #nppAcctBtns { gap: 4px !important; }
+  #npHud #npUser #npLogoutBtn, #npHud #npUser #npSwapBtn { width: 32px !important; height: 32px !important; background: var(--npp-pill-bg) !important; border-radius: var(--npp-pill-r) !important; }
+  #npHud #npUser #npSwapBtn:hover { background: var(--npp-pill-bg-h) !important; }
+  #npHud > #nppListsMod { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px !important; padding: 8px !important; }
+  #npHud #nppListsMod::before { display: none !important; }
+  #npHud #nppListsMod .nppLtAcct, #npHud #nppListsMod .nppLtPets { grid-column: auto !important; grid-row: auto !important; }
+  #npHud #nppListsMod .nppLt { display: flex !important; align-items: center !important; justify-content: center !important; gap: 7px !important; height: var(--npp-pill-h) !important; padding: 0 10px !important; border: 0 !important; border-radius: var(--npp-pill-r) !important; background: var(--npp-pill-bg) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  #npHud #nppListsMod .nppLt:hover { background: var(--npp-pill-bg-h) !important; }
+  #npHud #nppListsMod .nppLt svg { width: 16px !important; height: 16px !important; flex: none; }
+  #npHud #nppListsMod .nppLt em { border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: inherit !important; }
+  #npHud > #npNp { padding: 8px !important; }
+  #npHud #npNp .np-top-row .np-amounts { gap: 8px !important; }
+  #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc { min-height: var(--npp-pill-h) !important; height: var(--npp-pill-h) !important; padding-top: 0 !important; padding-bottom: 0 !important; border-radius: var(--npp-pill-r) !important; background: var(--npp-pill-bg) !important; }
+  #npHud #npNp .np-top-row .np-amount:hover, #npHud #npNp .np-top-row .np-nc:hover { background: var(--npp-pill-bg-h) !important; }
+  #npHud #npNp .np-chevron { width: var(--npp-pill-h) !important; height: var(--npp-pill-h) !important; border-radius: var(--npp-pill-r) !important; }
+  /* light mode: dark text everywhere. Extra IDs so these outrank the 3-ID white rules above. */
+  &.npp-side-light #npHud #npUser #npUserTitle, &.npp-side-light #npHud #npUser .name, &.npp-side-light #npHud #npUser .name * { color: #1c1830 !important; text-shadow: none !important; }
+  &.npp-side-light #npHud #npUser[data-main="1"] .rightSide::after { color: #1c1830 !important; }
+  &.npp-side-light #npHud #npUser #npLogoutBtn, &.npp-side-light #npHud #npUser #npSwapBtn, &.npp-side-light #npHud #npUser #npSwapBtn:hover { color: #1c1830 !important; }
+  &.npp-side-light #npHud #npUser #npLogoutBtn:hover { color: #d33 !important; background: rgba(255,90,90,.16) !important; }
+  &.npp-side-light #npHud #nppListsMod .nppLt, &.npp-side-light #npHud #nppListsMod .nppLt b { color: #1c1830 !important; }
+  &.npp-side-light #npHud #nppListsMod .nppLt em { background: rgba(0,0,0,.08) !important; }
+  &.npp-side-light #npHud #npNp .np-chevron:hover { color: #1c1830 !important; background: var(--npp-pill-bg-h) !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppTitle a, &.npp-side-light #npHud #npActivePet #nppPetInfo .nppName, &.npp-side-light #npHud #npActivePet #nppPetInfo .nppLinks a, &.npp-side-light #npHud #npActivePet #nppPetInfo .nppLinks button { color: #1c1830 !important; text-shadow: none !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppChip:not(.gF):not(.gM) { color: rgba(28,24,48,.68) !important; }
+
+  /* sidebar round 5 (4.1.12) */
+  #npHud #npUser #nppAcctBtns { gap: 2px !important; }
+  #npHud #npUser #npLogoutBtn, #npHud #npUser #npSwapBtn { width: 26px !important; height: 26px !important; border-radius: 8px !important; }
+  #npHud #npUser #npLogoutBtn svg, #npHud #npUser #npSwapBtn svg { width: 14px !important; height: 14px !important; }
+  #npHud > #nppListsMod { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  #npHud #nppListsMod .nppLt { box-sizing: border-box !important; min-width: 0 !important; width: 100% !important; justify-content: flex-start !important; gap: 8px !important; padding: 0 12px !important; }
+  #npHud #nppListsMod .nppLt em { margin-left: auto !important; }
+  #npHud > #npUser { order: 1; padding-bottom: 24px !important; }
+  #npHud > #npNp { order: 2; position: relative !important; z-index: 3; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; padding: 0 !important; margin: -22px 0 0 !important; }
+  #npHud > #nppListsMod { order: 3; }
+  #npHud #npNp .np-top-row { justify-content: center !important; }
+  #npHud #npNp .np-top-row .np-amounts { display: flex !important; justify-content: center !important; align-items: center !important; gap: 6px !important; }
+  #npHud #npNp .np-top-row .np-amount, #npHud #npNp .np-top-row .np-nc, #npHud #npNp .np-top-row .np-bank { display: flex !important; flex: 0 0 auto !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important; width: auto !important; min-width: 0 !important; height: 26px !important; min-height: 26px !important; margin: 0 !important; padding: 0 10px 0 22px !important; gap: 4px !important; border: 1px solid rgba(255,255,255,.10) !important; border-radius: 999px !important; background: rgba(18,16,28,.62) !important; -webkit-backdrop-filter: blur(18px) saturate(140%) !important; backdrop-filter: blur(18px) saturate(140%) !important; box-shadow: 0 4px 12px rgba(0,0,0,.25) !important; color: #fff !important; font-size: 14px !important; }
+  #npHud #npNp .np-top-row .np-amount:hover, #npHud #npNp .np-top-row .np-nc:hover, #npHud #npNp .np-top-row .np-bank:hover { background: rgba(40,36,56,.78) !important; }
+  #npHud #npNp .np-top-row .np-amount img, #npHud #npNp .np-top-row .np-nc img { width: 18px !important; height: 18px !important; left: 3px !important; }
+  #npHud #npNp .np-top-row .npVal, #npHud #npNp .np-top-row .ncVal { font-size: 14px !important; line-height: 1 !important; }
+  #npHud #npNp .np-top-row .np-bank { width: 26px !important; padding: 0 !important; text-decoration: none !important; cursor: pointer; }
+  #npHud #npNp .np-top-row .np-bank img { position: static !important; transform: none !important; width: 18px !important; height: 18px !important; }
+  #npHud #npNp .np-top-row .np-bank svg { width: 16px; height: 16px; display: block; }
+  &.npp-side-light #npHud #npNp .np-top-row .np-amount, &.npp-side-light #npHud #npNp .np-top-row .np-nc, &.npp-side-light #npHud #npNp .np-top-row .np-bank { background: rgba(255,255,255,.72) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 4px 12px rgba(40,30,80,.14) !important; color: #1c1830 !important; }
+  &.npp-side-light #npHud #npNp .np-top-row .np-amount:hover, &.npp-side-light #npHud #npNp .np-top-row .np-nc:hover, &.npp-side-light #npHud #npNp .np-top-row .np-bank:hover { background: rgba(255,255,255,.9) !important; }
+  &.npp-side-light #npHud #npNp .np-top-row .npVal, &.npp-side-light #npHud #npNp .np-top-row .ncVal { color: #1c1830 !important; }
+  #npHud #npActivePet #npPetDockBtn { top: 8px !important; right: 8px !important; }
+  #nppIcons #nppNestPop { background: rgba(255,255,255,.14) !important; -webkit-backdrop-filter: blur(18px) saturate(160%) !important; backdrop-filter: blur(18px) saturate(160%) !important; }
+  #nppIcons #nppNestPop::before { background: none !important; }
+  #nppIcons #nppNestPop::after { transform: none !important; width: 14px !important; height: 7px !important; top: 100% !important; bottom: auto !important; margin-left: -7px !important; border: 0 !important; clip-path: polygon(0 0, 100% 0, 50% 100%); background: rgba(255,255,255,.14) !important; -webkit-backdrop-filter: blur(18px) saturate(160%) !important; backdrop-filter: blur(18px) saturate(160%) !important; }
+  &.npp-side-light #nppIcons #nppNestPop, &.npp-side-light #nppIcons #nppNestPop::after { background: rgba(255,255,255,.45) !important; }
+  /* sidebar round 6 (4.1.13) */
+  #npHud > #npUser { padding-bottom: 22px !important; }
+  #npHud > #npNp { box-sizing: border-box !important; width: calc(100% - 24px) !important; max-width: none !important; align-self: flex-start !important; margin: -15px 12px 0 !important; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; min-height: 30px !important; }
+  #npHud > #npNp .np-top-row { display: block !important; box-sizing: border-box !important; width: 100% !important; min-width: 0 !important; flex: none !important; background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+  #npHud > #npNp .np-top-row .np-amounts { display: flex !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; flex: none !important; align-items: stretch !important; gap: 0 !important; box-sizing: border-box !important; height: 30px !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; border-radius: 999px !important; background: rgba(18,16,28,.72) !important; border: 1px solid rgba(255,255,255,.12) !important; -webkit-backdrop-filter: blur(18px) saturate(140%) !important; backdrop-filter: blur(18px) saturate(140%) !important; box-shadow: 0 4px 14px rgba(0,0,0,.28) !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a { position: static !important; display: flex !important; align-items: center !important; justify-content: center !important; box-sizing: border-box !important; flex: 1 1 0 !important; min-width: 0 !important; width: auto !important; height: 100% !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; gap: 5px !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; color: #fff !important; font-size: 13px !important; text-decoration: none !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a + a { border-left: 1px solid rgba(255,255,255,.14) !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a.np-bank { flex: 0 0 34px !important; width: 34px !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a:hover { background: var(--npp-pill-bg-h) !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a img { position: static !important; transform: none !important; left: auto !important; width: 16px !important; height: 16px !important; margin: 0 !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a.np-amount img, #npHud > #npNp .np-top-row .np-amounts > a.np-nc img { order: -1; }
+  #npHud > #npNp .np-top-row .np-amounts > a .npVal, #npHud > #npNp .np-top-row .np-amounts > a .ncVal { font-size: 13px !important; line-height: 1 !important; }
+  #npHud > #npNp .np-top-row .np-amounts > a.np-bank svg { width: 16px !important; height: 16px !important; display: block !important; }
+  &.npp-side-light #npHud > #npNp .np-top-row .np-amounts { background: rgba(255,255,255,.85) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 4px 14px rgba(40,30,80,.14) !important; }
+  &.npp-side-light #npHud > #npNp .np-top-row .np-amounts > a, &.npp-side-light #npHud > #npNp .np-top-row .np-amounts > a .npVal, &.npp-side-light #npHud > #npNp .np-top-row .np-amounts > a .ncVal { color: #1c1830 !important; }
+  &.npp-side-light #npHud > #npNp .np-top-row .np-amounts > a + a { border-left-color: rgba(0,0,0,.10) !important; }
+  &.npp-side-light #npHud > #npNp .np-top-row .np-amounts > a:hover { background: var(--npp-pill-bg-h) !important; }
+  #npHud #nppPinsMod .pTabs button { text-align: left !important; justify-content: flex-start !important; padding-left: 10px !important; }
+  #npHud #nppPinsMod .rList li > a { padding: 0 10px !important; align-items: flex-start !important; text-align: left !important; }
+  #npHud #nppPinsMod .rList li > a b { max-width: 100% !important; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+  #npHud #nppPinsMod .rList li .rPin { right: 3px !important; width: 22px !important; height: 22px !important; border-radius: 7px !important; background: rgba(40,36,56,.92) !important; opacity: 0 !important; pointer-events: none !important; z-index: 2; }
+  #npHud #nppPinsMod .rList li:hover .rPin, #npHud #nppPinsMod .rList li .rPin:focus, #npHud #nppPinsMod .rList li .rPin:focus-visible { opacity: 1 !important; pointer-events: auto !important; }
+  &.npp-side-light #npHud #nppPinsMod .rList li .rPin { background: rgba(255,255,255,.95) !important; }
+  #npHud #nppPinsMod .rList li.isPinned .rPin { color: #ffd166 !important; } &.npp-side-light #npHud #nppPinsMod .rList li.isPinned .rPin { color: #d89a00 !important; }
+  #npHud #npActivePet #nppPetInfo { gap: 0 !important; margin: 0 !important; align-items: stretch !important; }
+  #npHud #npActivePet #nppPetInfo .nppChips { order: 1 !important; flex: 1 1 auto !important; min-width: 0 !important; align-items: center !important; box-sizing: border-box !important; margin: 0 0 0 calc(-1 * var(--pn-pad, 12px)) !important; padding: 6px 0 6px var(--pn-pad, 12px) !important; background: var(--npp-pill-bg) !important; }
+  #npHud #npActivePet #nppPetInfo .nppLinks { order: 2 !important; flex: 0 0 auto !important; align-items: center !important; box-sizing: border-box !important; margin: 0 calc(-1 * var(--pn-pad, 12px)) 0 0 !important; padding: 6px var(--pn-pad, 12px) 6px 0 !important; gap: 4px !important; background: var(--npp-pill-bg) !important; }
+  #npHud #npActivePet #nppPetInfo .nppLinks a, #npHud #npActivePet #nppPetInfo .nppLinks button { width: 26px !important; height: 26px !important; }
+  #npHud #npActivePet #nppPetInfo .nppLinks a svg, #npHud #npActivePet #nppPetInfo .nppLinks button svg { width: 14px !important; height: 14px !important; }
+  #npHud #npActivePet #nppPetInfo .nppDetails { order: 4 !important; }
+  /* sidebar round 7 (4.1.14) */
+  #npHud > #npActivePet { padding-bottom: 0 !important; gap: 0 !important; }
+  #npHud #npActivePet > img { vertical-align: top !important; margin-bottom: 0 !important; }
+  #npHud #npActivePet #nppPetInfo { position: static !important; gap: 0 !important; margin: 0 !important; }
+  #npHud #npActivePet #nppPetInfo .nppTitle { position: absolute !important; left: 10px !important; right: 10px !important; top: var(--npp-img-h, 240px) !important; transform: translateY(calc(-100% - 10px)) !important; z-index: 3 !important; display: flex !important; align-items: center !important; flex-wrap: nowrap !important; justify-content: flex-start !important; gap: 6px !important; margin: 0 !important; max-width: calc(100% - 20px) !important; text-align: left !important; }
+  #npHud #npActivePet #nppPetInfo .nppTitle a { display: block !important; position: static !important; min-width: 0 !important; text-align: left !important; }
+  #npHud #npActivePet #nppPetInfo .nppName { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 26px !important; font-weight: 400 !important; line-height: 1.05 !important; letter-spacing: .02em !important; padding: 0 !important; }
+  #npHud #npActivePet #nppPetInfo .nppSub, #npHud #npActivePet #nppPetInfo .nppTitle .nppCopy { opacity: 0 !important; transform: translateY(4px) !important; transition: opacity .18s ease, transform .18s ease, background .15s !important; }
+  #npHud #npActivePet #nppPetInfo .nppSub { position: absolute !important; left: 0 !important; bottom: 100% !important; top: auto !important; margin: 0 0 4px !important; display: -webkit-box !important; -webkit-box-orient: vertical !important; -webkit-line-clamp: 2 !important; box-sizing: border-box !important; width: max-content !important; max-width: 100% !important; overflow: hidden !important; white-space: normal !important; pointer-events: none !important; font: 600 11.5px/1.25 'Outfit', system-ui, sans-serif !important; padding: 4px 9px !important; border-radius: 999px !important; background: rgba(20,16,32,.55) !important; -webkit-backdrop-filter: blur(10px) !important; backdrop-filter: blur(10px) !important; color: #fff !important; text-shadow: none !important; }
+  #npHud #npActivePet #nppPetInfo .nppSub .nppG.gF { color: #ffb3d9 !important; text-shadow: none !important; }
+  #npHud #npActivePet #nppPetInfo .nppSub .nppG.gM { color: #a8d4ff !important; text-shadow: none !important; }
+  #npHud #npActivePet #nppPetInfo .nppTitle .nppCopy { position: static !important; flex: 0 0 auto !important; }
+  #npHud #npActivePet:hover #nppPetInfo .nppSub, #npHud #npActivePet:focus-within #nppPetInfo .nppSub, #npHud #npActivePet:hover #nppPetInfo .nppTitle .nppCopy, #npHud #npActivePet:focus-within #nppPetInfo .nppTitle .nppCopy { opacity: 1 !important; transform: none !important; }
+  #npHud #npActivePet.npp-name-dark #nppPetInfo .nppTitle a, #npHud #npActivePet.npp-name-dark #nppPetInfo .nppName, #npHud #npActivePet.npp-name-dark #nppPetInfo .nppTitle .nppCopy { color: #1c1830 !important; text-shadow: none !important; }
+  #npHud #npActivePet #nppPetInfo .nppTitle a, #npHud #npActivePet #nppPetInfo .nppName, #npHud #npActivePet #nppPetInfo .nppTitle .nppCopy { transition: opacity .15s; }
+  #npHud #npActivePet.npp-tone-pending #nppPetInfo .nppTitle a, #npHud #npActivePet.npp-tone-pending #nppPetInfo .nppName, #npHud #npActivePet.npp-tone-pending #nppPetInfo .nppTitle .nppCopy { opacity: 0 !important; }
+  #npHud #npActivePet.npp-name-light #nppPetInfo .nppTitle a, #npHud #npActivePet.npp-name-light #nppPetInfo .nppName, #npHud #npActivePet.npp-name-light #nppPetInfo .nppTitle .nppCopy { color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.6) !important; }
+  #npHud #npActivePet #nppPetInfo .nppStats { margin-top: 0 !important; }
+  #npHud #npActivePet #nppPetInfo .nppStats.open { padding: 8px 0 var(--pn-pad, 12px) !important; }
+  /* stats panel (4.1.18): centred, full-width rows, 6px gap */
+  #npHud #npActivePet #nppPetInfo .nppStats { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; }
+  #npHud #npActivePet #nppPetInfo .nppStats.open { padding: 10px 0 var(--pn-pad, 12px) !important; }
+  #npHud #npActivePet #nppPetInfo .nppStatsBody, #npHud #npActivePet #nppPetInfo .nppStatsBody .nppDetails { box-sizing: border-box !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+  #npHud #npActivePet #nppPetInfo .nppStatsBody .nppDetails { display: flex !important; flex-direction: column !important; gap: 6px !important; }
+  #npHud #npActivePet #nppPetInfo .nppStatsBody .nppStat { box-sizing: border-box !important; width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: center !important; gap: 8px !important; margin: 0 !important; padding: 5px 10px !important; line-height: 1.3 !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppStatsBody .nppStat { background: rgba(0,0,0,.08) !important; text-shadow: none !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppStatsBody .nppStat span { color: rgba(28,24,48,.68) !important; text-shadow: none !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppStatsBody .nppStat b { color: #1c1830 !important; text-shadow: none !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppStatsBody .nppStat b.gF { color: #c2377e !important; }
+  &.npp-side-light #npHud #npActivePet #nppPetInfo .nppStatsBody .nppStat b.gM { color: #2f6fc4 !important; }
+  &.npp-side-light #npHud #nppListsMod .nppLt { background: #fff !important; box-shadow: 0 1px 3px rgba(40,30,80,.08) !important; }
+  &.npp-side-light #npHud #nppListsMod .nppLt:hover { background: #f3f0fa !important; }
 }`;
 
   const NC_CSS = `
@@ -1332,7 +1688,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .left { grid-column: 1 !important; justify-content: center !important; gap: 2px !important; }
 #menu-premium { max-height: calc(100vh - 100px); overflow-x: hidden !important; overflow-y: auto !important; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; }
 .menu a .npp-cd { margin-left: auto; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; }
-.menuHead { position: sticky; top: -8px; z-index: 1; margin: 0 -8px; padding: 9px 20px 4px; background: rgba(38,38,42,.97); font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+.menuHead { position: sticky; top: -8px; z-index: 1; margin: 0 -8px; padding: 9px 20px 4px; background: rgba(14,12,22,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 #menu-premium::-webkit-scrollbar { width: 8px; }
 #menu-premium::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
 .right { display: none !important; }
@@ -1351,7 +1707,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .npp-search button { position: absolute; z-index: 1; left: 2px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
 .npp-search button img { width: 30px; height: 30px; display: block; filter: var(--npp-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.3))); transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
 .npp-search:hover button img, .npp-search:focus-within button img { transform: scale(.82); }
-.npp-premcaret { display: none; position: absolute; z-index: 6; width: 12px; height: 12px; transform: rotate(45deg); background: rgba(38,38,42,.97); border-left: 1px solid rgba(255,255,255,.14); border-top: 1px solid rgba(255,255,255,.14); pointer-events: none; }
+.npp-premcaret { display: none; position: absolute; z-index: 6; width: 12px; height: 12px; transform: rotate(45deg); background: rgba(40,36,52,.92); border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); pointer-events: none; }
+#menu-premium::before { content: none; }
+.npp-prembg { display: none; position: absolute; overflow: hidden; box-sizing: border-box; border-radius: var(--npp-menu-radius, 0 0 16px 16px); pointer-events: none; }
+.npp-prembg::before { content: ""; position: absolute; inset: -24px; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--npLeftBarImg, none) center / cover no-repeat, var(--npLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); }
 .npp-bell { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); z-index: 2; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; pointer-events: auto; transition: background .2s; }
 .npp-bell:hover, .npp-bell[aria-expanded="true"] { background: rgba(255,255,255,.2); }
 .npp-bell svg { width: 24px; height: 24px; display: block; filter: var(--npp-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.5))); }
@@ -1364,13 +1723,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .npp-logo img { height: 43px; max-width: 215px; display: block; filter: var(--npp-logo-filter, none); }
 .npp-logo span { display: none; font: 400 32px 'CafeteriaBlack', Georgia, serif; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 .npp-logo.txt span { display: inline; }
-.menu::before { content: ""; position: absolute; left: 0; right: 0; top: -6px; height: 6px; }
+.menu::before { content: ""; position: absolute; inset: -24px; z-index: -1; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--npLeftBarImg, none) center / cover no-repeat, var(--npLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); clip-path: inset(24px round var(--npp-menu-radius, 0 0 16px 16px)); pointer-events: none; }
 .btn.cat::before { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 8px; }
-.menu { min-width: 236px !important; padding: 8px !important; overflow: visible; border: 1px solid rgba(255,255,255,.14) !important; border-radius: var(--npp-menu-radius, 0 0 16px 16px) !important; background: rgba(38,38,42,.97) !important; -webkit-backdrop-filter: blur(18px) saturate(1.2) !important; backdrop-filter: blur(18px) saturate(1.2) !important; box-shadow: 0 18px 44px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08) !important; margin-top: var(--npp-menu-lift, 0px); }
-.menu::after { content: ""; display: var(--npp-menu-caret, none); position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: rgba(38,38,42,.97); border-left: 1px solid rgba(255,255,255,.14); border-top: 1px solid rgba(255,255,255,.14); border-radius: 3px 0 0 0; pointer-events: none; }
-.menu a { gap: 12px !important; margin-bottom: 2px; padding: 9px 12px !important; border-radius: 12px !important; transition: background .18s, transform .18s cubic-bezier(.3,1.4,.5,1) !important; }
-.menu a, .menu a span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 18px !important; font-weight: 400 !important; color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.4) !important; }
-.menu a img { width: 22px !important; height: 22px !important; transition: transform .22s cubic-bezier(.3,1.6,.5,1); }
+.menu { min-width: 264px !important; padding: 8px !important; overflow: visible; border: 1px solid rgba(255,255,255,.2) !important; border-radius: var(--npp-menu-radius, 0 0 16px 16px) !important; background: rgba(14,12,22,.2) !important; -webkit-backdrop-filter: blur(18px) saturate(1.2) !important; backdrop-filter: blur(18px) saturate(1.2) !important; box-shadow: 0 18px 44px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08) !important; margin-top: var(--npp-menu-lift, 0px); }
+.menu::after { content: ""; display: var(--npp-menu-caret, none); position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: rgba(40,36,52,.92); border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); border-radius: 3px 0 0 0; pointer-events: none; }
+.menu a { gap: 14px !important; margin-bottom: 2px; padding: 11px 14px !important; border-radius: 12px !important; transition: background .18s, transform .18s cubic-bezier(.3,1.4,.5,1) !important; }
+.menu a, .menu a span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 21px !important; font-weight: 400 !important; color: #fff !important; text-shadow: 0 2px 4px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.9) !important; }
+.menu a img { width: 28px !important; height: 28px !important; filter: drop-shadow(0 2px 3px rgba(0,0,0,.7)); transition: transform .22s cubic-bezier(.3,1.6,.5,1); }
 .menu a:hover { background: linear-gradient(90deg, var(--np-accent-hover, rgba(255,255,255,.14)), var(--np-accent-soft, rgba(255,255,255,.04))), rgba(255,255,255,.07) !important; transform: translateX(3px); }
 .menu a:hover img { transform: scale(1.14) rotate(-5deg); }
 .menu a:hover span { color: #fff !important; }
@@ -1378,11 +1737,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .menu .menuTrash, .menu .menuAddRow { display: none !important; }
 .menu.np-edit-mode .menuTrash { display: flex !important; opacity: 1 !important; }
 .menu.np-edit-mode .menuAddRow { display: block !important; }
-.np-menu-edit-btn { position: absolute; left: 50%; bottom: -15px; transform: translateX(-50%); z-index: 2; display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; background: #1b1624; color: rgba(255,255,255,.85); cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.4); transition: background .15s, color .15s, transform .15s; }
-.np-menu-edit-btn span { display: none; }
-.np-menu-edit-btn svg { width: 14px; height: 14px; }
-.np-menu-edit-btn:hover, .np-menu-edit-btn.active { background: var(--np-accent, #fff); color: var(--npp-accent-fg, #1a1330); border-color: transparent; }
-.np-menu-edit-btn:hover { transform: translateX(-50%) scale(1.08); }
+.np-menu-edit-btn { position: relative; display: flex; align-items: center; justify-content: flex-start; gap: 8px; box-sizing: border-box; width: 100%; height: auto; margin: 6px 0 0; padding: 9px 14px 5px; border: 0; border-top: 1px solid rgba(255,255,255,.14); border-radius: 0; background: transparent; color: rgba(255,255,255,.78); font: 600 13px/1 'Outfit', system-ui, sans-serif; text-shadow: 0 1px 3px rgba(0,0,0,.85); cursor: pointer; transition: color .15s; }
+.np-menu-edit-btn svg { width: 13px; height: 13px; flex: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+.np-menu-edit-btn:hover, .np-menu-edit-btn.active { color: #fff; }
+.np-menu-edit-btn:hover span { text-decoration: underline; text-underline-offset: 3px; }
 .npp-tabs { display: flex; gap: 4px; margin-bottom: 6px; padding: 3px; border-radius: 11px; background: rgba(255,255,255,.08); }
 .npp-tabs button { flex: 1; height: 30px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: rgba(255,255,255,.7); font: 400 18px 'CafeteriaBlack', Georgia, serif; cursor: pointer; transition: background .15s, color .15s; }
 .npp-tabs button:hover { background: rgba(255,255,255,.14); color: #fff; }
@@ -1398,7 +1756,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 .nppAlertRow svg { color: #ffd27a !important; }
 .btn.npp-alert-on::after { content: ""; position: absolute; top: 6px; left: 37px; width: 9px; height: 9px; border-radius: 50%; background: #2fd873; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 1px 3px rgba(0,0,0,.35); pointer-events: none; z-index: 1; }
 .menu .menuAddBtns button.menuAddOk { color: var(--npp-accent-fg, #1a1330); }
-.bellMenu { display: none !important; }
 @media (max-width: 1500px) { .btn.npp-alert-on::after { left: 29px; } }
 @media (max-width: 1250px) { .btn.npp-alert-on::after { left: 26px; } }
 @media (max-width: 1500px) { .btn { padding: 9px 10px !important; } .btn, .btn span { font-size: 21px !important; } .btn img { width: 26px !important; height: 26px !important; } }
@@ -1570,7 +1927,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       + [['main', 'Background'], ['left', 'Sidebar'], ['head', 'Header']].map(([k, l]) =>
       `<div class="nppRow"><span>${l}</span><input type="color" data-k="${k}"><button type="button" data-r="${k}" title="Reset to default (also removes its image)">Reset</button></div>`).join('')
       + '<label class="nppShareRow"><input type="checkbox" data-share="1"><span>Share theme on all accounts</span></label>'
-      + '<div class="nppRow nppLogoRow"><i class="nppLogoDot"></i><span>Logo</span><div class="nppSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>';
+      + '<div class="nppRow nppLogoRow"><i class="nppLogoDot"></i><span>Logo</span><div class="nppSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>'
+      + '<div class="nppRow nppLogoRow nppSideRow"><i class="nppLogoDot"></i><span>Sidebar style</span><div class="nppSeg"><button type="button" data-side="0">Dark</button><button type="button" data-side="1">Light</button></div></div>';
     anchor.before(row);
     const curAccent = () => { let a = ''; try { a = (typeof W.__npGetAccent === 'function' && W.__npGetAccent()) || LSget('npqol_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
     const setAccent = (hex) => {
@@ -1587,7 +1945,15 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const lw = LSget('npp_logo_white') === '1' ? '1' : '0';
       row.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === lw));
       const lr = row.querySelector('.nppLogoRow'); if (lr) lr.dataset.logo = lw;
+      const sl = document.documentElement.classList.contains('npp-side-light') ? '1' : '0';
+      row.querySelectorAll('[data-side]').forEach(x => x.classList.toggle('on', x.dataset.side === sl));
     };
+    row.addEventListener('click', (e) => {
+      const sb = e.target.closest && e.target.closest('[data-side]'); if (!sb) return;
+      const on = sb.dataset.side === '1';
+      document.documentElement.classList.toggle('npp-side-light', on);
+      LSset('npp_side_light', on ? '1' : '0'); sync();
+    });
     row._sync = sync;
     sync();
     row.addEventListener('change', (e) => {
@@ -1914,11 +2280,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         if (!menu.querySelector('.np-menu-edit-btn')) {
           const b = document.createElement('button');
           b.type = 'button'; b.className = 'np-menu-edit-btn'; b.title = 'Edit links';
-          const lab = (on) => { b.classList.toggle('active', on); b.innerHTML = (on ? CHECK : PENCIL) + '<span>' + (on ? 'Done' : 'Edit') + '</span>'; };
+          const lab = (on) => { b.classList.toggle('active', on); b.innerHTML = (on ? CHECK : PENCIL) + '<span>' + (on ? 'Done editing' : 'Edit links') + '</span>'; };
           lab(menu.classList.contains('np-edit-mode'));
           b.addEventListener('click', (e) => { e.stopPropagation(); lab(menu.classList.toggle('np-edit-mode')); });
           menu.appendChild(b);
         }
+        const eb = menu.querySelector('.np-menu-edit-btn');
+        if (eb && menu.lastElementChild !== eb) menu.appendChild(eb);   // always the last row
         if (id === 'community' && !menu.querySelector('[data-np-news]')) {
           const a = document.createElement('a');
           a.href = 'https://www.neopets.com/nf.phtml'; a.dataset.npNews = '1';
@@ -1937,13 +2305,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
               if (b) { e.stopPropagation(); menu.dataset.tab = b.dataset.t; }
             });
             menu.prepend(bar);
-          }
-          if (!menu.querySelector('[data-npp-watch]')) {
-            const w = document.createElement('a');
-            w.href = '#'; w.dataset.nppWatch = '1';
-            w.innerHTML = '<span>Watch list</span>';
-            w.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openWatch(); });
-            menu.appendChild(w);
           }
           let seps = 0;
           [...menu.children].forEach(c => {
@@ -2123,10 +2484,18 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     sr.appendChild(menu);
     if (W.__nppDailies) W.__nppDailies.decoratePremium(menu);
     { const caret = document.createElement('div'); caret.className = 'npp-premcaret'; menu.insertAdjacentElement('afterend', caret);
+      // Premium scrolls, so its frosted image can't be .menu::before (it would scroll away): a sibling layer sits behind it.
+      const bg = document.createElement('div'); bg.className = 'npp-prembg'; menu.insertAdjacentElement('beforebegin', bg);
       const csync = () => {
-        const cs = getComputedStyle(menu), vis = cs.display !== 'none' && cs.getPropertyValue('--npp-menu-caret').trim() === 'block';
+        const cs = getComputedStyle(menu), open = cs.display !== 'none', vis = open && cs.getPropertyValue('--npp-menu-caret').trim() === 'block';
         caret.style.display = vis ? 'block' : 'none';
         if (vis) { caret.style.left = (menu.offsetLeft + menu.offsetWidth / 2 - 6) + 'px'; caret.style.top = (menu.offsetTop - 7) + 'px'; }
+        bg.style.display = open ? 'block' : 'none';
+        if (open) {
+          bg.style.position = cs.position; if (cs.zIndex !== 'auto') bg.style.zIndex = cs.zIndex;
+          bg.style.left = menu.offsetLeft + 'px'; bg.style.top = menu.offsetTop + 'px';
+          bg.style.width = menu.offsetWidth + 'px'; bg.style.height = menu.offsetHeight + 'px';
+        }
       };
       new MutationObserver(() => requestAnimationFrame(csync)).observe(menu, { attributes: true, attributeFilter: ['style', 'class'] });
       new ResizeObserver(csync).observe(menu);
@@ -2196,10 +2565,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     tools.id = 'nppTools';
     tools.innerHTML =
       '<div class="nppSep"></div>' +
-      `<form class="nppSearch" action="${SEARCH_URL}" method="get"><button type="submit" aria-label="Search" title="Search"><img alt=""></button><input name="string" placeholder="Search the site" autocomplete="off" aria-label="Search the site"></form>` +
-      '<button type="button" id="nppBellBtn" aria-label="Notifications" title="Notifications" aria-expanded="false"><img alt=""><svg class="nppBellSvg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.2 16.5h15.6L18 12.5V9a6 6 0 0 0-6-6zM9.8 19.5a2.4 2.4 0 0 0 4.4 0"/></svg><i class="nppTick"></i></button>';
+      `<form class="nppSearch" action="${SEARCH_URL}" method="get"><button type="submit" aria-label="Search" title="Search"><img alt=""></button><input name="string" placeholder="Search the site" autocomplete="off" aria-label="Search the site"></form>`;
     document.body.appendChild(tools);
-    const sImg = $('.nppSearch img', tools), bImg = $('#nppBellBtn img', tools), bell = $('#nppBellBtn', tools), form = $('.nppSearch', tools), input = $('input', form);
+    const sImg = $('.nppSearch img', tools), form = $('.nppSearch', tools), input = $('input', form);
     const host = $('#npx-host');
     const place = () => {
       if (!host) return;
@@ -2241,30 +2609,12 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     rs.setProperty('--npp-tools-h', '0px');
     new MutationObserver(remeasure).observe(col, { childList: true });
 
-    const BELL_NAMES = ['notifications', 'notification', 'bell', 'alerts', 'alert'];
-    let bellName = LSget('npp_bell_icon_name') || '';
     const paintIcons = () => {
       const su = iconUrl('search'); if (su && sImg.getAttribute('src') !== su) sImg.src = su;
-      if (bellName) { const bu = iconUrl(bellName); if (bu && bImg.getAttribute('src') !== bu) bImg.src = bu; }
     };
     document.addEventListener('np:btn-theme', () => paintIcons());
     setInterval(measure, 300);
     sImg.addEventListener('error', () => { sImg.style.display = 'none'; sImg.parentElement.classList.add('noimg'); });
-    bImg.addEventListener('error', () => { bImg.style.display = 'none'; bell.classList.add('noimg'); });
-    bImg.addEventListener('load', () => { bImg.style.display = ''; bell.classList.remove('noimg'); });
-    if (!bellName) {
-      let n = 0;
-      const tryNext = () => {
-        if (n >= BELL_NAMES.length) { bell.classList.add('noimg'); return; }
-        const name = BELL_NAMES[n++], u = iconUrl(name);
-        if (!u) { tryNext(); return; }
-        const im = new Image();
-        im.onload = () => { bellName = name; LSset('npp_bell_icon_name', name); paintIcons(); };
-        im.onerror = tryNext;
-        im.src = u;
-      };
-      bell.classList.add('noimg'); tryNext();
-    }
     setTimeout(remeasure, 700); setTimeout(remeasure, 2500);
     paintIcons();
     setInterval(() => { paintIcons(); try { const A = A0(), cur = String(A && A.getIconSize ? A.getIconSize() : ''); if (cur !== lastIcSize) { if (lastIcSize) remeasure(); lastIcSize = cur; } } catch {} }, 2000);
@@ -2290,7 +2640,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (e.key !== 'Escape' || !form.classList.contains('nppOpen')) return;
       closeSearch(); input.blur();
     });
-    bell.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closeSearch(); const d = $('#nppNotifDrawer'); setNotifOpen(!(d && d.classList.contains('open'))); });
+
   }
 
   const NEST_KEY = 'npp_nest_v1';
@@ -2342,7 +2692,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const key = itemKey(parent), nest = readNest(), by = kidsByKey();
       let list = (nest[key] || []).map(c => by.get(c)).filter(Boolean);
       if (!list.length) return;
-      if (col.closest('#nppIcons')) list = [parent].concat(list);
       mount();
       const sig = key + '|' + list.map(itemKey).join(',');
       if (!(pop._sig === sig && inner.children.length)) {
@@ -2362,19 +2711,26 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       pop.style.left = Math.round(r.right) + 'px'; pop.style.top = Math.round(r.top + r.height / 2) + 'px';
       if (!pop.classList.contains('open')) pop.classList.add('open');
     };
-    const hidePop = () => { clearTimeout(hideT); hideT = setTimeout(() => pop.classList.remove('open'), 260); };
+    const hidePop = () => { clearTimeout(hideT); hideT = setTimeout(() => pop.classList.remove('open'), 300); };
+    const canHover = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches; } catch { return true; } };
     const inMod = () => !!col.closest('#nppIcons');
-    col.addEventListener('mouseover', (e) => {
-      if (inMod()) return;
+    const hoverOpen = (e) => {
+      if (inMod() && !canHover()) return;
       const item = [...col.children].find(k => k.contains(e.target));
       if (!item) return;
-      if (item.classList.contains('nppHasNest')) showPop(item); else if (pop.classList.contains('open')) hidePop();
-    });
-    col.addEventListener('mouseleave', () => { if (!inMod()) hidePop(); });
-    pop.addEventListener('mouseenter', () => clearTimeout(hideT));
-    pop.addEventListener('mouseleave', () => { if (!inMod()) hidePop(); });
+      if (item.classList.contains('nppHasNest')) { showPop(item); pop._key = itemKey(item); } else if (pop.classList.contains('open')) hidePop();
+    };
+    col.addEventListener('mouseover', hoverOpen);
+    col.addEventListener('focusin', hoverOpen);
+    col.addEventListener('focusout', () => { if (inMod()) hidePop(); });
+    col.addEventListener('mouseleave', (e) => { if (e.relatedTarget && pop.contains(e.relatedTarget)) return; if (!inMod() || canHover()) hidePop(); });
+    pop.addEventListener('mouseenter', () => clearTimeout(hideT)); pop.addEventListener('mouseover', () => clearTimeout(hideT)); pop.addEventListener('pointerenter', () => clearTimeout(hideT));
+    pop.addEventListener('focusin', () => clearTimeout(hideT));
+    pop.addEventListener('focusout', () => { if (inMod()) hidePop(); });
+    pop.addEventListener('mouseleave', (e) => { if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#nppIcons #btnOverlay .col > .nppHasNest')) return; if (!inMod() || canHover()) hidePop(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && inMod() && pop.classList.contains('open')) pop.classList.remove('open'); });
     col.addEventListener('click', (e) => {
-      if (!inMod() || pop._via || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
+      if (!inMod() || canHover() || pop._via || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
       const item = [...col.children].find(k => k.contains(e.target));
       if (!item || !item.classList.contains('nppHasNest')) return;
       e.preventDefault(); e.stopPropagation();
@@ -2525,146 +2881,44 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     scan();
   }
 
-  /* ═══════════════════════════════ Notifications ═══════════════════════════════ */
-  const MAIL_URL = 'https://www.neopets.com/neomessages.phtml';
-  const MAIL_READ = 'https://www.neopets.com/neomessages.phtml?type=read_message&message_id=';
-  function wireNotif() {
-    const sr = shadow(), box = $('#nppBellBtn'), out = $('#nppNotifList');
-    if (!sr || !box || !out || box.dataset.w) return;
-    const list = sr.getElementById('npxBellList');
-    if (!list) return;
-    box.dataset.w = '1';
-    const GONE = 'npp_notif_gone', TTL = 5 * 60 * 1000;
-    const goneMap = () => {
-      let o = {};
-      try { o = JSON.parse(sessionStorage.getItem(GONE) || '{}') || {}; } catch {}
-      const now = Date.now();
-      Object.keys(o).forEach(k => { if (now - o[k] > TTL) delete o[k]; });
-      return o;
-    };
-    const addGone = (k) => {
-      const o = goneMap(); o[k] = Date.now();
-      try { sessionStorage.setItem(GONE, JSON.stringify(o)); sessionStorage.removeItem('npqol_notifs_v2'); } catch {}
-    };
-    const seen = new Set();
-    const t = (el, q) => ((el.querySelector(q) || {}).textContent || '').trim();
-    const hrefOf = (it) => it.getAttribute('href') || '';
-    const isMail = (it) => /neomail|neomessage|neomail/i.test(t(it, '.bellTitle') + ' ' + hrefOf(it));
-    const entries = () => {
-      const c = {};
-      return [...list.querySelectorAll('.bellItem')].map((it, i) => {
-        const base = hrefOf(it) + '|' + t(it, '.bellTitle') + '|' + t(it, '.bellText');
-        c[base] = (c[base] || 0) + 1;
-        return { it, i, k: c[base] > 1 ? base + '#' + c[base] : base };
-      });
-    };
-    const iconOf = (it) => {
-      let bg = '';
-      try { const el = it.querySelector('.bellIcon'); bg = (el && (getComputedStyle(el).backgroundImage || el.style.backgroundImage)) || ''; } catch {}
-      if (bg && bg !== 'none') { if (isMail(it)) { try { sessionStorage.setItem('npp_mail_ico', bg); } catch {} } return bg; }
-      if (isMail(it)) { let m = ''; try { m = sessionStorage.getItem('npp_mail_ico') || ''; } catch {} return m || `url("${MAIL_SVG}")`; }
-      return `url("${BELL_SVG}")`;
-    };
-    const render = () => {
-      const gone = goneMap();
-      const items = entries().filter(o => !gone[o.k]);
-      box.classList.toggle('has', items.length > 0);
-      box.title = items.length ? `${items.length} notification${items.length === 1 ? '' : 's'}` : 'Notifications'; box.setAttribute('aria-label', box.title);
-      const sortedItems = items.slice().sort((a, b) => (isMail(a.it) ? 0 : 1) - (isMail(b.it) ? 0 : 1));
-      let lastGrp = '';
-      out.innerHTML = items.length
-        ? sortedItems.map(({ it, k }) => {
-          const isNew = !seen.has(k);
-          seen.add(k);
-          const grp = isMail(it) ? 'Neomail' : 'Events & alerts';
-          const head = grp !== lastGrp ? `<div class="nppGrpHead">${grp}</div>` : '';
-          lastGrp = grp;
-          return head + `<div class="nppN${isNew ? ' isNew' : ''}" data-k="${esc(k)}"><div class="nppIco" style="background-image:${esc(iconOf(it))}"></div><a href="${esc(isMail(it) ? MAIL_URL : hrefOf(it))}"><b>${esc(t(it, '.bellTitle'))}</b><i>${esc(t(it, '.bellTime'))}</i><span>${esc(t(it, '.bellText'))}</span></a><button type="button" class="nppX" title="Dismiss" aria-label="Dismiss">×</button></div>`; }).join('')
-        : '<div class="nppEmpty">You’re all caught up</div>';
-    };
-    new MutationObserver(render).observe(list, { childList: true, subtree: true });
-    render();
-
-    async function resolveMail(it) {
-      const direct = /message_id=(\d+)/i.exec(hrefOf(it));
-      if (direct) return MAIL_READ + direct[1];
-      const title = t(it, '.bellTitle'), text = t(it, '.bellText'), all = title + ' ' + text;
-      const sm = /from\s+([A-Za-z0-9_]{3,20})/i.exec(all) || /^([A-Za-z0-9_]{3,20})\s*[:\-–]/.exec(text);
-      const sender = sm ? sm[1].toLowerCase() : '';
-      const subj = (((/["“]([^"”]{3,80})["”]/.exec(all)) || (/:\s*(.{3,80})$/.exec(text)) || [])[1] || '').trim().toLowerCase();
-      if (!sender && !subj) return '';
-      try {
-        const html = await Promise.race([
-          fetch(MAIL_URL, { credentials: 'same-origin', cache: 'no-store' }).then(r => r.text()),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3500)),
-        ]);
-        const re = /neomessages\.phtml\?[^"'<>\s]*?message_id=(\d+)/gi, found = [];
-        let m;
-        while ((m = re.exec(html))) found.push({ id: m[1], pos: m.index });
-        const cands = found.map((f, i) => ({
-          id: f.id,
-          ctx: html.slice(i === 0 ? Math.max(0, f.pos - 600) : Math.floor((found[i - 1].pos + f.pos) / 2), i === found.length - 1 ? f.pos + 600 : Math.floor((f.pos + found[i + 1].pos) / 2)).toLowerCase(),
-        }));
-        const has = (c, x) => !!x && c.ctx.includes(x);
-        const hit = cands.find(c => has(c, sender) && has(c, subj)) || (subj && cands.find(c => has(c, subj))) || (sender && cands.find(c => has(c, sender)));
-        return hit ? MAIL_READ + hit.id : '';
-      } catch { return ''; }
+  /* ═══════════════════════════════ Bell (Neopets' own) ═══════════════════════════════ */
+  // Modern pages: Neopets' bell (.nav-bell-icon__2020) and its dropdown (#navnewsdropdown__2020) live in #navtop__2020,
+  // which the Modern Interface hides. Both move into #nppBell, so they work exactly as on the normal site.
+  // Retired pages have no alert list, so the bell is a plain link to the events page. No requests either way.
+  const EVENTS_URL = 'https://www.neopets.com/allevents.phtml';
+  const BELL_ICON = 'https://images.neopets.com/themes/h5/basic/images/v3/bell-icon.svg';
+  function setupBell() {
+    if (isNc || isPopup || !document.body) return;
+    let box = $('#nppBell');
+    const nb = $('.nav-bell-icon__2020'), dd = $('#navnewsdropdown__2020');
+    if (nb && dd) {
+      if (box && box.dataset.k === 'native' && box.contains(nb)) return;
+      if (box) box.remove();
+      box = document.createElement('div');
+      box.id = 'nppBell'; box.dataset.k = 'native';
+      box.append(nb, dd);
+      document.body.appendChild(box);
+      try { if (getComputedStyle(nb).backgroundImage === 'none') nb.style.backgroundImage = `url("${BELL_ICON}")`; } catch {}
+      return;
     }
-
-    out.addEventListener('click', (e) => {
-      const rowOf = (el) => el.closest('.nppN');
-      const x = e.target.closest('.nppX');
-      if (x) {
-        const row = rowOf(x), ent = entries().find(o => o.k === row.dataset.k);
-        addGone(row.dataset.k);
-        if (ent) { try { ent.it.querySelector('.bellX').click(); } catch {} }
-        render();
-        return;
-      }
-      const a = e.target.closest('.nppN a');
-      if (!a) return;
-      const row = rowOf(a), k = row.dataset.k, ent = entries().find(o => o.k === k), it = ent && ent.it;
-      const modified = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
-      addGone(k);
-      if (it && isMail(it) && !modified) {
-        e.preventDefault();
-        row.classList.add('busy');
-        resolveMail(it).then((url) => {
-          if (!url) { try { fetch(hrefOf(it), { credentials: 'same-origin', keepalive: true, cache: 'no-store' }); } catch {} }
-          location.assign(url || MAIL_URL);
-        });
-      }
-      setTimeout(render, 0);
-      setNotifOpen(false);
-    });
-    out.addEventListener('auxclick', (e) => {
-      const a = e.target.closest('.nppN a');
-      if (a) { addGone(a.closest('.nppN').dataset.k); setTimeout(render, 0); }
-    });
+    if (box || document.readyState === 'loading') return;
+    const td = $('td.eventIcon');
+    const b = td && td.querySelector('b');
+    const txt = td ? (td.innerText || '').replace(/»\s*See all events\s*«/i, '').trim() : '';
+    const title = ((b && b.textContent) || '').trim() || txt.slice(0, 80);
+    box = document.createElement('a');
+    box.id = 'nppBell'; box.dataset.k = 'link'; box.href = EVENTS_URL;
+    box.title = title ? 'Newest alert: ' + title : 'Alerts';
+    box.setAttribute('aria-label', box.title);
+    box.innerHTML = `<img src="${BELL_ICON}" alt="">` + (title ? '<i class="nppBellDot"></i>' : '');
+    document.body.appendChild(box);
   }
 
-  function setNotifOpen(open) {
-    const dr = $('#nppNotifDrawer'), bell = $('#nppBellBtn');
-    if (!dr) return;
-    dr.classList.toggle('open', !!open);
-    if (bell) bell.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (open) document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'notif' }));
-  }
   function buildFooter() {
     if ($('#nppFoot') || !document.body || isNc) return;
     const f = document.createElement('div');
     f.id = 'nppFoot';
     document.body.appendChild(f);
-    const dr = document.createElement('div');
-    dr.id = 'nppNotifDrawer';
-    dr.innerHTML = '<div class="nppNHead"><span class="nppNTitle">Notifications</span><a class="nppNLink" href="https://www.neopets.com/allevents.phtml" title="Open your event inbox">Event inbox</a></div><div id="nppNotifList"><div class="nppEmpty">You’re all caught up</div></div>';
-    document.body.appendChild(dr);
-    document.addEventListener('pointerdown', (e) => {
-      if (!dr.classList.contains('open')) return;
-      if (!e.target.closest('#nppNotifDrawer, #nppBellBtn')) setNotifOpen(false);
-    }, true);
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dr.classList.contains('open')) setNotifOpen(false); });
-    document.addEventListener('npp:drawer', (e) => { if (e.detail !== 'notif') setNotifOpen(false); });
     new ResizeObserver(() => rs.setProperty('--np-hud-bottom', (f.offsetHeight + 12) + 'px')).observe(f);
   }
 
@@ -2726,7 +2980,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!a) { box.innerHTML = ''; return; }
     const title = `${a.name} - ${[a.colour, a.species].filter(Boolean).join(' ')}`;
     const gcls = /female/i.test(a.gender || '') ? 'gF' : 'gM';
-    const shown = `<span class="nppName">${esc(a.name)}</span><span class="nppSub">the ${a.gender ? `<span class="nppG ${gcls}">${esc(a.gender)}</span> ` : ''}${esc([a.colour, a.species].filter(Boolean).join(' '))}</span>`;
+    const shown = `<span class="nppName">${esc(a.name)}</span><span class="nppSub">${a.gender ? `<span class="nppG ${gcls}">${esc(a.gender)}</span> ` : ''}${esc([a.colour, a.species].filter(Boolean).join(' '))}</span>`;
     const ageN = parseInt(String(a.age || '').replace(/[^\d]/g, ''), 10);
     const ageUnit = /hour/i.test(a.age || '') ? 'hours' : /minute/i.test(a.age || '') ? 'minutes' : 'days';
     const ageShort = !Number.isFinite(ageN) ? a.age : (ageUnit === 'days' && ageN >= 1000) ? (() => { const k = Math.floor(ageN / 100) / 10; return (k % 1 ? k.toFixed(1) : k) + 'K days'; })() : ageN + ' ' + ageUnit;
@@ -2734,7 +2988,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const rows = [['Health', a.health], ['Strength', a.strength], ['Defence', a.defence], ['Move', a.move], ['Intelligence', a.intelligence]].filter(r => r[1]);
     box.innerHTML = `<div class="nppTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nppCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nppLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nppStatsBtn${LSget('npp_stats_open') === '0' ? '' : ' on'}" title="Stats" aria-label="Stats" aria-pressed="${LSget('npp_stats_open') === '0' ? 'false' : 'true'}">${STATS_ICON}</button>` : ''}</div><div class="nppChips">${chips.map(c => `<span class="nppChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nppStats${LSget('npp_stats_open') === '0' ? '' : ' open'}"><div class="nppStatsBody"><div class="nppDetails">${rows.map(r => `<div class="nppStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
   }
-  const PET_IMG_STYLE = 'aspect-ratio:1/1!important;object-fit:contain!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;transform:none!important;background:#fff!important;border-radius:10px!important;opacity:1!important;display:block!important';
+  const PET_IMG_STYLE = 'object-position:50% 50%!important;object-fit:cover!important;width:calc(100% + 2 * var(--pn-pad, 12px))!important;height:auto!important;aspect-ratio:1/1!important;max-width:none!important;max-height:none!important;transform:none!important;background:#fff!important;border-radius:var(--pn-r, 16px) var(--pn-r, 16px) 0 0!important;opacity:1!important;display:block!important;margin:calc(-1 * var(--pn-pad, 12px)) calc(-1 * var(--pn-pad, 12px)) 0!important;box-shadow:none!important';
   function syncPetImg() {
     if (Date.now() > petSyncUntil) return;
     const img = $('#npActivePet > img'), el = document.getElementById('navPetMenuIcon__2020');
@@ -2754,6 +3008,66 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   function fixPetImg() {
     const img = $('#npActivePet > img');
     if (img && img.getAttribute('style') !== PET_IMG_STYLE) img.setAttribute('style', PET_IMG_STYLE);
+    const card = $('#npActivePet');
+    if (!img || !card) return;
+    const h = img.offsetHeight;
+    if (h > 0 && card.dataset.nppImgH !== String(h)) { card.dataset.nppImgH = String(h); card.style.setProperty('--npp-img-h', h + 'px'); }
+    if (petImgRO && petImgRO.el !== img) { petImgRO.ro.disconnect(); petImgRO = null; }
+    if (!petImgRO && typeof ResizeObserver === 'function') { const ro = new ResizeObserver(fixPetImg); ro.observe(img); petImgRO = { ro, el: img }; }
+    const src = img.currentSrc || img.src || '';
+    if (src && src !== nameToneSrc) { nameToneSrc = src; pickNameTone(card, src); }
+  }
+  let petImgRO = null, nameToneSrc = '';
+  function npLoadBlob(src, cb) {
+    // Fetch bytes via GM (no CORS needed) and hand back a same-origin blob URL; cb(null) on any failure.
+    try {
+      if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
+      GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
+    } catch { cb(null); }
+  }
+  const nppToneCache = new Map();
+  const NPP_TONE_KEY = 'npp_pet_tone_v1';
+  function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function nppToneSave(src, dark) {
+    try {
+      const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
+      const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
+      localStorage.setItem(NPP_TONE_KEY, JSON.stringify(o));
+    } catch {}
+  }
+  function nppToneProbe(src, cb) {
+    // cb(dark, ok): ok=false on failure/timeout (resolves light, not persisted).
+    let fin = false, burl = null, tm = 0;
+    const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
+    tm = setTimeout(() => done(false, false), 3000);
+    try {
+      const im = new Image();
+      im.onerror = () => done(false, false);
+      im.onload = () => {
+        try {
+          const W0 = 48, cv = document.createElement('canvas'); cv.width = cv.height = W0;
+          const cx = cv.getContext('2d', { willReadFrequently: true });
+          cx.fillStyle = '#fff'; cx.fillRect(0, 0, W0, W0); cx.drawImage(im, 0, 0, W0, W0);
+          const p = 6, q = Math.round(W0 * 0.25), regs = [[0, 0], [W0 - p, 0], [0, W0 - p], [W0 - p, W0 - p], [0, W0 - q, p * 2, p * 2]];
+          let white = true;
+          for (const g of regs) {
+            const d = cx.getImageData(g[0], g[1], g[2] || p, g[3] || p).data; let rs = 0, gs = 0, bs = 0, n = 0;
+            for (let i = 0; i < d.length; i += 4) { rs += d[i]; gs += d[i + 1]; bs += d[i + 2]; n++; }
+            if (!n || rs / n < 240 || gs / n < 240 || bs / n < 240) { white = false; break; }
+          }
+          done(white, true);
+        } catch { done(false, false); }
+      };
+      npLoadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
+    } catch { done(false, false); }
+  }
+  function pickNameTone(card, src) {
+    const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('npp-name-dark', dark); card.classList.toggle('npp-name-light', !dark); card.classList.remove('npp-tone-pending'); };
+    if (nppToneCache.has(src)) return set(nppToneCache.get(src));
+    const v = nppToneRead()[src];
+    if (v === 'd' || v === 'l') { nppToneCache.set(src, v === 'd'); return set(v === 'd'); }
+    card.classList.remove('npp-name-dark', 'npp-name-light'); card.classList.add('npp-tone-pending');
+    nppToneProbe(src, (dark, ok) => { nppToneCache.set(src, dark); if (ok) nppToneSave(src, dark); set(dark); });
   }
   function setDock(open) {
     const wrap = $('#qrDockWrap'), dock = $('#qrDock');
@@ -2781,7 +3095,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!card || card.dataset.npp) return;
     card.dataset.npp = '1';
     const btn = document.createElement('button');
-    btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Switch active pet'; btn.innerHTML = SWAP + '<span>Swap Active</span>';
+    btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Swap Active'; btn.setAttribute('aria-label', 'Swap Active'); btn.innerHTML = SWAP + '<span>Swap Active</span>';
     card.appendChild(btn);
     renderPetInfo(); fixPetImg();
     new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
@@ -2858,66 +3172,32 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     sync();
   }
 
-  /* ═══════════════════════════════ Watch list (Shop dropdown) ═══════════════════════════════ */
-  const WATCH_KEY = 'npp_watch_v1';
-  const watchLoad = () => { try { const a = JSON.parse(LSget(WATCH_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
-  const watchSave = (a) => LSset(WATCH_KEY, JSON.stringify(a));
-  function renderWatch(panel) {
-    const list = panel.querySelector('ul'), items = watchLoad();
-    list.innerHTML = items.length
-      ? items.map((n, i) => `<li><span>${esc(n)}</span><button type="button" data-i="${i}" title="Remove" aria-label="Remove">×</button></li>`).join('')
-      : '<div class="wEmpty">Nothing here yet. Type an item name above.</div>';
-  }
-  function openWatch() {
-    let panel = document.getElementById('nppWatch');
-    if (!panel) {
-      panel = document.createElement('div');
-      panel.id = 'nppWatch';
-      panel.innerHTML = '<div class="wHead"><span>Watch list</span><button type="button" class="wClose" aria-label="Close">×</button></div>'
-        + '<form autocomplete="off"><input type="text" maxlength="60" placeholder="Item name…" aria-label="Item name"><button type="submit">Add</button></form><ul></ul>';
-      document.body.appendChild(panel);
-      panel.querySelector('.wClose').addEventListener('click', () => { panel.hidden = true; });
-      panel.querySelector('form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const inp = panel.querySelector('input'), v = inp.value.trim();
-        if (!v) return;
-        const items = watchLoad();
-        if (!items.some(x => x.toLowerCase() === v.toLowerCase())) { items.push(v); watchSave(items); }
-        inp.value = '';
-        renderWatch(panel);
-      });
-      panel.querySelector('ul').addEventListener('click', (e) => {
-        const b = e.target.closest('button[data-i]');
-        if (!b) return;
-        const items = watchLoad();
-        items.splice(+b.dataset.i, 1);
-        watchSave(items);
-        renderWatch(panel);
-      });
-    }
-    panel.hidden = !panel.hidden ? true : false;
-    if (!panel.hidden) { renderWatch(panel); panel.querySelector('input').focus(); }
-  }
-
   /* ═══════════════════════════════ Shop prices ═══════════════════════════════ */
   function highlightShopPrices() {
     if (!/[?&]type=shop\b/i.test(location.search) || !document.body) return;
     const targets = new Set(['10,000', '25,000']);
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-      acceptNode(n) {
-        const p = n.parentElement;
-        if (!p || p.closest('script, style, textarea, input, select, .nppBigPrice')) return NodeFilter.FILTER_REJECT;
-        return targets.has(n.nodeValue.trim()) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-      },
+    document.querySelectorAll('.shop-item .item-img[data-price]').forEach(img => {
+      if (!targets.has((img.dataset.price || '').trim())) return;
+      const cost = [...img.closest('.shop-item').querySelectorAll('.item-stock')].find(p => /Cost:/i.test(p.textContent));
+      if (cost) cost.classList.add('nppBigPrice');
     });
-    const hits = [];
-    while (walker.nextNode()) hits.push(walker.currentNode);
-    hits.forEach(n => {
-      const span = document.createElement('span');
-      span.className = 'nppBigPrice';
-      span.textContent = n.nodeValue.trim();
-      n.parentNode.replaceChild(span, n);
-    });
+  }
+
+  // Shopkeeper image (.shop-bg) reloads the shop on click. Ignore clicks on it for the first 5s after page load.
+  const SHOP_LOCK_MS = 5000;
+  let shopLockSet = false;
+  function lockShopkeeper() {
+    if (shopLockSet || !/[?&]type=shop\b/i.test(location.search)) return;
+    shopLockSet = true;
+    const locked = () => performance.now() < SHOP_LOCK_MS;
+    const block = (e) => {
+      if (!locked() || !e.target.closest || !e.target.closest('.shop-bg')) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    };
+    ['click', 'mousedown', 'pointerdown', 'auxclick'].forEach(t => window.addEventListener(t, block, true));
+    if (!locked()) return;
+    document.documentElement.classList.add('npp-shop-lock');
+    setTimeout(() => document.documentElement.classList.remove('npp-shop-lock'), SHOP_LOCK_MS - performance.now());
   }
 
   /* ═══════════════════════════════ Keys, keyboard shortcuts ═══════════════════════════════ */
@@ -2930,7 +3210,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const sr = shadow();
     if (sr) sr.querySelectorAll('.menu').forEach(m => { m.style.display = 'none'; });
     document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'none' }));
-    const wp = document.getElementById('nppWatch'); if (wp) wp.hidden = true;
     document.querySelectorAll('.bankSettingsBackdrop').forEach(el => el.remove());
     if (dockOpen) setDock(false);
   }
@@ -2973,11 +3252,9 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     np.innerHTML = '';
     const top = document.createElement('div');
     top.className = 'np-top-row';
-    top.innerHTML = `<div class="np-amounts"><a class="np-amount" href="https://www.neopets.com/inventory.phtml" title="Inventory"><span class="npVal">${esc(val ? val.textContent : '…')}</span>${img ? img.outerHTML : ''}</a><a class="np-nc" href="https://ncmall.neopets.com/mall/shop.phtml?layout=new" title="NC Mall"><span class="ncVal">…</span><img src="https://images.neopets.com/themes/h5/basic/images/nc-icon.svg" alt="" onerror="this.remove()"></a></div><button type="button" class="np-chevron" title="Bank">${CHEV}</button>`;
-    const drawer = document.createElement('div');
-    drawer.className = 'np-bank-drawer';
-    drawer.appendChild(bank);
-    np.append(top, drawer);
+    top.innerHTML = `<div class="np-amounts"><a class="np-amount" href="https://www.neopets.com/inventory.phtml" title="Inventory"><span class="npVal">${esc(val ? val.textContent : '…')}</span>${img ? img.outerHTML : ''}</a><a class="np-nc" href="https://ncmall.neopets.com/mall/shop.phtml?layout=new" title="NC Mall"><span class="ncVal">…</span><img src="https://images.neopets.com/themes/h5/basic/images/nc-icon.svg" alt="" onerror="this.remove()"></a><a class="np-bank" href="https://www.neopets.com/bank.phtml" title="Bank" aria-label="Bank"></a></div>`;
+    top.querySelector('.np-bank').innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 1 1.5 4.5V6h13V4.5z"/><rect x="2.5" y="7" width="2" height="5"/><rect x="7" y="7" width="2" height="5"/><rect x="11.5" y="7" width="2" height="5"/><rect x="1.5" y="13" width="13" height="1.8" rx=".4"/></svg>';
+    np.append(top);
     updateNc();
     ['.npVal', '.ncVal'].forEach(sel => {
       const el = top.querySelector(sel);
@@ -2985,8 +3262,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       new MutationObserver(() => abbrNum(el)).observe(el, { childList: true, characterData: true, subtree: true });
       abbrNum(el);
     });
-    top.querySelector('.np-chevron').addEventListener('click', () => np.classList.toggle('np-open'));
-    [top, drawer].forEach(el => ['click', 'auxclick', 'contextmenu'].forEach(t => el.addEventListener(t, e => e.stopPropagation())));
+    [top].forEach(el => ['click', 'auxclick', 'contextmenu'].forEach(t => el.addEventListener(t, e => e.stopPropagation())));
   }
 
   /* ═══════════════════════════════ Global listeners ═══════════════════════════════ */
@@ -3065,6 +3341,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); if (k && /notif/i.test(k)) keys.push(k); }
       keys.forEach(k => sessionStorage.removeItem(k));
     } catch {}
+    muteVendorAlerts();
   }
   let petSyncUntil = 0;
   let acctChecked = false;
@@ -3123,7 +3400,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     root.classList.add('npp-auth');
     const st = document.getElementById('npp-auth-css') || document.createElement('style');
     st.id = 'npp-auth-css';
-    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npHudResizer, html.npp-auth #npxFrameResizeR, html.npp-auth #npxFrameResizeB, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppNotifDrawer, html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
+    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npHudResizer, html.npp-auth #npxFrameResizeR, html.npp-auth #npxFrameResizeB, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppBell,html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
     if (!st.isConnected) (document.head || root).appendChild(st);
     document.querySelectorAll('style').forEach(el => {
       const t = el.textContent || '';
@@ -3183,6 +3460,23 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
   let hudMo = null;
   let hudWait = null;
+  let npFitRaf = 0, npFitMo = null;
+  function fitNpVals() {
+    const root = $('#npNp'); if (!root) return;
+    root.querySelectorAll('.np-top-row .np-amount, .np-top-row .np-nc').forEach((tile) => {
+      const v = tile.querySelector('.npVal, .ncVal'); if (!v) return;
+      tile.style.flexGrow = String(Math.max(1, (v.textContent || '').trim().length));
+      let px = 14; v.style.setProperty('font-size', px + 'px', 'important');
+      while (px > 9 && v.scrollWidth > v.clientWidth) { px -= 1; v.style.setProperty('font-size', px + 'px', 'important'); }
+    });
+  }
+  function scheduleNpFit() { cancelAnimationFrame(npFitRaf); npFitRaf = requestAnimationFrame(fitNpVals); }
+  function watchNpFit() {
+    const root = $('#npNp'); if (!root) return;
+    if (!npFitMo) { npFitMo = new MutationObserver(scheduleNpFit); window.addEventListener('resize', scheduleNpFit); }
+    npFitMo.disconnect(); npFitMo.observe(root, { childList: true, subtree: true, characterData: true });
+    scheduleNpFit(); setTimeout(scheduleNpFit, 600); setTimeout(scheduleNpFit, 2000);
+  }
   function layoutSidebar() {
     if (isNc || isPopup) return;
     const hud = $('#npHud');
@@ -3191,6 +3485,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (!hudWait) { hudWait = new MutationObserver(() => { if ($('#npHud')) { hudWait.disconnect(); layoutSidebar(); } }); hudWait.observe(document.documentElement, { childList: true, subtree: true }); }
       return;
     }
+    { const npA = $('#npNp .np-amount'), ncA = $('#npNp .np-nc'); if (npA && !npA.getAttribute('aria-label')) { npA.setAttribute('aria-label', 'Neopoints'); npA.title = 'Neopoints'; } if (ncA && !ncA.getAttribute('aria-label')) { ncA.setAttribute('aria-label', 'Neocash'); ncA.title = 'Neocash'; } }
+    watchNpFit();
     let mod = $('#nppIcons');
     const ov = $('#btnOverlay');
     if (!mod && ov) {
@@ -3211,7 +3507,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!nav) { nav = document.createElement('div'); nav.id = 'nppNavMod'; }
     const foot = $('#nppFoot');
     const un = $('#npUser');
-    if (nav.parentNode !== hud) hud.insertBefore(nav, un && un.parentNode === hud ? un.nextSibling : hud.firstChild);
+    const lists = $('#nppListsMod'), anchor = lists && lists.parentNode === hud ? lists : un;
+    if (nav.parentNode !== hud) hud.insertBefore(nav, anchor && anchor.parentNode === hud ? anchor.nextSibling : hud.firstChild);
     if (foot && foot.parentNode !== hud) hud.appendChild(foot);
     if (mod && hud.lastElementChild !== mod) hud.appendChild(mod);
     if (!hudMo) {
@@ -3279,6 +3576,16 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (mq.addEventListener) mq.addEventListener('change', wide); else if (mq.addListener) mq.addListener(wide);
   }
 
+  // Early guard (document-start, before the vendor script mounts): hide sidebar modules and cap the pet image until the patcher CSS is in.
+  if (!isAuth && !isNc && !isPopup) {
+    root.classList.add('npp-pre');
+    try { if (localStorage.getItem('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
+    const pre = document.createElement('style');
+    pre.id = 'npp-pre-css';
+    pre.textContent = 'html.npp-pre #npHud, html.npp-pre #nppFoot, html.npp-pre #btnOverlay, html.npp-pre #npLeftBar, html.npp-pre #qrDockWrap { opacity: 0 !important; pointer-events: none !important; } html.npp-pre #npActivePet img { max-width: 100% !important; max-height: 170px !important; object-fit: contain !important; } #npHud, #nppFoot, #btnOverlay { transition: opacity .3s ease; } @media (prefers-reduced-motion: reduce) { #npHud, #nppFoot, #btnOverlay { transition: none !important; } }';
+    (document.head || root).appendChild(pre);
+    setTimeout(() => root.classList.remove('npp-pre'), 5000);
+  }
   function boot() {
     if (root.dataset.nppBoot) return;
     root.dataset.nppBoot = '1';
@@ -3289,6 +3596,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (isNc) root.classList.add('npp-nc');
     if (!isNc && !isPopup) {
       root.classList.add('npp-wait');
+      root.classList.remove('npp-pre');
       setTimeout(() => root.classList.remove('npp-wait'), 3500);
     }
 
@@ -3328,7 +3636,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     setupKeys();
     let n = 0;
     const iv = setInterval(() => {
-      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupNest(); layoutSidebar(); setupDrawer(); decorateEditorNest(); wireNotif(); syncPetImg(); setupBank(); petUI(); wireSidebar();
+      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); lockShopkeeper(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupBell(); setupNest(); layoutSidebar(); setupDrawer(); decorateEditorNest(); syncPetImg(); setupBank(); petUI(); wireSidebar();
       if (root.classList.contains('npp-wait') && (($('#nppFoot') && $('#nppTools') && $('#npNp') && $('#npNp').dataset.acc && acctChecked && (petSettled || n > 10)) || n > 14)) root.classList.remove('npp-wait');
       if (++n > 100) clearInterval(iv);
     }, 200);
@@ -3459,6 +3767,48 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 #nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout { background: var(--np-accent, #ff8a1f); color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); border-color: transparent; }
 #nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout:hover { filter: brightness(1.07); }
 #nppAcctDrawer .nppAcctStandaloneFoot svg { width: 13px; height: 13px; flex: none; }
+/* restyle: match All Pets overlay */
+#nppAcctDrawer { --ap-bg: #fbf7ee; --ap-line: #e6dcf5; --ap-text: #392d5c; --ap-mute: #6c6290; --ap-acc: #7c5cf0; --ap-soft: #efe8ff; z-index: 2147482000; padding: 0; border: 3px solid #fff; border-radius: 24px; background: var(--ap-bg); color: var(--ap-text); font-family: 'Outfit', system-ui, sans-serif; box-shadow: 0 24px 70px rgba(70,52,110,.35); transform: scale(.97) translateY(8px); transform-origin: left top; transition: opacity .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
+#nppAcctDrawer.open { transform: none; }
+#nppAcctDrawer :focus-visible { outline: 3px solid #5b8def; outline-offset: 2px; }
+#nppAcctDrawer .nppAcctHead { padding: 14px 14px 10px 18px; background: linear-gradient(180deg, #f3ecff 0%, #fbf7ee 100%); border-bottom: 1px solid var(--ap-line); }
+#nppAcctDrawer .nppAcctTitle { font: 800 22px/30px 'Outfit', system-ui, sans-serif; letter-spacing: -.02em; color: var(--ap-text); }
+#nppAcctDrawer .nppAcctCount { font-size: 13px; font-weight: 500; color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctHeadR { display: flex; align-items: center; gap: 6px; }
+#nppAcctDrawer .nppAcctHeadL { align-items: baseline; }
+#nppAcctDrawer .nppAcctSwap { height: 34px; padding: 0 14px; background: #fff; border: 1px solid var(--ap-line); color: var(--ap-text) !important; box-shadow: none; }
+#nppAcctDrawer .nppAcctSwap span { font: 700 13px/20px 'Outfit', system-ui, sans-serif; letter-spacing: 0; }
+#nppAcctDrawer .nppAcctSwap:hover { filter: none; transform: none; background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nppAcctDrawer .nppAcctClose { flex: none; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ap-line); border-radius: 999px; background: #fff; color: var(--ap-text); font: 700 20px/1 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s; }
+#nppAcctDrawer .nppAcctClose:hover { background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nppAcctDrawer .nppAcctHint { margin: 10px 12px 0; border-color: #f0d28a; background: #fff4d6; color: #7a5200; }
+#nppAcctDrawer .nppAcctBody { padding: 10px 6px 12px 12px; scrollbar-color: #cbbaf2 transparent; }
+#nppAcctDrawer .nppAcctSec + .nppAcctSec { border-top-color: var(--ap-line); }
+#nppAcctDrawer .nppAcctSecHead span { color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctSecHead em { background: var(--ap-soft); color: var(--ap-acc); }
+#nppAcctDrawer .nppAcctRow:hover { background: var(--ap-soft); }
+#nppAcctDrawer .nppAcctRow.me { box-shadow: inset 0 0 0 1px #cbbaf2; background: #fff; }
+#nppAcctDrawer .nppAcctLink { color: var(--ap-text) !important; }
+#nppAcctDrawer .nppAcctAv { border-color: #fff; background-color: var(--ap-soft); color: var(--ap-text); box-shadow: 0 0 0 1px var(--ap-line); }
+#nppAcctDrawer .nppAcctTxt small { color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctStar { color: #c9c2dc; }
+#nppAcctDrawer .nppAcctStar:hover, #nppAcctDrawer .nppAcctRow.main .nppAcctStar { color: #f5a623; background: #fff; }
+#nppAcctDrawer .nppAcctX { background: #fff; border: 1px solid var(--ap-line); color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctRow:focus-within .nppAcctX { opacity: 1; }
+#nppAcctDrawer .nppAcctNote { border-color: var(--ap-line); background: var(--ap-soft); color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctSync, #nppAcctDrawer .nppAcctStandaloneFoot a { border: 1px solid var(--ap-line); background: #fff; color: var(--ap-text) !important; font-weight: 700; }
+#nppAcctDrawer .nppAcctSync:hover:not(:disabled), #nppAcctDrawer .nppAcctStandaloneFoot a:hover { background: var(--ap-soft); border-color: #cbbaf2; color: var(--ap-text); box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nppAcctDrawer .nppAcctStandaloneFoot { border-top-color: var(--ap-line); }
+#nppAcctDrawer .nppAcctAddBtn { border-color: #cbbaf2; color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctAddBtn:hover { background: #fff; border-color: var(--ap-acc); color: var(--ap-text); }
+#nppAcctDrawer .nppAcctAdd input { border-color: var(--ap-line); background: #fff; color: var(--ap-text); }
+#nppAcctDrawer .nppAcctAdd input::placeholder { color: var(--ap-mute); opacity: .8; }
+#nppAcctDrawer .nppAcctAdd input:focus { border-color: var(--ap-acc); background: #fff; }
+#nppAcctDrawer .nppAcctAddOk, #nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout { background: var(--ap-acc); color: #fff !important; text-shadow: none; }
+#nppAcctDrawer .nppAcctAddCancel { background: #fff; border: 1px solid var(--ap-line); color: var(--ap-mute); }
+#nppAcctDrawer .nppAcctAddCancel:hover { background: var(--ap-soft); }
+#nppAcctDrawer .nppAcctMsg { color: var(--ap-mute); }
+@media (prefers-reduced-motion: reduce) { #nppAcctDrawer, #nppAcctDrawer.open { transition: none; transform: none; } }
 
 #nppStandaloneAcct { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
 #nppStandaloneAcct.aboveDailies { bottom: 74px; }
@@ -3469,16 +3819,41 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 #nppAvatar { grid-column: 1; grid-row: 1 / span 2; position: relative; text-decoration: none !important; cursor: pointer; width: 48px; height: 48px; border-radius: 50%; background: center / cover no-repeat rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 2px 8px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font: 400 24px/1 'CafeteriaBlack', Georgia, serif; color: #fff; transition: border-color .15s, transform .15s; }
 #nppAvatar:hover { border-color: #fff; transform: scale(1.06); }
 #nppAvatar .nppAvInit { pointer-events: none; }
-#nppAcctBtns { position: absolute; left: 50%; bottom: -13px; transform: translateX(-50%); z-index: 3; display: flex; flex-wrap: nowrap; gap: 0; width: max-content; height: 26px; border-radius: 999px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 3px 10px rgba(0,0,0,.3); }
-#npLogoutBtn, #npSwapBtn { box-sizing: border-box; display: flex !important; align-items: center; justify-content: center; gap: 6px; width: auto; height: 26px; padding: 0 12px !important; border: 0 !important; border-radius: 0 !important; font: 400 14px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-decoration: none !important; white-space: nowrap; }
+#nppAcctBtns { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+#npLogoutBtn, #npSwapBtn { box-sizing: border-box; display: flex !important; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 30px; padding: 0 8px !important; border: 1px solid var(--npp-card-line, rgba(255,255,255,.14)) !important; border-radius: 10px !important; font: 600 12px/1 'Outfit', system-ui, sans-serif !important; letter-spacing: 0; text-decoration: none !important; white-space: nowrap; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
 #npLogoutBtn svg, #npSwapBtn svg { width: 13px; height: 13px; flex: none; }
 #npLogoutBtn span, #npSwapBtn span { display: inline !important; font: inherit !important; letter-spacing: inherit; }
-#npLogoutBtn { background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #ff8a1f) 80%, #fff) 0%, var(--np-accent, #ff8a1f) 50%, color-mix(in srgb, var(--np-accent, #ff8a1f) 86%, #000) 100%) !important; color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
-#npSwapBtn { background: linear-gradient(180deg, #52525e 0%, #3b3b46 50%, #2b2b34 100%) !important; color: #fff !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
-#npLogoutBtn:hover { filter: brightness(1.07); }
-#npSwapBtn:hover { background: linear-gradient(180deg, #5f5f6c 0%, #494956 50%, #373742 100%) !important; }
+#npLogoutBtn, #npSwapBtn { background: rgba(255,255,255,.07) !important; color: rgba(255,255,255,.82) !important; text-shadow: none; box-shadow: none; }
+#nppListsMod { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; font-family: 'Outfit', system-ui, sans-serif; }
+#nppListsMod .nppLt { box-sizing: border-box; min-width: 0; display: grid; grid-template-columns: auto 1fr; column-gap: 7px; align-items: center; padding: 9px 10px; text-align: left; background: var(--npp-card, rgba(20,18,28,.42)); border: 1px solid var(--npp-card-line, rgba(255,255,255,.14)); border-radius: 14px; color: #fff; cursor: pointer; font: inherit; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: border-color .15s, background .15s; }
+#nppListsMod .nppLt:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.1); }
+#nppListsMod .nppLt:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+#nppListsMod .nppLt svg { grid-row: 1 / span 2; width: 18px; height: 18px; }
+#nppListsMod .nppLt b { font-weight: 700; font-size: 13px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#nppListsMod .nppLt em { font-style: normal; font-size: 11px; line-height: 1.2; color: rgba(255,255,255,.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-height: 820px) { #nppListsMod { gap: 6px; margin-bottom: 6px; } #nppListsMod .nppLt { padding: 6px 8px; } }
+#nppAcctTab { display: none !important; }
+#npSwapBtn:hover { background: rgba(255,255,255,.16) !important; border-color: rgba(255,255,255,.3) !important; }
+#npLogoutBtn:hover { background: rgba(255,90,90,.18) !important; border-color: rgba(255,120,120,.5) !important; color: #ff8a8a !important; }
+#npLogoutBtn:focus-visible, #npSwapBtn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
 #npSwapBtn.busy svg { animation: nppSpinAcct .8s linear infinite; }
 @keyframes nppSpinAcct { to { transform: rotate(360deg); } }
+/* dark mode (follows sidebar toggle) */
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer { --ap-bg: #1d1a2b; --ap-panel: #272238; --ap-line: rgba(255,255,255,.12); --ap-text: #f1ecff; --ap-mute: rgba(241,236,255,.62); --ap-acc: #a58bff; --ap-soft: rgba(165,139,255,.16); border-color: rgba(255,255,255,.14); color-scheme: dark; box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctHead { background: linear-gradient(180deg, #2a2440 0%, #1d1a2b 100%); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSwap, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctClose, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctX, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSync, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStandaloneFoot a, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddCancel, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAdd input, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctRow.me { background: var(--ap-panel); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSwap:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctClose:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSync:hover:not(:disabled), html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStandaloneFoot a:hover { background: var(--ap-soft); border-color: rgba(165,139,255,.45); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddCancel:hover { background: var(--ap-soft); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddBtn { border-color: rgba(165,139,255,.45); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddBtn:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAdd input:focus { background: var(--ap-panel); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctRow.me { box-shadow: inset 0 0 0 1px rgba(165,139,255,.45); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctHint { background: rgba(255,209,102,.12); border-color: rgba(255,209,102,.3); color: #ffe2a0; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctBody { scrollbar-color: rgba(165,139,255,.45) transparent; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAv { border-color: rgba(255,255,255,.14); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStar { color: rgba(255,255,255,.28); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStar:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctRow.main .nppAcctStar { background: var(--ap-panel); color: #f5a623; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAdd input::placeholder { color: var(--ap-mute); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk { color: #1d1a2b !important; }
 `;
 
   const styleEl = document.createElement('style');
@@ -3491,7 +3866,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const writeAccts = (a) => LSset(ACCTS_KEY, JSON.stringify(a));
   function noteAccount(name) {
     name = String(name || '').trim();
-    if (!validName(name)) return false;
+    if (!validName(name) || apBlocked().has(name.toLowerCase())) return false;
     const a = readAccts();
     if (a.some(x => x.toLowerCase() === name.toLowerCase())) return false;
     a.push(name); writeAccts(a); return true;
@@ -3504,7 +3879,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const readNP = () => { try { const a = JSON.parse(LSget(NP_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const readManual = () => { try { const a = JSON.parse(LSget(MAN_KEY) || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch { return []; } };
   const writeManual = (a) => LSset(MAN_KEY, JSON.stringify(a));
-  const autoAccts = () => { const a = readAccts().slice(); [curUser(), ...seenAccounts()].forEach(n => { if (validName(n) && !a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
+  const autoAccts = () => { const a = readAccts().slice(), bl = apBlocked(); [curUser(), ...seenAccounts().filter(n => !bl.has(n.toLowerCase()))].forEach(n => { if (validName(n) && !a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
   const allAccts = () => { const a = autoAccts(); readManual().forEach(n => { if (!a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
 
   /* ───────────────────────────────── avatar cache ───────────────────────────────── */
@@ -3551,6 +3926,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     } catch {}
   }
   function swapAccount(onBusy, onDone) {
+    apCollect();   // save this account's pets before leaving it
     if (swapBusy) return;
     swapBusy = true;
     clearNotifCaches();
@@ -3576,25 +3952,46 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   const AP_KEY = 'npp_allpets_v1';
   const AP_TAGS = 'npp_allpets_tags_v1';
   const gmGet = (k, d) => { try { const v = typeof GM_getValue === 'function' ? GM_getValue(k, null) : JSON.parse(LSget(k) || 'null'); return v && typeof v === 'object' ? v : d; } catch { return d; } };
-  const gmSet = (k, v) => { try { if (typeof GM_setValue === 'function') GM_setValue(k, v); else LSset(k, JSON.stringify(v)); } catch {} };
-  const apRead = () => gmGet(AP_KEY, {});
-  const apTags = () => gmGet(AP_TAGS, {});
-  const apOrdered = () => { const m = mainAcct().toLowerCase(); return allAccts().slice().sort((a, b) => (b.toLowerCase() === m) - (a.toLowerCase() === m)); };
+  const gmSet = (k, v) => { try { if (typeof GM_setValue === 'function') GM_setValue(k, v); else LSset(k, JSON.stringify(v)); } catch {} if (k === AP_KEY || k === AP_TAGS) LSset(k + '_bak', JSON.stringify(v)); };
+  // GM storage belongs to one installed script (lost on reinstall, not shared with a second copy), so All Pets data is
+  // mirrored to localStorage and merged back on read. Per account the newer save wins; deletes write both copies.
+  const apMerge = (k, g) => {
+    let b = null; try { b = JSON.parse(LSget(k + '_bak') || 'null'); } catch {}
+    if (!b || typeof b !== 'object') return g;
+    const o = { ...b, ...g };
+    if (k === AP_KEY) Object.keys(b).forEach(a => { const gk = Object.keys(g).find(x => x.toLowerCase() === a.toLowerCase()); if (!gk) return; const keep = ((b[a] && b[a].t) || 0) > ((g[gk] && g[gk].t) || 0) ? [a, b[a]] : [gk, g[gk]]; delete o[a]; delete o[gk]; o[keep[0]] = keep[1]; });
+    return o;
+  };
+  const apRead = () => apMerge(AP_KEY, gmGet(AP_KEY, {}));
+  const apTags = () => apMerge(AP_TAGS, gmGet(AP_TAGS, {}));
+  // Cache keys are matched case-insensitively (curUser and the account list can differ in case).
+  // Always draw the crisp 600px name-based image; saved URLs can be small sizes (fallback via onerror).
+  const apPetUrl = (n) => 'https://www.neopets.com/petlookup.phtml?pet=' + encodeURIComponent(n);
+  const apUserUrl = (n) => 'https://www.neopets.com/userlookup.phtml?user=' + encodeURIComponent(n);
+  const apLk = (url, txt) => `<a class="apLk" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(txt)}</a>`;
+  const apPetLk = (n) => apLk(apPetUrl(n), n), apUserLk = (n) => apLk(apUserUrl(n), n);
+  const apHiRes = (p) => `https://pets.neopets.com/cpn/${encodeURIComponent(p.name)}/1/7.png`;
+  const apOf = (c, a) => { const l = String(a).toLowerCase(), k = Object.keys(c).find(x => x.toLowerCase() === l); return k ? c[k] : null; };
+  const apOrdered = () => { const m = mainAcct().toLowerCase(), bl = apBlocked(), list = allAccts().slice(); Object.keys(apRead()).forEach(k => { if (!list.some(x => x.toLowerCase() === k.toLowerCase())) list.push(k); }); return list.filter(x => !bl.has(x.toLowerCase())).sort((a, b) => (b.toLowerCase() === m) - (a.toLowerCase() === m)); };
   const AP_I = (d) => '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
   const AP_COPY = AP_I('<rect x="5.5" y="5.5" width="8" height="8" rx="1.6"/><path d="M10.5 3.5v-.4A1.6 1.6 0 0 0 8.9 1.5H3.6a1.6 1.6 0 0 0-1.6 1.6v5.3a1.6 1.6 0 0 0 1.6 1.6h.4"/>'), AP_PAGE = AP_I('<path d="M9 2.5h4.5V7M13.5 2.5L7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3"/>'), AP_ACTIVE = AP_I('<circle cx="8" cy="8" r="6"/><path d="M5.5 8.2l1.7 1.7 3.4-3.6"/>');
+  const AP_TRASH = AP_I('<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 8.5h5.6l.7-8.5"/>'), AP_BLOCK_I = AP_I('<circle cx="8" cy="8" r="5.5"/><path d="M4.1 11.9l7.8-7.8"/>');
+  const AP_SWAP = AP_I('<path d="M2.5 5.5h10M10 3l2.5 2.5L10 8M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/>'), AP_PENCIL = AP_I('<path d="M10.5 3l2.5 2.5L5.5 13H3v-2.5z"/>');
+  const APO = [['perm', 'Keeping'], ['uft', 'Up for trade'], ['maybe', 'Maybe'], ['', 'None']];
   const ST = { uft: 'Up for Trade', perm: 'Permanent', maybe: 'Maybe' };
+  const ST_LBL = { uft: 'UFT', perm: 'Permie', maybe: 'Maybe' };
 
   // Collect the current account's pets from the patcher's cached Quick Ref data (tolerant: any objects with a
   // name plus species/colour/level found under data) and from the pet dock DOM (.qrPet name + image).
-  function apCollect() {
+  function apCollect(force) {
     const me = curUser();
-    if (!validName(me)) return;
+    if (!validName(me) || apBlocked().has(me.toLowerCase())) return;
     const byName = new Map();
     const put = (o) => {
       const name = String(o.name || '').trim();
       if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) return;
-      const k = name.toLowerCase(), p = byName.get(k) || { name, img: '', species: '', color: '', level: 0, active: false };
-      p.img = p.img || o.img || ''; p.species = p.species || o.species || ''; p.color = p.color || o.color || ''; p.level = p.level || o.level || 0; p.active = p.active || !!o.active;
+      const k = name.toLowerCase(), p = byName.get(k) || { name, img: '', species: '', color: '', gender: '', level: 0, active: false };
+      p.gender = p.gender || o.gender || ''; p.img = p.img || o.img || ''; p.species = p.species || o.species || ''; p.color = p.color || o.color || ''; p.level = p.level || o.level || 0; p.active = p.active || !!o.active;
       byName.set(k, p);
     };
     let activeName = '';
@@ -3606,7 +4003,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         if (!v || typeof v !== 'object' || depth > 3) return;
         if (Array.isArray(v)) { v.forEach(x => walk(x, depth + 1)); return; }
         // Quick Ref pets are { name, isActive, actions }; only data.active carries colour/species/level.
-        if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
+        if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, gender: v.gender, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
         else Object.values(v).forEach(x => walk(x, depth + 1));
       };
       walk(data, 0);
@@ -3619,97 +4016,398 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (!img) { const bg = (el.getAttribute('style') || '') + (nm ? '' : ''); const m = bg.match(/url\(["']?([^"')]+pets\.neopets\.com[^"')]+)/i); if (m) img = m[1]; }
       put({ name, img });
     });
-    // Home page carousel (visited by the user): each .hp-carousel-nameplate carries data-species/-color/-level.
-    // Only pets already in this account's list get details, so a stray pet never enters the tracker.
-    document.querySelectorAll('.hp-carousel-nameplate[data-species]').forEach(el => {
-      const name = (el.dataset.name || el.textContent || '').trim();
-      if (!byName.has(name.toLowerCase())) return;
-      put({ name, species: el.dataset.species || '', color: el.dataset.color || '', level: parseInt(el.dataset.level, 10) || 0, img: el.dataset.petimage || '' });
+    // Home page carousel (visited by the user): elements carry data-species/-color/-level. Each one's pet name is found by
+    // walking up until exactly one known pet name appears, so pets that aren't on this account are skipped.
+    const known = [...byName.values()].map(p => p.name);
+    const hasName = (k, t) => new RegExp('(^|[^A-Za-z0-9_])' + k + '([^A-Za-z0-9_]|$)', 'i').test(t);
+    document.querySelectorAll('[data-species][data-color]').forEach(el => {
+      if (el.closest('.slick-cloned')) return;
+      // The carousel puts data-name on each pet; fall back to searching nearby text.
+      let name = known.find(k => k.toLowerCase() === String(el.dataset.name || '').trim().toLowerCase()) || '';
+      for (let box = el, i = 0; !name && box && i < 4; i++, box = box.parentElement) {
+        const hits = known.filter(k => hasName(k, [box.dataset.name || '', box.getAttribute('title') || '', box.textContent || ''].join(' ')));
+        if (hits.length === 1) name = hits[0]; else if (hits.length > 1) break;
+      }
+      if (name) put({ name, gender: el.dataset.gender || '', species: el.dataset.species || '', color: el.dataset.color || '', level: parseInt(el.dataset.level, 10) || 0 });
     });
+    // Live sources beat the Quick Ref cache (the core restores a per-account snapshot on swap, which can be stale):
+    // a just-clicked "Make Active" link (kept 10 min), then the home carousel, which marks the real active pet.
+    try { const pa = JSON.parse(LSget('npp_ap_newactive') || 'null'); if (pa && pa.u === me.toLowerCase() && Date.now() - pa.t < 10 * 60e3 && byName.has(String(pa.n).toLowerCase())) activeName = pa.n; } catch {}
+    const homeActive = document.querySelector('.hp-carousel-pet[data-active="true"][data-name]');
+    if (homeActive && byName.has(homeActive.dataset.name.toLowerCase())) activeName = homeActive.dataset.name;
     if (activeName) put({ name: activeName, active: true });
     if (!byName.size) return;
-    const c = apRead(), old = c[me];
+    const c = apRead(), old = apOf(c, me);
     // Keep colour/species/level learned earlier (each pet's details arrive while it is the active pet).
     const prev = new Map(((old && old.pets) || []).map(p => [p.name.toLowerCase(), p]));
     const pets = [...byName.values()].map(p => { const o = prev.get(p.name.toLowerCase()) || {}; return { ...p,
       img: /^(https?:)?\/\/pets\.neopets\.com\//i.test(p.img) ? p.img.replace(/^\/\//, 'https://') : `https://pets.neopets.com/cpn/${encodeURIComponent(p.name)}/1/4.png`,
-      species: p.species || o.species || '', color: p.color || o.color || '', level: p.level || o.level || 0,
-      active: p.active || p.name.toLowerCase() === activeName.toLowerCase() }; });
+      gender: p.gender || o.gender || '', species: p.species || o.species || '', color: p.color || o.color || '', level: p.level || o.level || 0,
+      active: activeName ? p.name.toLowerCase() === activeName.toLowerCase() : p.active }; });
+    // Stale-cache guard: pet names are unique, so when half or more of these pets are saved under another account the
+    // Quick Ref cache still holds that account's snapshot (restored on swap). Saving it would let apDedupe move those pets
+    // here for good, so skip; a later pass reads fresh data. A home carousel that shows one of these pets is live, so trust it.
+    const live = [...document.querySelectorAll('.hp-carousel-pet[data-name]')].some(el => byName.has(el.dataset.name.toLowerCase()));
+    if (!live) { let other = 0; Object.keys(c).forEach(k => { if (k.toLowerCase() !== me.toLowerCase()) ((c[k] && c[k].pets) || []).forEach(p => { if (byName.has(String(p.name).toLowerCase())) other++; }); }); if (other && other * 2 >= byName.size) return; }
     const same = old && JSON.stringify(old.pets) === JSON.stringify(pets);
-    if (same && Date.now() - old.t < 10 * 60e3) return;
-    c[me] = { t: Date.now(), pets }; gmSet(AP_KEY, c);
+    if (same && !force && Date.now() - old.t < 10 * 60e3) return;
+    Object.keys(c).forEach(k => { if (k.toLowerCase() === me.toLowerCase()) delete c[k]; });
+    c[me] = { t: Date.now(), pets }; apDedupe(c); gmSet(AP_KEY, c);
     if (apEl && apEl.classList.contains('open') && !same) apRender();
   }
 
+  // A pet name can only exist once: dedupe inside each account, and when the same name sits under two accounts
+  // (pet transfer, stale cache) keep the entry from the most recently collected account. Returns true if changed.
+  function apDedupe(c) {
+    let ch = false;
+    const keys = Object.keys(c).filter(k => c[k] && Array.isArray(c[k].pets));
+    keys.forEach(k => {
+      const seen = new Set(), out = [];
+      c[k].pets.forEach(p => { const n = p && String(p.name || '').toLowerCase(); if (!n) { ch = true; return; } if (seen.has(n)) { ch = true; const i = out.findIndex(x => x.name.toLowerCase() === n); if (p.active && i >= 0) out[i] = { ...out[i], active: true }; return; } seen.add(n); out.push(p); });
+      if (out.length !== c[k].pets.length) c[k] = { ...c[k], pets: out };
+    });
+    // Cross-account duplicates are NOT deleted here (a stale save would erase the real owner's pets for good);
+    // apRender shows each name once, under the newest-collected account.
+    keys.forEach(k => { if (!c[k].pets.length && keys.some(o => o !== k && o.toLowerCase() === k.toLowerCase())) { delete c[k]; ch = true; } });
+    return ch;
+  }
+
+  // Blocked accounts (localStorage, lowercase names): never collected, listed or auto-added. Unblock from the All Pets footer.
+  // Function declarations (hoisted): the account list code above calls apBlocked().
+  function apBlocked() { try { const a = JSON.parse(LSget('npp_ap_block_v1') || '[]'); return new Set(Array.isArray(a) ? a.map(x => String(x).toLowerCase()) : []); } catch { return new Set(); } }
+  function apSetBlock(n, on) { const s = apBlocked(); on ? s.add(n.toLowerCase()) : s.delete(n.toLowerCase()); LSset('npp_ap_block_v1', JSON.stringify([...s])); }
+  // Remove an account from this computer: drawer lists, NeoPass, seen/profile caches, main, its All Pets data and orphaned tags.
+  function removeAccount(nm) {
+    const low = nm.toLowerCase(), ne = (n) => String(n).toLowerCase() !== low;
+    writeManual(readManual().filter(ne));
+    writeAccts(readAccts().filter(ne));
+    try { LSset(NP_KEY, JSON.stringify(readNP().filter(ne))); } catch {}
+    seenAccounts().filter(n => !ne(n)).forEach(n => { try { localStorage.removeItem('npp_acct_' + n); localStorage.removeItem(PROF_KEY(n)); } catch {} });
+    if (mainAcct().toLowerCase() === low) LSset(MAIN_KEY, '');
+    const pc = apRead(), gone = [];
+    Object.keys(pc).filter(k => !ne(k)).forEach(k => { ((pc[k] && pc[k].pets) || []).forEach(p => gone.push(String(p.name).toLowerCase())); delete pc[k]; });
+    gmSet(AP_KEY, pc);
+    apDropTags(pc, gone);
+    apState.only.delete(nm);
+    if (apEl && apEl.classList.contains('open')) apRender();
+  }
+  // Delete tags/notes of removed pet names that no saved account still has.
+  function apDropTags(pc, gone) {
+    const still = new Set(); Object.keys(pc).forEach(k => ((pc[k] && pc[k].pets) || []).forEach(p => still.add(String(p.name).toLowerCase())));
+    const tg = apTags(); let tch = false; gone.forEach(k => { if (!still.has(k) && tg[k]) { delete tg[k]; tch = true; } }); if (tch) gmSet(AP_TAGS, tg);
+  }
+
+  // Name colour per card: white over art, dark when the pet image has a plain white background (mirrors the sidebar).
+function npLoadBlob(src, cb) {
+  // Fetch bytes via GM (no CORS needed) and hand back a same-origin blob URL; cb(null) on any failure.
+  try {
+    if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
+    GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
+  } catch { cb(null); }
+}
+  const NPP_TONE_KEY = 'npp_pet_tone_v1';
+  function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function nppToneSave(src, dark) {
+    try {
+      const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
+      const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
+      localStorage.setItem(NPP_TONE_KEY, JSON.stringify(o));
+    } catch {}
+  }
+  function nppToneProbe(src, cb) {
+    // cb(dark, ok): ok=false on failure/timeout (resolves light, not persisted).
+    let fin = false, burl = null, tm = 0;
+    const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
+    tm = setTimeout(() => done(false, false), 3000);
+    try {
+      const im = new Image();
+      im.onerror = () => done(false, false);
+      im.onload = () => {
+        try {
+          const W0 = 48, cv = document.createElement('canvas'); cv.width = cv.height = W0;
+          const cx = cv.getContext('2d', { willReadFrequently: true });
+          cx.fillStyle = '#fff'; cx.fillRect(0, 0, W0, W0); cx.drawImage(im, 0, 0, W0, W0);
+          const p = 6, q = Math.round(W0 * 0.25), regs = [[0, 0], [W0 - p, 0], [0, W0 - p], [W0 - p, W0 - p], [0, W0 - q, p * 2, p * 2]];
+          let white = true;
+          for (const g of regs) {
+            const d = cx.getImageData(g[0], g[1], g[2] || p, g[3] || p).data; let rs = 0, gs = 0, bs = 0, n = 0;
+            for (let i = 0; i < d.length; i += 4) { rs += d[i]; gs += d[i + 1]; bs += d[i + 2]; n++; }
+            if (!n || rs / n < 240 || gs / n < 240 || bs / n < 240) { white = false; break; }
+          }
+          done(white, true);
+        } catch { done(false, false); }
+      };
+      npLoadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
+    } catch { done(false, false); }
+  }
+  const apToneCache = new Map(), apInflight = new Map(), apQueue = [];
+  let apToneIO = null, apActive = 0;
+  function apPump() {
+    while (apActive < 4 && apQueue.length) {
+      const src = apQueue.shift(); apActive++;
+      nppToneProbe(src, (dark, ok) => {
+        apActive--; apToneCache.set(src, dark); if (ok) nppToneSave(src, dark);
+        const ws = apInflight.get(src) || []; apInflight.delete(src);
+        ws.forEach(c => { c.classList.toggle('apNameDark', dark); c.classList.remove('apTonePending'); });
+        apPump();
+      });
+    }
+  }
+  function apTone(root) {
+    const cards = [...root.querySelectorAll('.apCard')], stored = nppToneRead();
+    const apply = (card, dark) => { card.classList.toggle('apNameDark', !!dark); card.classList.remove('apTonePending'); };
+    const srcOf = (card) => { const img = card.querySelector('.apPic img'); return img ? (img.currentSrc || img.getAttribute('src') || '') : ''; };
+    const run = (card, src) => {
+      if (apToneCache.has(src)) return apply(card, apToneCache.get(src));
+      const w = apInflight.get(src); if (w) { w.push(card); return; }
+      apInflight.set(src, [card]); apQueue.push(src); apPump();
+    };
+    if (apToneIO) apToneIO.disconnect();
+    apToneIO = typeof IntersectionObserver === 'function' ? new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { apToneIO.unobserve(e.target); const s = srcOf(e.target); if (s) run(e.target, s); else apply(e.target, false); } }), { root: $('.apBody', root) || null, rootMargin: '600px' }) : null;
+    cards.forEach(cd => {
+      const src = srcOf(cd); if (!src) return;
+      const v = stored[src];
+      if (v === 'd' || v === 'l') { apToneCache.set(src, v === 'd'); apply(cd, v === 'd'); return; }
+      if (apToneCache.has(src)) { apply(cd, apToneCache.get(src)); return; }
+      cd.classList.add('apTonePending');
+      if (apToneIO) apToneIO.observe(cd); else run(cd, src);
+    });
+  }
+
   const AP_CSS = `
-#nppAP { --ap-bg: #15111f; --ap-panel: #1c1730; --ap-line: rgba(255,255,255,.1); --ap-text: #f4f0fb; --ap-mute: #b4acc8; --ap-acc: var(--np-accent, #ff8a1f); position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: stretch; justify-content: center; padding: 24px; background: rgba(8,6,16,.66); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: 'Outfit', system-ui, sans-serif; color: var(--ap-text); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s linear .2s; }
+#nppAP { --ap-bg: #fbf7ee; --ap-panel: #fffdf8; --ap-line: #e6dcf5; --ap-text: #392d5c; --ap-mute: #6c6290; --ap-acc: #7c5cf0; --ap-soft: #efe8ff; position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: stretch; justify-content: center; padding: 24px; background: rgba(70,52,110,.38); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-family: 'Outfit', system-ui, sans-serif; color: var(--ap-text); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s linear .2s; }
 #nppAP.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .2s ease; }
 #nppAP *, #nppAP *::before, #nppAP *::after { box-sizing: border-box; }
-#nppAP .apWin { width: min(1240px, 100%); display: flex; flex-direction: column; min-height: 0; background: var(--ap-bg); border: 1px solid var(--ap-line); border-radius: 20px; box-shadow: 0 24px 80px rgba(0,0,0,.6); overflow: hidden; position: relative; transform: scale(.97) translateY(8px); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+#nppAP .apWin { width: min(1240px, 100%); display: flex; flex-direction: column; min-height: 0; background: var(--ap-bg); border: 3px solid #fff; border-radius: 28px; box-shadow: 0 24px 70px rgba(70,52,110,.35); overflow: hidden; position: relative; transform: scale(.97) translateY(8px); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
 #nppAP.open .apWin { transform: none; }
-#nppAP .apTop { position: sticky; top: 0; z-index: 2; background: var(--ap-panel); border-bottom: 1px solid var(--ap-line); }
-#nppAP .apBar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 16px 16px 8px; }
-#nppAP .apBar h2 { margin: 0 8px 0 0; font-size: 20px; line-height: 28px; font-weight: 700; letter-spacing: -.01em; color: var(--ap-text); }
-#nppAP input, #nppAP select { font: inherit; font-size: 14px; line-height: 20px; color: var(--ap-text); background: rgba(255,255,255,.06); border: 1px solid var(--ap-line); border-radius: 10px; padding: 8px 12px; min-width: 0; }
-#nppAP input::placeholder { color: var(--ap-mute); }
-#nppAP select option { color: #111; }
+#nppAP .apTop { position: sticky; top: 0; z-index: 5; background: linear-gradient(180deg, #f3ecff 0%, #fbf7ee 100%); border-bottom: 1px solid var(--ap-line); }
+#nppAP .apBar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 16px 20px 8px; }
+#nppAP .apBar h2 { margin: 0 10px 0 0; font-size: 24px; line-height: 32px; font-weight: 800; letter-spacing: -.02em; color: var(--ap-text); }
+#nppAP .apStar { display: inline-block; color: #f5a623; margin-left: 6px; font-size: 18px; vertical-align: 2px; }
+#nppAP input[type=search], #nppAP input[type=text], #nppAP select { font: inherit; font-size: 14px; line-height: 20px; color: var(--ap-text); background: #fff; border: 1px solid var(--ap-line); border-radius: 999px; padding: 8px 16px; min-width: 0; }
+#nppAP input::placeholder { color: var(--ap-mute); opacity: .8; }
 #nppAP .apSearch { flex: 1 1 200px; }
-#nppAP button, #nppAP a.apBtn { font: inherit; font-size: 13px; font-weight: 600; line-height: 20px; cursor: pointer; color: var(--ap-text); background: rgba(255,255,255,.07); border: 1px solid var(--ap-line); border-radius: 10px; padding: 7px 12px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, transform .15s, border-color .15s; }
-#nppAP button:hover, #nppAP a.apBtn:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.22); }
-#nppAP .apPrimary { background: var(--ap-acc); color: #1a1330; border-color: transparent; }
-#nppAP .apPrimary:hover { background: var(--ap-acc); filter: brightness(1.08); }
-#nppAP :focus-visible { outline: 2px solid #8ab4ff; outline-offset: 2px; }
+#nppAP button, #nppAP a.apBtn { font: inherit; font-size: 13px; font-weight: 700; line-height: 20px; cursor: pointer; color: var(--ap-text); background: #fff; border: 1px solid var(--ap-line); border-radius: 999px; padding: 7px 14px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, transform .15s, border-color .15s, box-shadow .15s; }
+#nppAP button:hover, #nppAP a.apBtn:hover { background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nppAP .apPrimary { background: var(--ap-acc); color: #fff; border-color: transparent; }
+#nppAP .apPrimary:hover { background: #6a49e0; border-color: transparent; }
+#nppAP :focus-visible { outline: 3px solid #5b8def; outline-offset: 2px; }
 #nppAP svg { width: 16px; height: 16px; flex: none; }
-#nppAP .apIcon { width: 32px; height: 32px; padding: 0; }
-#nppAP .apRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 16px 12px; }
-#nppAP .apSeg { display: inline-flex; padding: 3px; gap: 2px; background: rgba(255,255,255,.06); border: 1px solid var(--ap-line); border-radius: 12px; max-width: 100%; overflow-x: auto; }
-#nppAP .apSeg button { border: 0; background: transparent; padding: 5px 12px; border-radius: 9px; color: var(--ap-mute); white-space: nowrap; }
-#nppAP .apSeg button:hover { background: rgba(255,255,255,.08); color: var(--ap-text); }
-#nppAP .apSeg button.on { background: var(--ap-acc); color: #1a1330; }
-#nppAP .apChip { padding: 4px 12px; font-size: 12px; border-radius: 999px; color: var(--ap-mute); }
-#nppAP .apChip.on { color: var(--ap-text); background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.3); }
-#nppAP .apStatus { padding: 8px 16px 0; font-size: 13px; color: var(--ap-mute); min-height: 28px; }
-#nppAP .apBody { flex: 1; overflow: auto; padding: 0 16px 24px; }
-#nppAP .apHead { display: flex; align-items: baseline; gap: 8px; margin: 24px 0 12px; font-weight: 700; font-size: 16px; line-height: 24px; flex-wrap: wrap; }
-#nppAP .apHead small { font-weight: 400; color: var(--ap-mute); font-size: 13px; }
-#nppAP .apGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
-#nppAP .apCard { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; background: var(--ap-panel); border: 1px solid var(--ap-line); border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.25); transition: transform .18s ease, box-shadow .18s ease, border-color .18s; }
-#nppAP .apCard:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.4); border-color: rgba(255,255,255,.22); }
-#nppAP .apPic { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; border-radius: 12px; background: radial-gradient(circle at 50% 35%, #fff 0%, #ece6fb 60%, #d7cdf2 100%); overflow: hidden; }
-#nppAP .apPic img { width: 100%; height: 100%; object-fit: contain; display: block; }
-#nppAP .apNoImg { font-size: 44px; font-weight: 700; color: #6d5fa0; }
-#nppAP .apBadge { position: absolute; top: 20px; left: 20px; font-size: 11px; line-height: 16px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #fff; background: #5e5875; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-#nppAP .apBadge.uft { background: #f5a623; color: #2a1a00; } #nppAP .apBadge.perm { background: #22a45d; } #nppAP .apBadge.maybe { background: #3b82f6; }
-#nppAP .apCopy { position: absolute; top: 20px; right: 20px; width: 28px; height: 28px; padding: 0; border-radius: 8px; background: rgba(20,16,32,.75); }
-#nppAP .apInfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-#nppAP .apInfo b { font-size: 15px; line-height: 20px; font-weight: 700; overflow-wrap: anywhere; }
-#nppAP .apInfo small { font-size: 12px; line-height: 16px; color: var(--ap-mute); }
-#nppAP .apCard select, #nppAP .apCard input { width: 100%; font-size: 13px; padding: 6px 10px; }
-#nppAP .apAct { display: flex; gap: 8px; }
-#nppAP .apAct .apIcon { flex: 1; }
-#nppAP .sk .apPic { background: linear-gradient(110deg, rgba(255,255,255,.05) 30%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.05) 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
-#nppAP .sk .apLine { height: 12px; border-radius: 6px; background: rgba(255,255,255,.07); }
+#nppAP .apIcon { width: 34px; height: 34px; padding: 0; }
+#nppAP .apGroup { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ap-mute); cursor: pointer; padding: 0 6px; }
+#nppAP .apGroup input { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; }
+#nppAP .apRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 20px 12px; }
+#nppAP .apSeg { display: inline-flex; padding: 3px; gap: 2px; background: var(--ap-soft); border-radius: 999px; max-width: 100%; overflow-x: auto; }
+#nppAP .apSeg button { border: 0; background: transparent; padding: 5px 14px; color: var(--ap-mute); white-space: nowrap; box-shadow: none; }
+#nppAP .apSeg button:hover { background: rgba(255,255,255,.7); color: var(--ap-text); box-shadow: none; }
+#nppAP .apSeg button.on { background: #fff; color: var(--ap-acc); box-shadow: 0 1px 4px rgba(124,92,240,.25); }
+#nppAP .apChip { padding: 3px 12px; font-size: 12px; color: var(--ap-mute); background: transparent; border-style: dashed; }
+#nppAP .apChip.on { color: var(--ap-text); background: #fff; border-style: solid; border-color: #cbbaf2; }
+#nppAP .apStatus { padding: 8px 20px 0; font-size: 13px; color: var(--ap-mute); min-height: 28px; }
+#nppAP .apBody { flex: 1; overflow: auto; padding: 0 20px 28px; background: radial-gradient(circle, #ddd2f7 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
+#nppAP .apHead { display: flex; align-items: center; gap: 8px; margin: 26px 0 6px; font-weight: 800; font-size: 16px; line-height: 24px; flex-wrap: wrap; color: var(--ap-text); }
+#nppAP .apHead small { font-weight: 500; color: var(--ap-mute); font-size: 13px; }
+#nppAP .apHead .apMain { color: #f5a623; }
+#nppAP .apFoot .apWipe { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: #d9534f; cursor: pointer; }
+#nppAP .apFoot .apWipe:hover { text-decoration: underline; }
+#nppAP .apFoot .apUnblk { border: 1px solid var(--ap-line); border-radius: 999px; background: none; padding: 1px 9px; font: inherit; font-size: 12px; font-weight: 600; color: var(--ap-mute); cursor: pointer; }
+#nppAP .apFoot .apUnblk:hover { color: #d9534f; border-color: #d9534f; }
+#nppAP .apAcRow { display: flex; align-items: center; gap: 2px; }
+#nppAP .apAcRow .apOpt { flex: 1; min-width: 0; }
+#nppAP .apAcRow .apAcX { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--ap-mute); cursor: pointer; opacity: .55; }
+#nppAP .apAcRow .apAcX svg { width: 14px; height: 14px; }
+#nppAP .apAcRow:hover .apAcX, #nppAP .apAcRow .apAcX:focus-visible { opacity: 1; }
+#nppAP .apAcRow .apAcX:hover { background: var(--ap-soft); color: #d9534f; }
+#nppAP .apOv .apIco.apDel:hover { color: #d9534f; }
+#nppAP .apGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px 14px; padding-top: 14px; }
+#nppAP .apCard { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+#nppAP .apImg { position: relative; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px var(--ap-line); transition: box-shadow .15s; }
+#nppAP:not(.apEditing) .apCard:hover .apImg, #nppAP:not(.apEditing) .apCard:focus-within .apImg, #nppAP .apCard.tap .apImg { box-shadow: 0 0 0 1px #cbbaf2, 0 8px 22px rgba(124,92,240,.2); }
+#nppAP .apCard.sel .apImg { box-shadow: 0 0 0 2px var(--ap-acc); }
+#nppAP .apPic { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, #fff 0%, #f6f0ff 58%, #e7dcff 100%); }
+#nppAP .apPic img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform .25s ease; }
+#nppAP:not(.apEditing) .apCard:hover .apPic img { transform: scale(1.04); }
+#nppAP .apOv { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 6px; padding: 26px 10px 8px; color: #fff; background: linear-gradient(to top, rgba(38,26,68,.86) 0%, rgba(38,26,68,.55) 60%, rgba(38,26,68,0) 100%); opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .16s ease, transform .18s ease; }
+#nppAP:not(.apEditing) .apCard:hover .apOv, #nppAP:not(.apEditing) .apCard:focus-within .apOv, #nppAP:not(.apEditing) .apCard.tap .apOv { opacity: 1; transform: none; pointer-events: auto; }
+#nppAP .apInfo { min-width: 0; line-height: 15px; }
+#nppAP .apInfo b { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nppAP .apInfo small { display: block; font-size: 11px; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nppAP .apIcos { display: flex; gap: 6px; }
+#nppAP .apOv .apIco { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: var(--ap-text); box-shadow: none; }
+#nppAP .apOv .apIco:hover { background: #fff; color: var(--ap-acc); box-shadow: none; }
+#nppAP .apOv .apIco svg { width: 14px; height: 14px; }
+#nppAP .apCap { display: flex; align-items: center; gap: 8px; min-height: 20px; padding: 0 2px; }
+#nppAP .apLk { color: inherit; text-decoration: none; } #nppAP .apLk:hover { text-decoration: underline; }
+#nppAP .apCard.apTonePending .apName { opacity: 0 !important; }
+#nppAP .apName { transition: opacity .15s; position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 4; font-family: 'CafeteriaBlack', Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+#nppAP .apName .apLk { pointer-events: auto; color: #fff; }
+#nppAP:not(.apEditing) .apCard:hover .apName, #nppAP:not(.apEditing) .apCard:focus-within .apName, #nppAP .apCard.tap .apName { opacity: 0; }
+#nppAP .apBadges { position: absolute; top: 8px; right: 8px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
+#nppAP .apTb { font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 1px 8px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+#nppAP .apTb.uft { background: #f0a92e; } #nppAP .apTb.perm { background: #4cc784; } #nppAP .apTb.maybe { background: #4a9be8; }
+#nppAP .apCard.apNameDark .apName, #nppAP .apCard.apNameDark .apName .apLk { color: #1c1830; text-shadow: none; }
+#nppAP .apInfo b, #nppAP .apInfo small, #nppAP .apInfo b *, #nppAP .apInfo small *, #nppAP .apInfo .apLk { font-family: 'CafeteriaBlack', Georgia, serif !important; font-weight: 400; }
+#nppAP .apName, #nppAP .apName .apLk, #nppAP .apCard .apName a { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+#nppAP .apInfo b { font-size: 14px; } #nppAP .apInfo small { font-size: 12px; }
+#nppAP .apAct { box-shadow: 0 1px 4px rgba(0,0,0,.25); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1c8f55; background: #e3f7ec; border-radius: 4px; padding: 1px 6px; }
+#nppAP .apNote { margin: -4px 2px 0; font-size: 12px; line-height: 16px; color: var(--ap-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nppAP .apChk { position: absolute; top: 8px; left: 8px; z-index: 4; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); border-radius: 6px; box-shadow: 0 0 0 1px var(--ap-line); cursor: pointer; }
+#nppAP .apChk input { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+#nppAP .apEd { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #fff; border: 1px solid var(--ap-line); border-radius: 12px; }
+#nppAP .apSegT { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+#nppAP .apTg { height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 600; gap: 6px; box-shadow: none; white-space: nowrap; }
+#nppAP .apTg::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #c9c2dc; flex: none; }
+#nppAP .apTg.uft::before { background: #f0a92e; } #nppAP .apTg.perm::before { background: #4cc784; } #nppAP .apTg.maybe::before { background: #4a9be8; }
+#nppAP .apTg:hover { box-shadow: none; }
+#nppAP .apTg.on { color: var(--ap-text); border-color: #bdb4d6; background: #e8e4f1; }
+#nppAP .apTg.on.uft { background: #ffd57d; border-color: #f0a92e; } #nppAP .apTg.on.perm { background: #9fe6b9; border-color: #4cc784; } #nppAP .apTg.on.maybe { background: #a5d6ff; border-color: #4a9be8; }
+#nppAP .apEd input[type=text] { width: 100%; height: 30px; border-radius: 8px; padding: 0 10px; font-size: 13px; }
+#nppAP .apEd input[type=text]:focus { outline: none; border-color: var(--ap-acc); box-shadow: 0 0 0 3px rgba(124,92,240,.18); }
+#nppAP .apSaved { font-size: 11px; line-height: 14px; height: 14px; color: #1c8f55; opacity: 0; }
+#nppAP .apSaved.show { animation: apSv 1.6s ease forwards; }
+@keyframes apSv { 0% { opacity: 0; } 12%, 70% { opacity: 1; } 100% { opacity: 0; } }
+#nppAP .apBulk { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 10px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 4px 14px rgba(70,52,110,.12); }
+#nppAP .apBulk button { height: 34px; border-radius: 8px; padding: 0 12px; font-weight: 600; box-shadow: none; }
+#nppAP .apBulk .apTg { height: 34px; }
+#nppAP .apBulk button:hover { box-shadow: none; }
+#nppAP .apSelN { font-size: 13px; font-weight: 700; min-width: 84px; }
+#nppAP .apBulkL { font-size: 13px; color: var(--ap-mute); }
+#nppAP .apBulkT { display: flex; flex-wrap: wrap; gap: 4px; }
+#nppAP .apSp { flex: 1 1 0; }
+#nppAP .apGrid { padding-top: 14px; }
+#nppAP .apBulk + .apGrid, #nppAP .apBulk + .apHead { margin-top: 0; }
+#nppAP .apTop .apEditBtn.on { background: var(--ap-acc); border-color: transparent; color: #fff; }
+#nppAP .apTop .apEditBtn.on:hover { background: #6a49e0; }
+#nppAP .apNoImg { font-size: 48px; font-weight: 800; color: #a595d6; }
+#nppAP .sk .apPic { background: linear-gradient(110deg, #f1eafc 30%, #fff 50%, #f1eafc 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
+#nppAP .sk .apLine { height: 12px; border-radius: 6px; background: #ece7f7; }
 @keyframes apSk { to { background-position: -200% 0; } }
-#nppAP .apNone { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px; color: var(--ap-mute); border: 1px dashed rgba(255,255,255,.2); border-radius: 14px; }
-#nppAP .apEmpty { padding: 48px 16px; text-align: center; color: var(--ap-mute); font-size: 15px; }
-#nppAP .apToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 16px; border-radius: 999px; background: #2a2342; border: 1px solid rgba(255,255,255,.25); font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+#nppAP .apNone { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px; color: var(--ap-mute); border: 2px dashed #cbbaf2; border-radius: 18px; background: rgba(255,255,255,.6); }
+#nppAP .apEmpty { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 56px 16px; text-align: center; color: var(--ap-mute); font-size: 15px; }
+#nppAP .apFace { position: relative; width: 84px; height: 76px; border-radius: 50% 50% 46% 46%; background: #e7dcff; box-shadow: inset 0 -6px 0 rgba(124,92,240,.12); }
+#nppAP .apFace::before, #nppAP .apFace::after { content: ""; position: absolute; top: -12px; width: 26px; height: 26px; background: #e7dcff; border-radius: 6px 22px 6px 22px; }
+#nppAP .apFace::before { left: 6px; transform: rotate(-8deg); } #nppAP .apFace::after { right: 6px; transform: rotate(98deg); }
+#nppAP .apFace i { position: absolute; top: 32px; width: 9px; height: 11px; border-radius: 50%; background: #392d5c; } #nppAP .apFace i:nth-child(1) { left: 24px; } #nppAP .apFace i:nth-child(2) { right: 24px; }
+#nppAP .apFace b { position: absolute; left: 50%; top: 50px; width: 16px; height: 8px; margin-left: -8px; border-bottom: 3px solid #392d5c; border-radius: 0 0 16px 16px; }
+#nppAP .apToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 18px; border-radius: 999px; background: #392d5c; color: #fff; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 9; }
 #nppAP .apToast.on { opacity: 1; transform: translate(-50%, 0); }
 .nppAcctAllPets { width: 100%; margin: 8px 0 0; }
+#nppAP .apTop .apBar { flex-wrap: nowrap; gap: 10px; padding: 16px 20px 10px; }
+#nppAP .apTop .apBar h2 { display: flex; align-items: baseline; gap: 10px; margin: 0 6px 0 0; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 30px; line-height: 1.1; font-weight: 400; white-space: nowrap; }
+#nppAP .apBar h2 .apCount { font-family: inherit; }
+#nppAP .apCount { font-size: 13px; font-weight: 500; color: var(--ap-mute); }
+#nppAP .apTop input[type=search] { height: 34px; border-radius: 8px; padding: 0 12px; flex: 1 1 auto; }
+#nppAP .apTop input[type=search]:focus { outline: none; border-color: var(--ap-acc); box-shadow: 0 0 0 3px rgba(124,92,240,.18); }
+#nppAP .apTop button { height: 34px; border-radius: 8px; padding: 0 12px; font-weight: 600; box-shadow: none; }
+#nppAP .apTop button:hover { box-shadow: none; }
+#nppAP .apTop .apIcon { width: 34px; padding: 0; color: var(--ap-mute); }
+#nppAP .apTop .apIcon:hover { color: var(--ap-text); }
+#nppAP .apTop .apRow { position: relative; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; padding: 0 20px 12px; }
+#nppAP .apTop .apSeg { padding: 3px; gap: 2px; border-radius: 10px; height: 38px; align-items: center; }
+#nppAP .apTop .apSeg button { height: 30px; border-radius: 7px; padding: 0 10px; gap: 7px; color: var(--ap-mute); }
+#nppAP .apTop .apSeg button.on { color: var(--ap-text); background: #fff; box-shadow: 0 0 0 1px var(--ap-line), 0 1px 2px rgba(70,52,110,.12); }
+#nppAP .apTop .apSeg button.on .apN { color: var(--ap-acc); }
+#nppAP .apN { font-weight: 500; font-size: 12px; color: var(--ap-mute); opacity: .9; }
+#nppAP .apTd { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+#nppAP .apTd.uft { background: #f0a92e; } #nppAP .apTd.perm { background: #4cc784; } #nppAP .apTd.maybe { background: #4a9be8; }
+#nppAP .apTools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#nppAP .apPopWrap { position: relative; }
+#nppAP .apTop .apDd { gap: 6px; }
+#nppAP .apDdl { color: var(--ap-mute); font-weight: 500; }
+#nppAP .apDd b { font-weight: 600; }
+#nppAP .apDd svg:last-child { width: 14px; height: 14px; color: var(--ap-mute); }
+#nppAP .apDd[aria-expanded=true] { border-color: var(--ap-acc); background: var(--ap-soft); }
+#nppAP .apTop .apTrade { color: var(--ap-text); }
+#nppAP .apTop .apTrade.hot { background: var(--ap-acc); border-color: transparent; color: #fff; }
+#nppAP .apTop .apTrade.hot:hover { background: #6a49e0; }
+#nppAP .apPop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; min-width: 220px; max-width: calc(100vw - 24px); max-height: 60vh; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 10px 30px rgba(70,52,110,.22); }
+#nppAP .apPop[hidden] { display: none; }
+#nppAP .apPopHead { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ap-mute); }
+#nppAP .apTop .apLink { height: auto; border: 0; background: none; padding: 0; font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--ap-acc); }
+#nppAP .apTop .apLink:hover { background: none; text-decoration: underline; }
+#nppAP .apOpt { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+#nppAP .apOpt:hover { background: var(--ap-soft); }
+#nppAP .apOpt input[type=checkbox], #nppAP .apOpt input[type=radio] { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; flex: none; }
+#nppAP .apMainS { margin-left: auto; font-style: normal; color: #f5a623; }
+#nppAP .apSep { height: 1px; margin: 6px 4px; background: var(--ap-line); }
+#nppAP .apSw { justify-content: space-between; position: relative; }
+#nppAP .apSw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+#nppAP .apTrack { position: relative; width: 32px; height: 18px; border-radius: 999px; background: #d6cfe6; transition: background .15s; flex: none; }
+#nppAP .apTrack::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+#nppAP .apSw input:checked ~ .apTrack { background: var(--ap-acc); }
+#nppAP .apSw input:checked ~ .apTrack::after { transform: translateX(14px); }
+#nppAP .apSw input:focus-visible ~ .apTrack { outline: 3px solid #5b8def; outline-offset: 2px; }
 @media (max-width: 600px) {
   #nppAP { padding: 0; }
   #nppAP .apWin { border-radius: 0; border: 0; width: 100%; }
-  #nppAP .apBar { padding: 12px 12px 6px; }
-  #nppAP .apBar h2 { flex: 1; font-size: 18px; }
-  #nppAP .apSearch { order: 5; flex-basis: 100%; }
-  #nppAP .apRow { flex-wrap: nowrap; overflow-x: auto; padding: 4px 12px 10px; }
+  #nppAP .apTop .apBar { flex-wrap: wrap; padding: 12px 12px 8px; }
+  #nppAP .apTop .apBar h2 { flex: 1; }
+  #nppAP .apTop .apSearch { order: 5; flex-basis: 100%; }
+  #nppAP .apTop .apRow { padding: 0 12px 10px; }
+  #nppAP .apTop .apSeg { width: 100%; }
+  #nppAP .apTools { width: 100%; }
+  #nppAP .apTools .apTrade { margin-left: auto; }
+  #nppAP .apPopWrap { position: static; }
+  #nppAP .apPop { left: 12px; right: 12px; top: auto; margin-top: 6px; }
   #nppAP .apBody { padding: 0 12px 24px; }
-  #nppAP .apGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  #nppAP .apGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
 }
-@media (prefers-reduced-motion: reduce) { #nppAP, #nppAP *, #nppAP .apWin { transition: none !important; animation: none !important; transform: none !important; } }
+@media (min-width: 601px) and (max-width: 900px) { #nppAP .apGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { #nppAP, #nppAP *, #nppAP .apWin { transition: none !important; animation: none !important; } #nppAP .apWin, #nppAP .apCard, #nppAP .apPic img, #nppAP .apOv { transform: none !important; } }
+/* dark mode (follows sidebar toggle) */
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP { --ap-bg: #1d1a2b; --ap-panel: #272238; --ap-line: rgba(255,255,255,.12); --ap-text: #f1ecff; --ap-mute: rgba(241,236,255,.62); --ap-acc: #a58bff; --ap-soft: rgba(165,139,255,.16); color-scheme: dark; background: rgba(8,6,16,.6); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apWin { border-color: rgba(255,255,255,.14); box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop { background: linear-gradient(180deg, #2a2440 0%, #1d1a2b 100%); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP input[type=search], html[data-np-modern-interface]:not(.npp-side-light) #nppAP input[type=text], html[data-np-modern-interface]:not(.npp-side-light) #nppAP select, html[data-np-modern-interface]:not(.npp-side-light) #nppAP button, html[data-np-modern-interface]:not(.npp-side-light) #nppAP a.apBtn, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apEd, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apBulk, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apPop { background: var(--ap-panel); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP select option { background: #272238; color: #f1ecff; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP button:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAP a.apBtn:hover { background: var(--ap-soft); border-color: rgba(165,139,255,.45); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apPrimary, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apEditBtn.on, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apTrade.hot { background: var(--ap-acc); color: #1d1a2b; border-color: transparent; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apPrimary:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apEditBtn.on:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apTrade.hot:hover { background: #b8a2ff; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSeg button { background: transparent; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSeg button:hover { background: rgba(255,255,255,.08); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSeg button.on, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apSeg button.on { background: var(--ap-panel); color: var(--ap-acc); box-shadow: 0 0 0 1px var(--ap-line), 0 1px 4px rgba(0,0,0,.35); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apSeg button.on { color: var(--ap-text); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apChip { background: transparent; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apChip.on { background: var(--ap-panel); border-color: rgba(165,139,255,.45); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apBody { background: radial-gradient(circle, rgba(255,255,255,.08) 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP:not(.apEditing) .apCard:hover .apImg, html[data-np-modern-interface]:not(.npp-side-light) #nppAP:not(.apEditing) .apCard:focus-within .apImg, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apCard.tap .apImg { box-shadow: 0 0 0 1px rgba(165,139,255,.45), 0 8px 22px rgba(0,0,0,.45); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apCard.sel .apImg { box-shadow: 0 0 0 2px var(--ap-acc); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apOv .apIco { background: rgba(255,255,255,.92); color: #392d5c; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apOv .apIco:hover { background: #fff; color: #7c5cf0; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apAct { background: rgba(76,199,132,.18); color: #7be0a6; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSaved { color: #7be0a6; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apChk { background: rgba(39,34,56,.92); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg::before { background: rgba(255,255,255,.3); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.uft::before { background: #f0a92e; } html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.perm::before { background: #4cc784; } html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.maybe::before { background: #4a9be8; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on { color: var(--ap-text); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.1); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on.uft { background: rgba(240,169,46,.22); border-color: #f0a92e; color: #ffe2a0; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on.perm { background: rgba(76,199,132,.2); border-color: #4cc784; color: #b5f0cd; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on.maybe { background: rgba(74,155,232,.22); border-color: #4a9be8; color: #bfe0ff; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apEd input[type=text]:focus, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop input[type=search]:focus { box-shadow: 0 0 0 3px rgba(165,139,255,.25); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apBulk { box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apNoImg { color: rgba(255,255,255,.35); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .sk .apPic { background: linear-gradient(110deg, rgba(255,255,255,.06) 30%, rgba(255,255,255,.14) 50%, rgba(255,255,255,.06) 70%); background-size: 200% 100%; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .sk .apLine { background: rgba(255,255,255,.08); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apNone { border-color: rgba(165,139,255,.45); background: rgba(255,255,255,.04); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace::before, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace::after { background: rgba(255,255,255,.08); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace i { background: var(--ap-text); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace b { border-bottom-color: var(--ap-text); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apToast { background: #f1ecff; color: #1d1a2b; }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTrack { background: rgba(255,255,255,.18); }
+html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~ .apTrack { background: var(--ap-acc); }
 `;
 
   let apEl = null, apToastT = null;
-  const apState = { q: '', sort: 'account', tab: 'all', only: new Set() };
+  const apState = { q: '', sort: 'account', group: false, tab: 'all', only: new Set(), edit: false, sel: new Set(), saved: '', shown: [], pick: false, picked: new Set() };
+  // Trade pick mode: checkboxes on Up for Trade cards; the copy button then copies only the picked pets.
+  function apTradeLbl() {
+    if (!apEl) return;
+    const pb = $('.apPickBtn', apEl), tb = $('.apTrade span', apEl), n = apState.picked.size;
+    if (pb) { pb.classList.toggle('on', apState.pick); pb.setAttribute('aria-pressed', String(apState.pick)); $('span', pb).textContent = apState.pick ? 'Done picking' : 'Pick pets'; }
+    if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
+  }
+  try { const pr = JSON.parse(LSget('npp_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; } } catch {}
+  const apSavePrefs = () => { try { LSset('npp_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group })); } catch {} };
   const fmtAgo = (t) => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   const apToast = (m) => { if (!apEl) return; const t = $('.apToast', apEl); t.textContent = m; t.classList.add('on'); clearTimeout(apToastT); apToastT = setTimeout(() => t.classList.remove('on'), 1800); };
   const apStatus = (m) => { if (apEl) $('.apStatus', apEl).textContent = m || ''; };
@@ -3719,36 +4417,93 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
 
   function openAllPets() {
+    if (drawerSetOpen) drawerSetOpen(false);
     apCollect();
     if (!apEl) {
       const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
-      apEl = document.createElement('div'); apEl.id = 'nppAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'All pets');
-      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets</h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><select class="apSort" aria-label="Sort"><option value="account">Sort: account</option><option value="name">Sort: name</option><option value="species">Sort: species</option></select><button type="button" class="apTrade apPrimary" title="Copy Up for Trade pets as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div></div><div class="apRow apChips"></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
+      apEl = document.createElement('div'); apEl.id = 'nppAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
+      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which Up for Trade pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><button type="button" class="apTrade" title="Copy Up for Trade pets as text">' + AP_COPY + '<span>Copy trade list</span></button></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
       document.body.appendChild(apEl);
       apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
       $('.apClose', apEl).addEventListener('click', closeAllPets);
       $('.apSearch', apEl).addEventListener('input', (e) => { apState.q = e.target.value.trim().toLowerCase(); apRender(); });
-      $('.apSort', apEl).addEventListener('change', (e) => { apState.sort = e.target.value; apRender(); });
+      const apClosePops = () => { apEl.querySelectorAll('.apPop').forEach(p => { p.hidden = true; }); apEl.querySelectorAll('.apDd').forEach(x => x.setAttribute('aria-expanded', 'false')); };
+      apEl.addEventListener('click', (e) => {
+        const dd = e.target.closest('.apDd');
+        if (dd) { const pop = $('.apPop', dd.parentNode), was = !pop.hidden; apClosePops(); if (!was) { pop.hidden = false; dd.setAttribute('aria-expanded', 'true'); } return; }
+        if (e.target.closest('[data-all]')) { apState.only.clear(); apRender(); }
+      });
+      apEl.addEventListener('mousedown', (e) => { if (!e.target.closest('.apPopWrap')) apClosePops(); });
+      apEl.addEventListener('change', (e) => { if (e.target.name === 'apSortR') { apState.sort = e.target.value; apSavePrefs(); apRender(); } });
+      $('.apGroupCb', apEl).addEventListener('change', (e) => { apState.group = e.target.checked; apSavePrefs(); apRender(); });
+      $('.apRefresh', apEl).addEventListener('click', () => { apCollect(true); apRender(); apStatus('Updated ' + (curUser() || 'this account') + '.'); });
       $('.apTrade', apEl).addEventListener('click', () => {
-        const c = apRead(), tags = apTags(), lines = [];
-        apOrdered().forEach(a => ((c[a] && c[a].pets) || []).forEach(p => { if ((tags[p.name.toLowerCase()] || {}).s === 'uft') lines.push(p.name + ' - ' + ([p.color, p.species].filter(Boolean).join(' ') || '?') + ' (' + a + ')'); }));
+        const c = apRead(), tags = apTags(), lines = [], only = apState.pick && apState.picked.size ? apState.picked : null;
+        apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => { if ((tags[p.name.toLowerCase()] || {}).s === 'uft' && (!only || only.has(p.name.toLowerCase())) && !lines.some(l => l.startsWith(p.name + ' - '))) lines.push(p.name + ' - ' + ([p.color, p.species].filter(Boolean).join(' ') || '?')); }));
         if (!lines.length) { apToast('No Up for Trade pets yet'); return; }
         apCopy(lines.join('\n'), 'Copied ' + lines.length + ' pet' + (lines.length === 1 ? '' : 's'));
       });
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && apEl.classList.contains('open')) { e.stopPropagation(); closeAllPets(); } }, true);
-      apEl.addEventListener('change', (e) => {
-        const el = e.target.closest('[data-tag]'); if (!el) return;
-        const k = el.dataset.tag, t = apTags(), cur = t[k] || {};
-        if (el.tagName === 'SELECT') cur.s = el.value; else cur.n = el.value.trim().slice(0, 60);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && apEl.classList.contains('open')) { e.stopPropagation(); if (apEl.querySelector('.apPop:not([hidden])')) apClosePops(); else if (apState.edit) apSetEdit(false); else closeAllPets(); } }, true);
+      const apSaveTag = (k, patch) => {
+        const t = apTags(), cur = t[k] || {};
+        if ('s' in patch) cur.s = patch.s;
+        if ('n' in patch) cur.n = patch.n.trim().slice(0, 60);
         if (!cur.s && !cur.n) delete t[k]; else t[k] = cur;
-        gmSet(AP_TAGS, t); apRender();
+        gmSet(AP_TAGS, t);
+      };
+      const apNote = (e) => { const el = e.target.closest('input[data-tag]'); if (el) apSaveTag(el.dataset.tag, { n: el.value }); };
+      apEl.addEventListener('input', apNote);
+      apEl.addEventListener('change', (e) => {
+        apNote(e);
+        const el = e.target.closest('input[data-tag]'); if (el) apFlash(el.dataset.tag);
+        const sk = e.target.dataset && e.target.dataset.sel;
+        if (sk) { e.target.checked ? apState.sel.add(sk) : apState.sel.delete(sk); e.target.closest('.apCard').classList.toggle('sel', e.target.checked); const sn = $('.apSelN', apEl); if (sn) sn.textContent = apState.sel.size + ' selected'; }
+        const pk = e.target.dataset && e.target.dataset.pick;
+        if (pk) { e.target.checked ? apState.picked.add(pk) : apState.picked.delete(pk); e.target.closest('.apCard').classList.toggle('sel', e.target.checked); apTradeLbl(); }
       });
       apEl.addEventListener('click', (e) => {
         const tab = e.target.closest('[data-tab]'); if (tab) { apState.tab = tab.dataset.tab; apRender(); return; }
-        const b = e.target.closest('button[data-act]'); if (!b) return;
+        const b = e.target.closest('button[data-act]');
+        if (!b) {
+          const cd = e.target.closest('.apCard');
+          if (cd && !apState.edit && !e.target.closest('a, input')) { const on = !cd.classList.contains('tap'); apEl.querySelectorAll('.apCard.tap').forEach(x => x.classList.remove('tap')); cd.classList.toggle('tap', on); }
+          return;
+        }
         const n = b.dataset.n, acct = b.dataset.a;
         if (b.dataset.act === 'copy') apCopy(n, 'Copied ' + n);
-        else if (b.dataset.act === 'active') {
+        else if (b.dataset.act === 'tag') { apSaveTag(b.dataset.k, { s: b.dataset.v }); apState.saved = b.dataset.k; apRender(); }
+        else if (b.dataset.act === 'bulk') {
+          if (!apState.sel.size) { apToast('Select some pets first'); return; }
+          const t = apTags(); apState.sel.forEach(k => { const cur = t[k] || {}; cur.s = b.dataset.v; if (!cur.s && !cur.n) delete t[k]; else t[k] = cur; });
+          gmSet(AP_TAGS, t); apToast('Updated ' + apState.sel.size + ' pet' + (apState.sel.size === 1 ? '' : 's')); apRender();
+        } else if (b.dataset.act === 'selall') { apState.shown.forEach(k => apState.sel.add(k)); apRender(); }
+        else if (b.dataset.act === 'selclr') { apState.sel.clear(); apRender(); }
+        else if (b.dataset.act === 'pick') {
+          apState.pick = !apState.pick;
+          if (apState.pick) { if (apState.edit) apSetEdit(false); apState.tab = 'uft'; } else apState.picked.clear();
+          apRender(); apTradeLbl();
+        }
+        else if (b.dataset.act === 'wipe') {
+          if (!confirm('Delete all saved All Pets data for every account, including tags and notes? This cannot be undone.')) return;
+          gmSet(AP_KEY, {}); gmSet(AP_TAGS, {}); apState.sel.clear(); apRender(); apToast('All Pets data deleted');
+        } else if (b.dataset.act === 'delpet') {
+          if (!confirm('Delete ' + n + ' from All Pets? If ' + n + ' is still on ' + acct + ', it comes back the next time you log in there.')) return;
+          const pc = apRead(), low = n.toLowerCase();
+          Object.keys(pc).forEach(k => { if (pc[k] && Array.isArray(pc[k].pets)) pc[k] = { ...pc[k], pets: pc[k].pets.filter(p => String(p.name).toLowerCase() !== low) }; });
+          gmSet(AP_KEY, pc); apDropTags(pc, [low]); apState.sel.delete(low); apRender(); apToast('Deleted ' + n);
+        } else if (b.dataset.act === 'acdel') {
+          if (acct.toLowerCase() === curUser().toLowerCase()) { apStatus('You are logged in as ' + acct + ', so its pets would come straight back. Block it instead, or log in to another account first.'); return; }
+          if (!confirm('Delete ' + acct + ' from this computer? Its saved pets, tags and notes are deleted too. It is added again if you log in to it.')) return;
+          removeAccount(acct); apToast('Deleted ' + acct);
+        } else if (b.dataset.act === 'acblock') {
+          if (!confirm('Block ' + acct + '? Its saved pets are deleted and it is never tracked or listed again, even if you log in to it. You can unblock it at the bottom of All Pets.')) return;
+          apSetBlock(acct, true); removeAccount(acct); apRender(); apToast('Blocked ' + acct);
+        } else if (b.dataset.act === 'unblock') {
+          apSetBlock(acct, false); apRender(); apToast('Unblocked ' + acct + '. Log in to it once to add its pets.');
+        }
+        else if (b.dataset.act === 'editmode') {
+          apSetEdit(!apState.edit);
+        } else if (b.dataset.act === 'active') {
           const a = [...document.querySelectorAll('#qrDock .qrOverlay a')].find(x => /make active/i.test(x.textContent) && (x.getAttribute('href') || '').toLowerCase().includes(n.toLowerCase()));
           if (a) { b.disabled = true; a.click(); } else apStatus('Open your Quick Ref / pet menu on Neopets to make ' + n + ' active.');
         } else if (b.dataset.act === 'switch') {
@@ -3756,21 +4511,47 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         }
       });
     }
+    apEl.querySelectorAll('input[name=apSortR]').forEach(r => { r.checked = r.value === apState.sort; }); $('.apGroupCb', apEl).checked = apState.group;
     document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'allpets' }));
     apEl.classList.add('open');
     apStatus('');
     apRender();
   }
-  function closeAllPets() { if (apEl) apEl.classList.remove('open'); }
+  function closeAllPets() { if (apEl) { apEl.classList.remove('open'); apSetEdit(false); } }
+  function apSetEdit(on) {
+    if (!apEl) return;
+    apState.edit = on; if (!on) apState.sel.clear();
+    if (on && apState.pick) { apState.pick = false; apState.picked.clear(); apTradeLbl(); }
+    apEl.classList.toggle('apEditing', on);
+    const b = $('.apEditBtn', apEl); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); $('span', b).textContent = on ? 'Done' : 'Edit tags';
+    apEl.querySelectorAll('.apPop').forEach(p => { p.hidden = true; });
+    if (apEl.classList.contains('open')) apRender();
+  }
+  function apFlash(k) {
+    if (!apEl) return;
+    const c = [...apEl.querySelectorAll('.apCard')].find(x => x.dataset.k === k), sv = c && $('.apSaved', c);
+    if (sv) { sv.classList.remove('show'); void sv.offsetWidth; sv.classList.add('show'); }
+  }
 
   function apRender() {
     if (!apEl) return;
     const c = apRead(), tags = apTags(), accts = apOrdered(), me = curUser().toLowerCase();
-    const tabs = [['all', 'All'], ['uft', 'UFT'], ['perm', 'Permanent'], ['maybe', 'Maybe'], ['none', 'Untagged']];
-    $('.apTabs', apEl).innerHTML = tabs.map(t => `<button type="button" role="tab" aria-selected="${apState.tab === t[0]}" class="${apState.tab === t[0] ? 'on' : ''}" data-tab="${t[0]}">${t[1]}</button>`).join('');
-    const chips = $('.apChips', apEl);
-    chips.innerHTML = accts.map(n => `<button type="button" class="apChip${!apState.only.size || apState.only.has(n) ? ' on' : ''}" data-n="${esc(n)}">${esc(n)}</button>`).join('');
-    chips.onclick = (e) => { const b = e.target.closest('.apChip'); if (!b) return; const n = b.dataset.n; apState.only.has(n) ? apState.only.delete(n) : apState.only.add(n); apRender(); };
+    const inAcct = (n) => !apState.only.size || apState.only.has(n);
+    const cnt = { all: 0, uft: 0, perm: 0, maybe: 0, none: 0 };
+    // Safety net: one card per pet name; if a name sits under several accounts, the newest-collected account owns it.
+    const owner = new Map();
+    accts.forEach(a => { const e = apOf(c, a); if (e) (e.pets || []).forEach(p => { const n = String(p.name).toLowerCase(), o = owner.get(n); if (!o || (e.t || 0) > o.t) owner.set(n, { a: a.toLowerCase(), t: e.t || 0 }); }); });
+    const petsOf = (e, a) => { const seen = new Set(); return (e.pets || []).filter(p => { const n = String(p.name).toLowerCase(); if (seen.has(n) || (owner.get(n) || {}).a !== a.toLowerCase()) return false; seen.add(n); return true; }); };
+    accts.filter(inAcct).forEach(a => { const e = apOf(c, a); if (e) petsOf(e, a).forEach(p => { cnt.all++; cnt[(tags[p.name.toLowerCase()] || {}).s || 'none']++; }); });
+    const tabs = [['all', 'All'], ['uft', 'Up for trade'], ['perm', 'Keeping'], ['maybe', 'Maybe'], ['none', 'Untagged']];
+    $('.apTabs', apEl).innerHTML = tabs.map(t => `<button type="button" role="tab" aria-selected="${apState.tab === t[0]}" class="${apState.tab === t[0] ? 'on' : ''}" data-tab="${t[0]}">${t[0] === 'all' || t[0] === 'none' ? '' : `<i class="apTd ${t[0]}"></i>`}${t[1]}<span class="apN">${cnt[t[0]] || 0}</span></button>`).join('');
+    $('.apCount', apEl).textContent = cnt.all + ' pet' + (cnt.all === 1 ? '' : 's');
+    $('.apAcctVal', apEl).textContent = apState.only.size ? apState.only.size + ' of ' + accts.length : 'All accounts';
+    $('.apSortVal', apEl).textContent = { account: 'Account', name: 'Name', species: 'Species', tag: 'Tag' }[apState.sort] || 'Account';
+    $('.apTrade', apEl).classList.toggle('hot', apState.tab === 'uft');
+    const mainA = mainAcct().toLowerCase();
+    $('.apAcctList', apEl).innerHTML = accts.map(n => `<div class="apAcRow"><label class="apOpt"><input type="checkbox" data-n="${esc(n)}"${inAcct(n) ? ' checked' : ''}><span>${esc(n)}</span>${n.toLowerCase() === mainA ? '<em class="apMainS" title="Main account" aria-label="Main account">★</em>' : ''}</label><button type="button" class="apAcX" data-act="acdel" data-a="${esc(n)}" title="Delete ${esc(n)} and its pets" aria-label="Delete account ${esc(n)}">${AP_TRASH}</button><button type="button" class="apAcX" data-act="acblock" data-a="${esc(n)}" title="Block ${esc(n)} (delete and never track again)" aria-label="Block account ${esc(n)}">${AP_BLOCK_I}</button></div>`).join('');
+    $('.apAcctList', apEl).onchange = (e) => { const n = e.target.dataset.n; if (!n) return; apState.only.has(n) ? apState.only.delete(n) : apState.only.add(n); apRender(); };
     const tagOf = (p) => tags[p.name.toLowerCase()] || {};
     const match = (p) => {
       const s = tagOf(p).s || '';
@@ -3778,32 +4559,65 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       return !apState.q || [p.name, p.species, p.color, tagOf(p).n || '', ST[s] || ''].join(' ').toLowerCase().includes(apState.q);
     };
     const card = (p, a) => {
-      const mine = a.toLowerCase() === me, t = tagOf(p), sub = [p.color, p.species].filter(Boolean).join(' ') + (p.level ? (p.color || p.species ? ' · ' : '') + 'Lv ' + p.level : '');
+      const mine = a.toLowerCase() === me, t = tagOf(p), k = p.name.toLowerCase();
+      const sub = [p.color, p.species].filter(Boolean).join(' ');
       const tip = mine ? 'Make ' + p.name + ' your active pet' : 'Switch to ' + a;
-      return `<div class="apCard"><span class="apBadge ${t.s || ''}">${esc(ST[t.s] || 'Untagged')}</span><button type="button" class="apCopy" data-act="copy" data-n="${esc(p.name)}" title="Copy name" aria-label="Copy ${esc(p.name)}">${AP_COPY}</button><div class="apPic">${p.img ? `<img src="${esc(p.img)}" alt="${esc(p.name)}" loading="lazy">` : `<span class="apNoImg">${esc(p.name.charAt(0).toUpperCase())}</span>`}</div><div class="apInfo"><b>${esc(p.name)}${p.active ? ' ●' : ''}</b><small>${esc(sub || '—')}</small><small>${esc(a)}</small></div><select data-tag="${esc(p.name.toLowerCase())}" aria-label="Status"><option value="">Untagged</option>${Object.keys(ST).map(k => `<option value="${k}"${t.s === k ? ' selected' : ''}>${ST[k]}</option>`).join('')}</select><input type="text" data-tag="${esc(p.name.toLowerCase())}" value="${esc(t.n || '')}" maxlength="60" placeholder="Note…" aria-label="Note"><div class="apAct"><a class="apBtn apIcon" href="https://www.neopets.com/~${encodeURIComponent(p.name)}" target="_blank" rel="noopener" title="Pet Page" aria-label="Pet Page for ${esc(p.name)}">${AP_PAGE}</a>${mine ? (p.active ? '' : `<button type="button" class="apIcon" data-act="active" data-n="${esc(p.name)}" title="${esc(tip)}" aria-label="Swap Active: ${esc(p.name)}">${AP_ACTIVE}</button>`) : `<button type="button" class="apIcon" data-act="switch" data-a="${esc(a)}" title="${esc(tip)}" aria-label="Switch to account ${esc(a)}">${USERS_ICON}</button>`}</div></div>`;
+      const g = /^f/i.test(p.gender || '') ? '♀' : /^m/i.test(p.gender || '') ? '♂' : (p.gender || '');
+      const line = [sub, p.level ? 'Lv ' + p.level : '', g].filter(Boolean).join(' · ') || p.name;
+      const sw = mine ? (p.active ? '' : `<button type="button" class="apIco" data-act="active" data-n="${esc(p.name)}" title="${esc(tip)}" aria-label="${esc(tip)}">${AP_SWAP}</button>`) : `<button type="button" class="apIco" data-act="switch" data-a="${esc(a)}" title="${esc(tip)}" aria-label="${esc(tip)}">${AP_SWAP}</button>`;
+      const tg = APO.map(o => `<button type="button" class="apTg ${o[0]}${(t.s || '') === o[0] ? ' on' : ''}" data-act="tag" data-v="${o[0]}" data-k="${esc(k)}" aria-pressed="${(t.s || '') === o[0]}">${o[1]}</button>`).join('');
+      const pic = `<div class="apPic">${p.img ? `<img src="${esc(apHiRes(p))}" data-fb="${esc(p.img)}" onerror="if(this.dataset.fb&&this.src!==this.dataset.fb)this.src=this.dataset.fb" alt="${esc(p.name + (sub ? ', ' + sub : ''))}" loading="lazy">` : `<span class="apNoImg">${esc(p.name.charAt(0).toUpperCase())}</span>`}</div>`;
+      const top = apState.edit
+        ? `<label class="apChk"><input type="checkbox" data-sel="${esc(k)}"${apState.sel.has(k) ? ' checked' : ''} aria-label="Select ${esc(p.name)}"></label>`
+        : (apState.pick && t.s === 'uft' ? `<label class="apChk"><input type="checkbox" data-pick="${esc(k)}"${apState.picked.has(k) ? ' checked' : ''} aria-label="Add ${esc(p.name)} to the trade list"></label>` : '') + `<div class="apOv"><div class="apInfo"><b>${esc(line)}</b><small>${apUserLk(a)}</small></div><div class="apIcos"><a class="apIco apBtn" href="https://www.neopets.com/~${encodeURIComponent(p.name)}" target="_blank" rel="noopener" title="Pet Page" aria-label="Pet Page for ${esc(p.name)}">${AP_PAGE}</a>${sw}<button type="button" class="apIco" data-act="copy" data-n="${esc(p.name)}" title="Copy name" aria-label="Copy name ${esc(p.name)}">${AP_COPY}</button><button type="button" class="apIco apDel" data-act="delpet" data-n="${esc(p.name)}" data-a="${esc(a)}" title="Delete from All Pets" aria-label="Delete ${esc(p.name)} from All Pets">${AP_TRASH}</button></div></div>`;
+      const ed = apState.edit ? `<div class="apEd" role="group" aria-label="Edit ${esc(p.name)}"><div class="apSegT">${tg}</div><input type="text" data-tag="${esc(k)}" value="${esc(t.n || '')}" maxlength="60" placeholder="Add a note…" aria-label="Note for ${esc(p.name)}"><span class="apSaved" aria-live="polite">Saved ✓</span></div>` : (t.n ? `<div class="apNote" title="${esc(t.n)}">${esc(t.n)}</div>` : '');
+      return `<div class="apCard${apState.sel.has(k) ? ' sel' : ''}" data-k="${esc(k)}"><div class="apImg">${pic}${top}${(p.active || t.s) ? `<div class="apBadges">${p.active ? '<span class="apAct">active</span>' : ''}${t.s && ST_LBL[t.s] ? `<span class="apTb ${t.s}">${ST_LBL[t.s]}</span>` : ''}</div>` : ''}<span class="apName ${t.s || ''}">${apPetLk(p.name)}</span></div><div class="apCap"></div>${ed}</div>`;
     };
     const shown = accts.filter(a => !apState.only.size || apState.only.has(a));
+    const rank = { uft: 0, perm: 1, maybe: 2 };
+    const byName = (x, y) => x[0].name.toLowerCase() < y[0].name.toLowerCase() ? -1 : 1;
+    const cmp = apState.sort === 'species' ? (x, y) => (x[0].species + ' ' + x[0].name).toLowerCase() < (y[0].species + ' ' + y[0].name).toLowerCase() ? -1 : 1
+      : apState.sort === 'tag' ? (x, y) => ((rank[tagOf(x[0]).s] ?? 3) - (rank[tagOf(y[0]).s] ?? 3)) || byName(x, y) : byName;
+    const grid = (l) => `<div class="apGrid">${l.map(x => card(x[0], x[1])).join('')}</div>`;
+    const mainL = mainAcct().toLowerCase();
     let html = '';
-    if (apState.sort === 'account') {
-      shown.forEach(a => {
-        const e = c[a], pets = e ? e.pets.filter(match) : [];
-        const star = a.toLowerCase() === mainAcct().toLowerCase() ? ' ★' : '';
-        if (!e) html += `<div class="apHead">${esc(a)}${star}<small>not seen yet</small></div><div class="apGrid"><div class="apCard sk" aria-hidden="true"><div class="apPic"></div><div class="apLine" style="width:60%"></div><div class="apLine" style="width:40%"></div></div><div class="apNone" style="grid-column:span 2">Log in to this account once to add its pets. <button type="button" data-act="switch" data-a="${esc(a)}" title="Switch to ${esc(a)}">${USERS_ICON}<span>Switch account</span></button></div></div>`;
-        else html += `<div class="apHead">${esc(a)}${star}<small>${pets.length}${pets.length !== e.pets.length ? ' / ' + e.pets.length : ''} pets · last seen ${fmtAgo(e.t)}</small></div>` + (pets.length ? `<div class="apGrid">${pets.map(p => card(p, a)).join('')}</div>` : '');
-      });
+    const unseen = [], all = [], secs = [];
+    shown.forEach(a => {
+      const e = apOf(c, a);
+      if (!e) { unseen.push(a); return; }
+      const l = petsOf(e, a).filter(match).map(p => [p, a]).sort(cmp);
+      if (!l.length) return;
+      secs.push([a, e, l]); l.forEach(x => all.push(x));
+    });
+    if (apState.group) {
+      html = secs.map(s => `<div class="apHead"><span>${apUserLk(s[0])}</span>${s[0].toLowerCase() === mainL ? '<span class="apMain" title="Main account" aria-label="Main account">★</span>' : ''}<small>${s[2].length} pet${s[2].length === 1 ? '' : 's'} · seen ${fmtAgo(s[1].t)}</small></div>${grid(s[2])}`).join('');
     } else {
-      const all = [];
-      shown.forEach(a => (c[a] ? c[a].pets : []).forEach(p => match(p) && all.push([p, a])));
-      const k = apState.sort === 'species' ? (x) => (x[0].species + ' ' + x[0].name).toLowerCase() : (x) => x[0].name.toLowerCase();
-      all.sort((x, y) => k(x) < k(y) ? -1 : k(x) > k(y) ? 1 : 0);
-      html = all.length ? `<div class="apHead">${all.length} pets</div><div class="apGrid">${all.map(x => card(x[0], x[1])).join('')}</div>` : '';
+      if (apState.sort !== 'account') all.sort(cmp);
+      html = all.length ? (apState.sort === 'account' ? '' : `<div class="apHead">${all.length} pets</div>`) + grid(all) : '';
     }
-    $('.apBody', apEl).innerHTML = html || '<div class="apEmpty">No pets match. Try another filter, or clear the search.</div>';
+    const blk = [...apBlocked()];
+    if (html || unseen.length || blk.length) html += `<div class="apHead apFoot"><small>${unseen.length ? `Not seen yet: ${unseen.map(apUserLk).join(', ')}. Log in once to add their pets.` : 'Pets stay saved on this computer until you delete them.'}</small><button type="button" class="apWipe" data-act="wipe" title="Delete all saved All Pets data">Delete data</button></div>`
+      + (blk.length ? `<div class="apHead apFoot"><small>Blocked:</small>${blk.map(n => `<button type="button" class="apUnblk" data-act="unblock" data-a="${esc(n)}" title="Unblock ${esc(n)}">${esc(n)} ×</button>`).join('')}</div>` : '');
+    apState.shown = all.map(x => x[0].name.toLowerCase());
+    if (apState.edit && html) html = `<div class="apBulk"><span class="apSelN">${apState.sel.size} selected</span><span class="apBulkL">Set selected to:</span><div class="apBulkT">${APO.map(o => `<button type="button" class="apTg ${o[0]}" data-act="bulk" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><span class="apSp"></span><button type="button" data-act="selall">Select all shown</button><button type="button" data-act="selclr">Clear</button></div>` + html;
+    $('.apBody', apEl).innerHTML = html || '<div class="apEmpty"><div class="apFace" aria-hidden="true"><i></i><i></i><b></b></div><div>No pets here yet. Try another filter, or clear the search.</div></div>';
+    if (apState.saved) { apFlash(apState.saved); apState.saved = ''; }
+    try { apTone(apEl); } catch {}
   }
 
   // Passive collection: local reads only (no network). Runs shortly after load and when the data changes.
-  setTimeout(apCollect, 2500); setTimeout(apCollect, 9000);
-  setInterval(() => { if (!document.hidden) apCollect(); }, 30000);
+  // Login / account swap: a new user in this tab gets extra passes while the page's pet data loads.
+  const apNewUser = () => { const u = curUser().toLowerCase(); let was = ''; try { was = sessionStorage.getItem('npp_ap_user') || ''; sessionStorage.setItem('npp_ap_user', u); } catch {} return !!u && u !== was; };
+  try { const dc = apRead(); if (apDedupe(dc)) gmSet(AP_KEY, dc); } catch {}   // one-time cleanup of stored duplicates
+  // Only on login/swap (a new user in this tab), not on a timer.
+  // Home page: read once when the pet carousel (colour/species/level) has loaded.
+  if (['/home', '/home/', '/home/index.phtml'].includes(location.pathname.toLowerCase())) { let n = 0; const iv = setInterval(() => { if (document.querySelector('.hp-carousel-pet[data-species]') || ++n > 30) { clearInterval(iv); apCollect(true); } }, 500); }
+  // Every other page load gets one local pass (no network; unchanged data within 10 min is not rewritten).
+  setTimeout(() => { if (apNewUser()) [0, 2500, 9500, 19500].forEach(ms => setTimeout(apCollect, ms)); else setTimeout(apCollect, 2000); }, 2500);
+  // Logout: save the current account's pets right before the logout link navigates away.
+  document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('a[href*="logout"]')) apCollect(); }, true);
+  // Remember a "Make Active" click for this account so the tag updates before Quick Ref refreshes.
+  document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href*="new_active_pet="]'); const m = a && a.href.match(/new_active_pet=([A-Za-z0-9_]+)/); if (m) LSset('npp_ap_newactive', JSON.stringify({ u: curUser().toLowerCase(), n: m[1], t: Date.now() })); }, true);
 
   /* ───────────────────────────────── drawer ───────────────────────────────── */
   let MODE = 'standalone';
@@ -3812,20 +4626,20 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     return MODE;
   };
 
-  let drawerEl = null, tabEl = null, open = false, acctTabRefresh = null;
+  let drawerEl = null, tabEl = null, open = false, acctTabRefresh = null, drawerSetOpen = null;
 
   function buildDrawer() {
     const drawer = document.createElement('div');
     drawer.id = 'nppAcctDrawer';
     drawer.innerHTML =
-      '<div class="nppAcctHead"><div class="nppAcctHeadL"><span class="nppAcctTitle">Accounts</span></div>' +
+      '<div class="nppAcctHead"><div class="nppAcctHeadL"><span class="nppAcctTitle">Accounts</span><small class="nppAcctCount"></small></div><div class="nppAcctHeadR">' +
       (MODE === 'modern'
         ? '<a class="nppAcctSwap" href="' + SWAP_URL + '" target="_blank" rel="noopener" title="Swap account: log out and go straight to the login page">' + USERS_ICON + '<span>Swap</span></a>'
         : '') +
-      '</div>' +
+      '<button type="button" class="nppAcctClose" aria-label="Close" title="Close">&times;</button></div></div>' +
       '<div class="nppAcctHint"></div>' +
       '<div class="nppAcctBody">' +
-        '<section class="nppAcctSec"><div class="nppAcctSecHead"><span>NeoPass</span><em class="nppCntNp"></em></div><div class="nppAcctList" data-list="np"></div><div class="nppAcctNote" data-note="np"></div><button type="button" class="nppAcctSync">Sync from NeoPass</button><button type="button" class="nppAcctSync nppAcctAllPets">All Pets</button><div class="nppAcctMsg" data-msg="np"></div></section>' +
+        '<section class="nppAcctSec"><div class="nppAcctSecHead"><span>NeoPass</span><em class="nppCntNp"></em></div><div class="nppAcctList" data-list="np"></div><div class="nppAcctNote" data-note="np"></div><button type="button" class="nppAcctSync">Sync from NeoPass</button><div class="nppAcctMsg" data-msg="np"></div></section>' +
         '<section class="nppAcctSec" data-sec="ex" hidden><div class="nppAcctSecHead"><span>Additional accounts</span><em class="nppCntEx"></em></div><div class="nppAcctList" data-list="ex"></div></section>' +
         '<div class="nppAcctAddWrap"><button type="button" class="nppAcctAddBtn">+ Add account</button><form class="nppAcctAdd" autocomplete="off" hidden><input type="text" placeholder="Account name…" aria-label="Account name" spellcheck="false"><button type="submit" class="nppAcctAddOk">Add</button><button type="button" class="nppAcctAddCancel" aria-label="Cancel" title="Cancel">×</button></form><div class="nppAcctMsg" data-msg="ex"></div></div>' +
       '</div>' +
@@ -3852,10 +4666,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       const npSet = new Set(npNames.map(n => n.toLowerCase()));
       const extra = all.filter(n => !npSet.has(n.toLowerCase()));
       const row = (n) => {
-        const mine = n.toLowerCase() === me, isMain = n.toLowerCase() === main, removable = !autoSet.has(n.toLowerCase()) && !npSet.has(n.toLowerCase());
+        const mine = n.toLowerCase() === me, isMain = n.toLowerCase() === main, removable = !mine;
         const pr = readProf(n), av = pr && pr.avatar ? pr.avatar.replace(/["'\\\n\r()]/g, '') : '';
         const sub = mine ? (isMain ? 'You · Main account' : 'You') : (isMain ? 'Main account' : 'View profile');
-        return `<div class="nppAcctRow${mine ? ' me' : ''}${isMain ? ' main' : ''}"><a class="nppAcctLink" href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(n)}" target="_blank" rel="noopener" title="View ${esc(n)}'s profile"><span class="nppAcctAv"${av ? ` style="background-image:url('${esc(av)}')"` : ''}>${av ? '' : esc(n.charAt(0).toUpperCase())}</span><span class="nppAcctTxt"><b>${esc(n)}</b><small>${esc(sub)}</small></span></a>${removable ? `<button type="button" class="nppAcctX" data-n="${esc(n)}" title="Remove (added by hand)" aria-label="Remove ${esc(n)}">×</button>` : ''}<button type="button" class="nppAcctStar" data-n="${esc(n)}" title="${isMain ? 'Main account (click to unset)' : 'Make this my main account'}" aria-label="${isMain ? 'Unset main account' : 'Make main account'}">${isMain ? '★' : '☆'}</button></div>`;
+        return `<div class="nppAcctRow${mine ? ' me' : ''}${isMain ? ' main' : ''}"><a class="nppAcctLink" href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(n)}" target="_blank" rel="noopener" title="View ${esc(n)}'s profile"><span class="nppAcctAv"${av ? ` style="background-image:url('${esc(av)}')"` : ''}>${av ? '' : esc(n.charAt(0).toUpperCase())}</span><span class="nppAcctTxt"><b>${esc(n)}</b><small>${esc(sub)}</small></span></a>${removable ? `<button type="button" class="nppAcctX" data-n="${esc(n)}" title="Remove from this computer" aria-label="Remove ${esc(n)}">×</button>` : ''}<button type="button" class="nppAcctStar" data-n="${esc(n)}" title="${isMain ? 'Main account (click to unset)' : 'Make this my main account'}" aria-label="${isMain ? 'Unset main account' : 'Make main account'}">${isMain ? '★' : '☆'}</button></div>`;
       };
       q('.nppCntNp').textContent = npNames.length || '';
       q('.nppCntEx').textContent = extra.length || '';
@@ -3885,13 +4699,15 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     };
     const setOpen = (o) => {
       open = !!o;
-      if (open) { document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); render(); place(); msgNp.textContent = autoErr; msgEx.textContent = ''; }
+      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nppAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = autoErr; msgEx.textContent = ''; }
       drawer.classList.toggle('open', open);
       if (tabEl) tabEl.classList.toggle('on', open);
     };
 
+    drawerSetOpen = setOpen;
+    drawer.querySelector('.nppAcctClose').addEventListener('click', () => setOpen(false));
     tabEl.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); });
-    document.addEventListener('pointerdown', (e) => { if (open && !e.target.closest('#nppAcctDrawer, #nppAcctTab, #nppStandaloneAcctToggle')) setOpen(false); }, true);
+    document.addEventListener('pointerdown', (e) => { if (open && !e.target.closest('#nppAcctDrawer, #nppAcctTab, #nppListsMod, #nppStandaloneAcctToggle')) setOpen(false); }, true);
     document.addEventListener('keydown', (e) => { if (open && e.key === 'Escape') setOpen(false); });
     document.addEventListener('npp:drawer', (e) => { if (open && e.detail !== 'accts') setOpen(false); });
     window.addEventListener('resize', () => { if (open) place(); });
@@ -3914,7 +4730,6 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (logoutLink) logoutLink.addEventListener('click', () => clearNotifCaches());
     }
 
-    q('.nppAcctAllPets').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); setOpen(false); openAllPets(); });
     const syncBtn = q('.nppAcctSync:not(.nppAcctAllPets)');
     syncBtn.addEventListener('click', async (e) => {
       e.preventDefault(); e.stopPropagation();
@@ -3938,7 +4753,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       }
       const x = e.target.closest('.nppAcctX');
       if (!x || !x.dataset.n) return;
-      writeManual(readManual().filter(n => n.toLowerCase() !== x.dataset.n.toLowerCase()));
+      const nm = x.dataset.n;
+      if (nm.toLowerCase() === curUser().toLowerCase()) return;
+      if (!confirm('Remove ' + nm + ' from this computer? Their saved pets will be deleted too.')) return;
+      removeAccount(nm);
       render();
     });
 
@@ -3970,6 +4788,26 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     acctTabRefresh();
     render();
     return { setOpen, render };
+  }
+
+  /* ───────────────────────────────── sidebar lists widget ───────────────────────────────── */
+  function mountLists(card) {
+    const hud = document.getElementById('npHud');
+    if (!hud || $('#nppListsMod') || !card || card.parentNode !== hud) return;
+    const mod = document.createElement('div');
+    mod.id = 'nppListsMod';
+    const tile = (cls, label, icon) => '<button type="button" class="nppLt ' + cls + '" aria-label="' + label + '">' + icon + '<b>' + label + '</b></button>';
+    mod.innerHTML =
+      tile('nppLtAcct', 'Accounts', '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13c.3-2.4 2.2-3.8 4.5-3.8s4.2 1.4 4.5 3.8M10.8 3.4a2.3 2.3 0 0 1 0 4.2M12.5 9.6c1.2.5 2 1.6 2.2 3.1"/></svg>') +
+      tile('nppLtPets', 'All Pets', '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="4" cy="6.5" r="1.6"/><circle cx="7" cy="3.8" r="1.6"/><circle cx="10.5" cy="3.8" r="1.6"/><circle cx="13" cy="6.5" r="1.6"/><path d="M8.7 7.6c2 0 4 2 4 3.9 0 1.4-1.2 2-2.2 2-.9 0-1.3-.5-1.8-.5s-.9.5-1.8.5c-1 0-2.2-.6-2.2-2 0-1.9 2-3.9 4-3.9z"/></svg>');
+    card.after(mod);
+    const upd = () => {
+      const nmEl = $('#npUserTitle'); if (nmEl) nmEl.title = nmEl.textContent.trim();
+      const uc = $('#npUser'); if (uc) uc.dataset.main = (mainAcct() && mainAcct().toLowerCase() === curUser().toLowerCase()) ? '1' : '0';
+    };
+    upd(); setInterval(upd, 3000);
+    mod.querySelector('.nppLtAcct').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (apEl && apEl.classList.contains('open')) closeAllPets(); if (drawerSetOpen) drawerSetOpen(!open); else if (tabEl) tabEl.click(); });
+    mod.querySelector('.nppLtPets').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAllPets(); });
   }
 
   /* ───────────────────────────────── mounts ───────────────────────────────── */
@@ -4017,11 +4855,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         swapAccount(() => { sw.lastElementChild.textContent = 'Swapping…'; sw.classList.add('busy'); }, () => { sw.lastElementChild.textContent = 'Swap'; sw.classList.remove('busy'); });
       });
       wrap.append(lo, sw);
+      lo.setAttribute('aria-label', 'Log out'); lo.title = 'Log out'; sw.setAttribute('aria-label', 'Swap account');
       side.appendChild(wrap);
     }
 
     drawerEl = buildDrawer();
     wireDrawer(drawerEl);
+    mountLists(card);
 
     // Avatar updater — reads the cached profile image, and refreshes it occasionally.
     updateAvatar();
@@ -4225,9 +5065,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 #nppRecent .rHead, #nppPinned .rHead { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); padding: 0 2px 2px; }
 #nppRecent .rList, #nppPinned .rList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 106px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; padding-right: 3px; }
 #nppRecent .rList li, #nppPinned .rList li { min-width: 0; position: relative; }
-#nppRecent .rList a, #nppPinned .rList a { padding-right: 30px !important; }
-#nppRecent .rPin, #nppPinned .rPin { position: absolute; top: 50%; right: 5px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
-#nppRecent .rList li:hover .rPin, #nppRecent .rPin:focus, #nppRecent li.isPinned .rPin, #nppPinned .rList li:hover .rPin, #nppPinned .rPin:focus, #nppPinned li.isPinned .rPin { opacity: 1; }
+#nppRecent .rPin, #nppPinned .rPin { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 7px; background: rgba(40,36,56,.92); pointer-events: none; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
+#nppRecent .rList li:hover .rPin, #nppRecent .rPin:focus, #nppPinned .rList li:hover .rPin, #nppPinned .rPin:focus { opacity: 1; pointer-events: auto; }
 #nppRecent li.isPinned .rPin, #nppPinned li.isPinned .rPin { color: #ffd166; }
 #nppRecent .rPin:hover, #nppPinned .rPin:hover { background: rgba(255,255,255,.14); color: #fff; }
 #nppRecent .rPin svg, #nppPinned .rPin svg { width: 13px; height: 13px; }
@@ -4253,7 +5092,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 #nppPinsMod .rList { max-height: 90px; gap: 3px; overflow-y: auto; scrollbar-width: thin; }
 #nppPinsMod .rList:empty::before { content: "Nothing here yet"; font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.55); padding: 4px 2px; }
 #nppPinsMod .rList li { flex: 0 0 auto; }
-#nppPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 30px 0 8px !important; }
+#nppPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 8px !important; }
 #nppPinsMod .rList b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Fallback footer (modern interface without core) */
@@ -4307,6 +5146,26 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (/petlookup/.test(p) && q.get('pet')) return 'Pet lookup: ' + q.get('pet');
     if (/topic/.test(p) && q.get('topic')) return 'Neoboard topic ' + q.get('topic');
     if (/neoboard/.test(p) && q.get('board')) return boardName(q.get('board')) || 'Neoboard board ' + q.get('board');
+    if (/browseshop/.test(p) && q.get('owner')) return 'Shop: ' + q.get('owner');
+    if (/market/.test(p) && q.get('type') === 'your') return 'My Shop';
+    if (/market/.test(p) && q.get('type') === 'till') return 'Shop Till';
+    return '';
+  }
+  // Last-resort label from the URL path, e.g. /island/tradingpost.phtml -> "Tradingpost".
+  function pathLabel(href) {
+    let u; try { u = new URL(href, 'https://www.neopets.com/'); } catch { return ''; }
+    const seg = u.pathname.split('/').filter(Boolean), last = (seg.pop() || '').replace(/\.(phtml|php|html?)$/i, '');
+    const w = (last && last !== 'index' ? last : seg.pop() || '').replace(/[_-]+/g, ' ').trim();
+    return w ? w.charAt(0).toUpperCase() + w.slice(1) : '';
+  }
+  // First real page heading outside the Modern Interface UI (old pages often have the plain title "Neopets").
+  function mainHeading() {
+    const UI = '#npHud, #nppFoot, #npLeftBar, #btnOverlay, #npBgSidebar, #npx-host, #nppRecent, #nppPinned, #nppStandaloneRecent, #npxSideBtnHost, #nppAP, #nppAcctDrawer';
+    for (const el of document.querySelectorAll('h1, h2')) {
+      if (el.closest(UI)) continue;
+      const x = (el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (x.length >= 3 && x.length <= 60 && !GENERIC_NB.test(x) && !/hold on/i.test(x)) return x;
+    }
     return '';
   }
   function headingLabel() {
@@ -4325,9 +5184,10 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (h) return h;
     if (/neoboard/i.test(location.pathname) && fromUrl) return fromUrl;
     if (fromUrl && /userlookup|petlookup/i.test(location.pathname)) return fromUrl;
-    let t = (document.title || '').replace(/\s*[|\-–—]\s*Neopets.*$/i, '').trim();
-    if (/^hold on/i.test(t)) t = '';
-    return t || fromUrl;
+    if (fromUrl && /browseshop|market/i.test(location.pathname)) return fromUrl;
+    let t = (document.title || '').replace(/\s*[|\-–—]\s*Neopets.*$/i, '').replace(/^Neopets\s*[|\-–—:]\s*/i, '').trim();
+    if (/^(hold on|neopets)$/i.test(t) || /^hold on/i.test(t)) t = '';
+    return t || fromUrl || mainHeading() || pathLabel(location.href);
   }
   function recentLabel(href, t) {
     const fu = labelFromUrl(href), generic = !t || /^(hold on|neoboards?|neoboard (board|topic) \d)/i.test(t);
@@ -4349,7 +5209,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     }
     const title = pageLabel();
     if (!title) return;
-    if (!labelFromUrl(location.href) && /^neopets\b/i.test(title)) return;
+    if (/^neopets$/i.test(title)) return;
     let rec = []; try { rec = JSON.parse(LSget(RECENT_KEY) || '[]') || []; } catch {}
     const u = location.href;
     const p = (location.pathname + location.search).slice(0, 70);

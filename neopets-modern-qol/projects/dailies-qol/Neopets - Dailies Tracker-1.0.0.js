@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.0
+// @version      1.0.6
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -28,7 +28,7 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
-  if (isPopup) return;
+  if (isPopup && !/^\/games\/giveaway(\/|$)/i.test(path)) return;   // the Expellibox popup still gets its result panel
   const isNc = location.hostname.toLowerCase() === 'ncmall.neopets.com';
 
   /* ═══════════════════════════════ dailies data ═══════════════════════════════ */
@@ -150,6 +150,8 @@
   let acctUser = '';
   const onMain = () => { const m = LSget('npp_main_account').toLowerCase(); return !m || (!!acctUser && acctUser.toLowerCase() === m); };
   function whenUser(cb) {
+    // The Expellibox result page is bare text and never sets appInsightsUserName: don't wait 10s for it.
+    if (/^\/games\/giveaway(\/|$)/i.test(location.pathname)) { acctUser = LSget('npqol_hud_username'); cb(); return; }
     let tries = 0;
     const iv = setInterval(() => {
       let u = ''; try { u = String(W.appInsightsUserName || '').trim(); } catch {}
@@ -197,8 +199,12 @@
     done: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>',
     err: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   };
-  const QAS_CSS = `#nppQas { position: fixed; z-index: 1500; left: calc(50% + var(--np-col-width, 0px) / 2); top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 40px)); box-sizing: border-box; padding: 0 0 22px; overflow: hidden; border-radius: 22px; background: #fff; box-shadow: 0 22px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06); color: #1f2937; text-align: center; font: 500 15px/1.45 'Outfit', system-ui, sans-serif; animation: nppIn .35s ease; }
-@keyframes nppIn { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+  // The result page hides the Modern Interface header/sidebar, so the panel centres on the whole window.
+  const QAS_CSS = `#npx-host, #npHud, #nppFoot, #npBgSidebar, #btnOverlay, #npxSideBtnHost { display: none !important; }
+#nppQas { position: fixed; z-index: 1500; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 40px)); box-sizing: border-box; padding: 0 0 22px; overflow: hidden; border-radius: 22px; background: #fff; box-shadow: 0 22px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06); color: #1f2937; text-align: center; font: 500 15px/1.45 'Outfit', system-ui, sans-serif; animation: nppQasIn .35s ease; }
+@keyframes nppQasIn { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes nppQasFade { from { opacity: 0; } to { opacity: 1; } }
+#nppQas.pop { left: 0; top: 0; transform: none; width: 100%; border-radius: 0; box-shadow: none; animation: nppQasFade .25s ease; }
 #nppQas, #nppQas * { box-sizing: border-box; font-family: 'Outfit', system-ui, sans-serif; }
 #nppQas .top { padding: 28px 24px 18px; background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
 #nppQas.ok { --c1: #3cc774; --c2: #1f9e55; } #nppQas.done { --c1: #f6b73c; --c2: #e08a12; } #nppQas.err { --c1: #ef6b6b; --c2: #cf3b3b; }
@@ -217,14 +223,30 @@
     const done = !res.ok && /tomorrow|already|come back|back later/i.test(res.msg);
     const kind = res.ok ? 'ok' : done ? 'done' : 'err';
     const title = res.ok ? 'Success!' : done ? 'Done for today' : 'That didn’t work';
-    const st = document.createElement('style'); st.id = 'nppQasCss'; st.textContent = QAS_CSS; (document.head || root).appendChild(st);
-    const el = document.createElement('div'); el.id = 'nppQas'; el.className = kind;
+    const pop = isPopup;   // opened by qasPopupLinks(): fill the small window and size it to the panel
+    const st = document.createElement('style'); st.id = 'nppQasCss'; st.textContent = QAS_CSS + (pop ? '\nhtml, body { margin: 0; background: #fff; }' : ''); (document.head || root).appendChild(st);
+    const el = document.createElement('div'); el.id = 'nppQas'; el.className = kind + (pop ? ' pop' : '');
     const CD_MS = (7 * 60 + 7) * 60000;
     el.innerHTML = `<div class="top"><div class="ico">${QAS_ICONS[kind]}</div><h2>${esc(title)}</h2></div>`
       + (res.msg ? `<div class="msg">${esc(res.msg)}</div>` : '')
       + (res.ok ? `<div class="next">Next play in ${cdText(CD_MS)}</div>` : done ? `<div class="next">Next play within ${cdText(CD_MS)}</div>` : '')
-      + `<div class="btns"><a class="go" href="/games/giveaway/">Back to the Expellibox</a><a href="https://www.neopets.com/inventory.phtml">Inventory</a></div>`;
+      + (pop
+        ? `<div class="btns"><a class="go" href="#" data-act="close">Close</a><a href="https://www.neopets.com/inventory.phtml" data-act="inv">Inventory</a></div>`
+        : `<div class="btns"><a class="go" href="/games/giveaway/">Back to the Expellibox</a><a href="https://www.neopets.com/inventory.phtml">Inventory</a></div>`);
     document.body.appendChild(el);
+    if (pop) {
+      document.title = QAS;
+      el.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-act]');
+        if (!a) return;
+        e.preventDefault();
+        if (a.dataset.act === 'inv') { try { window.opener.location.href = a.href; } catch { location.href = a.href; return; } }
+        window.close();
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
+      const fit = () => { try { window.resizeBy(0, el.offsetHeight - window.innerHeight); } catch {} };
+      fit(); setTimeout(fit, 400);
+    }
     [...document.body.childNodes].forEach(n => {
       if (n === el) return;
       if ((n.nodeType === 3 || (n.nodeType === 1 && n.tagName === 'PRE')) && /success=\d/.test(n.textContent)) n.remove();
@@ -250,6 +272,24 @@
     window.addEventListener('load', soon, { once: true });
     const watch = () => { if (document.body) { const mo = new MutationObserver(soon); mo.observe(document.body, { childList: true, subtree: true, characterData: true }); setTimeout(() => mo.disconnect(), 90000); } else setTimeout(watch, 100); };
     watch();
+  }
+
+  // Expellibox links (Premium menu, dailies menu) open a small popup instead, so the current page keeps its header
+  // and Premium menu. composedPath() reaches links inside the Modern Interface's open shadow root.
+  function qasPopupLinks() {
+    let qp = null;
+    const closeQp = () => { try { if (qp && !qp.closed) qp.close(); } catch {} qp = null; };   // click back here: popup closes
+    window.addEventListener('focus', closeQp);
+    document.addEventListener('pointerdown', closeQp, true);
+    document.addEventListener('click', (e) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      const a = (e.composedPath ? e.composedPath() : [e.target]).find(n => n && n.tagName === 'A' && n.href);
+      if (!a || !/\/games\/giveaway\/process_giveaway\.phtml/i.test(a.href)) return;
+      e.preventDefault();
+      const w = 460, h = 440, x = Math.round(window.screenX + (window.outerWidth - w) / 2), y = Math.round(window.screenY + (window.outerHeight - h) / 3);
+      qp = window.open(a.href, 'nppQas', `popup,width=${w},height=${h},left=${x},top=${y}`);
+      if (!qp) location.href = a.href;
+    }, true);
   }
 
   /* ─── watchDaily: detect "done" on the daily's own page ─── */
@@ -310,6 +350,8 @@
     if (!hitName) return;
     if (PREMIUM_CD[hitName] == null) return;
     const mark = (approx) => { const t = cdLoad()[hitName]; if (!(t && cdLeft(hitName, t) > 0)) { cdSet(hitName, Date.now(), approx); refreshAllMenus(); } };
+    // Trudy's prizes are drawn in the game canvas, so no text or button tells us it was played: visiting the page counts.
+    if (hitName === TRUDY) mark(false);
     const scan = () => {
       const area = document.querySelector('#content, #main, main, #container__2020') || document.body;
       const txt = (area && area.innerText) || '';
@@ -426,6 +468,7 @@
 #nppDaily:not(:has(.nppDHero)) { display: none !important; }
 #nppDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 #nppDaily, #nppDaily * { box-sizing: border-box; text-shadow: none !important; }
+#nppDaily .nppDBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 #nppDaily .nppDHero { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 13px; background: rgba(255,255,255,.08); color: #fff !important; text-decoration: none !important; overflow: hidden; transition: background .15s, transform .15s, border-color .15s; }
 #nppDaily .nppDHero:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.34); transform: translateY(-1px); }
 #nppDaily .nppDHero .nppDIco { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
@@ -566,12 +609,15 @@
     const urlOf = {}; DAILY_LINKS.forEach(([n, u]) => { urlOf[n] = u; });
     function renderSidebar() {
       const m = dailyModel();
-      if (!(m.snow || m.symol || m.tarla)) { d.hidden = true; d.innerHTML = ''; d._html = ''; return; }
+      // Render into a body child so the patcher's eye (fold) button, prepended to #nppDaily, is never wiped.
+      let body = d.querySelector(':scope > .nppDBody');
+      if (!body) { body = document.createElement('div'); body.className = 'nppDBody'; d.appendChild(body); }
+      if (!(m.snow || m.symol || m.tarla)) { d.hidden = true; body.innerHTML = ''; d._html = ''; return; }
       d.hidden = false;
       const html = (m.snow ? hero('Snowager', m.snow, SNOWFLAKE, 'https://www.neopets.com/winter/snowager.phtml') : '')
         + (m.symol ? hero('Symol Hole', m.symol, HOLE_SVG, urlOf['Symol Hole']) : '')
         + (m.tarla ? hero("Tarla's Toolbar", m.tarla, GIFT, urlOf["Tarla's Toolbar"]) : '');
-      if (d._html !== html) { d.innerHTML = html; d._html = html; }
+      if (d._html !== html) { body.innerHTML = html; d._html = html; }
     }
     renderSidebar();
     setInterval(renderSidebar, 1000);
@@ -584,6 +630,7 @@
     if (typeof GM_xmlhttpRequest === 'function') setTimeout(symolEnsure, 2500);
     watchDaily();
     watchQasalan();
+    if (!isPopup) qasPopupLinks();
     if (!isNc) { ncPull(); setInterval(ncPull, 4000); }
   }
 
