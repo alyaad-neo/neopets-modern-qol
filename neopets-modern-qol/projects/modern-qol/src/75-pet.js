@@ -78,12 +78,12 @@
   }
   const nppToneCache = new Map();
   const NPP_TONE_KEY = 'npp_pet_tone_v1';
-  function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function nppToneRead() { try { const o = JSON.parse(LSget(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function nppToneSave(src, dark) {
     try {
       const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
       const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      localStorage.setItem(NPP_TONE_KEY, JSON.stringify(o));
+      LSset(NPP_TONE_KEY, JSON.stringify(o));
     } catch {}
   }
   function nppToneProbe(src, cb) {

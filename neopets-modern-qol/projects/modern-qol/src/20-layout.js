@@ -383,12 +383,12 @@
   const TOPBAR_CUSTOM_LS = 'npqol_topbar_custom_v1';
   function loadAllCustom(){
     try {
-      const raw = localStorage.getItem(TOPBAR_CUSTOM_LS);
+      const raw = LSget(TOPBAR_CUSTOM_LS);
       return raw ? JSON.parse(raw) : {};
     } catch { return {}; }
   }
   function saveAllCustom(data){
-    try { localStorage.setItem(TOPBAR_CUSTOM_LS, JSON.stringify(data)); } catch {}
+    LSset(TOPBAR_CUSTOM_LS, JSON.stringify(data));
   }
   function getCustom(catId){
     const all = loadAllCustom();
@@ -450,7 +450,7 @@ function startLayout() {
     NQ.btnThemes = BTN_THEMES.map(t => ({ id: t.id, label: t.label }));
 
     NQ.getBtnTheme = () => {
-      try { return localStorage.getItem(LS_KEY) || DEFAULT; }
+      try { return LSget(LS_KEY) || DEFAULT; }
       catch { return DEFAULT; }
     };
     const themeListeners = [];
@@ -459,7 +459,7 @@ function startLayout() {
       themeListeners.forEach(fn => { try { fn(id); } catch {} });
     };
     NQ.saveBtnTheme = (id) => {
-      try { localStorage.setItem(LS_KEY, id); } catch {}
+      LSset(LS_KEY, id);
       NQ.applyBtnTheme(id);
     };
 
@@ -541,7 +541,6 @@ function startLayout() {
     const NEO_GOLD_HUE = 40;
 
     function setCSSVars(hex){
-      const root = document.documentElement;
       root.style.setProperty('--np-accent',       hex);
       root.style.setProperty('--np-accent-bg',    rgba(hex, .14));
       root.style.setProperty('--np-accent-line',  rgba(hex, .45));
@@ -570,7 +569,7 @@ function startLayout() {
     }
 
     function getAccent(){
-      try { return localStorage.getItem(LS_KEY) || DEFAULT_HEX; }
+      try { return LSget(LS_KEY) || DEFAULT_HEX; }
       catch { return DEFAULT_HEX; }
     }
     function applyAccent(hex){

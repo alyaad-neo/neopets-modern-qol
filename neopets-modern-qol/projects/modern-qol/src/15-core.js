@@ -1,5 +1,16 @@
   if (!/^(www\.|ncmall\.)?neopets\.com$/i.test(location.hostname)) return;
 
+  const W = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
+  const root = document.documentElement;
+  const rs = root.style;
+  const path = location.pathname.toLowerCase();
+  const $ = (s, r = document) => r.querySelector(s);
+  const LSget = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
+  const LSset = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
+
   const NP_RUN_ON_PHONES = false;
   const npIsPhone = () => {
     try {
@@ -17,7 +28,7 @@
         (p === '/games/game.phtml' && location.search)) return true;
     if (!NP_RUN_ON_PHONES && npIsPhone()){
       let forced = false;
-      try { forced = localStorage.getItem('npqol_mobile_v1') === 'on'; } catch {}
+      try { forced = LSget('npqol_mobile_v1') === 'on'; } catch {}
       if (!forced) return true;
     }
     return false;
@@ -31,7 +42,7 @@
   const NP_STRIKE_KEY  = 'npqol_403_strikes_v1';
   const NP_BACKOFF_STEPS_MIN = [10, 30, 60, 120];
   const np403BackoffActive = () => {
-    try { return Date.now() < (+localStorage.getItem(NP_BACKOFF_KEY) || 0); } catch { return false; }
+    try { return Date.now() < (+LSget(NP_BACKOFF_KEY) || 0); } catch { return false; }
   };
   const npNote403 = (res) => {
     if (!res || res.status !== 403) return;
@@ -39,13 +50,13 @@
       const nowMs = Date.now();
       let strikes = 0, lastMs = 0;
       try {
-        const raw = JSON.parse(localStorage.getItem(NP_STRIKE_KEY) || 'null');
+        const raw = JSON.parse(LSget(NP_STRIKE_KEY) || 'null');
         if (raw && typeof raw === 'object'){ strikes = +raw.n || 0; lastMs = +raw.t || 0; }
       } catch {}
       if (lastMs && (nowMs - lastMs) > 3 * 60 * 60 * 1000) strikes = 0;
       const mins = NP_BACKOFF_STEPS_MIN[Math.min(strikes, NP_BACKOFF_STEPS_MIN.length - 1)];
-      localStorage.setItem(NP_BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
-      localStorage.setItem(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
+      LSset(NP_BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
+      LSset(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
     } catch {}
   };
   const npWhenBgAllowed = (fn) => {
@@ -60,17 +71,6 @@
     };
     document.addEventListener('visibilitychange', onVis);
   };
-
-  const W = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
-  const root = document.documentElement;
-  const rs = root.style;
-  const path = location.pathname.toLowerCase();
-  const $ = (s, r = document) => r.querySelector(s);
-  const LSget = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
-  const LSset = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
-  const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1',
     'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_icon_size_v1',

@@ -147,7 +147,7 @@
 
   if (!isAuth && !isNc && !isPopup) {
     root.classList.add('npp-pre');
-    try { if (localStorage.getItem('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
+    try { if (LSget('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
     const pre = document.createElement('style');
     pre.id = 'npp-pre-css';
     pre.textContent = 'html.npp-pre #npHud, html.npp-pre #nppFoot, html.npp-pre #btnOverlay, html.npp-pre #npLeftBar, html.npp-pre #qrDockWrap { opacity: 0 !important; pointer-events: none !important; } html.npp-pre #npActivePet img { max-width: 100% !important; max-height: 170px !important; object-fit: contain !important; } #npHud, #nppFoot, #btnOverlay { transition: opacity .3s ease; } @media (prefers-reduced-motion: reduce) { #npHud, #nppFoot, #btnOverlay { transition: none !important; } }';

@@ -35,7 +35,7 @@ function startBackgrounds() {
   if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
 
-  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { try { localStorage.removeItem(k); } catch {} });
+  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { LSdel(k); });
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 

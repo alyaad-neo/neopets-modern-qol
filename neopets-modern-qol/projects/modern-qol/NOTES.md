@@ -52,7 +52,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 ## Don't touch
 
 - Keep the MIT credit line in `05-utils.js` and the bundle header.
-- The base start functions use the 15-core helpers (`W`, `root`, `LSget`, `LSset`). Inside `startLayout`, the top-bar shadow root is `barRoot`.
+- One helper set, top of 15-core: `W`, `root`, `$`, `LSget`/`LSset`/`LSdel`, `esc`, `shadow`. Use them; don't add local copies or raw `localStorage`/`document.querySelector` (10-jellyneo excepted: it runs before 15-core). Inside `startLayout`, the top-bar shadow root is `barRoot`.
 
 ## Lessons learned
 

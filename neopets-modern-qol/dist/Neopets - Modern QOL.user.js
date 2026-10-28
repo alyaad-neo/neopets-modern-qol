@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.13
+// @version      5.5.14
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -105,6 +105,17 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
 // ---------- src/15-core.js ----------
   if (!/^(www\.|ncmall\.)?neopets\.com$/i.test(location.hostname)) return;
 
+  const W = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
+  const root = document.documentElement;
+  const rs = root.style;
+  const path = location.pathname.toLowerCase();
+  const $ = (s, r = document) => r.querySelector(s);
+  const LSget = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
+  const LSset = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
+
   const NP_RUN_ON_PHONES = false;
   const npIsPhone = () => {
     try {
@@ -122,7 +133,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
         (p === '/games/game.phtml' && location.search)) return true;
     if (!NP_RUN_ON_PHONES && npIsPhone()){
       let forced = false;
-      try { forced = localStorage.getItem('npqol_mobile_v1') === 'on'; } catch {}
+      try { forced = LSget('npqol_mobile_v1') === 'on'; } catch {}
       if (!forced) return true;
     }
     return false;
@@ -136,7 +147,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const NP_STRIKE_KEY  = 'npqol_403_strikes_v1';
   const NP_BACKOFF_STEPS_MIN = [10, 30, 60, 120];
   const np403BackoffActive = () => {
-    try { return Date.now() < (+localStorage.getItem(NP_BACKOFF_KEY) || 0); } catch { return false; }
+    try { return Date.now() < (+LSget(NP_BACKOFF_KEY) || 0); } catch { return false; }
   };
   const npNote403 = (res) => {
     if (!res || res.status !== 403) return;
@@ -144,13 +155,13 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       const nowMs = Date.now();
       let strikes = 0, lastMs = 0;
       try {
-        const raw = JSON.parse(localStorage.getItem(NP_STRIKE_KEY) || 'null');
+        const raw = JSON.parse(LSget(NP_STRIKE_KEY) || 'null');
         if (raw && typeof raw === 'object'){ strikes = +raw.n || 0; lastMs = +raw.t || 0; }
       } catch {}
       if (lastMs && (nowMs - lastMs) > 3 * 60 * 60 * 1000) strikes = 0;
       const mins = NP_BACKOFF_STEPS_MIN[Math.min(strikes, NP_BACKOFF_STEPS_MIN.length - 1)];
-      localStorage.setItem(NP_BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
-      localStorage.setItem(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
+      LSset(NP_BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
+      LSset(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
     } catch {}
   };
   const npWhenBgAllowed = (fn) => {
@@ -165,17 +176,6 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
     };
     document.addEventListener('visibilitychange', onVis);
   };
-
-  const W = (typeof unsafeWindow !== 'undefined') ? unsafeWindow : window;
-  const root = document.documentElement;
-  const rs = root.style;
-  const path = location.pathname.toLowerCase();
-  const $ = (s, r = document) => r.querySelector(s);
-  const LSget = (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
-  const LSset = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
-  const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
 
   const SYNC_KEYS = ['npqol_accent_v1', 'npqol_btn_theme_v1', 'npqol_topbar_bg_v1', 'npqol_recolor_site_v1',
     'npqol_bg_main_v3', 'npqol_bg_left_v3', 'npqol_side_btns_v2', 'npqol_side_icon_size_v1',
@@ -616,12 +616,12 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
   const TOPBAR_CUSTOM_LS = 'npqol_topbar_custom_v1';
   function loadAllCustom(){
     try {
-      const raw = localStorage.getItem(TOPBAR_CUSTOM_LS);
+      const raw = LSget(TOPBAR_CUSTOM_LS);
       return raw ? JSON.parse(raw) : {};
     } catch { return {}; }
   }
   function saveAllCustom(data){
-    try { localStorage.setItem(TOPBAR_CUSTOM_LS, JSON.stringify(data)); } catch {}
+    LSset(TOPBAR_CUSTOM_LS, JSON.stringify(data));
   }
   function getCustom(catId){
     const all = loadAllCustom();
@@ -683,7 +683,7 @@ function startLayout() {
     NQ.btnThemes = BTN_THEMES.map(t => ({ id: t.id, label: t.label }));
 
     NQ.getBtnTheme = () => {
-      try { return localStorage.getItem(LS_KEY) || DEFAULT; }
+      try { return LSget(LS_KEY) || DEFAULT; }
       catch { return DEFAULT; }
     };
     const themeListeners = [];
@@ -692,7 +692,7 @@ function startLayout() {
       themeListeners.forEach(fn => { try { fn(id); } catch {} });
     };
     NQ.saveBtnTheme = (id) => {
-      try { localStorage.setItem(LS_KEY, id); } catch {}
+      LSset(LS_KEY, id);
       NQ.applyBtnTheme(id);
     };
 
@@ -774,7 +774,6 @@ function startLayout() {
     const NEO_GOLD_HUE = 40;
 
     function setCSSVars(hex){
-      const root = document.documentElement;
       root.style.setProperty('--np-accent',       hex);
       root.style.setProperty('--np-accent-bg',    rgba(hex, .14));
       root.style.setProperty('--np-accent-line',  rgba(hex, .45));
@@ -803,7 +802,7 @@ function startLayout() {
     }
 
     function getAccent(){
-      try { return localStorage.getItem(LS_KEY) || DEFAULT_HEX; }
+      try { return LSget(LS_KEY) || DEFAULT_HEX; }
       catch { return DEFAULT_HEX; }
     }
     function applyAccent(hex){
@@ -1416,17 +1415,17 @@ if (NQ.base) startLayout();
 // ---------- src/25-hud.js ----------
   const ACTIVE_IMG_LS = 'npqol_active_pet_img_v1';
   function readLastGoodPetImg(){
-    try { return JSON.parse(localStorage.getItem(ACTIVE_IMG_LS) || 'null'); }
+    try { return JSON.parse(LSget(ACTIVE_IMG_LS) || 'null'); }
     catch { return null; }
   }
   function saveLastGoodPetImg(name, url){
     if (!name || !url || !/\/cp\//.test(url)) return;
-    try { localStorage.setItem(ACTIVE_IMG_LS, JSON.stringify({ name, url })); } catch {}
+    LSset(ACTIVE_IMG_LS, JSON.stringify({ name, url }));
   }
   function _cacheRawPetImage(url){
     try {
       const cacheKey = 'npqol_pp_png:' + url;
-      if (localStorage.getItem(cacheKey)) return;
+      if (LSget(cacheKey)) return;
       const probe = new Image();
       probe.crossOrigin = 'anonymous';
       probe.onload = () => {
@@ -1437,7 +1436,7 @@ if (NQ.base) startLayout();
           cv.getContext('2d').drawImage(probe, 0, 0);
           const out = cv.toDataURL('image/png');
           if (out.length < 800000){
-            try { localStorage.setItem(cacheKey, out); } catch {}
+            LSset(cacheKey, out);
           }
         } catch {}
       };
@@ -1446,11 +1445,11 @@ if (NQ.base) startLayout();
   }
   function _resolveActivePet(){
     try {
-      const homeRaw = localStorage.getItem('jb_np_homedata_v2');
+      const homeRaw = LSget('jb_np_homedata_v2');
       if (homeRaw){
         const home = JSON.parse(homeRaw);
         if (home && home.data && Date.now() - (home.ts||0) < 7*24*3600*1000){
-          const qr = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
+          const qr = JSON.parse(LSget('npqol_qr_data') || 'null');
           const name = qr?.data?.active?.name;
           if (name && home.data[name] && home.data[name].sci){
             return { name, sci: home.data[name].sci, mood: home.data[name].mood || '1' };
@@ -1459,7 +1458,7 @@ if (NQ.base) startLayout();
       }
     } catch {}
     try {
-      const qrRaw = localStorage.getItem('npqol_qr_data');
+      const qrRaw = LSget('npqol_qr_data');
       if (qrRaw){
         const qr = JSON.parse(qrRaw);
         const name = qr?.data?.active?.name;
@@ -1490,7 +1489,7 @@ if (NQ.base) startLayout();
   const BANK_PIN_LS = 'npqol_bank_pin_v1';
   function getBankPin(){
     try {
-      const stored = (localStorage.getItem(BANK_PIN_LS) || '').replace(/[^\d]/g, '').slice(0, 4);
+      const stored = (LSget(BANK_PIN_LS) || '').replace(/[^\d]/g, '').slice(0, 4);
       if (stored.length === 4) return stored;
     } catch {}
     return String(BANK_PIN || '').replace(/[^\d]/g, '').slice(0, 4);
@@ -1505,12 +1504,12 @@ if (NQ.base) startLayout();
     if (v === null) return '';
     const clean = String(v).replace(/[^\d]/g, '').slice(0, 4);
     try {
-      if (clean.length === 4) localStorage.setItem(BANK_PIN_LS, clean);
+      if (clean.length === 4) LSset(BANK_PIN_LS, clean);
     } catch {}
     return clean;
   }
   function clearBankPin(){
-    try { localStorage.removeItem(BANK_PIN_LS); } catch {}
+    LSdel(BANK_PIN_LS);
   }
   const now = () => Date.now();
   const HUD_CSS = `
@@ -2065,9 +2064,9 @@ function startHud() {
   if (document.getElementById('npHud')) return;
 
   try {
-    const qr = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
+    const qr = JSON.parse(LSget('npqol_qr_data') || 'null');
     if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
-      localStorage.removeItem('npqol_qr_data_lastFetch');
+      LSdel('npqol_qr_data_lastFetch');
     }
   } catch {}
 
@@ -2081,7 +2080,7 @@ function startHud() {
       if (sci) saveLastGoodPetImg(name, url);
       const cacheKey = 'npqol_pp_png:' + url;
 
-      const cached = localStorage.getItem(cacheKey);
+      const cached = LSget(cacheKey);
       const initialSrc = cached || url;
 
       const img = document.createElement('img');
@@ -2104,7 +2103,7 @@ function startHud() {
       link.rel = 'preload'; link.as = 'image'; link.href = url; link.crossOrigin = 'anonymous';
       (document.head || document.documentElement).appendChild(link);
 
-      const qrSnap = JSON.parse(localStorage.getItem('npqol_qr_data') || 'null');
+      const qrSnap = JSON.parse(LSget('npqol_qr_data') || 'null');
       const a = qrSnap?.data?.active || {};
       [a.petpet, a.petpetpet].filter(Boolean).forEach(src => {
         const l = document.createElement('link');
@@ -2189,9 +2188,6 @@ function startHud() {
     const USERNAME_KEY = 'npqol_hud_username';
     const st = { username:null };
 
-    const sGet = (k, f='') => { try { return String(localStorage.getItem(k) ?? f); } catch { return f; } };
-    const sSet = (k, v) => { try { localStorage.setItem(k, String(v)); } catch {} };
-
     const titleEl = () => cardUser.querySelector('#npUserTitle');
     const linkEl = () => cardUser.querySelector('#npUserLink');
 
@@ -2200,7 +2196,7 @@ function startHud() {
       return null;
     }
     function applyUsername(u){
-      st.username = u; sSet(USERNAME_KEY, u);
+      st.username = u; LSset(USERNAME_KEY, u);
       const l = linkEl(), t = titleEl();
       if (l) l.href = `https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(u)}`;
       if (t) t.textContent = u;
@@ -2208,7 +2204,7 @@ function startHud() {
     function ensureUsername(){
       if (st.username) return st.username;
       const p = pickFromPage(); if (p){ applyUsername(p); return st.username; }
-      const c = (sGet(USERNAME_KEY, '') || '').trim(); if (c){ applyUsername(c); return st.username; }
+      const c = LSget(USERNAME_KEY).trim(); if (c){ applyUsername(c); return st.username; }
       return null;
     }
     function waitForGlobal(maxMs=6000, step=200){
@@ -2263,8 +2259,8 @@ function startHud() {
     const SETTINGS_LS = 'npqol_bank_btn_settings_v1';
     const DAILY_LS    = 'npqol_bank_daily_v1';
     const FORM_TTL = 5*60*1000;
-    const load = () => { try { return JSON.parse(localStorage.getItem(STORE) || 'null') || {}; } catch { return {}; } };
-    const save = (s) => { try { localStorage.setItem(STORE, JSON.stringify(s || {})); } catch {} };
+    const load = () => { try { return JSON.parse(LSget(STORE) || 'null') || {}; } catch { return {}; } };
+    const save = (s) => { LSset(STORE, JSON.stringify(s || {})); };
     const state = Object.assign({
       bank_balance:'',
       bank_forms:{},
@@ -2294,7 +2290,7 @@ function startHud() {
     };
     function loadSettings(){
       try {
-        const raw = localStorage.getItem(SETTINGS_LS);
+        const raw = LSget(SETTINGS_LS);
         if (!raw) return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
         const p = JSON.parse(raw) || {};
         return {
@@ -2307,19 +2303,19 @@ function startHud() {
         };
       } catch { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
     }
-    function saveSettings(s){ try { localStorage.setItem(SETTINGS_LS, JSON.stringify(s||{})); } catch {} }
+    function saveSettings(s){ LSset(SETTINGS_LS, JSON.stringify(s||{})); }
     let settings = loadSettings();
 
     const HISTORY_LS = 'npqol_bank_history_v1';
     const HISTORY_MAX = 180;
     function loadHistory(){
       try {
-        const j = JSON.parse(localStorage.getItem(HISTORY_LS) || '[]');
+        const j = JSON.parse(LSget(HISTORY_LS) || '[]');
         return Array.isArray(j) ? j : [];
       } catch { return []; }
     }
     function saveHistory(arr){
-      try { localStorage.setItem(HISTORY_LS, JSON.stringify(arr.slice(-HISTORY_MAX))); } catch {}
+      LSset(HISTORY_LS, JSON.stringify(arr.slice(-HISTORY_MAX)));
     }
     function pushHistory(dateKey, balance){
       if (!dateKey || !Number.isFinite(balance)) return;
@@ -2339,10 +2335,10 @@ function startHud() {
       return `${get('year')}-${get('month')}-${get('day')}`;
     }
     function loadDaily(){
-      try { const j = JSON.parse(localStorage.getItem(DAILY_LS) || 'null'); if (j && typeof j === 'object') return j; } catch {}
+      try { const j = JSON.parse(LSget(DAILY_LS) || 'null'); if (j && typeof j === 'object') return j; } catch {}
       return { date:'', baseline:null, gained:0, lost:0, lastSeen:null };
     }
-    function saveDaily(){ try { localStorage.setItem(DAILY_LS, JSON.stringify(daily)); } catch {} }
+    function saveDaily(){ LSset(DAILY_LS, JSON.stringify(daily)); }
     let daily = loadDaily();
     function noteBalance(rawDigits){
       const n = parseInt(String(rawDigits||'').replace(/[^\d]/g,''), 10);
@@ -2393,15 +2389,14 @@ function startHud() {
       return bankDayKey(lastMs) !== bankDayKey(nowMs);
     }
 
-    const $ = (id) => cardBank.querySelector(id);
-    const balEl  = $('#npBal');
-    const balValEl = $('#npBal .balVal');
-    const deltaEl  = $('#npBankDelta');
-    const intBtn = $('#npInterest');
-    const msgEl  = $('#npBankMsg');
-    const btnsEl = $('#npBankBtns');
-    const gearBtn= $('#npBankGear');
-    const graphEl= $('#npBankGraph');
+    const balEl  = $('#npBal', cardBank);
+    const balValEl = $('#npBal .balVal', cardBank);
+    const deltaEl  = $('#npBankDelta', cardBank);
+    const intBtn = $('#npInterest', cardBank);
+    const msgEl  = $('#npBankMsg', cardBank);
+    const btnsEl = $('#npBankBtns', cardBank);
+    const gearBtn= $('#npBankGear', cardBank);
+    const graphEl= $('#npBankGraph', cardBank);
 
     let busy = false, lastAct = 0;
     const gate = () => { const n = now(); if (n - lastAct < 450) return false; lastAct = n; return true; };
@@ -2551,9 +2546,9 @@ function startHud() {
 
     function npOnHand(){
       let raw = '';
-      const el = document.querySelector('#npanchor');
+      const el = $('#npanchor');
       if (el) raw = el.textContent;
-      if (!raw){ try { raw = localStorage.getItem('npqol_np_last') || ''; } catch {} }
+      if (!raw){ try { raw = LSget('npqol_np_last') || ''; } catch {} }
       const n = parseInt(String(raw).replace(/[^\d]/g,''), 10);
       return Number.isFinite(n) ? n : 0;
     }
@@ -2561,7 +2556,7 @@ function startHud() {
       if (!j) return;
       const np = (j.new_neopoints != null) ? numComma(j.new_neopoints) : null;
       const bal = (j.final_balance != null) ? j.final_balance : j.new_balance;
-      if (np != null){ const el = document.querySelector('#npanchor'); if (el) el.textContent = np; try { localStorage.setItem('npqol_np_last', np); } catch {} }
+      if (np != null){ const el = $('#npanchor'); if (el) el.textContent = np; LSset('npqol_np_last', np); }
       if (bal != null){
         state.bank_balance = numComma(bal);
         noteBalance(bal);
@@ -2779,7 +2774,7 @@ function startHud() {
     }
 
     function openSettings(){
-      document.querySelector('.bankSettingsBackdrop')?.remove();
+      $('.bankSettingsBackdrop')?.remove();
 
       const backdrop = document.createElement('div');
       backdrop.className = 'bankSettingsBackdrop';
@@ -2902,7 +2897,7 @@ function startHud() {
     balEl.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; setBusy(true); try { await refreshBank(); setMsg(''); } catch { setMsg('refresh error'); } finally { setBusy(false); } });
     gearBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openSettings(); });
     intBtn.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; await collectInterest(); });
-    const bankRefreshBtn = $('#npBankRefresh');
+    const bankRefreshBtn = $('#npBankRefresh', cardBank);
     if (bankRefreshBtn){
       bankRefreshBtn.addEventListener('click', async (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -2939,12 +2934,12 @@ function startHud() {
     const state = { data:null, loading:false, closeT:0, wantOpen:false, imagesLoaded:false };
     const cpn = (n) => `https://pets.neopets.com/cpn/${encodeURIComponent(n)}/1/4.png`;
 
-    const readCache = () => { try { const s = localStorage.getItem(LS_DATA); return s ? JSON.parse(s) : null; } catch { return null; } };
+    const readCache = () => { try { const s = LSget(LS_DATA); return s ? JSON.parse(s) : null; } catch { return null; } };
     const qrListeners = [];
     NQ.onQrData = (fn) => { qrListeners.push(fn); };
-    const writeCache = (data) => { try { localStorage.setItem(LS_DATA, JSON.stringify({ ts:now(), data })); } catch {} qrListeners.forEach(fn => { try { fn(); } catch {} }); };
-    const readLast = () => { try { return ((localStorage.getItem(LS_DATA+'_lastFetch')||0)|0); } catch { return 0; } };
-    const writeLast = () => { try { localStorage.setItem(LS_DATA+'_lastFetch', String(now())); } catch {} };
+    const writeCache = (data) => { LSset(LS_DATA, JSON.stringify({ ts:now(), data })); qrListeners.forEach(fn => { try { fn(); } catch {} }); };
+    const readLast = () => { try { return ((LSget(LS_DATA+'_lastFetch')||0)|0); } catch { return 0; } };
+    const writeLast = () => { LSset(LS_DATA+'_lastFetch', String(now())); };
 
     function parse(html){
       const dom = new DOMParser().parseFromString(html, 'text/html');
@@ -3099,25 +3094,25 @@ function startHud() {
 
     const PP_VER_KEY = 'npqol_pp_ver';
     try {
-      if (localStorage.getItem(PP_VER_KEY) !== '2'){
+      if (LSget(PP_VER_KEY) !== '2'){
         const kill = [];
         for (let i = 0; i < localStorage.length; i++){
           const k = localStorage.key(i);
           if (k && k.startsWith('npqol_pp_png')) kill.push(k);
         }
-        kill.forEach(k => { try { localStorage.removeItem(k); } catch {} });
-        localStorage.setItem(PP_VER_KEY, '2');
+        kill.forEach(k => { LSdel(k); });
+        LSset(PP_VER_KEY, '2');
       }
     } catch {}
 
     const PP_INDEX_KEY = 'npqol_pp_png_index';
     const PP_MAX = 30;
     function ppIndexRead(){
-      try { const r = localStorage.getItem(PP_INDEX_KEY); return r ? (JSON.parse(r) || []) : []; }
+      try { const r = LSget(PP_INDEX_KEY); return r ? (JSON.parse(r) || []) : []; }
       catch { return []; }
     }
     function ppIndexWrite(arr){
-      try { localStorage.setItem(PP_INDEX_KEY, JSON.stringify(arr.slice(-PP_MAX*2))); } catch {}
+      LSset(PP_INDEX_KEY, JSON.stringify(arr.slice(-PP_MAX*2)));
     }
     function ppCachePut(key, dataUrl){
       try { localStorage.setItem(key, dataUrl); } catch { return; }
@@ -3125,7 +3120,7 @@ function startHud() {
       idx.push(key);
       while (idx.length > PP_MAX){
         const old = idx.shift();
-        try { localStorage.removeItem(old); } catch {}
+        LSdel(old);
       }
       ppIndexWrite(idx);
     }
@@ -3133,7 +3128,7 @@ function startHud() {
     function cleanImg(url, imgEl){
       if (!url || !imgEl) return;
       const KEY = 'npqol_pp_png:' + url;
-      let cached = null; try { cached = localStorage.getItem(KEY); } catch {}
+      let cached = null; try { cached = LSget(KEY); } catch {}
       if (cached){ imgEl.src = cached; return; }
       const probe = new Image();
       probe.crossOrigin = 'anonymous';
@@ -3214,7 +3209,7 @@ function startHud() {
       let mood = '1';
       if (!sci){
         try {
-          const homeRaw = localStorage.getItem('jb_np_homedata_v2');
+          const homeRaw = LSget('jb_np_homedata_v2');
           if (homeRaw){
             const home = JSON.parse(homeRaw);
             const entry = home && home.data && home.data[name];
@@ -3357,15 +3352,13 @@ function startHud() {
     const SELECTORS = ['#npanchor', '.navsub-np-meter__2020 #npanchor', '.navsub-np-meter__2020 .np-text__2020', 'span.np-text__2020'];
     const st = { last:null, anchor:null, watch:null, obs:null, fastTimer:0, fastUntil:0, lastManual:0 };
     const valEl = () => cardNp.querySelector('.npVal');
-    const sGet = () => { try { return localStorage.getItem(LS_KEY) || ''; } catch { return ''; } };
-    const sSet = (v) => { try { localStorage.setItem(LS_KEY, v); } catch {} };
     const clean = (t) => (t||'').replace(/\s+/g,' ').trim();
     function setText(val, fromCache=false){
       const v = clean(val); if (!v || v === st.last) return;
       st.last = v; const el = valEl(); if (el) el.textContent = v;
-      if (!fromCache) sSet(v);
+      if (!fromCache) LSset(LS_KEY, v);
     }
-    const findAnchor = () => { for (const s of SELECTORS){ const el = document.querySelector(s); if (el) return el; } return null; };
+    const findAnchor = () => { for (const s of SELECTORS){ const el = $(s); if (el) return el; } return null; };
     const readNP = () => { const a = findAnchor(); return a ? clean(a.textContent) : ''; };
     const refresh = () => { const v = readNP(); if (v) setText(v, false); return !!v; };
     function bindWatcher(){
@@ -3419,7 +3412,7 @@ function startHud() {
       e.preventDefault();
       window.open(BANK_URL, '_blank', 'noopener');
     });
-    const cached = sGet(); if (cached) setText(cached, true);
+    const cached = LSget(LS_KEY); if (cached) setText(cached, true);
     startFast(6000);
     window.setInterval(bindWatcher, 8000);
   })();
@@ -3434,7 +3427,7 @@ function startHud() {
     const DEFAULT_THEME = SHARED.DEFAULT || 'constellations';
 
     const getTheme = () => {
-      try { return localStorage.getItem(LS_BTN_THEME) || DEFAULT_THEME; }
+      try { return LSget(LS_BTN_THEME) || DEFAULT_THEME; }
       catch { return DEFAULT_THEME; }
     };
     const themeById = (id) => BTN_THEMES.find(t => t.id === id) || BTN_THEMES.find(t => t.id === DEFAULT_THEME) || BTN_THEMES[0];
@@ -3527,7 +3520,7 @@ function startHud() {
     }
     function loadConfig(){
       try {
-        const raw = localStorage.getItem(LS_BTNS_KEY);
+        const raw = LSget(LS_BTNS_KEY);
         if (raw){
           const j = JSON.parse(raw);
           return { left: [...(j.left || []), ...(j.right || [])].map(resolveItem).filter(Boolean) };
@@ -3536,14 +3529,14 @@ function startHud() {
       return { left: DEFAULT_CFG.left.map(id => CATALOG_BY_ID[id]).filter(Boolean) };
     }
     function saveConfig(cfg){
-      try { localStorage.setItem(LS_BTNS_KEY, JSON.stringify({ left: cfg.left })); } catch {}
+      LSset(LS_BTNS_KEY, JSON.stringify({ left: cfg.left }));
     }
 
     const ICON_SIZE_LS = 'npqol_side_icon_size_v1';
     const ICON_SIZE_MIN = 36, ICON_SIZE_MAX = 84, ICON_SIZE_STEP = 6, ICON_SIZE_DEFAULT = 60;
     function getIconSize(){
       try {
-        const v = parseInt(localStorage.getItem(ICON_SIZE_LS) || '', 10);
+        const v = parseInt(LSget(ICON_SIZE_LS) || '', 10);
         if (Number.isFinite(v)) return Math.max(ICON_SIZE_MIN, Math.min(ICON_SIZE_MAX, v));
       } catch {}
       return ICON_SIZE_DEFAULT;
@@ -3553,7 +3546,7 @@ function startHud() {
     }
     function setIconSize(v){
       v = Math.max(ICON_SIZE_MIN, Math.min(ICON_SIZE_MAX, Math.round(v)));
-      try { localStorage.setItem(ICON_SIZE_LS, String(v)); } catch {}
+      LSset(ICON_SIZE_LS, String(v));
       applyIconSize(v);
       return v;
     }
@@ -3605,10 +3598,10 @@ function startHud() {
     function tryOpenSSW(){
       const openers = ['#sswmenu .imgmenu', '#sswmenu img', '#sswmenu', '.navsub-ssw-icon__2020', '#ssw-tab-button'];
       for (const sel of openers){
-        const el = document.querySelector(sel);
+        const el = $(sel);
         if (el){ try { el.click(); return true; } catch {} }
       }
-      const panel = document.querySelector('#ssw__2020, #ssw_tabs_pane');
+      const panel = $('#ssw__2020, #ssw_tabs_pane');
       if (panel){
         panel.style.display = 'block';
         try { panel.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch {}
@@ -3664,7 +3657,7 @@ function startHud() {
       defaults: DEFAULT_CFG,
       load: loadConfig,
       save: (cfg) => { saveConfig(cfg); rebuildColumns(); },
-      reset: () => { try { localStorage.removeItem(LS_BTNS_KEY); } catch {}; rebuildColumns(); },
+      reset: () => { LSdel(LS_BTNS_KEY); rebuildColumns(); },
       rebuild: rebuildColumns,
       iconUrl, fallbackUrl, getTheme,
       getIconSize, setIconSize,
@@ -3830,9 +3823,6 @@ function startHud() {
     `;
     root.appendChild(panel);
 
-    const esc = (s) => String(s||'').replace(/[&<>"']/g, c => (
-      { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
-    ));
     function iconPreviewUrl(item){
       if (item.fixedSrc) return item.fixedSrc;
       return API.iconUrl(item.icon || item.id, API.getTheme());
@@ -3964,7 +3954,7 @@ function startBackgrounds() {
   if (document.documentElement.dataset.npBgBoot === '1') return;
   document.documentElement.dataset.npBgBoot = '1';
 
-  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { try { localStorage.removeItem(k); } catch {} });
+  ['npqol_dti_bgs_v6', 'npqol_bg_favs_v1', 'npqol_bg_hidden_v1', 'npqol_inv_menubar_v1'].forEach(k => { LSdel(k); });
 
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 
@@ -6043,7 +6033,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
       if (st) { const h = findLink(st.dataset.find); if (h) st.href = h; return; }
       if (!e.target.closest('[data-ssw]')) return;
       for (const sel of ['#sswmenu .imgmenu', '#sswmenu img', '#sswmenu', '.navsub-ssw-icon__2020', '#ssw-tab-button']) {
-        const el = document.querySelector(sel);
+        const el = $(sel);
         if (el) { e.preventDefault(); el.click(); return; }
       }
     });
@@ -6572,12 +6562,12 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   }
   const nppToneCache = new Map();
   const NPP_TONE_KEY = 'npp_pet_tone_v1';
-  function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function nppToneRead() { try { const o = JSON.parse(LSget(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function nppToneSave(src, dark) {
     try {
       const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
       const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      localStorage.setItem(NPP_TONE_KEY, JSON.stringify(o));
+      LSset(NPP_TONE_KEY, JSON.stringify(o));
     } catch {}
   }
   function nppToneProbe(src, cb) {
@@ -7097,7 +7087,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
 
   if (!isAuth && !isNc && !isPopup) {
     root.classList.add('npp-pre');
-    try { if (localStorage.getItem('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
+    try { if (LSget('npp_side_light') === '1') root.classList.add('npp-side-light'); } catch (er) {}
     const pre = document.createElement('style');
     pre.id = 'npp-pre-css';
     pre.textContent = 'html.npp-pre #npHud, html.npp-pre #nppFoot, html.npp-pre #btnOverlay, html.npp-pre #npLeftBar, html.npp-pre #qrDockWrap { opacity: 0 !important; pointer-events: none !important; } html.npp-pre #npActivePet img { max-width: 100% !important; max-height: 170px !important; object-fit: contain !important; } #npHud, #nppFoot, #btnOverlay { transition: opacity .3s ease; } @media (prefers-reduced-motion: reduce) { #npHud, #nppFoot, #btnOverlay { transition: none !important; } }';

@@ -116,7 +116,7 @@
       if (st) { const h = findLink(st.dataset.find); if (h) st.href = h; return; }
       if (!e.target.closest('[data-ssw]')) return;
       for (const sel of ['#sswmenu .imgmenu', '#sswmenu img', '#sswmenu', '.navsub-ssw-icon__2020', '#ssw-tab-button']) {
-        const el = document.querySelector(sel);
+        const el = $(sel);
         if (el) { e.preventDefault(); el.click(); return; }
       }
     });
