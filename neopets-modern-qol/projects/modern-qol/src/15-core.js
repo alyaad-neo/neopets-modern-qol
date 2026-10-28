@@ -11,8 +11,8 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#nq-host'); return h && h.shadowRoot; };
 
-  const NP_RUN_ON_PHONES = false;
-  const npIsPhone = () => {
+  const RUN_ON_PHONES = false;
+  const isPhone = () => {
     try {
       const uad = navigator.userAgentData;
       if (uad && typeof uad.mobile === 'boolean') return uad.mobile === true;
@@ -21,46 +21,46 @@
       return /iPhone|iPod|Windows Phone|IEMobile|BlackBerry|Opera Mini|Android.*Mobile/i.test(navigator.userAgent || '');
     } catch { return false; }
   };
-  const npBaseOff = () => {
+  const baseOff = () => {
     const p = location.pathname;
     if (p === '/' || p.startsWith('/~') || p.startsWith('/faeriefragments') ||
         p.startsWith('/talesofdacardia') ||
         (p === '/games/game.phtml' && location.search)) return true;
-    if (!NP_RUN_ON_PHONES && npIsPhone()){
+    if (!RUN_ON_PHONES && isPhone()){
       let forced = false;
       try { forced = LSget('nq_mobile_v1') === 'on'; } catch {}
       if (!forced) return true;
     }
     return false;
   };
-  if (!npBaseOff()) {
+  if (!baseOff()) {
     try { document.documentElement.dataset.nqModernInterface = '1'; } catch {}
     NQ.base = true;
   }
 
-  const NP_BACKOFF_KEY = 'nq_403_backoff_until_v1';
-  const NP_STRIKE_KEY  = 'nq_403_strikes_v1';
-  const NP_BACKOFF_STEPS_MIN = [10, 30, 60, 120];
-  const np403BackoffActive = () => {
-    try { return Date.now() < (+LSget(NP_BACKOFF_KEY) || 0); } catch { return false; }
+  const BACKOFF_KEY = 'nq_403_backoff_until_v1';
+  const STRIKE_KEY  = 'nq_403_strikes_v1';
+  const BACKOFF_STEPS_MIN = [10, 30, 60, 120];
+  const backoff403Active = () => {
+    try { return Date.now() < (+LSget(BACKOFF_KEY) || 0); } catch { return false; }
   };
-  const npNote403 = (res) => {
+  const note403 = (res) => {
     if (!res || res.status !== 403) return;
     try {
       const nowMs = Date.now();
       let strikes = 0, lastMs = 0;
       try {
-        const raw = JSON.parse(LSget(NP_STRIKE_KEY) || 'null');
+        const raw = JSON.parse(LSget(STRIKE_KEY) || 'null');
         if (raw && typeof raw === 'object'){ strikes = +raw.n || 0; lastMs = +raw.t || 0; }
       } catch {}
       if (lastMs && (nowMs - lastMs) > 3 * 60 * 60 * 1000) strikes = 0;
-      const mins = NP_BACKOFF_STEPS_MIN[Math.min(strikes, NP_BACKOFF_STEPS_MIN.length - 1)];
-      LSset(NP_BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
-      LSset(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
+      const mins = BACKOFF_STEPS_MIN[Math.min(strikes, BACKOFF_STEPS_MIN.length - 1)];
+      LSset(BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
+      LSset(STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
     } catch {}
   };
-  const npWhenBgAllowed = (fn) => {
-    const run = () => { if (np403BackoffActive()) return; try { fn(); } catch {} };
+  const whenBgAllowed = (fn) => {
+    const run = () => { if (backoff403Active()) return; try { fn(); } catch {} };
     let hidden = false;
     try { hidden = document.visibilityState === 'hidden'; } catch {}
     if (!hidden){ run(); return; }

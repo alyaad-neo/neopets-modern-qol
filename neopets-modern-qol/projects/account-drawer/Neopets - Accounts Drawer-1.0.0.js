@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.23
+// @version      1.3.24
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -450,23 +450,23 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
   }
 
   // Name colour per card: white over art, dark when the pet image has a plain white background (mirrors the sidebar).
-function npLoadBlob(src, cb) {
+function loadBlob(src, cb) {
   // Fetch bytes via GM (no CORS needed) and hand back a same-origin blob URL; cb(null) on any failure.
   try {
     if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
     GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
   } catch { cb(null); }
 }
-  const NPP_TONE_KEY = 'nq_pet_tone_v1';
-  function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
-  function nppToneSave(src, dark) {
+  const TONE_KEY = 'nq_pet_tone_v1';
+  function toneRead() { try { const o = JSON.parse(localStorage.getItem(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function toneSave(src, dark) {
     try {
-      const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
+      const o = toneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
       const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      localStorage.setItem(NPP_TONE_KEY, JSON.stringify(o));
+      localStorage.setItem(TONE_KEY, JSON.stringify(o));
     } catch {}
   }
-  function nppToneProbe(src, cb) {
+  function toneProbe(src, cb) {
     // cb(dark, ok): ok=false on failure/timeout (resolves light, not persisted).
     let fin = false, burl = null, tm = 0;
     const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
@@ -489,7 +489,7 @@ function npLoadBlob(src, cb) {
           done(white, true);
         } catch { done(false, false); }
       };
-      npLoadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
+      loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
   const apToneCache = new Map(), apInflight = new Map(), apQueue = [];
@@ -497,8 +497,8 @@ function npLoadBlob(src, cb) {
   function apPump() {
     while (apActive < 4 && apQueue.length) {
       const src = apQueue.shift(); apActive++;
-      nppToneProbe(src, (dark, ok) => {
-        apActive--; apToneCache.set(src, dark); if (ok) nppToneSave(src, dark);
+      toneProbe(src, (dark, ok) => {
+        apActive--; apToneCache.set(src, dark); if (ok) toneSave(src, dark);
         const ws = apInflight.get(src) || []; apInflight.delete(src);
         ws.forEach(c => { c.classList.toggle('apNameDark', dark); c.classList.remove('apTonePending'); });
         apPump();
@@ -506,7 +506,7 @@ function npLoadBlob(src, cb) {
     }
   }
   function apTone(root) {
-    const cards = [...root.querySelectorAll('.apCard')], stored = nppToneRead();
+    const cards = [...root.querySelectorAll('.apCard')], stored = toneRead();
     const apply = (card, dark) => { card.classList.toggle('apNameDark', !!dark); card.classList.remove('apTonePending'); };
     const srcOf = (card) => { const img = card.querySelector('.apPic img'); return img ? (img.currentSrc || img.getAttribute('src') || '') : ''; };
     const run = (card, src) => {

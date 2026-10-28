@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.10
+// @version      1.0.11
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -463,7 +463,7 @@
   }
 
   /* ─── CSS injected by this file ─── */
-  const NPP_CSS = `
+  const DAILY_CSS = `
 #nqDaily[hidden] { display: none !important; }
 #nqDaily:not(:has(.nqDHero)) { display: none !important; }
 #nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -540,7 +540,7 @@
 
   const styleEl = document.createElement('style');
   styleEl.id = 'nq-dailies-css';
-  styleEl.textContent = NPP_CSS;
+  styleEl.textContent = DAILY_CSS;
   (document.head || root).appendChild(styleEl);
 
   /* ─── Standalone dailies panel ─── */

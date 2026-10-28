@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.18
+// @version      5.5.19
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -162,8 +162,8 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#nq-host'); return h && h.shadowRoot; };
 
-  const NP_RUN_ON_PHONES = false;
-  const npIsPhone = () => {
+  const RUN_ON_PHONES = false;
+  const isPhone = () => {
     try {
       const uad = navigator.userAgentData;
       if (uad && typeof uad.mobile === 'boolean') return uad.mobile === true;
@@ -172,46 +172,46 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
       return /iPhone|iPod|Windows Phone|IEMobile|BlackBerry|Opera Mini|Android.*Mobile/i.test(navigator.userAgent || '');
     } catch { return false; }
   };
-  const npBaseOff = () => {
+  const baseOff = () => {
     const p = location.pathname;
     if (p === '/' || p.startsWith('/~') || p.startsWith('/faeriefragments') ||
         p.startsWith('/talesofdacardia') ||
         (p === '/games/game.phtml' && location.search)) return true;
-    if (!NP_RUN_ON_PHONES && npIsPhone()){
+    if (!RUN_ON_PHONES && isPhone()){
       let forced = false;
       try { forced = LSget('nq_mobile_v1') === 'on'; } catch {}
       if (!forced) return true;
     }
     return false;
   };
-  if (!npBaseOff()) {
+  if (!baseOff()) {
     try { document.documentElement.dataset.nqModernInterface = '1'; } catch {}
     NQ.base = true;
   }
 
-  const NP_BACKOFF_KEY = 'nq_403_backoff_until_v1';
-  const NP_STRIKE_KEY  = 'nq_403_strikes_v1';
-  const NP_BACKOFF_STEPS_MIN = [10, 30, 60, 120];
-  const np403BackoffActive = () => {
-    try { return Date.now() < (+LSget(NP_BACKOFF_KEY) || 0); } catch { return false; }
+  const BACKOFF_KEY = 'nq_403_backoff_until_v1';
+  const STRIKE_KEY  = 'nq_403_strikes_v1';
+  const BACKOFF_STEPS_MIN = [10, 30, 60, 120];
+  const backoff403Active = () => {
+    try { return Date.now() < (+LSget(BACKOFF_KEY) || 0); } catch { return false; }
   };
-  const npNote403 = (res) => {
+  const note403 = (res) => {
     if (!res || res.status !== 403) return;
     try {
       const nowMs = Date.now();
       let strikes = 0, lastMs = 0;
       try {
-        const raw = JSON.parse(LSget(NP_STRIKE_KEY) || 'null');
+        const raw = JSON.parse(LSget(STRIKE_KEY) || 'null');
         if (raw && typeof raw === 'object'){ strikes = +raw.n || 0; lastMs = +raw.t || 0; }
       } catch {}
       if (lastMs && (nowMs - lastMs) > 3 * 60 * 60 * 1000) strikes = 0;
-      const mins = NP_BACKOFF_STEPS_MIN[Math.min(strikes, NP_BACKOFF_STEPS_MIN.length - 1)];
-      LSset(NP_BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
-      LSset(NP_STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
+      const mins = BACKOFF_STEPS_MIN[Math.min(strikes, BACKOFF_STEPS_MIN.length - 1)];
+      LSset(BACKOFF_KEY, String(nowMs + mins * 60 * 1000));
+      LSset(STRIKE_KEY, JSON.stringify({ n: strikes + 1, t: nowMs }));
     } catch {}
   };
-  const npWhenBgAllowed = (fn) => {
-    const run = () => { if (np403BackoffActive()) return; try { fn(); } catch {} };
+  const whenBgAllowed = (fn) => {
+    const run = () => { if (backoff403Active()) return; try { fn(); } catch {} };
     let hidden = false;
     try { hidden = document.visibilityState === 'hidden'; } catch {}
     if (!hidden){ run(); return; }
@@ -2514,9 +2514,9 @@ function startHud() {
         return;
       }
 
-      const W = 220, H = 72;
+      const GW = 220, H = 72;
       const ML = 36, MR = 4, MT = 6, MB = 11;
-      const innerW = W - ML - MR;
+      const innerW = GW - ML - MR;
       const innerH = H - MT - MB;
 
       const balances = points.map(p => p.b);
@@ -2559,7 +2559,7 @@ function startHud() {
 
       if (points.length === 1){
         graphEl.innerHTML =
-          `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
+          `<svg viewBox="0 0 ${GW} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
           gridSvg +
           yLabelsSvg +
           xLabelsSvg +
@@ -2576,7 +2576,7 @@ function startHud() {
       const linePts = coords.map(c => c.join(',')).join(' ');
       const fillPts = `${ML},${MT + innerH} ${linePts} ${ML + innerW},${MT + innerH}`;
       graphEl.innerHTML =
-        `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
+        `<svg viewBox="0 0 ${GW} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
         `<defs><linearGradient id="nqBankGraphFill" x1="0" y1="0" x2="0" y2="1">` +
         `<stop offset="0%" stop-color="${stroke}" stop-opacity=".6"/>` +
         `<stop offset="100%" stop-color="${stroke}" stop-opacity="0"/>` +
@@ -2640,7 +2640,7 @@ function startHud() {
       }
       return out;
     }
-    async function fetchBank(){ if (np403BackoffActive()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); npNote403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
+    async function fetchBank(){ if (backoff403Active()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); note403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
     async function refreshBank(html){
       const p = parseBank(html || await fetchBank());
       if (p.balance){ state.bank_balance = p.balance; noteBalance(p.balance); }
@@ -2656,7 +2656,7 @@ function startHud() {
       const body = new URLSearchParams();
       Object.entries(dataObj || {}).forEach(([k,v]) => body.set(k, v ?? ''));
       const r = await fetch(url, { method:'POST', credentials:'include', headers:{ 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With':'XMLHttpRequest', 'Accept':'*/*' }, body });
-      npNote403(r);
+      note403(r);
       return { ok:r.ok, status:r.status, text: await r.text() };
     }
     const extractMsg = (t) => { const s = strip(String(t||'')); if (!s) return 'ok'; const j = tryJSON(s); if (j) return strip(j.message||j.msg||j.error||j.status||'ok'); return s.length>90 ? s.slice(0,90)+'…' : s; };
@@ -3333,9 +3333,9 @@ function startHud() {
       });
     }
     async function fetchQr(){
-      if (np403BackoffActive()) throw new Error('qr 403 backoff');
+      if (backoff403Active()) throw new Error('qr 403 backoff');
       const r = await fetch(FETCH_URL, { credentials:'include', cache:'no-store', headers:{ 'Cache-Control':'no-cache, no-store, must-revalidate', 'Pragma':'no-cache', 'Expires':'0' } });
-      npNote403(r);
+      note403(r);
       const data = parse(await r.text());
       if ((data.pets && data.pets.length) || data.active){ writeCache(data); writeLast(); return data; }
       throw new Error('QuickRef parse failed');
@@ -3383,12 +3383,12 @@ function startHud() {
     cardActivePet.addEventListener('contextmenu', navQuickRefMenu);
 
     const snap = readCache(); if (snap?.data){ try { applyData(snap.data); } catch {} }
-    npWhenBgAllowed(() => refresh({ force: false }));
+    whenBgAllowed(() => refresh({ force: false }));
     window.addEventListener('pageshow', (e) => {
       if (!e.persisted) return;
       state.imagesLoaded = false;
       const s = readCache(); if (s?.data) applyData(s.data);
-      npWhenBgAllowed(() => refresh({ force: false }));
+      whenBgAllowed(() => refresh({ force: false }));
     });
   })();
 
@@ -3704,7 +3704,7 @@ function startHud() {
       zIndex: 'calc(var(--nq-z-hud, 1000) + 3)',
       pointerEvents:'none',
     });
-    const root = host.attachShadow({ mode:'open' });
+    const btnRoot = host.attachShadow({ mode:'open' });
 
     const css = document.createElement('style');
     css.textContent = `
@@ -3817,13 +3817,13 @@ function startHud() {
         .body{ grid-template-columns: 1fr; }
       }
     `;
-    root.appendChild(css);
+    btnRoot.appendChild(css);
 
     const tab = document.createElement('div');
     tab.className = 'tab';
     tab.title = 'Customize the side buttons';
     tab.innerHTML = `<span>˄</span>`;
-    root.appendChild(tab);
+    btnRoot.appendChild(tab);
 
     const panel = document.createElement('div');
     panel.className = 'panel';
@@ -3844,7 +3844,7 @@ function startHud() {
         </div>
       </div>
     `;
-    root.appendChild(panel);
+    btnRoot.appendChild(panel);
 
     function iconPreviewUrl(item){
       if (item.fixedSrc) return item.fixedSrc;
@@ -6546,23 +6546,23 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     if (src && src !== nameToneSrc) { nameToneSrc = src; pickNameTone(card, src); }
   }
   let petImgRO = null, nameToneSrc = '';
-  function npLoadBlob(src, cb) {
+  function loadBlob(src, cb) {
     try {
       if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
       GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
     } catch { cb(null); }
   }
-  const nppToneCache = new Map();
-  const NPP_TONE_KEY = 'nq_pet_tone_v1';
-  function nppToneRead() { try { const o = JSON.parse(LSget(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
-  function nppToneSave(src, dark) {
+  const toneCache = new Map();
+  const TONE_KEY = 'nq_pet_tone_v1';
+  function toneRead() { try { const o = JSON.parse(LSget(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function toneSave(src, dark) {
     try {
-      const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
+      const o = toneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
       const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      LSset(NPP_TONE_KEY, JSON.stringify(o));
+      LSset(TONE_KEY, JSON.stringify(o));
     } catch {}
   }
-  function nppToneProbe(src, cb) {
+  function toneProbe(src, cb) {
     let fin = false, burl = null, tm = 0;
     const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
     tm = setTimeout(() => done(false, false), 3000);
@@ -6584,16 +6584,16 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
           done(white, true);
         } catch { done(false, false); }
       };
-      npLoadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
+      loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
-    if (nppToneCache.has(src)) return set(nppToneCache.get(src));
-    const v = nppToneRead()[src];
-    if (v === 'd' || v === 'l') { nppToneCache.set(src, v === 'd'); return set(v === 'd'); }
+    if (toneCache.has(src)) return set(toneCache.get(src));
+    const v = toneRead()[src];
+    if (v === 'd' || v === 'l') { toneCache.set(src, v === 'd'); return set(v === 'd'); }
     card.classList.remove('nq-name-dark', 'nq-name-light'); card.classList.add('nq-tone-pending');
-    nppToneProbe(src, (dark, ok) => { nppToneCache.set(src, dark); if (ok) nppToneSave(src, dark); set(dark); });
+    toneProbe(src, (dark, ok) => { toneCache.set(src, dark); if (ok) toneSave(src, dark); set(dark); });
   }
   function setDock(open) {
     const wrap = $('#qrDockWrap'), dock = $('#qrDock');
@@ -6957,13 +6957,13 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
   }
 
   const ICONS_KEY = 'nq_side_icons_v1';
-  const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
+  const NAV_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
   let hudMo = null;
   let hudWait = null;
   let npFitRaf = 0, npFitMo = null;
   function fitNpVals() {
-    const root = $('#nqNp'); if (!root) return;
-    root.querySelectorAll('.nq-top-row .nq-amount, .nq-top-row .nq-nc').forEach((tile) => {
+    const npEl = $('#nqNp'); if (!npEl) return;
+    npEl.querySelectorAll('.nq-top-row .nq-amount, .nq-top-row .nq-nc').forEach((tile) => {
       const v = tile.querySelector('.nqVal, .ncVal'); if (!v) return;
       tile.style.flexGrow = String(Math.max(1, (v.textContent || '').trim().length));
       let px = 14; v.style.setProperty('font-size', px + 'px', 'important');
@@ -6972,9 +6972,9 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
   }
   function scheduleNpFit() { cancelAnimationFrame(npFitRaf); npFitRaf = requestAnimationFrame(fitNpVals); }
   function watchNpFit() {
-    const root = $('#nqNp'); if (!root) return;
+    const npEl = $('#nqNp'); if (!npEl) return;
     if (!npFitMo) { npFitMo = new MutationObserver(scheduleNpFit); window.addEventListener('resize', scheduleNpFit); }
-    npFitMo.disconnect(); npFitMo.observe(root, { childList: true, subtree: true, characterData: true });
+    npFitMo.disconnect(); npFitMo.observe(npEl, { childList: true, subtree: true, characterData: true });
     scheduleNpFit(); setTimeout(scheduleNpFit, 600); setTimeout(scheduleNpFit, 2000);
   }
   function layoutSidebar() {
@@ -6991,7 +6991,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     if (!mod && ov) {
       mod = document.createElement('div');
       mod.id = 'nqIcons';
-      mod.innerHTML = `<button type="button" class="nqIcHead" aria-expanded="true"><span>Shortcuts</span>${NPP_CHEV}</button><div class="nqIcBody"></div>`;
+      mod.innerHTML = `<button type="button" class="nqIcHead" aria-expanded="true"><span>Shortcuts</span>${NAV_CHEV}</button><div class="nqIcBody"></div>`;
       const shut = LSget(ICONS_KEY) === '0';
       mod.classList.toggle('nqShut', shut);
       $('.nqIcHead', mod).setAttribute('aria-expanded', shut ? 'false' : 'true');
@@ -7026,7 +7026,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       if (!label) return;
       const id = b.dataset && b.dataset.id, menu = id ? sr.getElementById('menu-' + id) : null;
       const links = menu ? [...menu.querySelectorAll('a[href]')].filter(a => { const h = a.getAttribute('href'); return h && h !== '#' && !a.closest('.menuAddRow'); }).map(a => [(a.textContent || '').replace(/\s+/g, ' ').trim(), a.href]).filter(l => l[0]) : [];
-      if (links.length) html.push(`<div class="nqNavGrp"><button type="button" class="nqNavHead" aria-expanded="false"><span>${esc(label)}</span>${NPP_CHEV}</button><div class="nqNavLinks">${links.map(l => `<a href="${esc(l[1])}">${esc(l[0])}</a>`).join('')}</div></div>`);
+      if (links.length) html.push(`<div class="nqNavGrp"><button type="button" class="nqNavHead" aria-expanded="false"><span>${esc(label)}</span>${NAV_CHEV}</button><div class="nqNavLinks">${links.map(l => `<a href="${esc(l[1])}">${esc(l[0])}</a>`).join('')}</div></div>`);
       else if (b.href && !seen.has(b.href)) { seen.add(b.href); html.push(`<div class="nqNavGrp"><a class="nqNavSolo" href="${esc(b.href)}">${esc(label)}</a></div>`); }
     });
     const out = html.join('');
@@ -7609,7 +7609,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
   }
 
   /* ─── CSS injected by this file ─── */
-  const NPP_CSS = `
+  const DAILY_CSS = `
 #nqDaily[hidden] { display: none !important; }
 #nqDaily:not(:has(.nqDHero)) { display: none !important; }
 #nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
@@ -7686,7 +7686,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
 
   const styleEl = document.createElement('style');
   styleEl.id = 'nq-dailies-css';
-  styleEl.textContent = NPP_CSS;
+  styleEl.textContent = DAILY_CSS;
   (document.head || root).appendChild(styleEl);
 
   /* ─── Standalone dailies panel ─── */
@@ -8238,23 +8238,23 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
   }
 
   // Name colour per card: white over art, dark when the pet image has a plain white background (mirrors the sidebar).
-function npLoadBlob(src, cb) {
+function loadBlob(src, cb) {
   // Fetch bytes via GM (no CORS needed) and hand back a same-origin blob URL; cb(null) on any failure.
   try {
     if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
     GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
   } catch { cb(null); }
 }
-  const NPP_TONE_KEY = 'nq_pet_tone_v1';
-  function nppToneRead() { try { const o = JSON.parse(localStorage.getItem(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
-  function nppToneSave(src, dark) {
+  const TONE_KEY = 'nq_pet_tone_v1';
+  function toneRead() { try { const o = JSON.parse(localStorage.getItem(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function toneSave(src, dark) {
     try {
-      const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
+      const o = toneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
       const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      localStorage.setItem(NPP_TONE_KEY, JSON.stringify(o));
+      localStorage.setItem(TONE_KEY, JSON.stringify(o));
     } catch {}
   }
-  function nppToneProbe(src, cb) {
+  function toneProbe(src, cb) {
     // cb(dark, ok): ok=false on failure/timeout (resolves light, not persisted).
     let fin = false, burl = null, tm = 0;
     const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
@@ -8277,7 +8277,7 @@ function npLoadBlob(src, cb) {
           done(white, true);
         } catch { done(false, false); }
       };
-      npLoadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
+      loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
   const apToneCache = new Map(), apInflight = new Map(), apQueue = [];
@@ -8285,8 +8285,8 @@ function npLoadBlob(src, cb) {
   function apPump() {
     while (apActive < 4 && apQueue.length) {
       const src = apQueue.shift(); apActive++;
-      nppToneProbe(src, (dark, ok) => {
-        apActive--; apToneCache.set(src, dark); if (ok) nppToneSave(src, dark);
+      toneProbe(src, (dark, ok) => {
+        apActive--; apToneCache.set(src, dark); if (ok) toneSave(src, dark);
         const ws = apInflight.get(src) || []; apInflight.delete(src);
         ws.forEach(c => { c.classList.toggle('apNameDark', dark); c.classList.remove('apTonePending'); });
         apPump();
@@ -8294,7 +8294,7 @@ function npLoadBlob(src, cb) {
     }
   }
   function apTone(root) {
-    const cards = [...root.querySelectorAll('.apCard')], stored = nppToneRead();
+    const cards = [...root.querySelectorAll('.apCard')], stored = toneRead();
     const apply = (card, dark) => { card.classList.toggle('apNameDark', !!dark); card.classList.remove('apTonePending'); };
     const srcOf = (card) => { const img = card.querySelector('.apPic img'); return img ? (img.currentSrc || img.getAttribute('src') || '') : ''; };
     const run = (card, src) => {

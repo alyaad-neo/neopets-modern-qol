@@ -1054,9 +1054,9 @@ function startHud() {
         return;
       }
 
-      const W = 220, H = 72;
+      const GW = 220, H = 72;
       const ML = 36, MR = 4, MT = 6, MB = 11;
-      const innerW = W - ML - MR;
+      const innerW = GW - ML - MR;
       const innerH = H - MT - MB;
 
       const balances = points.map(p => p.b);
@@ -1099,7 +1099,7 @@ function startHud() {
 
       if (points.length === 1){
         graphEl.innerHTML =
-          `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
+          `<svg viewBox="0 0 ${GW} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
           gridSvg +
           yLabelsSvg +
           xLabelsSvg +
@@ -1116,7 +1116,7 @@ function startHud() {
       const linePts = coords.map(c => c.join(',')).join(' ');
       const fillPts = `${ML},${MT + innerH} ${linePts} ${ML + innerW},${MT + innerH}`;
       graphEl.innerHTML =
-        `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
+        `<svg viewBox="0 0 ${GW} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
         `<defs><linearGradient id="nqBankGraphFill" x1="0" y1="0" x2="0" y2="1">` +
         `<stop offset="0%" stop-color="${stroke}" stop-opacity=".6"/>` +
         `<stop offset="100%" stop-color="${stroke}" stop-opacity="0"/>` +
@@ -1180,7 +1180,7 @@ function startHud() {
       }
       return out;
     }
-    async function fetchBank(){ if (np403BackoffActive()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); npNote403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
+    async function fetchBank(){ if (backoff403Active()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); note403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
     async function refreshBank(html){
       const p = parseBank(html || await fetchBank());
       if (p.balance){ state.bank_balance = p.balance; noteBalance(p.balance); }
@@ -1196,7 +1196,7 @@ function startHud() {
       const body = new URLSearchParams();
       Object.entries(dataObj || {}).forEach(([k,v]) => body.set(k, v ?? ''));
       const r = await fetch(url, { method:'POST', credentials:'include', headers:{ 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With':'XMLHttpRequest', 'Accept':'*/*' }, body });
-      npNote403(r);
+      note403(r);
       return { ok:r.ok, status:r.status, text: await r.text() };
     }
     const extractMsg = (t) => { const s = strip(String(t||'')); if (!s) return 'ok'; const j = tryJSON(s); if (j) return strip(j.message||j.msg||j.error||j.status||'ok'); return s.length>90 ? s.slice(0,90)+'…' : s; };
@@ -1873,9 +1873,9 @@ function startHud() {
       });
     }
     async function fetchQr(){
-      if (np403BackoffActive()) throw new Error('qr 403 backoff');
+      if (backoff403Active()) throw new Error('qr 403 backoff');
       const r = await fetch(FETCH_URL, { credentials:'include', cache:'no-store', headers:{ 'Cache-Control':'no-cache, no-store, must-revalidate', 'Pragma':'no-cache', 'Expires':'0' } });
-      npNote403(r);
+      note403(r);
       const data = parse(await r.text());
       if ((data.pets && data.pets.length) || data.active){ writeCache(data); writeLast(); return data; }
       throw new Error('QuickRef parse failed');
@@ -1923,12 +1923,12 @@ function startHud() {
     cardActivePet.addEventListener('contextmenu', navQuickRefMenu);
 
     const snap = readCache(); if (snap?.data){ try { applyData(snap.data); } catch {} }
-    npWhenBgAllowed(() => refresh({ force: false }));
+    whenBgAllowed(() => refresh({ force: false }));
     window.addEventListener('pageshow', (e) => {
       if (!e.persisted) return;
       state.imagesLoaded = false;
       const s = readCache(); if (s?.data) applyData(s.data);
-      npWhenBgAllowed(() => refresh({ force: false }));
+      whenBgAllowed(() => refresh({ force: false }));
     });
   })();
 
@@ -2244,7 +2244,7 @@ function startHud() {
       zIndex: 'calc(var(--nq-z-hud, 1000) + 3)',
       pointerEvents:'none',
     });
-    const root = host.attachShadow({ mode:'open' });
+    const btnRoot = host.attachShadow({ mode:'open' });
 
     const css = document.createElement('style');
     css.textContent = `
@@ -2357,13 +2357,13 @@ function startHud() {
         .body{ grid-template-columns: 1fr; }
       }
     `;
-    root.appendChild(css);
+    btnRoot.appendChild(css);
 
     const tab = document.createElement('div');
     tab.className = 'tab';
     tab.title = 'Customize the side buttons';
     tab.innerHTML = `<span>˄</span>`;
-    root.appendChild(tab);
+    btnRoot.appendChild(tab);
 
     const panel = document.createElement('div');
     panel.className = 'panel';
@@ -2384,7 +2384,7 @@ function startHud() {
         </div>
       </div>
     `;
-    root.appendChild(panel);
+    btnRoot.appendChild(panel);
 
     function iconPreviewUrl(item){
       if (item.fixedSrc) return item.fixedSrc;

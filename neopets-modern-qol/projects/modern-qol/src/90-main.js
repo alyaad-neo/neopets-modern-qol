@@ -25,13 +25,13 @@
   }
 
   const ICONS_KEY = 'nq_side_icons_v1';
-  const NPP_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
+  const NAV_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>';
   let hudMo = null;
   let hudWait = null;
   let npFitRaf = 0, npFitMo = null;
   function fitNpVals() {
-    const root = $('#nqNp'); if (!root) return;
-    root.querySelectorAll('.nq-top-row .nq-amount, .nq-top-row .nq-nc').forEach((tile) => {
+    const npEl = $('#nqNp'); if (!npEl) return;
+    npEl.querySelectorAll('.nq-top-row .nq-amount, .nq-top-row .nq-nc').forEach((tile) => {
       const v = tile.querySelector('.nqVal, .ncVal'); if (!v) return;
       tile.style.flexGrow = String(Math.max(1, (v.textContent || '').trim().length));
       let px = 14; v.style.setProperty('font-size', px + 'px', 'important');
@@ -40,9 +40,9 @@
   }
   function scheduleNpFit() { cancelAnimationFrame(npFitRaf); npFitRaf = requestAnimationFrame(fitNpVals); }
   function watchNpFit() {
-    const root = $('#nqNp'); if (!root) return;
+    const npEl = $('#nqNp'); if (!npEl) return;
     if (!npFitMo) { npFitMo = new MutationObserver(scheduleNpFit); window.addEventListener('resize', scheduleNpFit); }
-    npFitMo.disconnect(); npFitMo.observe(root, { childList: true, subtree: true, characterData: true });
+    npFitMo.disconnect(); npFitMo.observe(npEl, { childList: true, subtree: true, characterData: true });
     scheduleNpFit(); setTimeout(scheduleNpFit, 600); setTimeout(scheduleNpFit, 2000);
   }
   function layoutSidebar() {
@@ -59,7 +59,7 @@
     if (!mod && ov) {
       mod = document.createElement('div');
       mod.id = 'nqIcons';
-      mod.innerHTML = `<button type="button" class="nqIcHead" aria-expanded="true"><span>Shortcuts</span>${NPP_CHEV}</button><div class="nqIcBody"></div>`;
+      mod.innerHTML = `<button type="button" class="nqIcHead" aria-expanded="true"><span>Shortcuts</span>${NAV_CHEV}</button><div class="nqIcBody"></div>`;
       const shut = LSget(ICONS_KEY) === '0';
       mod.classList.toggle('nqShut', shut);
       $('.nqIcHead', mod).setAttribute('aria-expanded', shut ? 'false' : 'true');
@@ -94,7 +94,7 @@
       if (!label) return;
       const id = b.dataset && b.dataset.id, menu = id ? sr.getElementById('menu-' + id) : null;
       const links = menu ? [...menu.querySelectorAll('a[href]')].filter(a => { const h = a.getAttribute('href'); return h && h !== '#' && !a.closest('.menuAddRow'); }).map(a => [(a.textContent || '').replace(/\s+/g, ' ').trim(), a.href]).filter(l => l[0]) : [];
-      if (links.length) html.push(`<div class="nqNavGrp"><button type="button" class="nqNavHead" aria-expanded="false"><span>${esc(label)}</span>${NPP_CHEV}</button><div class="nqNavLinks">${links.map(l => `<a href="${esc(l[1])}">${esc(l[0])}</a>`).join('')}</div></div>`);
+      if (links.length) html.push(`<div class="nqNavGrp"><button type="button" class="nqNavHead" aria-expanded="false"><span>${esc(label)}</span>${NAV_CHEV}</button><div class="nqNavLinks">${links.map(l => `<a href="${esc(l[1])}">${esc(l[0])}</a>`).join('')}</div></div>`);
       else if (b.href && !seen.has(b.href)) { seen.add(b.href); html.push(`<div class="nqNavGrp"><a class="nqNavSolo" href="${esc(b.href)}">${esc(label)}</a></div>`); }
     });
     const out = html.join('');

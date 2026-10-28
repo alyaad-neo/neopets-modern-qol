@@ -70,23 +70,23 @@
     if (src && src !== nameToneSrc) { nameToneSrc = src; pickNameTone(card, src); }
   }
   let petImgRO = null, nameToneSrc = '';
-  function npLoadBlob(src, cb) {
+  function loadBlob(src, cb) {
     try {
       if (typeof GM_xmlhttpRequest === 'undefined') return cb(null);
       GM_xmlhttpRequest({ method: 'GET', url: src, responseType: 'blob', onload: (r) => { try { cb(r.status >= 200 && r.status < 300 && r.response ? URL.createObjectURL(r.response) : null); } catch { cb(null); } }, onerror: () => cb(null), ontimeout: () => cb(null) });
     } catch { cb(null); }
   }
-  const nppToneCache = new Map();
-  const NPP_TONE_KEY = 'nq_pet_tone_v1';
-  function nppToneRead() { try { const o = JSON.parse(LSget(NPP_TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
-  function nppToneSave(src, dark) {
+  const toneCache = new Map();
+  const TONE_KEY = 'nq_pet_tone_v1';
+  function toneRead() { try { const o = JSON.parse(LSget(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
+  function toneSave(src, dark) {
     try {
-      const o = nppToneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
+      const o = toneRead(); delete o[src]; o[src] = dark ? 'd' : 'l';
       const ks = Object.keys(o); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete o[k]);
-      LSset(NPP_TONE_KEY, JSON.stringify(o));
+      LSset(TONE_KEY, JSON.stringify(o));
     } catch {}
   }
-  function nppToneProbe(src, cb) {
+  function toneProbe(src, cb) {
     let fin = false, burl = null, tm = 0;
     const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
     tm = setTimeout(() => done(false, false), 3000);
@@ -108,16 +108,16 @@
           done(white, true);
         } catch { done(false, false); }
       };
-      npLoadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
+      loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
     } catch { done(false, false); }
   }
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
-    if (nppToneCache.has(src)) return set(nppToneCache.get(src));
-    const v = nppToneRead()[src];
-    if (v === 'd' || v === 'l') { nppToneCache.set(src, v === 'd'); return set(v === 'd'); }
+    if (toneCache.has(src)) return set(toneCache.get(src));
+    const v = toneRead()[src];
+    if (v === 'd' || v === 'l') { toneCache.set(src, v === 'd'); return set(v === 'd'); }
     card.classList.remove('nq-name-dark', 'nq-name-light'); card.classList.add('nq-tone-pending');
-    nppToneProbe(src, (dark, ok) => { nppToneCache.set(src, dark); if (ok) nppToneSave(src, dark); set(dark); });
+    toneProbe(src, (dark, ok) => { toneCache.set(src, dark); if (ok) toneSave(src, dark); set(dark); });
   }
   function setDock(open) {
     const wrap = $('#qrDockWrap'), dock = $('#qrDock');
