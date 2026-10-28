@@ -18,31 +18,31 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 
 | Feature | File | Search for (function names, CSS classes, button text) |
 | --- | --- | --- |
-| CSS styles | lines 62–145 | `#nppAcctDrawer`, `#nppAcctTab`, `#nppAvatar`, `#npLogoutBtn`, `#npSwapBtn` |
+| CSS styles | lines 62–145 | `#nqAcctDrawer`, `#nqAcctTab`, `#nqAvatar`, `#nqLogoutBtn`, `#nqSwapBtn` |
 | Storage keys/constants | lines 46–51 | `MAIN_KEY`, `ACCTS_KEY`, `MAN_KEY`, `NP_KEY`, `PROF_KEY`, `DIRTY_KEY` |
 | Account list helpers | lines 154–172 | `readAccts`, `writeAccts`, `noteAccount`, `seenAccounts`, `readNP`, `readManual`, `allAccts` |
 | Avatar cache | lines 175 | `readProf` |
 | NeoPass sync | lines 178–206 | `parseNeoPass`, `neoPassFetch`, `syncNeoPass` |
 | Swap session | lines 209–234 | `swapAccount` |
-| Drawer build/wire | lines 244–400 | `buildDrawer`, `wireDrawer`, `nppAcctRow`, `nppAcctStar`, `nppAcctX` |
-| Modern mode mount | lines 403–462 | `mountModern`, `#npUser`, `#nppAcctTab`, `#nppAvatar`, `#npLogoutBtn`, `#npSwapBtn` |
-| Standalone mode mount | lines 464–491 | `mountStandalone`, `#nppStandaloneAcct`, `#nppStandaloneAcctToggle` |
-| Avatar updater | lines 493–517 | `updateAvatar`, `#nppAvatar`, `nppAvInit` |
+| Drawer build/wire | lines 244–400 | `buildDrawer`, `wireDrawer`, `nqAcctRow`, `nqAcctStar`, `nqAcctX` |
+| Modern mode mount | lines 403–462 | `mountModern`, `#nqUser`, `#nqAcctTab`, `#nqAvatar`, `#nqLogoutBtn`, `#nqSwapBtn` |
+| Standalone mode mount | lines 464–491 | `mountStandalone`, `#nqStandaloneAcct`, `#nqStandaloneAcctToggle` |
+| Avatar updater | lines 493–517 | `updateAvatar`, `#nqAvatar`, `nqAvInit` |
 | Profile fetch & cache | lines 520–570 | `pickProfImgs`, `profFromFrame`, `refreshProfile`, `maybeRefreshProfile` |
 | Settings watcher | lines 571–584 | `watchSettingsForAvatar`, `markProfDirty` |
-| All Pets overlay | search `All Pets` block | `parseUserlookup`, `apRefresh`, `openAllPets`, `apRender`, `#nppAP`, `.nppAcctAllPets` |
-| Boot | lines 587–601 | `mount`, `detectMode`, `npp:main`, `npp:drawer` |
+| All Pets overlay | search `All Pets` block | `parseUserlookup`, `apRefresh`, `openAllPets`, `apRender`, `#nqAP`, `.nqAcctAllPets` |
+| Boot | lines 587–601 | `mount`, `detectMode`, `nq:main`, `nq:drawer` |
 
 ## Depends on
 
 - `unsafeWindow` — access to Neopets globals (`appInsightsUserName`)
 - `GM_xmlhttpRequest` + `@connect account.neopets.com` — NeoPass sync
 - `localStorage` — all state (accounts, main account, profile cache)
-- Modern Interface patcher's `#npUser` card (for modern mode); falls back to standalone
+- Modern Interface patcher's `#nqUser` card (for modern mode); falls back to standalone
 
 ## All Pets (passive, zero network)
 
-- "All Pets" button in the drawer opens a full-screen overlay (#nppAP): tabs All/UFT/Permanent/Maybe/Untagged, account chips, search, sort, copy name, status + note per pet, "Copy trade list" (`Name - Colour Species (account)`).
+- "All Pets" button in the drawer opens a full-screen overlay (#nqAP): tabs All/UFT/Permanent/Maybe/Untagged, account chips, search, sort, copy name, status + note per pet, "Copy trade list" (`Name - Colour Species (account)`).
 - Data: no requests. `apCollect` reads the patcher's `localStorage nq_qr_data` (tolerant walk for objects with name + species/colour/level) and the `.qrPet` dock DOM, on load (2.5s, 9s), every 30s, and on open. Only the logged-in account is collected; others show "Log in to this account once".
 - Storage (GM): `nq_allpets_v1` = {account: {t, pets:[{name,img,species,color,level,active}]}}; `nq_allpets_tags_v1` = {lowercasePetName: {s:"uft"|"perm"|"maybe", n:note}}.
 - pet-trading-qol keeps its tradelist in GM storage (per-script), so UFT cannot be pre-filled from it.
@@ -53,7 +53,7 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 ## Don't touch
 
 - The CSS is self-contained so standalone and modern modes look the same. The patcher no longer carries copies of these selectors.
-- `MODE` (line 237) is decided by `detectMode()` at mount time, not at script load: `#npUser` appears after document-start. The boot MutationObserver upgrades a standalone mount to modern if the card appears later.
+- `MODE` (line 237) is decided by `detectMode()` at mount time, not at script load: `#nqUser` appears after document-start. The boot MutationObserver upgrades a standalone mount to modern if the card appears later.
 - `swapAccount` opens a new window to logout.phtml — never auto-logs in.
 - Profile fetch uses a hidden iframe fallback when the direct fetch fails (403 or CORS).
 
@@ -62,7 +62,7 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 <!-- Add notes here as they come up. -->
 - All Pets details: colour/species/level come from data.active (active pet) and from /home/ `.hp-carousel-nameplate` data-* attributes, only for pets already in the account list. Quick Ref redirects to /home/; its petCare popup and pound `petN_table` are NOT the user's pets.
 
-- #nppListsMod (Accounts / Pets tiles under the user card) is built by mountLists(); All Pets button removed from the drawer; user card restyled compact, #nppAcctTab hidden.
+- #nqListsMod (Accounts / Pets tiles under the user card) is built by mountLists(); All Pets button removed from the drawer; user card restyled compact, #nqAcctTab hidden.
 
 ## 1.3.10
 - Sidebar tile renamed "All Pets". Every saved account except the logged-in one has an X; removing confirms, then clears it from accounts/manual/NeoPass/seen/main and deletes its All Pets data and orphaned tags.

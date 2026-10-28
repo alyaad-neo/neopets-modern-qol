@@ -18,22 +18,22 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 | Feature | File | Search for (function names, CSS classes, button text) |
 | --- | --- | --- |
-| CSS styles | lines 53–85 | `#nppRecent`, `#nppPinned`, `.rList`, `.rPin`, `#nppStandaloneRecent` |
+| CSS styles | lines 53–85 | `#nqRecent`, `#nqPinned`, `.rList`, `.rPin`, `#nqStandaloneRecent` |
 | Constants | lines 42–48 | `RECENT_KEY`, `PIN_KEY_OLD`, `BOARD_NAMES_KEY`, `RECENT_MAX` (15), `PIN_SVG`, `PIN_ICON` |
 | Storage helpers | lines 91–102 | `readAccts`, `pinKey`, `migratePins`, `loadPins` (per-account) |
 | Label logic | lines 105–146 | `boardNames`, `boardName`, `labelFromUrl`, `headingLabel`, `pageLabel`, `recentLabel` |
 | Record visit + pin | lines 149–186 | `recordVisit`, `pinKeyOf`, `pinMatches`, `togglePin`, `pinItems` |
 | Card rendering | lines 189–242 | `makeCard`, `rowsHtml`, `setList`, `paintPinned`, `paintRecent`, `refreshCards` |
-| Sidebar cards mount | lines 250–275 | `mountSidebarCards`, `#nppFoot`, `#nppRecent`, `#nppPinned` |
-| Standalone panel mount | lines 278–328 | `mountStandalone`, `#nppStandaloneRecent`, `#nppStandaloneRecentToggle`, `#nppStandaloneRecentPanel` |
-| Boot + recordVisit timers | lines 331–357 | `mount`, `[1500, 4000, 8000]`, `npp:main`, `neopetsResetPins` |
+| Sidebar cards mount | lines 250–275 | `mountSidebarCards`, `#nqFoot`, `#nqRecent`, `#nqPinned` |
+| Standalone panel mount | lines 278–328 | `mountStandalone`, `#nqStandaloneRecent`, `#nqStandaloneRecentToggle`, `#nqStandaloneRecentPanel` |
+| Boot + recordVisit timers | lines 331–357 | `mount`, `[1500, 4000, 8000]`, `nq:main`, `neopetsResetPins` |
 
 ## Depends on
 
 - `localStorage` keys: `nq_recent_v3` (history), `nq_recent_pins_v1:<user>` (per-account pins), `nq_board_names_v1` (neoboard labels)
 - `unsafeWindow` — exposes `neopetsResetPins` console helper
-- `#nppFoot` (Modern Interface core footer) or `#npLeftBar` sidebar for sidebar mode
-- `npp:main` event from account-drawer to refresh cards on account switch
+- `#nqFoot` (Modern Interface core footer) or `#nqLeftBar` sidebar for sidebar mode
+- `nq:main` event from account-drawer to refresh cards on account switch
 
 ## Don't touch
 
@@ -44,8 +44,8 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 ## Lessons learned
 
-- `#nppPinned` has its own gold tint, border and inset left bar so it reads differently from `#nppRecent`.
-- The patcher's footer clock moved to the header, so `#nppBottom` no longer exists; the cards just append to `#nppFoot`.
+- `#nqPinned` has its own gold tint, border and inset left bar so it reads differently from `#nqRecent`.
+- The patcher's footer clock moved to the header, so `#nqBottom` no longer exists; the cards just append to `#nqFoot`.
 - 1.0.5: pin button is hidden (opacity 0, pointer-events none) until row hover/focus in both tabs, even when pinned; it overlays the text end, so rows no longer reserve right padding.
 
 ## 1.0.6

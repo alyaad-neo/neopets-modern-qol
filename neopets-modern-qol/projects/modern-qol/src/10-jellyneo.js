@@ -1,25 +1,25 @@
 (function () {
   'use strict';
   if (window.top !== window) return;
-  const POP = 'nppJN';
+  const POP = 'nqJN';
   if (location.hostname === 'items.jellyneo.net') {
     if (window.name !== POP) return;
-    const CSS = `#nppJnCard { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: #fff; color: #1f2937; font: 600 14px/1.35 system-ui, sans-serif; text-align: center; }
-#nppJnCard .in { padding: 14px 16px 16px; }
-#nppJnCard p { margin: 0; }
-#nppJnCard img { display: block; width: 80px; height: 80px; margin: 0 auto 6px; image-rendering: auto; }
-#nppJnCard a { color: inherit; text-decoration: none; }
-#nppJnCard .price-history-link { display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 999px; background: #f3f4f6; font-size: 15px; font-weight: 800; color: #111827; }
-#nppJnCard .x { position: fixed; top: 6px; right: 6px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: #f3f4f6; color: #374151; font: 700 16px/26px system-ui, sans-serif; cursor: pointer; padding: 0; }
-#nppJnCard .x:hover { background: #e5e7eb; }
-html.nppJn, html.nppJn body { overflow: hidden !important; }`;
+    const CSS = `#nqJnCard { position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: center; justify-content: center; background: #fff; color: #1f2937; font: 600 14px/1.35 system-ui, sans-serif; text-align: center; }
+#nqJnCard .in { padding: 14px 16px 16px; }
+#nqJnCard p { margin: 0; }
+#nqJnCard img { display: block; width: 80px; height: 80px; margin: 0 auto 6px; image-rendering: auto; }
+#nqJnCard a { color: inherit; text-decoration: none; }
+#nqJnCard .price-history-link { display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 999px; background: #f3f4f6; font-size: 15px; font-weight: 800; color: #111827; }
+#nqJnCard .x { position: fixed; top: 6px; right: 6px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: #f3f4f6; color: #374151; font: 700 16px/26px system-ui, sans-serif; cursor: pointer; padding: 0; }
+#nqJnCard .x:hover { background: #e5e7eb; }
+html.nqJn, html.nqJn body { overflow: hidden !important; }`;
     let tries = 0;
     const show = () => {
-      if (document.getElementById('nppJnCard')) return;
+      if (document.getElementById('nqJnCard')) return;
       const img = document.querySelector('img.item-result-image'), res = img && img.closest('p');
       if (!res) { if (++tries < 40) setTimeout(show, 150); return; }
       const st = document.createElement('style'); st.textContent = CSS; (document.head || document.documentElement).appendChild(st);
-      const card = document.createElement('div'); card.id = 'nppJnCard';
+      const card = document.createElement('div'); card.id = 'nqJnCard';
       const inner = document.createElement('div'); inner.className = 'in';
       inner.appendChild(res.cloneNode(true));
       inner.querySelectorAll('input, label:empty').forEach(n => n.remove());
@@ -28,7 +28,7 @@ html.nppJn, html.nppJn body { overflow: hidden !important; }`;
       card.innerHTML = '<button class="x" type="button" title="Close (Esc)">×</button>';
       card.appendChild(inner);
       document.body.appendChild(card);
-      document.documentElement.classList.add('nppJn');
+      document.documentElement.classList.add('nqJn');
       card.querySelector('.x').addEventListener('click', () => window.close());
       try { window.resizeBy(0, inner.offsetHeight + 8 - window.innerHeight); } catch {}
     };

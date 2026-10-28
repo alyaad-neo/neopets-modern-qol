@@ -60,7 +60,7 @@
 
   function nativePremium() {
     const out = [];
-    const a = [...document.querySelectorAll('a[href*="membership"]')].find(x => !x.closest('#npHud, #nppFoot, #npBgSidebar') && x.closest('[id*="nav"], [class*="nav"], #header'));
+    const a = [...document.querySelectorAll('a[href*="membership"]')].find(x => !x.closest('#nqHud, #nqFoot, #nqBgSidebar') && x.closest('[id*="nav"], [class*="nav"], #header'));
     let el = a && a.parentElement;
     for (let i = 0; el && i < 6; i++, el = el.parentElement) {
       const links = [...el.querySelectorAll('a[href]')].filter(x => x.textContent.trim());
@@ -80,7 +80,7 @@
 
   function findLink(key) {
     const re = new RegExp(key, 'i');
-    const a = [...document.querySelectorAll('a[href]')].find(x => re.test(x.textContent) && !x.closest('#npHud, #nppFoot, #npBgSidebar'));
+    const a = [...document.querySelectorAll('a[href]')].find(x => re.test(x.textContent) && !x.closest('#nqHud, #nqFoot, #nqBgSidebar'));
     return a ? a.href : '';
   }
 
@@ -122,10 +122,10 @@
     });
     sr.appendChild(menu);
     if (NQ.dailies) NQ.dailies.decoratePremium(menu);
-    { const caret = document.createElement('div'); caret.className = 'npp-premcaret'; menu.insertAdjacentElement('afterend', caret);
-      const bg = document.createElement('div'); bg.className = 'npp-prembg'; menu.insertAdjacentElement('beforebegin', bg);
+    { const caret = document.createElement('div'); caret.className = 'nq-premcaret'; menu.insertAdjacentElement('afterend', caret);
+      const bg = document.createElement('div'); bg.className = 'nq-prembg'; menu.insertAdjacentElement('beforebegin', bg);
       const csync = () => {
-        const cs = getComputedStyle(menu), open = cs.display !== 'none', vis = open && cs.getPropertyValue('--npp-menu-caret').trim() === 'block';
+        const cs = getComputedStyle(menu), open = cs.display !== 'none', vis = open && cs.getPropertyValue('--nq-menu-caret').trim() === 'block';
         caret.style.display = vis ? 'block' : 'none';
         if (vis) { caret.style.left = (menu.offsetLeft + menu.offsetWidth / 2 - 6) + 'px'; caret.style.top = (menu.offsetTop - 7) + 'px'; }
         bg.style.display = open ? 'block' : 'none';
@@ -174,7 +174,7 @@
         if (was !== 'block') { m.style.display = was || 'none'; m.style.visibility = ''; }
       });
       if (tall) menu.style.maxHeight = Math.min(tall, innerHeight - 100) + 'px';
-      menu.style.top = Math.round($('#npx-host').getBoundingClientRect().bottom) + 'px';
+      menu.style.top = Math.round($('#nq-host').getBoundingClientRect().bottom) + 'px';
       menu.style.display = 'block';
     });
   }

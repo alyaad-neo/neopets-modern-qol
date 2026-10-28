@@ -20,10 +20,10 @@
   const allAccts = () => { const a = autoAccts(); readManual().forEach(n => { if (!a.some(x => x.toLowerCase() === n.toLowerCase())) a.push(n); }); return a; };
   let petSig = null;
   function renderPetInfo() {
-    const card = $('#npActivePet');
+    const card = $('#nqActivePet');
     if (!card) return;
-    let box = $('#nppPetInfo');
-    if (!box) { box = document.createElement('div'); box.id = 'nppPetInfo'; card.appendChild(box); petSig = null; }
+    let box = $('#nqPetInfo');
+    if (!box) { box = document.createElement('div'); box.id = 'nqPetInfo'; card.appendChild(box); petSig = null; }
     const raw = LSget('nq_qr_data');
     if (raw === petSig) return;
     petSig = raw;
@@ -32,18 +32,18 @@
     if (!a) { box.innerHTML = ''; return; }
     const title = `${a.name} - ${[a.colour, a.species].filter(Boolean).join(' ')}`;
     const gcls = /female/i.test(a.gender || '') ? 'gF' : 'gM';
-    const shown = `<span class="nppName">${esc(a.name)}</span><span class="nppSub">${a.gender ? `<span class="nppG ${gcls}">${esc(a.gender)}</span> ` : ''}${esc([a.colour, a.species].filter(Boolean).join(' '))}</span>`;
+    const shown = `<span class="nqName">${esc(a.name)}</span><span class="nqSub">${a.gender ? `<span class="nqG ${gcls}">${esc(a.gender)}</span> ` : ''}${esc([a.colour, a.species].filter(Boolean).join(' '))}</span>`;
     const ageN = parseInt(String(a.age || '').replace(/[^\d]/g, ''), 10);
     const ageUnit = /hour/i.test(a.age || '') ? 'hours' : /minute/i.test(a.age || '') ? 'minutes' : 'days';
     const ageShort = !Number.isFinite(ageN) ? a.age : (ageUnit === 'days' && ageN >= 1000) ? (() => { const k = Math.floor(ageN / 100) / 10; return (k % 1 ? k.toFixed(1) : k) + 'K days'; })() : ageN + ' ' + ageUnit;
     const chips = [a.level && ['', 'Lv ' + a.level, 'Level ' + a.level], a.age && ['', ageShort, a.age]].filter(Boolean);
     const rows = [['Health', a.health], ['Strength', a.strength], ['Defence', a.defence], ['Move', a.move], ['Intelligence', a.intelligence]].filter(r => r[1]);
-    box.innerHTML = `<div class="nppTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nppCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nppLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nppStatsBtn${LSget('nq_stats_open') === '1' ? ' on' : ''}" title="Stats" aria-label="Stats" aria-pressed="${LSget('nq_stats_open') === '1' ? 'true' : 'false'}">${STATS_ICON}</button>` : ''}</div><div class="nppChips">${chips.map(c => `<span class="nppChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nppStats${LSget('nq_stats_open') === '1' ? ' open' : ''}"><div class="nppStatsBody"><div class="nppDetails">${rows.map(r => `<div class="nppStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
+    box.innerHTML = `<div class="nqTitle"><a href="https://www.neopets.com/petlookup.phtml?pet=${encodeURIComponent(a.name)}">${shown}</a><button type="button" class="nqCopy" title="Copy" data-copy="${esc(title)}">${COPY}</button></div><div class="nqLinks"><a href="https://www.neopets.com/~${encodeURIComponent(a.name)}" title="View petpage" aria-label="View petpage">${EYE}</a><a href="https://www.neopets.com/editpage.phtml?pet_name=${encodeURIComponent(a.name)}" title="Edit petpage" aria-label="Edit petpage">${PENCIL}</a>${rows.length ? `<button type="button" class="nqStatsBtn${LSget('nq_stats_open') === '1' ? ' on' : ''}" title="Stats" aria-label="Stats" aria-pressed="${LSget('nq_stats_open') === '1' ? 'true' : 'false'}">${STATS_ICON}</button>` : ''}</div><div class="nqChips">${chips.map(c => `<span class="nqChip ${c[0]}" title="${esc(c[2] || '')}">${esc(c[1])}</span>`).join('')}</div>${rows.length ? `<div class="nqStats${LSget('nq_stats_open') === '1' ? ' open' : ''}"><div class="nqStatsBody"><div class="nqDetails">${rows.map(r => `<div class="nqStat"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`).join('')}</div></div></div>` : ''}`;
   }
   const PET_IMG_STYLE = 'object-position:50% 50%!important;object-fit:cover!important;width:calc(100% + 2 * var(--pn-pad, 12px))!important;height:auto!important;aspect-ratio:1/1!important;max-width:none!important;max-height:none!important;transform:none!important;background:#fff!important;border-radius:var(--pn-r, 16px) var(--pn-r, 16px) 0 0!important;opacity:1!important;display:block!important;margin:calc(-1 * var(--pn-pad, 12px)) calc(-1 * var(--pn-pad, 12px)) 0!important;box-shadow:none!important';
   function syncPetImg() {
     if (Date.now() > petSyncUntil) return;
-    const img = $('#npActivePet > img'), el = document.getElementById('navPetMenuIcon__2020');
+    const img = $('#nqActivePet > img'), el = document.getElementById('navPetMenuIcon__2020');
     if (!img || !el) return;
     const m = (getComputedStyle(el).backgroundImage || '').match(/url\(["']?([^"')]+)["']?\)/);
     if (!m) return;
@@ -58,12 +58,12 @@
     petSettled = true;
   }
   function fixPetImg() {
-    const img = $('#npActivePet > img');
+    const img = $('#nqActivePet > img');
     if (img && img.getAttribute('style') !== PET_IMG_STYLE) img.setAttribute('style', PET_IMG_STYLE);
-    const card = $('#npActivePet');
+    const card = $('#nqActivePet');
     if (!img || !card) return;
     const h = img.offsetHeight;
-    if (h > 0 && card.dataset.nppImgH !== String(h)) { card.dataset.nppImgH = String(h); card.style.setProperty('--npp-img-h', h + 'px'); }
+    if (h > 0 && card.dataset.nqImgH !== String(h)) { card.dataset.nqImgH = String(h); card.style.setProperty('--nq-img-h', h + 'px'); }
     if (petImgRO && petImgRO.el !== img) { petImgRO.ro.disconnect(); petImgRO = null; }
     if (!petImgRO && typeof ResizeObserver === 'function') { const ro = new ResizeObserver(fixPetImg); ro.observe(img); petImgRO = { ro, el: img }; }
     const src = img.currentSrc || img.src || '';
@@ -112,11 +112,11 @@
     } catch { done(false, false); }
   }
   function pickNameTone(card, src) {
-    const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('npp-name-dark', dark); card.classList.toggle('npp-name-light', !dark); card.classList.remove('npp-tone-pending'); };
+    const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
     if (nppToneCache.has(src)) return set(nppToneCache.get(src));
     const v = nppToneRead()[src];
     if (v === 'd' || v === 'l') { nppToneCache.set(src, v === 'd'); return set(v === 'd'); }
-    card.classList.remove('npp-name-dark', 'npp-name-light'); card.classList.add('npp-tone-pending');
+    card.classList.remove('nq-name-dark', 'nq-name-light'); card.classList.add('nq-tone-pending');
     nppToneProbe(src, (dark, ok) => { nppToneCache.set(src, dark); if (ok) nppToneSave(src, dark); set(dark); });
   }
   function setDock(open) {
@@ -125,41 +125,41 @@
     dockOpen = open;
     wrap.classList.toggle('open', open);
     if (dock) dock.classList.toggle('open', open);
-    document.body.classList.toggle('npDockActive', open);
+    document.body.classList.toggle('nqDockActive', open);
     if (open) wrap.querySelectorAll('.qrPet').forEach(el => {
       if (el.dataset.loaded === '1' || !el.dataset.bg) return;
       el.style.backgroundImage = `url(${el.dataset.bg})`; el.dataset.loaded = '1';
     });
     if (open) wrap.querySelectorAll('.qrPet').forEach(el => {
       const ov = el.querySelector('.qrOverlay'), nm = el.querySelector('.qrPetName');
-      if (!ov || ov.querySelector('.nppPetPage')) return;
+      if (!ov || ov.querySelector('.nqPetPage')) return;
       const name = ((nm && nm.textContent) || '').trim();
       if (!/^\w+$/.test(name)) return;
       const a = document.createElement('a');
-      a.className = 'nppPetPage'; a.href = 'https://www.neopets.com/~' + name; a.textContent = 'Pet Page';
+      a.className = 'nqPetPage'; a.href = 'https://www.neopets.com/~' + name; a.textContent = 'Pet Page';
       ov.appendChild(a);
     });
   }
   function petUI() {
-    const card = $('#npActivePet');
-    if (!card || card.dataset.npp) return;
-    card.dataset.npp = '1';
+    const card = $('#nqActivePet');
+    if (!card || card.dataset.nq) return;
+    card.dataset.nq = '1';
     const btn = document.createElement('button');
-    btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Swap Active'; btn.setAttribute('aria-label', 'Swap Active'); btn.innerHTML = SWAP + '<span>Swap Active</span>';
+    btn.id = 'nqPetDockBtn'; btn.type = 'button'; btn.title = 'Swap Active'; btn.setAttribute('aria-label', 'Swap Active'); btn.innerHTML = SWAP + '<span>Swap Active</span>';
     card.appendChild(btn);
     renderPetInfo(); fixPetImg();
     new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'src'] });
     card.addEventListener('click', (e) => {
-      const sbtn = e.target.closest('.nppStatsBtn');
+      const sbtn = e.target.closest('.nqStatsBtn');
       if (sbtn) {
         e.stopImmediatePropagation(); e.preventDefault();
-        const wrap = $('#nppPetInfo .nppStats'), open = !(wrap && wrap.classList.contains('open'));
+        const wrap = $('#nqPetInfo .nqStats'), open = !(wrap && wrap.classList.contains('open'));
         if (wrap) wrap.classList.toggle('open', open);
         sbtn.classList.toggle('on', open); sbtn.setAttribute('aria-pressed', open ? 'true' : 'false');
         LSset('nq_stats_open', open ? '1' : '0');
         return;
       }
-      const copy = e.target.closest('.nppCopy');
+      const copy = e.target.closest('.nqCopy');
       if (copy) {
         e.stopImmediatePropagation(); e.preventDefault();
         const text = copy.dataset.copy;
@@ -180,9 +180,9 @@
           } catch { flash(false); }
         };
         try { navigator.clipboard.writeText(text).then(() => flash(true), fallback); } catch { fallback(); }
-      } else if (e.target.closest('.nppTitle a, .nppLinks a')) {
+      } else if (e.target.closest('.nqTitle a, .nqLinks a')) {
         e.stopImmediatePropagation();
-      } else if (e.target.closest('#npPetDockBtn')) {
+      } else if (e.target.closest('#nqPetDockBtn')) {
         e.stopImmediatePropagation(); e.preventDefault();
         setDock(!dockOpen);
       }

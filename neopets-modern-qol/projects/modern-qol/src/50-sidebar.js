@@ -1,15 +1,15 @@
   function wireSidebar() {
-    const sb = $('#npBgSidebar'), h = $('#npBgHandle');
-    if (!sb || !h || sb.dataset.npp) return;
-    sb.dataset.npp = '1';
+    const sb = $('#nqBgSidebar'), h = $('#nqBgHandle');
+    if (!sb || !h || sb.dataset.nq) return;
+    sb.dataset.nq = '1';
     handleEl = h;
     h.innerHTML = CHEV;
     injectPicker(sb);
-    const barSel = $('#npTopbarBg', sb);
+    const barSel = $('#nqTopbarBg', sb);
     if (barSel) barSel.addEventListener('change', () => applyBarStyle(barSel.value));
-    const rb = $('#npRecolorSite', sb);
+    const rb = $('#nqRecolorSite', sb);
     if (rb) rb.title = 'Turn Neopets’ built-in gold buttons, tabs and bars into your accent color';
-    const bgList = $('#npBgList', sb), bgQuery = $('#npBgQuery', sb), bar = $('.npBgSearch', sb);
+    const bgList = $('#nqBgList', sb), bgQuery = $('#nqBgQuery', sb), bar = $('.nqBgSearch', sb);
     let runShuffle = () => {};
     if (bgList && bgQuery && bar) {
       const HIDE_RULES = [
@@ -18,31 +18,31 @@
         [/birthday|anniversar|\b\d+[- ]?years?\b/i, /birthday|anniversar|year|\d+(st|nd|rd|th)/i],
       ];
       const dbar = document.createElement('div');
-      dbar.id = 'nppDiscBar'; dbar.hidden = true;
-      dbar.innerHTML = '<span id="nppDiscMsg"></span>';
+      dbar.id = 'nqDiscBar'; dbar.hidden = true;
+      dbar.innerHTML = '<span id="nqDiscMsg"></span>';
       bar.after(dbar);
-      const dmsg = $('#nppDiscMsg', dbar);
+      const dmsg = $('#nqDiscMsg', dbar);
       const SHUFFLE_MSG = 'Random selection · click Shuffle again for more';
-      const busyOn = (msg) => { bgList.classList.add('nppFetching'); dbar.classList.add('loading'); dbar.hidden = false; dmsg.textContent = msg; };
-      const busyOff = () => { bgList.classList.remove('nppFetching'); dbar.classList.remove('loading'); };
+      const busyOn = (msg) => { bgList.classList.add('nqFetching'); dbar.classList.add('loading'); dbar.hidden = false; dmsg.textContent = msg; };
+      const busyOff = () => { bgList.classList.remove('nqFetching'); dbar.classList.remove('loading'); };
       const safeUrl = (u) => String(u || '').replace(/["'\\\n\r]/g, '');
       let lastShuffle = [];
       const renderDisc = (items) => {
         bgList.innerHTML = items.map((it, i) =>
-          `<div class="npBgItem nppRowIn" style="--i:${i}"><div class="npBgThumb" style="background-image:url('${safeUrl(it.thumb)}')"></div><div class="npBgName" title="${esc(it.name)}">${esc(it.name)}</div>` +
-          `<button type="button" class="npBgBtn npBgL" data-url="${esc(it.url)}" title="Use on LEFT decor column">L</button>` +
-          `<button type="button" class="npBgBtn npBgR" data-url="${esc(it.url)}" title="Use as MAIN background">M</button></div>`).join('');
+          `<div class="nqBgItem nqRowIn" style="--i:${i}"><div class="nqBgThumb" style="background-image:url('${safeUrl(it.thumb)}')"></div><div class="nqBgName" title="${esc(it.name)}">${esc(it.name)}</div>` +
+          `<button type="button" class="nqBgBtn nqBgL" data-url="${esc(it.url)}" title="Use on LEFT decor column">L</button>` +
+          `<button type="button" class="nqBgBtn nqBgR" data-url="${esc(it.url)}" title="Use as MAIN background">M</button></div>`).join('');
         bgList.scrollTop = 0;
       };
       bgList.addEventListener('click', (e) => {
-        const b = e.target.closest && e.target.closest('.npBgBtn');
+        const b = e.target.closest && e.target.closest('.nqBgBtn');
         if (!b) return;
         e.preventDefault(); e.stopPropagation();
-        const url = b.dataset.url, isMain = b.classList.contains('npBgR'), k = isMain ? 'main' : 'left';
+        const url = b.dataset.url, isMain = b.classList.contains('nqBgR'), k = isMain ? 'main' : 'left';
         draft[k] = null; clearImg[k] = false; pendingImg[k] = url;
-        if (isMain) { rs.setProperty('--npMainSolid', '#000'); rs.setProperty('--npWallImage', cssUrl(url)); }
-        else { rs.setProperty('--npLeftBarImg', cssUrl(url)); rs.setProperty('--npLeftBarSolid', '#000'); rs.setProperty('--npLeftBarShadeA', '1'); }
-        bgList.querySelectorAll(isMain ? '.npBgR' : '.npBgL').forEach(x => x.classList.toggle('isActive', x === b));
+        if (isMain) { rs.setProperty('--nqMainSolid', '#000'); rs.setProperty('--nqWallImage', cssUrl(url)); }
+        else { rs.setProperty('--nqLeftBarImg', cssUrl(url)); rs.setProperty('--nqLeftBarSolid', '#000'); rs.setProperty('--nqLeftBarShadeA', '1'); }
+        bgList.querySelectorAll(isMain ? '.nqBgR' : '.nqBgL').forEach(x => x.classList.toggle('isActive', x === b));
       });
       const KW_MAX = 100, kwEnd = {};
       let kwToken = 0, kwTimer = 0;
@@ -84,13 +84,13 @@
         try {
           const items = await kwSearch(q, shuffle);
           if (tok !== kwToken) return;
-          if (!items.length) { bgList.innerHTML = '<div class="nppDiscEmpty">No backgrounds found for “' + esc(q) + '”.</div>'; dmsg.textContent = `No backgrounds found for “${q}”.`; }
+          if (!items.length) { bgList.innerHTML = '<div class="nqDiscEmpty">No backgrounds found for “' + esc(q) + '”.</div>'; dmsg.textContent = `No backgrounds found for “${q}”.`; }
           else { renderDisc(items); dmsg.textContent = `${items.length}${items.length >= KW_MAX ? '+' : ''} for “${q}” · Shuffle for other matches`; }
         } catch (err) { if (tok === kwToken) dmsg.textContent = 'Couldn’t search DTI (' + (err && err.message || 'error') + ')'; }
         finally { if (tok === kwToken) busyOff(); }
       };
       const sh = document.createElement('button');
-      sh.type = 'button'; sh.id = 'nppShuffle'; sh.title = 'Shuffle: a fresh random selection of backgrounds'; sh.innerHTML = SHUFFLE;
+      sh.type = 'button'; sh.id = 'nqShuffle'; sh.title = 'Shuffle: a fresh random selection of backgrounds'; sh.innerHTML = SHUFFLE;
       bar.appendChild(sh);
       let busyDisc = false;
       runShuffle = async () => {
@@ -130,7 +130,7 @@
       if (open && !wasOpen) {
         draft = saved(); clearImg = { main: false, left: false }; saving = false; pendingImg = { main: null, left: null };
         accentPick = null; accentBase = LSget('nq_accent_v1');
-        const r = $('#nppColors'); if (r && r._sync) r._sync();
+        const r = $('#nqColors'); if (r && r._sync) r._sync();
         if (bgList && !bgList.children.length) runShuffle();
       } else if (!open && wasOpen) {
         if (saving) commit();

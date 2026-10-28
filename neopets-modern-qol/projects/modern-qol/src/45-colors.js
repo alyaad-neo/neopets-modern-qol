@@ -7,24 +7,24 @@
 
   function paintMain(c) {
     if (c === null && hasImg('main')) return;
-    rs.setProperty('--npWallImage', 'none');
-    rs.setProperty('--npMainSolid', c || DEF.main);
+    rs.setProperty('--nqWallImage', 'none');
+    rs.setProperty('--nqMainSolid', c || DEF.main);
   }
   function paintLeft(c) {
     if (c === null && hasImg('left')) return;
-    rs.setProperty('--npLeftBarImg', 'none');
-    rs.setProperty('--npLeftBarSolid', c || DEF.left);
-    rs.setProperty('--npLeftBarShadeA', '0');
+    rs.setProperty('--nqLeftBarImg', 'none');
+    rs.setProperty('--nqLeftBarSolid', c || DEF.left);
+    rs.setProperty('--nqLeftBarShadeA', '0');
   }
   function paintHead(c) {
     const h = c || DEF.head, d = darken(h, .72);
-    rs.setProperty('--npp-head-a', h + HEAD_ALPHA);
-    rs.setProperty('--npp-head-b', d + HEAD_ALPHA);
+    rs.setProperty('--nq-head-a', h + HEAD_ALPHA);
+    rs.setProperty('--nq-head-b', d + HEAD_ALPHA);
     try { applySearchContrast(); } catch {}
     lastHeadHex = h; try { applyNavContrast(); } catch {}
     [['solid', 'ff'], ['tint', 'b3'], ['blur', '8c']].forEach(([k, a]) => {
-      rs.setProperty('--npp-head-a-' + k, h + a);
-      rs.setProperty('--npp-head-b-' + k, d + a);
+      rs.setProperty('--nq-head-a-' + k, h + a);
+      rs.setProperty('--nq-head-b-' + k, d + a);
     });
   }
   const painters = { main: paintMain, left: paintLeft, head: paintHead };
@@ -32,13 +32,13 @@
 
   let lastHeadHex = DEF.head;
   function applyNavContrast() {
-    const mode = root.dataset.nppBar || 'blur', m = /^#?([0-9a-f]{6})/i.exec(String(lastHeadHex || ''));
+    const mode = root.dataset.nqBar || 'blur', m = /^#?([0-9a-f]{6})/i.exec(String(lastHeadHex || ''));
     let light = false;
     if (m && mode !== 'none') {
       const n = parseInt(m[1], 16), lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
       light = (0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255)) >= 0.72;
     }
-    const vars = { '--npp-nav-fg': '#111827', '--npp-nav-shadow': 'none', '--npp-nav-hover': 'rgba(0,0,0,.08)', '--npp-nav-ring': 'rgba(0,0,0,.14)' };
+    const vars = { '--nq-nav-fg': '#111827', '--nq-nav-shadow': 'none', '--nq-nav-hover': 'rgba(0,0,0,.08)', '--nq-nav-ring': 'rgba(0,0,0,.14)' };
     Object.keys(vars).forEach(k => light ? rs.setProperty(k, vars[k]) : rs.removeProperty(k));
   }
   let draft = saved(), clearImg = { main: false, left: false }, saving = false;
@@ -64,18 +64,18 @@
   };
 
   function injectPicker(sb) {
-    const anchor = $('.npBgSearch', sb);
-    if (!anchor || $('#nppColors')) return;
+    const anchor = $('.nqBgSearch', sb);
+    if (!anchor || $('#nqColors')) return;
     const row = document.createElement('div');
-    row.id = 'nppColors';
-    row.innerHTML = '<div class="npSmall">Colors</div>'
-      + '<div class="nppPresets"><button type="button" data-preset="default">Default</button><button type="button" data-preset="dark">Dark</button><button type="button" data-preset="contrast">High contrast</button></div>'
-      + `<div class="nppRow nppAccRow"><input type="color" data-acc="1" title="Accent colour"><span>Accent</span><button type="button" data-accreset="1" title="Reset to the default accent">Reset</button></div>`
+    row.id = 'nqColors';
+    row.innerHTML = '<div class="nqSmall">Colors</div>'
+      + '<div class="nqPresets"><button type="button" data-preset="default">Default</button><button type="button" data-preset="dark">Dark</button><button type="button" data-preset="contrast">High contrast</button></div>'
+      + `<div class="nqRow nqAccRow"><input type="color" data-acc="1" title="Accent colour"><span>Accent</span><button type="button" data-accreset="1" title="Reset to the default accent">Reset</button></div>`
       + [['main', 'Background'], ['left', 'Sidebar'], ['head', 'Header']].map(([k, l]) =>
-      `<div class="nppRow"><span>${l}</span><input type="color" data-k="${k}"><button type="button" data-r="${k}" title="Reset to default (also removes its image)">Reset</button></div>`).join('')
-      + '<label class="nppShareRow"><input type="checkbox" data-share="1"><span>Share theme on all accounts</span></label>'
-      + '<div class="nppRow nppLogoRow"><i class="nppLogoDot"></i><span>Logo</span><div class="nppSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>'
-      + '<div class="nppRow nppLogoRow nppSideRow"><i class="nppLogoDot"></i><span>Sidebar style</span><div class="nppSeg"><button type="button" data-side="0">Dark</button><button type="button" data-side="1">Light</button></div></div>';
+      `<div class="nqRow"><span>${l}</span><input type="color" data-k="${k}"><button type="button" data-r="${k}" title="Reset to default (also removes its image)">Reset</button></div>`).join('')
+      + '<label class="nqShareRow"><input type="checkbox" data-share="1"><span>Share theme on all accounts</span></label>'
+      + '<div class="nqRow nqLogoRow"><i class="nqLogoDot"></i><span>Logo</span><div class="nqSeg"><button type="button" data-logo="0">Black</button><button type="button" data-logo="1">White</button></div></div>'
+      + '<div class="nqRow nqLogoRow nqSideRow"><i class="nqLogoDot"></i><span>Sidebar style</span><div class="nqSeg"><button type="button" data-side="0">Dark</button><button type="button" data-side="1">Light</button></div></div>';
     anchor.before(row);
     const curAccent = () => { let a = ''; try { a = NQ.getAccent() || LSget('nq_accent_v1') || ''; } catch {} return /^#[0-9a-f]{6}$/i.test(a) ? a : NP_ORANGE; };
     const setAccent = (hex) => {
@@ -91,14 +91,14 @@
       row.querySelectorAll('input[data-k]').forEach(i => { i.value = draft[i.dataset.k] || DEF[i.dataset.k]; });
       const lw = LSget('nq_logo_white') === '1' ? '1' : '0';
       row.querySelectorAll('[data-logo]').forEach(b => b.classList.toggle('on', b.dataset.logo === lw));
-      const lr = row.querySelector('.nppLogoRow'); if (lr) lr.dataset.logo = lw;
-      const sl = document.documentElement.classList.contains('npp-side-light') ? '1' : '0';
+      const lr = row.querySelector('.nqLogoRow'); if (lr) lr.dataset.logo = lw;
+      const sl = document.documentElement.classList.contains('nq-side-light') ? '1' : '0';
       row.querySelectorAll('[data-side]').forEach(x => x.classList.toggle('on', x.dataset.side === sl));
     };
     row.addEventListener('click', (e) => {
       const sb = e.target.closest && e.target.closest('[data-side]'); if (!sb) return;
       const on = sb.dataset.side === '1';
-      document.documentElement.classList.toggle('npp-side-light', on);
+      document.documentElement.classList.toggle('nq-side-light', on);
       LSset('nq_side_light', on ? '1' : '0'); sync();
     });
     row._sync = sync;

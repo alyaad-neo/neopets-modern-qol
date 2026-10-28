@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.7
+// @version      1.0.8
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -51,57 +51,57 @@
 
   /* ───────────────────────────────── CSS ───────────────────────────────── */
   const RECENT_CSS = `
-#nppRecent, #nppPinned { display: flex; flex-direction: column; gap: 6px; padding: 10px 11px; box-sizing: border-box; width: 100%; flex: 0 0 auto; position: relative; z-index: 1; }
-#nppRecent .rHead, #nppPinned .rHead { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); padding: 0 2px 2px; }
-#nppRecent .rList, #nppPinned .rList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 106px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; padding-right: 3px; }
-#nppRecent .rList li, #nppPinned .rList li { min-width: 0; position: relative; }
-#nppRecent .rPin, #nppPinned .rPin { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 7px; background: rgba(40,36,56,.92); pointer-events: none; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
-#nppRecent .rList li:hover .rPin, #nppRecent .rPin:focus, #nppPinned .rList li:hover .rPin, #nppPinned .rPin:focus { opacity: 1; pointer-events: auto; }
-#nppRecent li.isPinned .rPin, #nppPinned li.isPinned .rPin { color: #ffd166; }
-#nppRecent .rPin:hover, #nppPinned .rPin:hover { background: rgba(255,255,255,.14); color: #fff; }
-#nppRecent .rPin svg, #nppPinned .rPin svg { width: 13px; height: 13px; }
-#nppRecent .rList a, #nppPinned .rList a { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 9px; background: rgba(255,255,255,.07); color: #fff !important; text-decoration: none !important; min-width: 0; }
-#nppRecent .rList a:hover, #nppPinned .rList a:hover { background: rgba(255,255,255,.16); }
-#nppRecent .rList b, #nppPinned .rList b { font: 600 12px/1.25 'Outfit', system-ui, sans-serif; white-space: normal; overflow-wrap: anywhere; }
-#nppRecent .rEmpty, #nppPinned .rEmpty { font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.6); padding: 4px 2px; }
-#nppPinned[hidden] { display: none !important; }
-#nppPinned { background: rgba(255,209,102,.07); border: 1px solid rgba(255,209,102,.22); border-radius: 12px; box-shadow: inset 3px 0 0 #ffd166; }
-#nppPinned .rHead { color: #ffd166; }
+#nqRecent, #nqPinned { display: flex; flex-direction: column; gap: 6px; padding: 10px 11px; box-sizing: border-box; width: 100%; flex: 0 0 auto; position: relative; z-index: 1; }
+#nqRecent .rHead, #nqPinned .rHead { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); padding: 0 2px 2px; }
+#nqRecent .rList, #nqPinned .rList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 106px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.35) transparent; padding-right: 3px; }
+#nqRecent .rList li, #nqPinned .rList li { min-width: 0; position: relative; }
+#nqRecent .rPin, #nqPinned .rPin { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); width: 22px; height: 22px; padding: 0; border: 0; border-radius: 7px; background: rgba(40,36,56,.92); pointer-events: none; color: rgba(255,255,255,.45); display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s, color .15s; }
+#nqRecent .rList li:hover .rPin, #nqRecent .rPin:focus, #nqPinned .rList li:hover .rPin, #nqPinned .rPin:focus { opacity: 1; pointer-events: auto; }
+#nqRecent li.isPinned .rPin, #nqPinned li.isPinned .rPin { color: #ffd166; }
+#nqRecent .rPin:hover, #nqPinned .rPin:hover { background: rgba(255,255,255,.14); color: #fff; }
+#nqRecent .rPin svg, #nqPinned .rPin svg { width: 13px; height: 13px; }
+#nqRecent .rList a, #nqPinned .rList a { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 9px; background: rgba(255,255,255,.07); color: #fff !important; text-decoration: none !important; min-width: 0; }
+#nqRecent .rList a:hover, #nqPinned .rList a:hover { background: rgba(255,255,255,.16); }
+#nqRecent .rList b, #nqPinned .rList b { font: 600 12px/1.25 'Outfit', system-ui, sans-serif; white-space: normal; overflow-wrap: anywhere; }
+#nqRecent .rEmpty, #nqPinned .rEmpty { font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.6); padding: 4px 2px; }
+#nqPinned[hidden] { display: none !important; }
+#nqPinned { background: rgba(255,209,102,.07); border: 1px solid rgba(255,209,102,.22); border-radius: 12px; box-shadow: inset 3px 0 0 #ffd166; }
+#nqPinned .rHead { color: #ffd166; }
 
 /* Combined Pinned / Recent module (sidebar) */
-#nppPinsMod { box-sizing: border-box; width: 100%; min-width: 0; border-radius: 14px; background: var(--npp-card, rgba(20,18,28,.42)); border: 1px solid var(--npp-card-line, rgba(255,255,255,.14)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); overflow: hidden; }
-#nppPinsMod .pTabs { display: flex; gap: 4px; padding: 6px 6px 0; }
-#nppPinsMod .pTabs button { flex: 1 1 0; min-width: 0; padding: 7px 4px; border: 0; border-radius: 9px 9px 0 0; background: transparent; color: rgba(255,255,255,.6); font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; }
-#nppPinsMod .pTabs button:hover { color: #fff; }
-#nppPinsMod .pTabs button.on { color: #fff; background: rgba(255,255,255,.08); border-bottom-color: var(--np-accent, #fff); }
-#nppPinsMod .pTabs button[data-t="pinned"].on { color: #ffd166; border-bottom-color: #ffd166; }
-#nppPinsMod #nppRecent, #nppPinsMod #nppPinned { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 6px 8px 8px; -webkit-backdrop-filter: none; backdrop-filter: none; }
-#nppPinsMod .rHead { display: none; }
-#nppPinsMod[data-tab="pinned"] #nppRecent, #nppPinsMod[data-tab="recent"] #nppPinned { display: none !important; }
-#nppPinsMod[data-tab="pinned"] #nppPinned[hidden] { display: flex !important; }
-#nppPinsMod .rList { max-height: 90px; gap: 3px; overflow-y: auto; scrollbar-width: thin; }
-#nppPinsMod .rList:empty::before { content: "Nothing here yet"; font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.55); padding: 4px 2px; }
-#nppPinsMod .rList li { flex: 0 0 auto; }
-#nppPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 8px !important; }
-#nppPinsMod .rList b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nqPinsMod { box-sizing: border-box; width: 100%; min-width: 0; border-radius: 14px; background: var(--nq-card, rgba(20,18,28,.42)); border: 1px solid var(--nq-card-line, rgba(255,255,255,.14)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); overflow: hidden; }
+#nqPinsMod .pTabs { display: flex; gap: 4px; padding: 6px 6px 0; }
+#nqPinsMod .pTabs button { flex: 1 1 0; min-width: 0; padding: 7px 4px; border: 0; border-radius: 9px 9px 0 0; background: transparent; color: rgba(255,255,255,.6); font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; border-bottom: 2px solid transparent; }
+#nqPinsMod .pTabs button:hover { color: #fff; }
+#nqPinsMod .pTabs button.on { color: #fff; background: rgba(255,255,255,.08); border-bottom-color: var(--nq-accent, #fff); }
+#nqPinsMod .pTabs button[data-t="pinned"].on { color: #ffd166; border-bottom-color: #ffd166; }
+#nqPinsMod #nqRecent, #nqPinsMod #nqPinned { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 6px 8px 8px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+#nqPinsMod .rHead { display: none; }
+#nqPinsMod[data-tab="pinned"] #nqRecent, #nqPinsMod[data-tab="recent"] #nqPinned { display: none !important; }
+#nqPinsMod[data-tab="pinned"] #nqPinned[hidden] { display: flex !important; }
+#nqPinsMod .rList { max-height: 90px; gap: 3px; overflow-y: auto; scrollbar-width: thin; }
+#nqPinsMod .rList:empty::before { content: "Nothing here yet"; font: 500 11px/1.3 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.55); padding: 4px 2px; }
+#nqPinsMod .rList li { flex: 0 0 auto; }
+#nqPinsMod .rList a { box-sizing: border-box; height: 28px; justify-content: center; padding: 0 8px !important; }
+#nqPinsMod .rList b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Fallback footer (modern interface without core) */
-#nppRecentFoot { position: fixed; left: 0; bottom: 0; width: var(--np-col-width, 240px); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
+#nqRecentFoot { position: fixed; left: 0; bottom: 0; width: var(--nq-col-width, 240px); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; }
 
 /* Standalone panel */
-#nppStandaloneRecent { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
-#nppStandaloneRecent[data-stack="1"] { bottom: 74px; }
-#nppStandaloneRecent[data-stack="2"] { bottom: 128px; }
-#nppStandaloneRecent[data-stack="3"] { bottom: 182px; }
-#nppStandaloneRecentToggle { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
-#nppStandaloneRecentToggle:hover { background: #f3f4f6; }
-#nppStandaloneRecentToggle svg { width: 18px; height: 18px; }
-#nppStandaloneRecentPanel { display: none; width: 320px; max-height: 70vh; overflow-y: auto; padding: 10px; border-radius: 14px; background: #1a1722; color: #fff; box-shadow: 0 12px 34px rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.14); }
-#nppStandaloneRecent.open #nppStandaloneRecentPanel { display: block; }
+#nqStandaloneRecent { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
+#nqStandaloneRecent[data-stack="1"] { bottom: 74px; }
+#nqStandaloneRecent[data-stack="2"] { bottom: 128px; }
+#nqStandaloneRecent[data-stack="3"] { bottom: 182px; }
+#nqStandaloneRecentToggle { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+#nqStandaloneRecentToggle:hover { background: #f3f4f6; }
+#nqStandaloneRecentToggle svg { width: 18px; height: 18px; }
+#nqStandaloneRecentPanel { display: none; width: 320px; max-height: 70vh; overflow-y: auto; padding: 10px; border-radius: 14px; background: #1a1722; color: #fff; box-shadow: 0 12px 34px rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.14); }
+#nqStandaloneRecent.open #nqStandaloneRecentPanel { display: block; }
 `;
 
   const styleEl = document.createElement('style');
-  styleEl.id = 'npp-recent-css';
+  styleEl.id = 'nq-recent-css';
   styleEl.textContent = RECENT_CSS;
   (document.head || root).appendChild(styleEl);
 
@@ -150,7 +150,7 @@
   }
   // First real page heading outside the Modern Interface UI (old pages often have the plain title "Neopets").
   function mainHeading() {
-    const UI = '#npHud, #nppFoot, #npLeftBar, #btnOverlay, #npBgSidebar, #npx-host, #nppRecent, #nppPinned, #nppStandaloneRecent, #npxSideBtnHost, #nppAP, #nppAcctDrawer';
+    const UI = '#nqHud, #nqFoot, #nqLeftBar, #btnOverlay, #nqBgSidebar, #nq-host, #nqRecent, #nqPinned, #nqStandaloneRecent, #nqSideBtnHost, #nqAP, #nqAcctDrawer';
     for (const el of document.querySelectorAll('h1, h2')) {
       if (el.closest(UI)) continue;
       const x = (el.textContent || '').replace(/\s+/g, ' ').trim();
@@ -160,7 +160,7 @@
   }
   function headingLabel() {
     if (!/neoboard/i.test(location.pathname)) return '';
-    const UI = '#npHud, #nppFoot, #npLeftBar, #btnOverlay, #npBgSidebar, #npx-host, #nppRecent, #nppStandaloneRecent, #npxSideBtnHost';
+    const UI = '#nqHud, #nqFoot, #nqLeftBar, #btnOverlay, #nqBgSidebar, #nq-host, #nqRecent, #nqStandaloneRecent, #nqSideBtnHost';
     for (const el of document.querySelectorAll('.topicTitle h1, .topicTitle, #boardTopic h1, #boardTopic h2, #boardTopic h3')) {
       if (el.closest(UI)) continue;
       const x = (el.textContent || '').replace(/\s+/g, ' ').replace(/^topic:\s*/i, '').trim();
@@ -227,7 +227,7 @@
   /* ───────────────────────────────── cards ───────────────────────────────── */
   function makeCard(id, head) {
     const card = document.createElement('div');
-    card.id = id; card.className = 'npCard';
+    card.id = id; card.className = 'nqCard';
     card.innerHTML = `<div class="rHead">${head}</div><ul class="rList"></ul>`;
     ['auxclick', 'contextmenu', 'pointerdown'].forEach(ev => card.addEventListener(ev, (e) => e.stopPropagation()));
     card.addEventListener('click', (e) => {
@@ -275,38 +275,38 @@
     card.dataset.painted = '1';
   }
   function refreshCards() {
-    const pinned = $('#nppPinned'), card = $('#nppRecent');
+    const pinned = $('#nqPinned'), card = $('#nqRecent');
     if (pinned) paintPinned(pinned);
     if (card) paintRecent(card);
   }
 
   /* ───────────────────────────────── mode detection ───────────────────────────────── */
-  const hasFoot = () => !!document.getElementById('nppFoot');
-  const hasSidebar = () => !!document.getElementById('npLeftBar');
-  const hasCard = () => !!document.getElementById('nppRecent');
+  const hasFoot = () => !!document.getElementById('nqFoot');
+  const hasSidebar = () => !!document.getElementById('nqLeftBar');
+  const hasCard = () => !!document.getElementById('nqRecent');
 
   /* ───────────────────────────────── mount: sidebar cards ───────────────────────────────── */
   function mountSidebarCards() {
-    // Cards already exist: only continue if they need moving from #nppRecentFoot into the core's #nppFoot.
-    if (hasCard() && (!hasFoot() || $('#nppFoot #nppPinsMod'))) return;
+    // Cards already exist: only continue if they need moving from #nqRecentFoot into the core's #nqFoot.
+    if (hasCard() && (!hasFoot() || $('#nqFoot #nqPinsMod'))) return;
     if (!document.body) return;
 
-    let pinned = $('#nppPinned'), card = $('#nppRecent');
-    if (!card) card = makeCard('nppRecent', 'Recently visited');
-    if (!pinned) pinned = makeCard('nppPinned', 'Pinned');
+    let pinned = $('#nqPinned'), card = $('#nqRecent');
+    if (!card) card = makeCard('nqRecent', 'Recently visited');
+    if (!pinned) pinned = makeCard('nqPinned', 'Pinned');
 
-    // Prefer #nppFoot (the core's footer); otherwise create a fallback footer container.
-    let foot = $('#nppFoot');
+    // Prefer #nqFoot (the core's footer); otherwise create a fallback footer container.
+    let foot = $('#nqFoot');
     if (!foot) {
       foot = document.createElement('div');
-      foot.id = 'nppRecentFoot';
+      foot.id = 'nqRecentFoot';
       document.body.appendChild(foot);
     }
-    const clock = $('#nppBottom', foot);
-    let wrap = $('#nppPinsMod');
+    const clock = $('#nqBottom', foot);
+    let wrap = $('#nqPinsMod');
     if (!wrap) {
       wrap = document.createElement('div');
-      wrap.id = 'nppPinsMod';
+      wrap.id = 'nqPinsMod';
       wrap.dataset.tab = 'recent';
       wrap.innerHTML = '<div class="pTabs" role="tablist"><button type="button" role="tab" data-t="recent">Recent</button><button type="button" role="tab" data-t="pinned">Pinned</button></div>';
       const sync = () => wrap.querySelectorAll('.pTabs button').forEach(b => { const on = b.dataset.t === wrap.dataset.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
@@ -319,7 +319,7 @@
     if (pinned.parentNode !== wrap) wrap.appendChild(pinned);
     if (card.parentNode !== wrap) wrap.appendChild(card);
     if (wrap.parentNode !== foot) foot.insertBefore(wrap, clock || null);
-    const tmp = $('#nppRecentFoot'); if (tmp && tmp !== foot && !tmp.children.length) tmp.remove();
+    const tmp = $('#nqRecentFoot'); if (tmp && tmp !== foot && !tmp.children.length) tmp.remove();
     refreshCards();
     if (!wrap._init) { wrap._init = 1; wrap.dataset.tab = pinned.hidden ? 'recent' : 'pinned'; if (wrap._sync) wrap._sync(); }
 
@@ -330,25 +330,25 @@
 
   /* ───────────────────────────────── mount: standalone panel ───────────────────────────────── */
   function mountStandalone() {
-    if (document.getElementById('nppStandaloneRecent')) return;
+    if (document.getElementById('nqStandaloneRecent')) return;
     if (!document.body) return;
 
     const wrap = document.createElement('div');
-    wrap.id = 'nppStandaloneRecent';
+    wrap.id = 'nqStandaloneRecent';
     wrap.innerHTML = `
-      <button type="button" id="nppStandaloneRecentToggle">${PIN_ICON}<span>Recent</span></button>
-      <div id="nppStandaloneRecentPanel">
-        <div id="nppRecent"></div>
-        <div id="nppPinned"></div>
+      <button type="button" id="nqStandaloneRecentToggle">${PIN_ICON}<span>Recent</span></button>
+      <div id="nqStandaloneRecentPanel">
+        <div id="nqRecent"></div>
+        <div id="nqPinned"></div>
       </div>`;
     document.body.appendChild(wrap);
-    const toggle = wrap.querySelector('#nppStandaloneRecentToggle');
+    const toggle = wrap.querySelector('#nqStandaloneRecentToggle');
     toggle.addEventListener('click', (e) => { e.preventDefault(); wrap.classList.toggle('open'); if (wrap.classList.contains('open')) refreshCards(); });
 
     // Build the two cards inside the panel.
-    const panel = wrap.querySelector('#nppStandaloneRecentPanel');
-    const pinned = makeCard('nppPinned', 'Pinned');
-    const recent = makeCard('nppRecent', 'Recently visited');
+    const panel = wrap.querySelector('#nqStandaloneRecentPanel');
+    const pinned = makeCard('nqPinned', 'Pinned');
+    const recent = makeCard('nqRecent', 'Recently visited');
     panel.innerHTML = '';
     panel.appendChild(pinned);
     panel.appendChild(recent);
@@ -357,14 +357,14 @@
     // Dismiss on outside click.
     document.addEventListener('pointerdown', (e) => {
       if (!wrap.classList.contains('open')) return;
-      if (!e.target.closest('#nppStandaloneRecent')) wrap.classList.remove('open');
+      if (!e.target.closest('#nqStandaloneRecent')) wrap.classList.remove('open');
     }, true);
 
     // Stack above the dailies / accounts buttons when they exist.
     const restack = () => {
       let n = 0;
-      if (document.getElementById('nppStandaloneAcct')) n++;
-      if (document.getElementById('nppDailiesRoot')) n++;
+      if (document.getElementById('nqStandaloneAcct')) n++;
+      if (document.getElementById('nqDailiesRoot')) n++;
       wrap.dataset.stack = String(Math.min(3, n));
     };
     restack();
@@ -397,8 +397,8 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, { once: true }); else mount();
 
   // If the core appears later (its footer element), swap to sidebar cards.
-  // Also re-mount when the core's #nppFoot shows up after we fell back to #nppRecentFoot (fixed, overlaps the sidebar).
-  watchDoc(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nppFoot #nppPinsMod'))) mount(); });
+  // Also re-mount when the core's #nqFoot shows up after we fell back to #nqRecentFoot (fixed, overlaps the sidebar).
+  watchDoc(() => { if ((!hasCard() && (hasFoot() || hasSidebar())) || (hasFoot() && !document.querySelector('#nqFoot #nqPinsMod'))) mount(); });
 
   // Record the current page. The core used to do this at 1.5s / 4s / 8s.
   [1500, 4000, 8000].forEach(ms => setTimeout(recordVisit, ms));
@@ -412,8 +412,8 @@
     setTimeout(() => mo.disconnect(), 60000);
   }
 
-  // Some pages re-render on "npp:main" — re-render the cards.
-  document.addEventListener('npp:main', refreshCards);
+  // Some pages re-render on "nq:main" — re-render the cards.
+  document.addEventListener('nq:main', refreshCards);
 
   // Optional console helper: neopetsResetPins() clears the pin list.
   try { W.neopetsResetPins = () => { const k = pinKey(); if (k) LSdel(k); refreshCards(); }; } catch {}

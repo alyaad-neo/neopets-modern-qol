@@ -1,19 +1,19 @@
   function globalListeners() {
     ['mouseenter', 'mouseleave'].forEach(t => document.addEventListener(t, (e) => {
       const id = e.target && e.target.id;
-      if (id === 'npActivePet' || id === 'qrDock') e.stopImmediatePropagation();
+      if (id === 'nqActivePet' || id === 'qrDock') e.stopImmediatePropagation();
     }, true));
     document.addEventListener('pointerdown', (e) => {
-      if (dockOpen && !e.target.closest('#qrDockWrap, #npActivePet')) setDock(false);
-      if (e.target.closest && e.target.closest('#npBgSave')) saving = true;
+      if (dockOpen && !e.target.closest('#qrDockWrap, #nqActivePet')) setDock(false);
+      if (e.target.closest && e.target.closest('#nqBgSave')) saving = true;
     }, true);
 
     document.addEventListener('click', (e) => {
       const pet = e.target.closest && e.target.closest('#qrDock .qrPet');
       if (!pet || e.target.closest('a')) return;
-      const on = !pet.classList.contains('nppTap');
-      document.querySelectorAll('#qrDock .qrPet.nppTap').forEach(x => x.classList.remove('nppTap'));
-      if (on) pet.classList.add('nppTap');
+      const on = !pet.classList.contains('nqTap');
+      document.querySelectorAll('#qrDock .qrPet.nqTap').forEach(x => x.classList.remove('nqTap'));
+      if (on) pet.classList.add('nqTap');
     });
     document.addEventListener('click', async (e) => {
       const a = e.target.closest && e.target.closest('#qrDock .qrOverlay a');
@@ -29,14 +29,14 @@
     document.addEventListener('mousemove', (e) => {
       const col = 240;
       if (tabEl) tabEl.classList.toggle('show', (innerHeight - e.clientY < 44 && e.clientX > col) || !!(panelEl && panelEl.classList.contains('open')));
-      if (handleEl) handleEl.classList.toggle('npp-show', innerWidth - e.clientX < 44 && e.clientY > 60);
+      if (handleEl) handleEl.classList.toggle('nq-show', innerWidth - e.clientX < 44 && e.clientY > 60);
     }, { passive: true });
 
     document.addEventListener('keydown', (e) => {
       if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target;
       if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
-      setTimeout(() => { const i = $('#nppTools input'); if (i) i.focus(); }, 40);
+      setTimeout(() => { const i = $('#nqTools input'); if (i) i.focus(); }, 40);
     }, true);
   }
 
@@ -56,9 +56,9 @@
   let petSettled = true;
   let petWaited = false;
   const unwait = () => {
-    if (!root.classList.contains('npp-wait')) return;
-    const np = $('#npNp');
-    if ($('#nppFoot') && $('#nppTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('npp-wait');
+    if (!root.classList.contains('nq-wait')) return;
+    const np = $('#nqNp');
+    if ($('#nqFoot') && $('#nqTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('nq-wait');
   };
   const cachedAtStart = LSget('nq_hud_username');
   let tabUser = '';
@@ -114,15 +114,15 @@
   const AUTH_RE = /^\/(log(in|out)[^/]*|loginpage\.phtml|signin|neopass|hub\/login|index\.phtml)(\/|\.|$)/i;
   const isAuth = AUTH_RE.test(location.pathname);
   function stripUi() {
-    root.classList.add('npp-auth');
-    const st = document.getElementById('npp-auth-css') || document.createElement('style');
-    st.id = 'npp-auth-css';
-    st.textContent = 'html.npp-auth #npx-host, html.npp-auth #npHud, html.npp-auth #npLeftBar, html.npp-auth #btnOverlay, html.npp-auth #npxSideBtnHost, html.npp-auth #npBgHandle, html.npp-auth #npBgSidebar, html.npp-auth #qrDockWrap, html.npp-auth #npxScrollTrack, html.npp-auth #nppFoot, html.npp-auth #nppTools, html.npp-auth #nppBell,html.npp-auth #nppNestPop, html.npp-auth #nppNestMenu { display: none !important; }\nhtml.npp-auth, html.npp-auth body { visibility: visible !important; opacity: 1 !important; }';
+    root.classList.add('nq-auth');
+    const st = document.getElementById('nq-auth-css') || document.createElement('style');
+    st.id = 'nq-auth-css';
+    st.textContent = 'html.nq-auth #nq-host, html.nq-auth #nqHud, html.nq-auth #nqLeftBar, html.nq-auth #btnOverlay, html.nq-auth #nqSideBtnHost, html.nq-auth #nqBgHandle, html.nq-auth #nqBgSidebar, html.nq-auth #qrDockWrap, html.nq-auth #nqScrollTrack, html.nq-auth #nqFoot, html.nq-auth #nqTools, html.nq-auth #nqBell,html.nq-auth #nqNestPop, html.nq-auth #nqNestMenu { display: none !important; }\nhtml.nq-auth, html.nq-auth body { visibility: visible !important; opacity: 1 !important; }';
     if (!st.isConnected) (document.head || root).appendChild(st);
     document.querySelectorAll('style').forEach(el => {
       const t = el.textContent || '';
       if (el === st) return;
-      if (['np-core-layout', 'np-kill-native', 'npHudStyle', 'npRecolorSite', 'np-frame-resize-style'].includes(el.id) || t.includes('#npLeftBar') || t.includes('#npBgHandle')) el.remove();
+      if (['nq-core-layout', 'nq-kill-native', 'nqHudStyle', 'nqRecolorSite', 'nq-frame-resize-style'].includes(el.id) || t.includes('#nqLeftBar') || t.includes('#nqBgHandle')) el.remove();
     });
   }
   function checkLoggedOutHome() {

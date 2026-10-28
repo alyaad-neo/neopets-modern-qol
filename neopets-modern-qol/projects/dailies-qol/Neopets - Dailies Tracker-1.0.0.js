@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.9
+// @version      1.0.10
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -97,7 +97,7 @@
   }
   function snowRowHTML() {
     const st = snowagerState(), b = snowBadge(st);
-    return `<a class="nppSnowRow" href="https://www.neopets.com/winter/snowager.phtml"><span>Snowager</span><em class="nppSnowBadge${st.asleep ? ' asleep' : ''}" title="${b.title}">${b.text}</em></a>`;
+    return `<a class="nqSnowRow" href="https://www.neopets.com/winter/snowager.phtml"><span>Snowager</span><em class="nqSnowBadge${st.asleep ? ' asleep' : ''}" title="${b.title}">${b.text}</em></a>`;
   }
 
   /* ─── JellyNeo windows: Symol Hole, Tarla's Toolbar ─── */
@@ -158,7 +158,7 @@
       if (u || ++tries > 100) { clearInterval(iv); acctUser = u || LSget('nq_hud_username'); cb(); }
     }, 100);
   }
-  document.addEventListener('npp:main', () => { if (!onMain()) ['nppDaily', 'nppDailiesRoot'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); });
+  document.addEventListener('nq:main', () => { if (!onMain()) ['nqDaily', 'nqDailiesRoot'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); });
   function ncShare(name, ts, approx) {
     if (typeof GM_getValue !== 'function' || typeof GM_setValue !== 'function') return;
     try { const o = JSON.parse(GM_getValue(NC_CD_KEY, '{}') || '{}'); o[curUser().toLowerCase() + '|' + name] = { t: ts, a: approx ? 1 : 0 }; GM_setValue(NC_CD_KEY, JSON.stringify(o)); } catch {}
@@ -200,32 +200,32 @@
     err: '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   };
   // The result page hides the Modern Interface header/sidebar, so the panel centres on the whole window.
-  const QAS_CSS = `#npx-host, #npHud, #nppFoot, #npBgSidebar, #btnOverlay, #npxSideBtnHost { display: none !important; }
-#nppQas { position: fixed; z-index: 1500; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 40px)); box-sizing: border-box; padding: 0 0 22px; overflow: hidden; border-radius: 22px; background: #fff; box-shadow: 0 22px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06); color: #1f2937; text-align: center; font: 500 15px/1.45 'Outfit', system-ui, sans-serif; animation: nppQasIn .35s ease; }
-@keyframes nppQasIn { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
-@keyframes nppQasFade { from { opacity: 0; } to { opacity: 1; } }
-#nppQas.pop { left: 0; top: 0; transform: none; width: 100%; border-radius: 0; box-shadow: none; animation: nppQasFade .25s ease; }
-#nppQas, #nppQas * { box-sizing: border-box; font-family: 'Outfit', system-ui, sans-serif; }
-#nppQas .top { padding: 28px 24px 18px; background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
-#nppQas.ok { --c1: #3cc774; --c2: #1f9e55; } #nppQas.done { --c1: #f6b73c; --c2: #e08a12; } #nppQas.err { --c1: #ef6b6b; --c2: #cf3b3b; }
-#nppQas .ico { width: 62px; height: 62px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.22); box-shadow: inset 0 0 0 2px rgba(255,255,255,.45); }
-#nppQas .ico svg { width: 32px; height: 32px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); }
-#nppQas h2 { margin: 0; font: 400 28px/1.1 'CafeteriaBlack', Georgia, serif; letter-spacing: .01em; }
-#nppQas .msg { margin: 18px 22px 0; padding: 13px 16px; border-radius: 14px; background: #f3f4f6; color: #374151; font-size: 14.5px; }
-#nppQas .next { margin: 12px 22px 0; color: #6b7280; font-size: 13px; font-weight: 600; }
-#nppQas .btns { display: flex; gap: 10px; margin: 18px 22px 0; }
-#nppQas .btns a { flex: 1; display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fff; color: #1f2937; font-weight: 700; font-size: 14px; text-decoration: none; transition: background .15s, transform .15s; }
-#nppQas .btns a:hover { background: #f3f4f6; transform: translateY(-1px); }
-#nppQas .btns a.go { border: 0; background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
-#nppQas .btns a.go:hover { filter: brightness(1.06); background: linear-gradient(180deg, var(--c1), var(--c2)); }`;
+  const QAS_CSS = `#nq-host, #nqHud, #nqFoot, #nqBgSidebar, #btnOverlay, #nqSideBtnHost { display: none !important; }
+#nqQas { position: fixed; z-index: 1500; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 40px)); box-sizing: border-box; padding: 0 0 22px; overflow: hidden; border-radius: 22px; background: #fff; box-shadow: 0 22px 60px rgba(0,0,0,.28), 0 0 0 1px rgba(0,0,0,.06); color: #1f2937; text-align: center; font: 500 15px/1.45 'Outfit', system-ui, sans-serif; animation: nqQasIn .35s ease; }
+@keyframes nqQasIn { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)) scale(.97); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes nqQasFade { from { opacity: 0; } to { opacity: 1; } }
+#nqQas.pop { left: 0; top: 0; transform: none; width: 100%; border-radius: 0; box-shadow: none; animation: nqQasFade .25s ease; }
+#nqQas, #nqQas * { box-sizing: border-box; font-family: 'Outfit', system-ui, sans-serif; }
+#nqQas .top { padding: 28px 24px 18px; background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); }
+#nqQas.ok { --c1: #3cc774; --c2: #1f9e55; } #nqQas.done { --c1: #f6b73c; --c2: #e08a12; } #nqQas.err { --c1: #ef6b6b; --c2: #cf3b3b; }
+#nqQas .ico { width: 62px; height: 62px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,.22); box-shadow: inset 0 0 0 2px rgba(255,255,255,.45); }
+#nqQas .ico svg { width: 32px; height: 32px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); }
+#nqQas h2 { margin: 0; font: 400 28px/1.1 'CafeteriaBlack', Georgia, serif; letter-spacing: .01em; }
+#nqQas .msg { margin: 18px 22px 0; padding: 13px 16px; border-radius: 14px; background: #f3f4f6; color: #374151; font-size: 14.5px; }
+#nqQas .next { margin: 12px 22px 0; color: #6b7280; font-size: 13px; font-weight: 600; }
+#nqQas .btns { display: flex; gap: 10px; margin: 18px 22px 0; }
+#nqQas .btns a { flex: 1; display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 999px; border: 1px solid #e5e7eb; background: #fff; color: #1f2937; font-weight: 700; font-size: 14px; text-decoration: none; transition: background .15s, transform .15s; }
+#nqQas .btns a:hover { background: #f3f4f6; transform: translateY(-1px); }
+#nqQas .btns a.go { border: 0; background: linear-gradient(180deg, var(--c1), var(--c2)); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.3); }
+#nqQas .btns a.go:hover { filter: brightness(1.06); background: linear-gradient(180deg, var(--c1), var(--c2)); }`;
   function qasalanPanel(res) {
-    if (!document.body || document.getElementById('nppQas')) return;
+    if (!document.body || document.getElementById('nqQas')) return;
     const done = !res.ok && /tomorrow|already|come back|back later/i.test(res.msg);
     const kind = res.ok ? 'ok' : done ? 'done' : 'err';
     const title = res.ok ? 'Success!' : done ? 'Done for today' : 'That didn’t work';
     const pop = isPopup;   // opened by qasPopupLinks(): fill the small window and size it to the panel
-    const st = document.createElement('style'); st.id = 'nppQasCss'; st.textContent = QAS_CSS + (pop ? '\nhtml, body { margin: 0; background: #fff; }' : ''); (document.head || root).appendChild(st);
-    const el = document.createElement('div'); el.id = 'nppQas'; el.className = kind + (pop ? ' pop' : '');
+    const st = document.createElement('style'); st.id = 'nqQasCss'; st.textContent = QAS_CSS + (pop ? '\nhtml, body { margin: 0; background: #fff; }' : ''); (document.head || root).appendChild(st);
+    const el = document.createElement('div'); el.id = 'nqQas'; el.className = kind + (pop ? ' pop' : '');
     const CD_MS = (7 * 60 + 7) * 60000;
     el.innerHTML = `<div class="top"><div class="ico">${QAS_ICONS[kind]}</div><h2>${esc(title)}</h2></div>`
       + (res.msg ? `<div class="msg">${esc(res.msg)}</div>` : '')
@@ -287,7 +287,7 @@
       if (!a || !/\/games\/giveaway\/process_giveaway\.phtml/i.test(a.href)) return;
       e.preventDefault();
       const w = 460, h = 440, x = Math.round(window.screenX + (window.outerWidth - w) / 2), y = Math.round(window.screenY + (window.outerHeight - h) / 3);
-      qp = window.open(a.href, 'nppQas', `popup,width=${w},height=${h},left=${x},top=${y}`);
+      qp = window.open(a.href, 'nqQas', `popup,width=${w},height=${h},left=${x},top=${y}`);
       if (!qp) location.href = a.href;
     }, true);
   }
@@ -361,7 +361,7 @@
     document.addEventListener('submit', () => setTimeout(() => mark(false), 0), true);
     document.addEventListener('click', (e) => {
       const t = e.target.closest && e.target.closest('button, input[type="submit"], input[type="image"], [onclick], area, a[href]');
-      if (!t || t.closest('#npHud, #nppFoot, #npBgSidebar, #nppDailiesRoot, #nppDailiesMenu')) return;
+      if (!t || t.closest('#nqHud, #nqFoot, #nqBgSidebar, #nqDailiesRoot, #nqDailiesMenu')) return;
       if (t.tagName === 'A') {
         try { const u = new URL(t.href); if (u.pathname.toLowerCase() !== here || !u.search) return; } catch { return; }
       }
@@ -377,10 +377,10 @@
   }
   function undecoratePremium(menu) {
     if (!menu || !menu.querySelectorAll) return;
-    menu.querySelectorAll('.npp-cd, .nppSnowRow').forEach(el => el.remove());
+    menu.querySelectorAll('.nq-cd, .nqSnowRow').forEach(el => el.remove());
   }
   function refreshAllMenus() {
-    document.querySelectorAll('#menu-premium, #nppDailiesMenu').forEach(m => { try { refreshCd(m); } catch {} });
+    document.querySelectorAll('#menu-premium, #nqDailiesMenu').forEach(m => { try { refreshCd(m); } catch {} });
   }
   function refreshCd(menu) {
     if (!menu || !menu.querySelectorAll) return;
@@ -388,10 +388,10 @@
     let dirty = false;
     menu.querySelectorAll('a').forEach(a => {
       const name = ((a.querySelector('span') || {}).textContent || a.textContent || '').trim();
-      a.querySelectorAll('.npp-cd').forEach(x => x.remove());
+      a.querySelectorAll('.nq-cd').forEach(x => x.remove());
       if (name === 'Symol Hole') {
         const sw = symolLoad(), z = (n) => String(n).padStart(2, '0'), b = document.createElement('em');
-        b.className = 'npp-cd npp-win';
+        b.className = 'nq-cd nq-win';
         b.textContent = sw ? `:${z(Math.floor(sw.start / 60))}–:${z(Math.floor((sw.start + sw.len - 1) / 60))}` : '?';
         b.title = sw ? 'Today’s Symol Hole prize window (each hour, NST)' : 'Today’s window isn’t known yet' + (LSget(SYM_ST) && LSget(SYM_ST) !== 'ok' ? ': ' + LSget(SYM_ST) : '');
         a.appendChild(b);
@@ -400,7 +400,7 @@
       const left = cdLeft(name, store[name]);
       if (left <= 0) { delete store[name]; delete store['~' + name]; dirty = true; return; }
       const b = document.createElement('em');
-      b.className = 'npp-cd'; const approx = store['~' + name] && PREMIUM_CD[name] !== 'nst';
+      b.className = 'nq-cd'; const approx = store['~' + name] && PREMIUM_CD[name] !== 'nst';
       b.textContent = (approx ? '≤' : '') + cdText(left);
       b.title = approx ? 'Counted from when the script first saw it was done, so it may end sooner · Alt+click to clear' : 'On cooldown · Alt+click to clear';
       a.appendChild(b);
@@ -411,29 +411,29 @@
   function qasReady() { const t = cdLoad()[QAS]; return seenLoad().includes(QAS) && !(t && cdLeft(QAS, t) > 0) && !isAcked(QAS); }
   function syncAlerts(menu) {
     if (!menu || !menu.querySelectorAll) return;
-    const rows = () => [...menu.querySelectorAll('.nppAlertRow')];
-    let snow = menu.querySelector('.nppSnowRow:not(.nppAlertRow)');
+    const rows = () => [...menu.querySelectorAll('.nqAlertRow')];
+    let snow = menu.querySelector('.nqSnowRow:not(.nqAlertRow)');
     [{ n: TRUDY, url: 'https://www.neopets.com/trudys_surprise.phtml', on: trudyReady() && !isAcked(TRUDY) },
      { n: QAS, url: QASALAN_ITEM[1], on: qasReady() }].forEach(def => {
       const row = rows().find(r => r.dataset.n === def.n);
-      if (def.on && !row) menu.insertAdjacentHTML('afterbegin', `<a class="nppSnowRow nppAlertRow" data-n="${esc(def.n)}" href="${esc(def.url)}">${GIFT}<span>${esc(def.n)}</span><em class="nppSnowBadge ready">Ready</em></a>`);
+      if (def.on && !row) menu.insertAdjacentHTML('afterbegin', `<a class="nqSnowRow nqAlertRow" data-n="${esc(def.n)}" href="${esc(def.url)}">${GIFT}<span>${esc(def.n)}</span><em class="nqSnowBadge ready">Ready</em></a>`);
       else if (!def.on && row) row.remove();
-      const orig = [...menu.querySelectorAll('a:not(.nppAlertRow)')].find(a => ((a.querySelector('span') || {}).textContent || '').trim() === def.n);
+      const orig = [...menu.querySelectorAll('a:not(.nqAlertRow)')].find(a => ((a.querySelector('span') || {}).textContent || '').trim() === def.n);
       if (orig) orig.style.display = def.on ? 'none' : '';
     });
     [QAS, TRUDY].map(n => rows().find(r => r.dataset.n === n)).filter(Boolean).reverse().forEach(r => { if (menu.firstElementChild !== r) menu.prepend(r); });
     if (snowagerState().asleep && !snowAcked(snowagerState())) {
-      if (!snow) { menu.insertAdjacentHTML('afterbegin', snowRowHTML()); snow = menu.querySelector('.nppSnowRow:not(.nppAlertRow)'); }
+      if (!snow) { menu.insertAdjacentHTML('afterbegin', snowRowHTML()); snow = menu.querySelector('.nqSnowRow:not(.nqAlertRow)'); }
       if (menu.firstElementChild !== snow) menu.prepend(snow);
     } else if (snow) snow.remove();
   }
   function updateSnow(menu, btn) {
     if (!onMain()) return;
     const st = snowagerState(), b = snowBadge(st);
-    const el = menu && menu.querySelector('.nppSnowBadge:not(.ready)');
+    const el = menu && menu.querySelector('.nqSnowBadge:not(.ready)');
     if (el) { el.classList.toggle('asleep', st.asleep); el.textContent = b.text; el.title = b.title; }
     syncAlerts(menu);
-    if (btn) btn.classList.toggle('npp-alert-on', (st.asleep && !snowAcked(st)) || (trudyReady() && !isAcked(TRUDY)) || qasReady());
+    if (btn) btn.classList.toggle('nq-alert-on', (st.asleep && !snowAcked(st)) || (trudyReady() && !isAcked(TRUDY)) || qasReady());
   }
 
   /* ─── dailyModel + sidebar card ─── */
@@ -464,82 +464,82 @@
 
   /* ─── CSS injected by this file ─── */
   const NPP_CSS = `
-#nppDaily[hidden] { display: none !important; }
-#nppDaily:not(:has(.nppDHero)) { display: none !important; }
-#nppDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-#nppDaily, #nppDaily * { box-sizing: border-box; text-shadow: none !important; }
-#nppDaily .nppDBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-#nppDaily .nppDHero { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 13px; background: rgba(255,255,255,.08); color: #fff !important; text-decoration: none !important; overflow: hidden; transition: background .15s, transform .15s, border-color .15s; }
-#nppDaily .nppDHero:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.34); transform: translateY(-1px); }
-#nppDaily .nppDHero .nppDIco { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
-#nppDaily .nppDHero .nppDIco svg { width: 19px; height: 19px; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
-#nppDaily .nppDHero .nppDTxt { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-#nppDaily .nppDHero .nppDTxt b { overflow-wrap: anywhere; white-space: normal; font: 700 13.5px/1.2 'Outfit', system-ui, sans-serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
-#nppDaily .nppDHero .nppDTxt small.sub { color: rgba(255,255,255,.62); font-size: 10.5px !important; }
-#nppDaily .nppDHero .nppDTxt small { overflow-wrap: anywhere; white-space: normal; font: 500 11px/1.25 'Outfit', system-ui, sans-serif !important; color: rgba(255,255,255,.8); font-variant-numeric: tabular-nums; }
-#nppDaily .nppDHero > em { padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.16); font: normal 700 10px/1.5 'Outfit', system-ui, sans-serif !important; letter-spacing: .06em; text-transform: uppercase; }
-#nppDaily .nppDLocked { cursor: default; }
-#nppDaily .nppDLocked:hover { transform: none; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
-#nppDaily .nppDHero .nppDProg { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.12); }
-#nppDaily .nppDProg i { display: block; height: 100%; border-radius: 0 2px 2px 0; background: var(--np-accent, #fff); transition: width .6s linear; }
-#nppDaily .nppDHero.asleep { background: linear-gradient(135deg, rgba(86,160,255,.30), rgba(86,160,255,.10)); border-color: rgba(140,195,255,.5); }
-#nppDaily .nppDHero.asleep .nppDIco { background: rgba(120,185,255,.30); color: #cfe6ff; }
-#nppDaily .nppDHero.asleep > em { background: #2f7de0; color: #fff; }
-#nppDaily .nppDHero.open { background: linear-gradient(135deg, rgba(47,216,115,.30), rgba(47,216,115,.10)); border-color: rgba(110,235,160,.55); animation: nppPulse 1.6s ease-in-out infinite; }
-#nppDaily .nppDHero.open .nppDIco { background: rgba(47,216,115,.30); color: #c4ffdd; }
-#nppDaily .nppDHero.open > em { background: #22b45a; color: #fff; }
-#nppDaily .nppDHero.soon { border-color: rgba(255,210,122,.5); }
-#nppDaily .nppDHero.soon .nppDIco { background: rgba(255,210,122,.24); color: #ffe2a3; }
-#nppDaily .nppDHero.soon > em { background: #f0a020; color: #2a1a00; }
-@keyframes nppPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
-#nppDaily .nppDHero.nppTh-snow { background: radial-gradient(circle, rgba(255,255,255,.95) 1.3px, transparent 1.8px) 0 0 / 16px 16px, radial-gradient(circle, rgba(255,255,255,.8) 1px, transparent 1.5px) 8px 11px / 24px 24px, linear-gradient(160deg, #f4fbff 0%, #cfeafc 55%, #a9d8f5 100%) !important; border: 1px solid rgba(255,255,255,.85) !important; color: #0e2a44 !important; }
-#nppDaily .nppTh-snow b { color: #0e2a44 !important; text-shadow: none !important; }
-#nppDaily .nppTh-snow small { color: rgba(14,42,68,.78) !important; }
-#nppDaily .nppTh-snow .nppDIco { background: rgba(255,255,255,.75) !important; color: #2b6fa6 !important; box-shadow: inset 0 0 0 1px rgba(43,111,166,.25) !important; }
-#nppDaily .nppTh-snow > em { background: #2b6fa6 !important; color: #fff !important; }
-#nppDaily .nppTh-snow.asleep > em { background: #1b4f85 !important; }
-#nppDaily .nppTh-snow .nppDProg { background: rgba(14,42,68,.12) !important; }
-#nppDaily .nppTh-snow .nppDProg i { background: #2b6fa6 !important; }
-#nppDaily .nppDHero.nppTh-cave { background: radial-gradient(ellipse at 50% 115%, rgba(255,214,120,.35), transparent 60%), linear-gradient(160deg, #6b5440 0%, #3b2d22 60%, #251b14 100%) !important; border: 1px solid rgba(255,210,122,.3) !important; color: #fbf1df !important; }
-#nppDaily .nppTh-cave b { color: #fff6e6 !important; text-shadow: 0 1px 2px rgba(0,0,0,.6) !important; }
-#nppDaily .nppTh-cave small { color: rgba(251,241,223,.78) !important; }
-#nppDaily .nppTh-cave .nppDIco { background: rgba(255,210,122,.2) !important; color: #ffe2a3 !important; }
-#nppDaily .nppTh-cave.open { box-shadow: 0 0 16px rgba(110,235,160,.35) !important; }
-#nppDaily .nppTh-cave > em { background: #c98a1d !important; color: #2a1a00 !important; }
-#nppDaily .nppTh-cave.open > em { background: #22b45a !important; color: #fff !important; }
-#nppDaily .nppTh-cave .nppDProg { background: rgba(0,0,0,.35) !important; }
-#nppDaily .nppDHero.nppTh-gift { background: radial-gradient(circle at 85% 15%, rgba(255,255,255,.35), transparent 55%), linear-gradient(160deg, #ffe3ef 0%, #ffc8dd 55%, #f5a8c4 100%) !important; border: 1px solid rgba(255,255,255,.8) !important; color: #5a1c34 !important; }
-#nppDaily .nppTh-gift b { color: #5a1c34 !important; text-shadow: none !important; }
-#nppDaily .nppTh-gift small { color: rgba(90,28,52,.78) !important; }
-#nppDaily .nppTh-gift .nppDIco { background: rgba(255,255,255,.75) !important; color: #c2185b !important; box-shadow: inset 0 0 0 1px rgba(194,24,91,.25) !important; }
-#nppDaily .nppTh-gift > em { background: #c2185b !important; color: #fff !important; }
-#nppDaily .nppTh-gift.open > em { background: #22b45a !important; color: #fff !important; }
-#nppDaily .nppTh-gift .nppDProg { background: rgba(90,28,52,.16) !important; }
-#nppDaily .nppTh-gift .nppDProg i { background: #c2185b !important; }
+#nqDaily[hidden] { display: none !important; }
+#nqDaily:not(:has(.nqDHero)) { display: none !important; }
+#nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+#nqDaily, #nqDaily * { box-sizing: border-box; text-shadow: none !important; }
+#nqDaily .nqDBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+#nqDaily .nqDHero { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 13px; background: rgba(255,255,255,.08); color: #fff !important; text-decoration: none !important; overflow: hidden; transition: background .15s, transform .15s, border-color .15s; }
+#nqDaily .nqDHero:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.34); transform: translateY(-1px); }
+#nqDaily .nqDHero .nqDIco { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: rgba(255,255,255,.14); box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
+#nqDaily .nqDHero .nqDIco svg { width: 19px; height: 19px; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+#nqDaily .nqDHero .nqDTxt { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+#nqDaily .nqDHero .nqDTxt b { overflow-wrap: anywhere; white-space: normal; font: 700 13.5px/1.2 'Outfit', system-ui, sans-serif !important; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); }
+#nqDaily .nqDHero .nqDTxt small.sub { color: rgba(255,255,255,.62); font-size: 10.5px !important; }
+#nqDaily .nqDHero .nqDTxt small { overflow-wrap: anywhere; white-space: normal; font: 500 11px/1.25 'Outfit', system-ui, sans-serif !important; color: rgba(255,255,255,.8); font-variant-numeric: tabular-nums; }
+#nqDaily .nqDHero > em { padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.16); font: normal 700 10px/1.5 'Outfit', system-ui, sans-serif !important; letter-spacing: .06em; text-transform: uppercase; }
+#nqDaily .nqDLocked { cursor: default; }
+#nqDaily .nqDLocked:hover { transform: none; background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); }
+#nqDaily .nqDHero .nqDProg { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.12); }
+#nqDaily .nqDProg i { display: block; height: 100%; border-radius: 0 2px 2px 0; background: var(--nq-accent, #fff); transition: width .6s linear; }
+#nqDaily .nqDHero.asleep { background: linear-gradient(135deg, rgba(86,160,255,.30), rgba(86,160,255,.10)); border-color: rgba(140,195,255,.5); }
+#nqDaily .nqDHero.asleep .nqDIco { background: rgba(120,185,255,.30); color: #cfe6ff; }
+#nqDaily .nqDHero.asleep > em { background: #2f7de0; color: #fff; }
+#nqDaily .nqDHero.open { background: linear-gradient(135deg, rgba(47,216,115,.30), rgba(47,216,115,.10)); border-color: rgba(110,235,160,.55); animation: nqPulse 1.6s ease-in-out infinite; }
+#nqDaily .nqDHero.open .nqDIco { background: rgba(47,216,115,.30); color: #c4ffdd; }
+#nqDaily .nqDHero.open > em { background: #22b45a; color: #fff; }
+#nqDaily .nqDHero.soon { border-color: rgba(255,210,122,.5); }
+#nqDaily .nqDHero.soon .nqDIco { background: rgba(255,210,122,.24); color: #ffe2a3; }
+#nqDaily .nqDHero.soon > em { background: #f0a020; color: #2a1a00; }
+@keyframes nqPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+#nqDaily .nqDHero.nqTh-snow { background: radial-gradient(circle, rgba(255,255,255,.95) 1.3px, transparent 1.8px) 0 0 / 16px 16px, radial-gradient(circle, rgba(255,255,255,.8) 1px, transparent 1.5px) 8px 11px / 24px 24px, linear-gradient(160deg, #f4fbff 0%, #cfeafc 55%, #a9d8f5 100%) !important; border: 1px solid rgba(255,255,255,.85) !important; color: #0e2a44 !important; }
+#nqDaily .nqTh-snow b { color: #0e2a44 !important; text-shadow: none !important; }
+#nqDaily .nqTh-snow small { color: rgba(14,42,68,.78) !important; }
+#nqDaily .nqTh-snow .nqDIco { background: rgba(255,255,255,.75) !important; color: #2b6fa6 !important; box-shadow: inset 0 0 0 1px rgba(43,111,166,.25) !important; }
+#nqDaily .nqTh-snow > em { background: #2b6fa6 !important; color: #fff !important; }
+#nqDaily .nqTh-snow.asleep > em { background: #1b4f85 !important; }
+#nqDaily .nqTh-snow .nqDProg { background: rgba(14,42,68,.12) !important; }
+#nqDaily .nqTh-snow .nqDProg i { background: #2b6fa6 !important; }
+#nqDaily .nqDHero.nqTh-cave { background: radial-gradient(ellipse at 50% 115%, rgba(255,214,120,.35), transparent 60%), linear-gradient(160deg, #6b5440 0%, #3b2d22 60%, #251b14 100%) !important; border: 1px solid rgba(255,210,122,.3) !important; color: #fbf1df !important; }
+#nqDaily .nqTh-cave b { color: #fff6e6 !important; text-shadow: 0 1px 2px rgba(0,0,0,.6) !important; }
+#nqDaily .nqTh-cave small { color: rgba(251,241,223,.78) !important; }
+#nqDaily .nqTh-cave .nqDIco { background: rgba(255,210,122,.2) !important; color: #ffe2a3 !important; }
+#nqDaily .nqTh-cave.open { box-shadow: 0 0 16px rgba(110,235,160,.35) !important; }
+#nqDaily .nqTh-cave > em { background: #c98a1d !important; color: #2a1a00 !important; }
+#nqDaily .nqTh-cave.open > em { background: #22b45a !important; color: #fff !important; }
+#nqDaily .nqTh-cave .nqDProg { background: rgba(0,0,0,.35) !important; }
+#nqDaily .nqDHero.nqTh-gift { background: radial-gradient(circle at 85% 15%, rgba(255,255,255,.35), transparent 55%), linear-gradient(160deg, #ffe3ef 0%, #ffc8dd 55%, #f5a8c4 100%) !important; border: 1px solid rgba(255,255,255,.8) !important; color: #5a1c34 !important; }
+#nqDaily .nqTh-gift b { color: #5a1c34 !important; text-shadow: none !important; }
+#nqDaily .nqTh-gift small { color: rgba(90,28,52,.78) !important; }
+#nqDaily .nqTh-gift .nqDIco { background: rgba(255,255,255,.75) !important; color: #c2185b !important; box-shadow: inset 0 0 0 1px rgba(194,24,91,.25) !important; }
+#nqDaily .nqTh-gift > em { background: #c2185b !important; color: #fff !important; }
+#nqDaily .nqTh-gift.open > em { background: #22b45a !important; color: #fff !important; }
+#nqDaily .nqTh-gift .nqDProg { background: rgba(90,28,52,.16) !important; }
+#nqDaily .nqTh-gift .nqDProg i { background: #c2185b !important; }
 
 /* ── Standalone dailies panel ── */
-#nppDailiesRoot { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
-#nppDailiesRoot[data-modern="1"] { display: none !important; }
-#nppDailiesToggle { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
-#nppDailiesToggle:hover { background: #f3f4f6; }
-#nppDailiesToggle svg { width: 18px; height: 18px; }
-#nppDailiesMenu { display: none; width: 300px; max-height: 70vh; overflow-y: auto; padding: 10px; border-radius: 14px; background: #1a1722; color: #fff; box-shadow: 0 12px 34px rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.14); }
-#nppDailiesRoot.open #nppDailiesMenu { display: block; }
-#nppDailiesMenu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; color: #fff; text-decoration: none; }
-#nppDailiesMenu a:hover { background: rgba(255,255,255,.1); }
-#nppDailiesMenu a span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#nppDailiesMenu a .npp-cd { flex: none; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; }
-#nppDailiesMenu a .npp-cd.npp-win { background: rgba(255,255,255,.16); }
-#nppDailiesMenu .nppSnowRow .nppSnowBadge { margin-left: auto; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
-#nppDailiesMenu .nppSnowRow .nppSnowBadge.asleep { background: #22b45a; }
-#nppDailiesMenu .nppSnowRow .nppSnowBadge.ready { background: #f0a020; color: #2a1a00; }
-#nppDailiesMenu .nppSnowRow svg { width: 22px; height: 22px; flex: none; color: #bfe3ff; }
-#nppDailiesMenu .nppAlertRow svg { color: #ffd27a !important; }
-#nppDailiesMenu .menuHead { padding: 8px 10px 4px; font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+#nqDailiesRoot { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
+#nqDailiesRoot[data-modern="1"] { display: none !important; }
+#nqDailiesToggle { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+#nqDailiesToggle:hover { background: #f3f4f6; }
+#nqDailiesToggle svg { width: 18px; height: 18px; }
+#nqDailiesMenu { display: none; width: 300px; max-height: 70vh; overflow-y: auto; padding: 10px; border-radius: 14px; background: #1a1722; color: #fff; box-shadow: 0 12px 34px rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.14); }
+#nqDailiesRoot.open #nqDailiesMenu { display: block; }
+#nqDailiesMenu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; color: #fff; text-decoration: none; }
+#nqDailiesMenu a:hover { background: rgba(255,255,255,.1); }
+#nqDailiesMenu a span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#nqDailiesMenu a .nq-cd { flex: none; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; }
+#nqDailiesMenu a .nq-cd.nq-win { background: rgba(255,255,255,.16); }
+#nqDailiesMenu .nqSnowRow .nqSnowBadge { margin-left: auto; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#nqDailiesMenu .nqSnowRow .nqSnowBadge.asleep { background: #22b45a; }
+#nqDailiesMenu .nqSnowRow .nqSnowBadge.ready { background: #f0a020; color: #2a1a00; }
+#nqDailiesMenu .nqSnowRow svg { width: 22px; height: 22px; flex: none; color: #bfe3ff; }
+#nqDailiesMenu .nqAlertRow svg { color: #ffd27a !important; }
+#nqDailiesMenu .menuHead { padding: 8px 10px 4px; font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 `;
 
   const styleEl = document.createElement('style');
-  styleEl.id = 'npp-dailies-css';
+  styleEl.id = 'nq-dailies-css';
   styleEl.textContent = NPP_CSS;
   (document.head || root).appendChild(styleEl);
 
@@ -547,22 +547,22 @@
   const SUN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 
   function mountStandalonePanel() {
-    if (document.getElementById('nppDailiesRoot')) return;
+    if (document.getElementById('nqDailiesRoot')) return;
     if (!document.body) return;
     const wrap = document.createElement('div');
-    wrap.id = 'nppDailiesRoot';
+    wrap.id = 'nqDailiesRoot';
     wrap.dataset.modern = NQ.base ? '1' : '0';
     wrap.innerHTML = `
-      <button type="button" id="nppDailiesToggle">${SUN_SVG}<span>Dailies</span></button>
-      <div id="nppDailiesMenu">
+      <button type="button" id="nqDailiesToggle">${SUN_SVG}<span>Dailies</span></button>
+      <div id="nqDailiesMenu">
         <div class="menuHead">Today</div>
         ${DAILY_LINKS.map(([name, url]) => `<a href="${esc(url)}" data-name="${esc(name)}"><span>${esc(name)}</span></a>`).join('')}
       </div>`;
     document.body.appendChild(wrap);
-    const toggle = wrap.querySelector('#nppDailiesToggle');
-    const menu = wrap.querySelector('#nppDailiesMenu');
+    const toggle = wrap.querySelector('#nqDailiesToggle');
+    const menu = wrap.querySelector('#nqDailiesMenu');
     toggle.addEventListener('click', (e) => { e.preventDefault(); wrap.classList.toggle('open'); refreshCd(menu); updateSnow(menu, null); });
-    document.addEventListener('pointerdown', (e) => { if (!wrap.classList.contains('open')) return; if (!e.target.closest('#nppDailiesRoot')) wrap.classList.remove('open'); }, true);
+    document.addEventListener('pointerdown', (e) => { if (!wrap.classList.contains('open')) return; if (!e.target.closest('#nqDailiesRoot')) wrap.classList.remove('open'); }, true);
     menu.addEventListener('click', (e) => {
       const a = e.target.closest('a[data-name]');
       if (!a) return;
@@ -579,21 +579,21 @@
 
   /* ─── Sidebar card (Modern Interface mode) ─── */
   function sidebarDailyCard() {
-    const pet = document.getElementById('npActivePet');
+    const pet = document.getElementById('nqActivePet');
     if (!pet) return;
-    let d = document.getElementById('nppDaily');
+    let d = document.getElementById('nqDaily');
     if (!d) {
       d = document.createElement('div');
-      d.id = 'nppDaily'; d.className = 'npCard';
+      d.id = 'nqDaily'; d.className = 'nqCard';
       pet.insertAdjacentElement('afterend', d);
       cardListeners.forEach(fn => { try { fn(d); } catch {} });
     }
     const hero = (name, h, icon, href) => {
-      const theme = name === 'Snowager' ? 'nppTh-snow' : name === "Tarla's Toolbar" ? 'nppTh-gift' : 'nppTh-cave';
-      const inner = `<i class="nppDIco">${icon}</i><span class="nppDTxt"><b>${esc(name)}</b><small>${esc(h.text)}</small>${h.sub ? `<small class="sub">${esc(h.sub)}</small>` : ''}</span><em>${esc(h.pill)}</em>${h.pct ? `<span class="nppDProg"><i style="width:${h.pct}%"></i></span>` : ''}`;
+      const theme = name === 'Snowager' ? 'nqTh-snow' : name === "Tarla's Toolbar" ? 'nqTh-gift' : 'nqTh-cave';
+      const inner = `<i class="nqDIco">${icon}</i><span class="nqDTxt"><b>${esc(name)}</b><small>${esc(h.text)}</small>${h.sub ? `<small class="sub">${esc(h.sub)}</small>` : ''}</span><em>${esc(h.pill)}</em>${h.pct ? `<span class="nqDProg"><i style="width:${h.pct}%"></i></span>` : ''}`;
       return href
-        ? `<a class="nppDHero ${theme} ${h.cls}" data-n="${esc(name)}" href="${esc(href)}">${inner}</a>`
-        : `<div class="nppDHero nppDLocked ${theme} ${h.cls}" data-n="${esc(name)}" title="Swap to your main">${inner}</div>`;
+        ? `<a class="nqDHero ${theme} ${h.cls}" data-n="${esc(name)}" href="${esc(href)}">${inner}</a>`
+        : `<div class="nqDHero nqDLocked ${theme} ${h.cls}" data-n="${esc(name)}" title="Swap to your main">${inner}</div>`;
     };
     d.addEventListener('click', (e) => {
       const a = e.target.closest && e.target.closest('a[data-n]');
@@ -606,9 +606,9 @@
     const urlOf = {}; DAILY_LINKS.forEach(([n, u]) => { urlOf[n] = u; });
     function renderSidebar() {
       const m = dailyModel();
-      // Render into a body child so the patcher's eye (fold) button, prepended to #nppDaily, is never wiped.
-      let body = d.querySelector(':scope > .nppDBody');
-      if (!body) { body = document.createElement('div'); body.className = 'nppDBody'; d.appendChild(body); }
+      // Render into a body child so the patcher's eye (fold) button, prepended to #nqDaily, is never wiped.
+      let body = d.querySelector(':scope > .nqDBody');
+      if (!body) { body = document.createElement('div'); body.className = 'nqDBody'; d.appendChild(body); }
       if (!(m.snow || m.symol || m.tarla)) { d.hidden = true; body.innerHTML = ''; d._html = ''; return; }
       d.hidden = false;
       const html = (m.snow ? hero('Snowager', m.snow, SNOWFLAKE, 'https://www.neopets.com/winter/snowager.phtml') : '')

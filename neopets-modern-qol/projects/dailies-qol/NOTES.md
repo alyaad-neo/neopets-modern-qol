@@ -26,7 +26,7 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 | "Done" detection on daily pages | Lines 243-316 | `watchDaily`, `SUCCESS_RE`, `ALREADY_RE`, `DAILY_PATHS` |
 | Premium menu decoration (CD badges, alerts) | Lines 318-382 | `decoratePremium`, `undecoratePremium`, `refreshCd`, `syncAlerts`, `updateSnow` |
 | Sidebar card (Modern Interface mode) | Lines 528-566 | `sidebarDailyCard`, `dailyModel`, `hero` |
-| Standalone floating dailies panel | Lines 490-526 | `mountStandalonePanel`, `nppDailiesRoot`, `nppDailiesToggle` |
+| Standalone floating dailies panel | Lines 490-526 | `mountStandalonePanel`, `nqDailiesRoot`, `nqDailiesToggle` |
 | NC Mall cooldown sync | Lines 147-164 | `ncShare`, `ncPull` |
 | Public API for core | Lines 577-585 | `__nppDailies` |
 
@@ -41,7 +41,7 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 
 - `onMain()` gates mount, the observer, `decoratePremium` and `updateSnow`: only the main account (`nq_main_account`) gets dailies. Side accounts see nothing and record no cooldowns. Mount waits for `appInsightsUserName` via `whenUser()`; until then `onMain()` is false.
 
-- `isModernInterface()` checks `root.dataset.npModernInterface === '1'` — do not change this detection.
+- `isModernInterface()` checks `root.dataset.nqModernInterface === '1'` — do not change this detection.
 - `W.__nppDailies` is a public API consumed by the core. Keep it in sync if adding features.
 - Popup detection (`isPopup`) skips modals/iframes — do not remove.
 
@@ -50,8 +50,8 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 <!-- Short notes the agent adds when something tricky comes up. Newest first. -->
 
 - 1.0.6: Trudy's Surprise is marked done (NST cooldown) on visiting trudys_surprise.phtml. Its prizes are drawn in the game canvas, so SUCCESS_RE and the button-click listener never saw a play.
-- 1.0.1: renderSidebar writes into #nppDaily > .nppDBody, never #nppDaily itself, because innerHTML on the card wiped the patcher eye/fold button every time the countdown text changed (eye flickered in and out).
+- 1.0.1: renderSidebar writes into #nqDaily > .nqDBody, never #nqDaily itself, because innerHTML on the card wiped the patcher eye/fold button every time the countdown text changed (eye flickered in and out).
 - 1.0.2: whenUser() returns at once on /games/giveaway (bare text page, no appInsightsUserName), so the Expellibox panel no longer waits the full 10s poll.
-- 1.0.3: Expellibox links open a small popup (qasPopupLinks, composedPath for the shadow-root menu); dailies runs in popups only on /games/giveaway, panel gets .pop (fills window, resizeBy to fit, Close/Inventory buttons). Panel keyframes are nppQasIn and keep translate(-50%,-50%); the shared nppIn ended at transform:none, so the panel started off-centre then snapped to the middle.
-- 1.0.4: Expellibox result page hides the Modern Interface chrome (#npx-host, #npHud, #nppFoot, #npBgSidebar, #btnOverlay, #npxSideBtnHost) inside QAS_CSS; panel centres at left 50%.
+- 1.0.3: Expellibox links open a small popup (qasPopupLinks, composedPath for the shadow-root menu); dailies runs in popups only on /games/giveaway, panel gets .pop (fills window, resizeBy to fit, Close/Inventory buttons). Panel keyframes are nqQasIn and keep translate(-50%,-50%); the shared nqIn ended at transform:none, so the panel started off-centre then snapped to the middle.
+- 1.0.4: Expellibox result page hides the Modern Interface chrome (#nq-host, #nqHud, #nqFoot, #nqBgSidebar, #btnOverlay, #nqSideBtnHost) inside QAS_CSS; panel centres at left 50%.
 - 1.0.5: qasPopupLinks keeps the popup ref (qp) and closes it on focus/pointerdown back on the opener page.

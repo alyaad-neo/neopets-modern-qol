@@ -98,73 +98,73 @@
   }
   const now = () => Date.now();
   const HUD_CSS = `
-  #npHud{
-    z-index:var(--np-z-hud, 1000);
+  #nqHud{
+    z-index:var(--nq-z-hud, 1000);
     -webkit-font-smoothing:antialiased;
     pointer-events:none;
     isolation:isolate;
   }
-  #npHud > *{ pointer-events:auto; }
-  #npHud *, #npHud *::before, #npHud *::after{ box-sizing:border-box; }
+  #nqHud > *{ pointer-events:auto; }
+  #nqHud *, #nqHud *::before, #nqHud *::after{ box-sizing:border-box; }
 
   @media (max-width: 900px){
-    :root{ --np-bar-inset-left:0px !important; }
+    :root{ --nq-bar-inset-left:0px !important; }
   }
 
-  .npCard{
+  .nqCard{
     width:100%;
     box-sizing:border-box;
-    background:var(--np-glass, rgba(0,0,0,.22));
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
-    border-radius:var(--np-radius, 14px);
-    box-shadow:var(--np-shadow, 0 8px 24px rgba(0,0,0,.28));
-    backdrop-filter:blur(var(--np-blur, 8px));
-    -webkit-backdrop-filter:blur(var(--np-blur, 8px));
-    color:var(--np-ink, #fff);
+    background:var(--nq-glass, rgba(0,0,0,.22));
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
+    border-radius:var(--nq-radius, 14px);
+    box-shadow:var(--nq-shadow, 0 8px 24px rgba(0,0,0,.28));
+    backdrop-filter:blur(var(--nq-blur, 8px));
+    -webkit-backdrop-filter:blur(var(--nq-blur, 8px));
+    color:var(--nq-ink, #fff);
     position:relative;
     transition:background .16s ease, border-color .16s ease, transform .08s ease;
   }
-  .npCard:hover{
-    background:var(--np-glass-hover, rgba(0,0,0,.30));
-    border-color:var(--np-line-hover, rgba(255,255,255,.30));
+  .nqCard:hover{
+    background:var(--nq-glass-hover, rgba(0,0,0,.30));
+    border-color:var(--nq-line-hover, rgba(255,255,255,.30));
   }
-  .npCard.clickable{ cursor:pointer; user-select:none; }
-  .npCard.clickable:active{ transform:translateY(1px); }
+  .nqCard.clickable{ cursor:pointer; user-select:none; }
+  .nqCard.clickable:active{ transform:translateY(1px); }
 
-  .npBtn{
+  .nqBtn{
     display:flex; align-items:center; justify-content:center; text-align:center;
     padding:6px 8px;
-    border-radius:var(--np-radius-sm, 10px);
-    background:var(--np-btn, rgba(255,255,255,.06));
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
+    border-radius:var(--nq-radius-sm, 10px);
+    background:var(--nq-btn, rgba(255,255,255,.06));
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
     color:#fff; font-size:12px; font-weight:600; line-height:1.1;
     cursor:pointer;
     transition:background .12s ease, transform .08s ease;
   }
-  .npBtn:hover{ background:var(--np-btn-hover, rgba(255,255,255,.10)); }
-  .npBtn:active{ transform:translateY(1px); }
+  .nqBtn:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
+  .nqBtn:active{ transform:translateY(1px); }
 
-  .npSpin{
+  .nqSpin{
     width:16px;height:16px;border-radius:50%;
     border:2px solid rgba(255,255,255,.25);
     border-top-color:rgba(255,255,255,.85);
-    animation:npSpin .8s linear infinite;
+    animation:nqSpin .8s linear infinite;
   }
-  @keyframes npSpin{ to{ transform:rotate(360deg); } }
+  @keyframes nqSpin{ to{ transform:rotate(360deg); } }
 
-  #npUser{
+  #nqUser{
     display:flex;
     align-items:stretch;
     gap:12px;
     position:relative;
   }
-  #npUser .rightSide{
+  #nqUser .rightSide{
     flex:1 1 0;
     min-width:0;
     flex-direction:column; justify-content:center;
     gap:6px;
   }
-  #npUser .name{
+  #nqUser .name{
     display:block;
     width:100%;
     text-decoration:none !important; color:#fff !important;
@@ -174,48 +174,48 @@
     position:relative;
     z-index:1;
   }
-  #npUser .name:hover{
+  #nqUser .name:hover{
     text-decoration:underline !important;
-    text-decoration-color:var(--np-accent, #dcb8ff) !important;
+    text-decoration-color:var(--nq-accent, #dcb8ff) !important;
     text-underline-offset:3px;
   }
 
-  #npBank{ padding:10px 12px; }
-  #npBank .head{
+  #nqBank{ padding:10px 12px; }
+  #nqBank .head{
     display:grid;
     grid-template-columns: 26px 1fr 26px;
     align-items:center;
     margin:0 0 8px 0;
     gap:6px;
   }
-  #npBank .title{
+  #nqBank .title{
     grid-column:2;
     text-align:center;
     opacity:.95;
   }
-  #npBank .title{ cursor:pointer; }
-  #npBank .title:hover{
+  #nqBank .title{ cursor:pointer; }
+  #nqBank .title:hover{
     text-decoration:underline;
-    text-decoration-color:var(--np-accent, #dcb8ff);
+    text-decoration-color:var(--nq-accent, #dcb8ff);
     text-underline-offset:3px;
   }
-  #npBank .rows{ display:flex; flex-direction:column; gap:8px; }
-  #npBank .balance{
+  #nqBank .rows{ display:flex; flex-direction:column; gap:8px; }
+  #nqBank .balance{
     width:100%; font-weight:700; letter-spacing:.2px; min-height:26px;
     display:flex; align-items:center; justify-content:center; gap:10px;
     flex-wrap:wrap;
   }
-  #npBank .balance .balVal{ font-variant-numeric:tabular-nums; }
-  #npBank .dailyDelta{
+  #nqBank .balance .balVal{ font-variant-numeric:tabular-nums; }
+  #nqBank .dailyDelta{
     display:inline-flex; gap:6px; align-items:baseline;
     font-size:11px; font-weight:600; line-height:1;
     font-variant-numeric:tabular-nums;
     opacity:.95;
   }
-  #npBank .dailyDelta:empty{ display:none; }
-  #npBank .dailyDelta .dgain{ color:#7be08e; }
-  #npBank .dailyDelta .dloss{ color:#ff8a8a; }
-  #npBank #npInterest{
+  #nqBank .dailyDelta:empty{ display:none; }
+  #nqBank .dailyDelta .dgain{ color:#7be08e; }
+  #nqBank .dailyDelta .dloss{ color:#ff8a8a; }
+  #nqBank #nqInterest{
     width:100%;
     background:rgba(255,90,90,.18);
     border:1px solid #ff5a5a;
@@ -226,103 +226,103 @@
     box-shadow:
       0 0 18px rgba(255,90,90,.55),
       0 0 0 0 rgba(255,90,90,.55);
-    animation: npBankIntPulse 1.6s ease-in-out infinite;
+    animation: nqBankIntPulse 1.6s ease-in-out infinite;
   }
-  #npBank #npInterest:hover{
+  #nqBank #nqInterest:hover{
     background:rgba(255,90,90,.32);
     filter:brightness(1.08);
   }
-  @keyframes npBankIntPulse{
+  @keyframes nqBankIntPulse{
     0%, 100%{ box-shadow:0 0 0 0  rgba(255,90,90,.65), 0 0 18px rgba(255,90,90,.55); }
     50%     { box-shadow:0 0 0 12px rgba(255,90,90,0),  0 0 26px rgba(255,90,90,.75); }
   }
-  #npBank .bankBtns{
+  #nqBank .bankBtns{
     display:grid;
     grid-template-columns: 1fr 1fr;
     gap:8px;
     align-items:start;
   }
-  #npBank .bankBtns:empty{ display:none; }
-  #npBank .bankCol{
+  #nqBank .bankBtns:empty{ display:none; }
+  #nqBank .bankCol{
     display:flex; flex-direction:column; gap:8px;
     min-width:0;
   }
-  #npBank .bankCol:empty{ display:none; }
-  #npBank .bankBtns .npBtn{ width:100%; height:30px; padding:0 8px; }
-  #npBank .bankCustomForm{
+  #nqBank .bankCol:empty{ display:none; }
+  #nqBank .bankBtns .nqBtn{ width:100%; height:30px; padding:0 8px; }
+  #nqBank .bankCustomForm{
     display:flex; align-items:stretch; gap:3px;
     width:100%; height:30px;
     box-sizing:border-box;
   }
-  #npBank .bankCustomForm input{
+  #nqBank .bankCustomForm input{
     flex:1 1 0;
     min-width:0;
     width:0;
     height:100%;
     padding:0 6px;
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
-    background:var(--np-btn, rgba(255,255,255,.06));
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
+    background:var(--nq-btn, rgba(255,255,255,.06));
     color:#fff; font:inherit; font-size:12px; font-weight:600;
-    border-radius:var(--np-radius-sm, 10px);
+    border-radius:var(--nq-radius-sm, 10px);
     outline:0;
     font-variant-numeric:tabular-nums;
     text-align:right;
   }
-  #npBank .bankCustomForm input:focus{ border-color:var(--np-accent, #dcb8ff); }
-  #npBank .bankCustomForm input::placeholder{ color:rgba(255,255,255,.4); font-weight:500; }
-  #npBank .bankCustomForm .ok{
+  #nqBank .bankCustomForm input:focus{ border-color:var(--nq-accent, #dcb8ff); }
+  #nqBank .bankCustomForm input::placeholder{ color:rgba(255,255,255,.4); font-weight:500; }
+  #nqBank .bankCustomForm .ok{
     flex:0 0 26px; width:26px; height:100%;
     padding:0;
     display:flex; align-items:center; justify-content:center;
-    background:var(--np-accent, #dcb8ff);
-    border:0; border-radius:var(--np-radius-sm, 10px);
+    background:var(--nq-accent, #dcb8ff);
+    border:0; border-radius:var(--nq-radius-sm, 10px);
     font-weight:800; font-size:13px;
     cursor:pointer;
   }
-  #npBank .bankCustomForm .ok:hover{ filter:brightness(1.08); }
-  #npBank .msg{ font-size:11px; opacity:.62; text-align:center; min-height:12px; }
-  #npBank .msg:empty{ display:none; }
-  #npBank .disabled{ opacity:.55; cursor:not-allowed; pointer-events:none; }
+  #nqBank .bankCustomForm .ok:hover{ filter:brightness(1.08); }
+  #nqBank .msg{ font-size:11px; opacity:.62; text-align:center; min-height:12px; }
+  #nqBank .msg:empty{ display:none; }
+  #nqBank .disabled{ opacity:.55; cursor:not-allowed; pointer-events:none; }
 
-  #npBank .bankGraph{
+  #nqBank .bankGraph{
     width:100%;
     height:72px;
     padding:0;
     margin:0;
   }
-  #npBank .bankGraph:empty{ display:none; }
-  #npBank .bankGraph svg{
+  #nqBank .bankGraph:empty{ display:none; }
+  #nqBank .bankGraph svg{
     display:block;
     width:100%; height:100%;
     overflow:visible;
   }
-  #npBank .bankGraph .gLine{
+  #nqBank .bankGraph .gLine{
     fill:none;
     stroke-width:1.6;
     stroke-linecap:round;
     stroke-linejoin:round;
     filter: drop-shadow(0 1px 1px rgba(0,0,0,.4));
   }
-  #npBank .bankGraph .gFill{
-    fill:url(#npBankGraphFill);
+  #nqBank .bankGraph .gFill{
+    fill:url(#nqBankGraphFill);
     opacity:.18;
   }
-  #npBank .bankGraph text{
-    font-family: var(--np-font, system-ui, sans-serif);
+  #nqBank .bankGraph text{
+    font-family: var(--nq-font, system-ui, sans-serif);
     font-size: 7px;
     fill: rgba(255,255,255,.55);
     font-variant-numeric: tabular-nums;
   }
-  #npBank .bankGraph .axisY{ text-anchor: end; }
-  #npBank .bankGraph .axisX{ text-anchor: middle; }
-  #npBank .bankGraph .axisXLeft{ text-anchor: start; }
-  #npBank .bankGraph .axisXRight{ text-anchor: end; }
-  #npBank .bankGraph .gridLine{
+  #nqBank .bankGraph .axisY{ text-anchor: end; }
+  #nqBank .bankGraph .axisX{ text-anchor: middle; }
+  #nqBank .bankGraph .axisXLeft{ text-anchor: start; }
+  #nqBank .bankGraph .axisXRight{ text-anchor: end; }
+  #nqBank .bankGraph .gridLine{
     stroke: rgba(255,255,255,.10);
     stroke-width: 0.5;
     stroke-dasharray: 2 2;
   }
-  #npBank .bankGraph .gEmpty{
+  #nqBank .bankGraph .gEmpty{
     text-align:center;
     font-size:10px;
     opacity:.5;
@@ -335,7 +335,7 @@
     background:rgba(0,0,0,.55);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-    z-index: calc(var(--np-z-menu, 2000) + 100);
+    z-index: calc(var(--nq-z-menu, 2000) + 100);
     display:flex; align-items:center; justify-content:center;
     padding:20px;
     animation: bankModalIn .14s ease-out;
@@ -344,11 +344,11 @@
   .bankSettingsBox{
     width:auto; max-width:min(480px, calc(100vw - 40px));
     background:rgba(20,14,32,.96);
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
-    border-radius:var(--np-radius, 14px);
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
+    border-radius:var(--nq-radius, 14px);
     box-shadow:0 14px 40px rgba(0,0,0,.55);
-    color:var(--np-ink, #fff);
-    font-family:var(--np-font, system-ui, sans-serif);
+    color:var(--nq-ink, #fff);
+    font-family:var(--nq-font, system-ui, sans-serif);
     overflow:hidden;
   }
   .bankSettingsHead{
@@ -384,21 +384,21 @@
   }
   .bankSettingsRow{
     padding:8px 10px;
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
-    background:var(--np-btn, rgba(255,255,255,.04));
-    border-radius:var(--np-radius-sm, 10px);
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
+    background:var(--nq-btn, rgba(255,255,255,.04));
+    border-radius:var(--nq-radius-sm, 10px);
     display:flex; flex-direction:column; gap:8px;
   }
   .bankSettingsRow.on{
-    border-color: var(--np-accent-line, rgba(220,184,255,.45));
-    background: var(--np-accent-soft, rgba(220,184,255,.08));
+    border-color: var(--nq-accent-line, rgba(220,184,255,.45));
+    background: var(--nq-accent-soft, rgba(220,184,255,.08));
   }
   .bankSettingsRow .topLine{
     display:flex; align-items:center; gap:8px;
   }
   .bankSettingsRow input[type="checkbox"]{
     width:16px; height:16px; cursor:pointer;
-    accent-color: var(--np-accent, #dcb8ff);
+    accent-color: var(--nq-accent, #dcb8ff);
     margin:0;
   }
   .bankSettingsRow .lbl{
@@ -415,7 +415,7 @@
   .bankSettingsRow .sub select{
     width:100%; min-width:0; box-sizing:border-box;
     height:28px; padding:0 8px;
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
     background:rgba(0,0,0,.22);
     color:#fff; font:inherit; font-size:12px; font-weight:600;
     border-radius:8px; outline:0;
@@ -424,29 +424,29 @@
   }
   .bankSettingsRow .sub select{ text-align:left; }
   .bankSettingsRow .sub input:focus,
-  .bankSettingsRow .sub select:focus{ border-color:var(--np-accent, #dcb8ff); }
+  .bankSettingsRow .sub select:focus{ border-color:var(--nq-accent, #dcb8ff); }
   .bankSettingsRow.off .sub{ opacity:.4; pointer-events:none; }
   .bankSettingsFoot{
     display:flex; gap:8px; justify-content:flex-end;
     padding:10px 14px;
     border-top:1px solid rgba(255,255,255,.10);
   }
-  .bankSettingsFoot .npBtn{
+  .bankSettingsFoot .nqBtn{
     padding:6px 14px;
-    background:var(--np-btn, rgba(255,255,255,.06));
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
+    background:var(--nq-btn, rgba(255,255,255,.06));
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
     color:#fff; font-size:12px; font-weight:700;
-    border-radius:var(--np-radius-sm, 10px);
+    border-radius:var(--nq-radius-sm, 10px);
     cursor:pointer;
   }
-  .bankSettingsFoot .npBtn:hover{ background:var(--np-btn-hover, rgba(255,255,255,.10)); }
-  .bankSettingsFoot .npBtn.save{
-    background:var(--np-accent, #dcb8ff);
+  .bankSettingsFoot .nqBtn:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
+  .bankSettingsFoot .nqBtn.save{
+    background:var(--nq-accent, #dcb8ff);
     color:#1a1330; border-color:transparent;
   }
-  .bankSettingsFoot .npBtn.save:hover{ filter:brightness(1.08); }
+  .bankSettingsFoot .nqBtn.save:hover{ filter:brightness(1.08); }
 
-  .npCard .cardGear{
+  .nqCard .cardGear{
     position:absolute;
     top:6px; right:6px;
     width:26px; height:26px; padding:0;
@@ -459,15 +459,15 @@
     transition: opacity .14s ease, background .12s ease, color .12s ease, transform .15s ease;
     z-index:3;
   }
-  .npCard:hover .cardGear{ opacity:.85; }
-  .npCard .cardGear:hover{
+  .nqCard:hover .cardGear{ opacity:.85; }
+  .nqCard .cardGear:hover{
     opacity:1 !important;
-    background:var(--np-btn-hover, rgba(255,255,255,.10));
+    background:var(--nq-btn-hover, rgba(255,255,255,.10));
     color:#fff;
     transform: rotate(45deg);
   }
 
-  .npCard .cardRefresh{
+  .nqCard .cardRefresh{
     position:absolute;
     top:6px; right:36px;
     width:26px; height:26px; padding:0;
@@ -480,10 +480,10 @@
     transition: opacity .14s ease, background .12s ease, color .12s ease, transform .2s ease;
     z-index:3;
   }
-  .npCard:hover .cardRefresh{ opacity:.85; }
-  .npCard .cardRefresh:hover{
+  .nqCard:hover .cardRefresh{ opacity:.85; }
+  .nqCard .cardRefresh:hover{
     opacity:1 !important;
-    background:var(--np-btn-hover, rgba(255,255,255,.10));
+    background:var(--nq-btn-hover, rgba(255,255,255,.10));
     color:#fff;
     transform: rotate(180deg);
   }
@@ -503,11 +503,11 @@
   #qrDockWrap{
     position: fixed;
     left: 2px;
-    width: calc(var(--np-col-width, 330px) - 4px);
+    width: calc(var(--nq-col-width, 330px) - 4px);
     bottom: 2px;
-    --collapsed-h: calc(var(--np-col-width, 330px) - 2 * var(--np-hud-left, 20px));
+    --collapsed-h: calc(var(--nq-col-width, 330px) - 2 * var(--nq-hud-left, 20px));
     top: calc(100vh - var(--collapsed-h) - 2px);
-    z-index: calc(var(--np-z-hud, 1000) + 1);
+    z-index: calc(var(--nq-z-hud, 1000) + 1);
     pointer-events: none;
     opacity: 0;
     overflow: hidden;
@@ -528,8 +528,8 @@
     margin: 0; padding: 0; gap: 0;
     list-style: none;
     background: rgba(20, 14, 32, 0.95);
-    -webkit-backdrop-filter: blur(var(--np-blur, 8px));
-    backdrop-filter: blur(var(--np-blur, 8px));
+    -webkit-backdrop-filter: blur(var(--nq-blur, 8px));
+    backdrop-filter: blur(var(--nq-blur, 8px));
     overflow: hidden;
   }
   .qrPet{
@@ -556,7 +556,7 @@
     opacity: 1;
   }
   .qrPet.active{
-    box-shadow: inset 0 0 0 2px var(--np-accent, #dcb8ff);
+    box-shadow: inset 0 0 0 2px var(--nq-accent, #dcb8ff);
   }
   .qrPet + .qrPet{ border-top: 2px solid #000; }
   .qrPet:hover{ filter: brightness(1.10); }
@@ -572,17 +572,17 @@
   .qrPet:hover .qrOverlay{ opacity:1; pointer-events:auto; }
   .qrOverlay a{
     min-height:32px; display:flex; align-items:center; justify-content:center; text-align:center;
-    padding:6px 8px; border-radius:var(--np-radius-sm, 10px);
+    padding:6px 8px; border-radius:var(--nq-radius-sm, 10px);
     text-decoration:none !important; color:#fff !important;
     font-size:12px; font-weight:700; line-height:1.1;
-    background:var(--np-btn, rgba(255,255,255,.06));
-    border:1px solid var(--np-line, rgba(255,255,255,.16));
+    background:var(--nq-btn, rgba(255,255,255,.06));
+    border:1px solid var(--nq-line, rgba(255,255,255,.16));
     transition:background .12s ease, transform .08s ease;
   }
-  .qrOverlay a:hover{ background:var(--np-btn-hover, rgba(255,255,255,.10)); }
+  .qrOverlay a:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
   .qrOverlay a:active{ transform:translateY(1px); }
   .qrPetName{
-    font-family: 'CafeteriaBlack', var(--np-font, system-ui), sans-serif;
+    font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
     font-size: 20px; font-weight: 400; color: #fff;
     text-align: center; padding: 0 4px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -590,37 +590,37 @@
     text-shadow: 0 1px 2px rgba(0,0,0,.7);
   }
 
-  body.npDockActive #npUser,
-  body.npDockActive #npBank,
-  body.npDockActive #npNp,
-  body.npDockActive #npActivePet{
+  body.nqDockActive #nqUser,
+  body.nqDockActive #nqBank,
+  body.nqDockActive #nqNp,
+  body.nqDockActive #nqActivePet{
     opacity: 0;
     pointer-events: none;
     transition: opacity .25s ease;
   }
 
-  #npUser .name #npUserTitle,
-  #npBank .title{
-    font-family: 'CafeteriaBlack', var(--np-font, system-ui), sans-serif;
+  #nqUser .name #nqUserTitle,
+  #nqBank .title{
+    font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
     font-weight: 400;
     letter-spacing: .02em;
     font-size: 20px;
     line-height: 1.1;
   }
 
-  #npNp{ display:flex; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
-  #npNp .npVal{ font-variant-numeric:tabular-nums; }
-  #npNp img{ width:24px; height:24px; display:block; flex:0 0 24px; }
-  #npNp.dim{ opacity:.6; }
+  #nqNp{ display:flex; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
+  #nqNp .nqVal{ font-variant-numeric:tabular-nums; }
+  #nqNp img{ width:24px; height:24px; display:block; flex:0 0 24px; }
+  #nqNp.dim{ opacity:.6; }
 
-  #npActivePet{
+  #nqActivePet{
     cursor:pointer;
     justify-content:center;
   }
-  #npActivePet:hover{
+  #nqActivePet:hover{
     background: transparent;
   }
-  #npActivePet img{
+  #nqActivePet img{
     width:auto; height:auto;
     max-width:100%; max-height:100%;
     transform: scale(0.8);
@@ -628,25 +628,25 @@
     display:block;
     opacity:0; transition:opacity .18s ease;
   }
-  #npActivePet img.loaded{ opacity:1; }
+  #nqActivePet img.loaded{ opacity:1; }
 
   @media (hover: none){
-    .npCard .cardGear, .npCard .cardRefresh{ opacity:.85; }
+    .nqCard .cardGear, .nqCard .cardRefresh{ opacity:.85; }
     .qrOverlay{
       opacity:1;
       pointer-events:auto;
       background:rgba(0,0,0,.30);
     }
   }
-  #npHud > #npUser,
-  #npHud > #npBank,
-  #npHud > #npNp{
+  #nqHud > #nqUser,
+  #nqHud > #nqBank,
+  #nqHud > #nqNp{
     flex: 0 0 auto;
   }
   `;
 
 function startHud() {
-  if (document.getElementById('npHud')) return;
+  if (document.getElementById('nqHud')) return;
 
   try {
     const qr = JSON.parse(LSget('nq_qr_data') || 'null');
@@ -699,52 +699,52 @@ function startHud() {
   })();
 
   const styleEl = document.createElement('style');
-  styleEl.id = 'npHudStyle';
+  styleEl.id = 'nqHudStyle';
   styleEl.textContent = HUD_CSS;
   (document.head || document.documentElement).prepend(styleEl);
 
   const hud = document.createElement('div');
-  hud.id = 'npHud';
+  hud.id = 'nqHud';
 
   const cardUser = document.createElement('div');
-  cardUser.className = 'npCard clickable';
-  cardUser.id = 'npUser';
+  cardUser.className = 'nqCard clickable';
+  cardUser.id = 'nqUser';
   cardUser.innerHTML = `
     <div class="rightSide">
-      <a class="name" id="npUserLink" href="https://www.neopets.com/userlookup.phtml" target="_self" rel="noopener"><span id="npUserTitle">—</span></a>
+      <a class="name" id="nqUserLink" href="https://www.neopets.com/userlookup.phtml" target="_self" rel="noopener"><span id="nqUserTitle">—</span></a>
     </div>
   `;
 
   const cardBank = document.createElement('div');
-  cardBank.className = 'npCard';
-  cardBank.id = 'npBank';
+  cardBank.className = 'nqCard';
+  cardBank.id = 'nqBank';
   cardBank.innerHTML = `
-    <button type="button" class="cardGear" id="npBankGear" title="Mini Bank settings" aria-label="Settings">⚙</button>
-    <button type="button" class="cardRefresh" id="npBankRefresh" title="Refresh bank data" aria-label="Refresh">↻</button>
+    <button type="button" class="cardGear" id="nqBankGear" title="Mini Bank settings" aria-label="Settings">⚙</button>
+    <button type="button" class="cardRefresh" id="nqBankRefresh" title="Refresh bank data" aria-label="Refresh">↻</button>
     <div class="head">
       <div class="title">Bank</div>
     </div>
     <div class="rows">
-      <div class="npBtn balance" id="npBal" title="Click to refresh">
+      <div class="nqBtn balance" id="nqBal" title="Click to refresh">
         <span class="balVal">—</span>
-        <span class="dailyDelta" id="npBankDelta"></span>
+        <span class="dailyDelta" id="nqBankDelta"></span>
       </div>
-      <div class="bankGraph" id="npBankGraph"></div>
-      <button type="button" class="npBtn" id="npInterest" style="display:none">Collect interest</button>
-      <div class="bankBtns" id="npBankBtns"></div>
-      <div class="msg" id="npBankMsg"></div>
+      <div class="bankGraph" id="nqBankGraph"></div>
+      <button type="button" class="nqBtn" id="nqInterest" style="display:none">Collect interest</button>
+      <div class="bankBtns" id="nqBankBtns"></div>
+      <div class="msg" id="nqBankMsg"></div>
     </div>
   `;
 
   const cardNp = document.createElement('div');
-  cardNp.className = 'npCard clickable';
-  cardNp.id = 'npNp';
+  cardNp.className = 'nqCard clickable';
+  cardNp.id = 'nqNp';
   cardNp.title = 'Bank (Alt+click = refresh NP)';
-  cardNp.innerHTML = `NP: <span class="npVal">…</span> <img src="https://images.neopets.com/themes/h5/basic/images/np-icon.svg" alt="">`;
+  cardNp.innerHTML = `NP: <span class="nqVal">…</span> <img src="https://images.neopets.com/themes/h5/basic/images/np-icon.svg" alt="">`;
 
   const cardActivePet = document.createElement('div');
-  cardActivePet.className = 'npCard clickable';
-  cardActivePet.id = 'npActivePet';
+  cardActivePet.className = 'nqCard clickable';
+  cardActivePet.id = 'nqActivePet';
   cardActivePet.title = 'Hover to switch active pet · click for Quick Reference';
 
   if (_earlyActivePetImg){
@@ -773,8 +773,8 @@ function startHud() {
     const USERNAME_KEY = 'nq_hud_username';
     const st = { username:null };
 
-    const titleEl = () => cardUser.querySelector('#npUserTitle');
-    const linkEl = () => cardUser.querySelector('#npUserLink');
+    const titleEl = () => cardUser.querySelector('#nqUserTitle');
+    const linkEl = () => cardUser.querySelector('#nqUserLink');
 
     function pickFromPage(){
       try { const u = (PW.appInsightsUserName || '').trim(); if (u) return u; } catch {}
@@ -802,16 +802,16 @@ function startHud() {
       tick();
     }
     cardUser.addEventListener('click', (e) => {
-      if (e.target?.closest?.('#npUserLink, button, a, input, select')) return;
+      if (e.target?.closest?.('#nqUserLink, button, a, input, select')) return;
       const href = userLinkUrl();
       if (href) window.location.assign(href);
     });
     function userLinkUrl(){
-      const a = cardUser.querySelector('#npUserLink');
+      const a = cardUser.querySelector('#nqUserLink');
       return a ? (a.getAttribute('href') || '') : '';
     }
     document.addEventListener('click', (e) => {
-      const a = e.target?.closest?.('#npUserLink');
+      const a = e.target?.closest?.('#nqUserLink');
       if (!a) return;
       const href = a.getAttribute('href') || '';
       if (!href) return;
@@ -821,7 +821,7 @@ function startHud() {
     }, true);
     document.addEventListener('auxclick', (e) => {
       if (e.button !== 1) return;
-      const a = e.target?.closest?.('#npUserLink');
+      const a = e.target?.closest?.('#nqUserLink');
       if (!a) return;
       const href = a.getAttribute('href') || '';
       if (!href) return;
@@ -829,7 +829,7 @@ function startHud() {
       window.open(href, '_blank', 'noopener');
     }, true);
     document.addEventListener('contextmenu', (e) => {
-      const a = e.target?.closest?.('#npUserLink');
+      const a = e.target?.closest?.('#nqUserLink');
       if (!a) return;
       const href = a.getAttribute('href') || '';
       if (!href) return;
@@ -974,14 +974,14 @@ function startHud() {
       return bankDayKey(lastMs) !== bankDayKey(nowMs);
     }
 
-    const balEl  = $('#npBal', cardBank);
-    const balValEl = $('#npBal .balVal', cardBank);
-    const deltaEl  = $('#npBankDelta', cardBank);
-    const intBtn = $('#npInterest', cardBank);
-    const msgEl  = $('#npBankMsg', cardBank);
-    const btnsEl = $('#npBankBtns', cardBank);
-    const gearBtn= $('#npBankGear', cardBank);
-    const graphEl= $('#npBankGraph', cardBank);
+    const balEl  = $('#nqBal', cardBank);
+    const balValEl = $('#nqBal .balVal', cardBank);
+    const deltaEl  = $('#nqBankDelta', cardBank);
+    const intBtn = $('#nqInterest', cardBank);
+    const msgEl  = $('#nqBankMsg', cardBank);
+    const btnsEl = $('#nqBankBtns', cardBank);
+    const gearBtn= $('#nqBankGear', cardBank);
+    const graphEl= $('#nqBankGraph', cardBank);
 
     let busy = false, lastAct = 0;
     const gate = () => { const n = now(); if (n - lastAct < 450) return false; lastAct = n; return true; };
@@ -1117,7 +1117,7 @@ function startHud() {
       const fillPts = `${ML},${MT + innerH} ${linePts} ${ML + innerW},${MT + innerH}`;
       graphEl.innerHTML =
         `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
-        `<defs><linearGradient id="npBankGraphFill" x1="0" y1="0" x2="0" y2="1">` +
+        `<defs><linearGradient id="nqBankGraphFill" x1="0" y1="0" x2="0" y2="1">` +
         `<stop offset="0%" stop-color="${stroke}" stop-opacity=".6"/>` +
         `<stop offset="100%" stop-color="${stroke}" stop-opacity="0"/>` +
         `</linearGradient></defs>` +
@@ -1276,7 +1276,7 @@ function startHud() {
     }
     function addBtn(parent, key, label){
       const b = document.createElement('div');
-      b.className = 'npBtn bankBtn';
+      b.className = 'nqBtn bankBtn';
       b.dataset.key = key;
       b.textContent = label;
       if (key === 'rounded'){
@@ -1371,8 +1371,8 @@ function startHud() {
           </div>
           <div class="bankSettingsBody"></div>
           <div class="bankSettingsFoot">
-            <button type="button" class="npBtn cancel">Cancel</button>
-            <button type="button" class="npBtn save">Save</button>
+            <button type="button" class="nqBtn cancel">Cancel</button>
+            <button type="button" class="nqBtn save">Save</button>
           </div>
         </div>
       `;
@@ -1482,7 +1482,7 @@ function startHud() {
     balEl.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; setBusy(true); try { await refreshBank(); setMsg(''); } catch { setMsg('refresh error'); } finally { setBusy(false); } });
     gearBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openSettings(); });
     intBtn.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; await collectInterest(); });
-    const bankRefreshBtn = $('#npBankRefresh', cardBank);
+    const bankRefreshBtn = $('#nqBankRefresh', cardBank);
     if (bankRefreshBtn){
       bankRefreshBtn.addEventListener('click', async (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -1492,7 +1492,7 @@ function startHud() {
       });
     }
     cardBank.addEventListener('click', (e) => {
-      if (e.target?.closest?.('button, a, input, select, .npBtn, .bankCustomForm')) return;
+      if (e.target?.closest?.('button, a, input, select, .nqBtn, .bankCustomForm')) return;
       window.location.assign('https://www.neopets.com/bank.phtml');
     });
 
@@ -1889,7 +1889,7 @@ function startHud() {
     function setOpen(on){
       dock.classList.toggle('open', !!on);
       dockWrap.classList.toggle('open', !!on);
-      try { document.body.classList.toggle('npDockActive', !!on); } catch {}
+      try { document.body.classList.toggle('nqDockActive', !!on); } catch {}
     }
     function wantOpen(on){
       state.wantOpen = !!on; clearTimeout(state.closeT);
@@ -1936,7 +1936,7 @@ function startHud() {
     const LS_KEY = 'nq_np_last';
     const SELECTORS = ['#npanchor', '.navsub-np-meter__2020 #npanchor', '.navsub-np-meter__2020 .np-text__2020', 'span.np-text__2020'];
     const st = { last:null, anchor:null, watch:null, obs:null, fastTimer:0, fastUntil:0, lastManual:0 };
-    const valEl = () => cardNp.querySelector('.npVal');
+    const valEl = () => cardNp.querySelector('.nqVal');
     const clean = (t) => (t||'').replace(/\s+/g,' ').trim();
     function setText(val, fromCache=false){
       const v = clean(val); if (!v || v === st.last) return;
@@ -2122,13 +2122,13 @@ function startHud() {
     st.textContent = `
       #btnOverlay{
         position:fixed !important; inset:0 !important;
-        z-index:calc(var(--np-z-hud, 1000) + 2) !important;
+        z-index:calc(var(--nq-z-hud, 1000) + 2) !important;
         pointer-events:none !important;
         --frame-left: max(
-          calc((100vw - var(--np-frame-width, 1100px)) / 2),
-          var(--np-frame-shift, 0px)
+          calc((100vw - var(--nq-frame-width, 1100px)) / 2),
+          var(--nq-frame-shift, 0px)
         ) !important;
-        --frame-right: calc(var(--frame-left) + var(--np-frame-width, 1100px)) !important;
+        --frame-right: calc(var(--frame-left) + var(--nq-frame-width, 1100px)) !important;
       }
       #btnOverlay .center{ display:contents !important; }
       #btnOverlay .col{
@@ -2230,7 +2230,7 @@ function startHud() {
   })();
 
   (function sideBtnEditor(){
-    if (document.getElementById('npxSideBtnHost')) return;
+    if (document.getElementById('nqSideBtnHost')) return;
     const API = NQ.sideBtns;
     if (!API) return;
 
@@ -2238,25 +2238,25 @@ function startHud() {
     const PANEL_W = 720, PANEL_H = 470;
 
     const host = document.createElement('div');
-    host.id = 'npxSideBtnHost';
+    host.id = 'nqSideBtnHost';
     Object.assign(host.style, {
       position:'fixed', left:'0', right:'0', bottom:'0',
-      zIndex: 'calc(var(--np-z-hud, 1000) + 3)',
+      zIndex: 'calc(var(--nq-z-hud, 1000) + 3)',
       pointerEvents:'none',
     });
     const root = host.attachShadow({ mode:'open' });
 
     const css = document.createElement('style');
     css.textContent = `
-      :host, :host * { box-sizing:border-box; font-family: var(--np-font, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif); }
+      :host, :host * { box-sizing:border-box; font-family: var(--nq-font, system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif); }
 
       .tab{
         position:absolute; left:50%; bottom:0; transform:translateX(-50%);
         width:${TAB_W}px; height:${TAB_H}px;
-        background: var(--np-glass, rgba(0,0,0,.45));
-        backdrop-filter: blur(var(--np-blur, 8px));
-        -webkit-backdrop-filter: blur(var(--np-blur, 8px));
-        border:1px solid var(--np-line, rgba(255,255,255,.18));
+        background: var(--nq-glass, rgba(0,0,0,.45));
+        backdrop-filter: blur(var(--nq-blur, 8px));
+        -webkit-backdrop-filter: blur(var(--nq-blur, 8px));
+        border:1px solid var(--nq-line, rgba(255,255,255,.18));
         border-bottom:0;
         border-radius:12px 12px 0 0;
         color: #fff;
@@ -2276,7 +2276,7 @@ function startHud() {
         height:min(${PANEL_H}px, 78vh);
         background:rgba(20,14,32,.96);
         backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        border:1px solid var(--np-line, rgba(255,255,255,.16));
+        border:1px solid var(--nq-line, rgba(255,255,255,.16));
         border-radius:14px 14px 0 0;
         color:#fff; pointer-events:auto;
         box-shadow:none;
@@ -2299,7 +2299,7 @@ function startHud() {
         padding:3px 8px; font:600 10px/1 system-ui,sans-serif; cursor:pointer;
         letter-spacing:.04em; text-transform:uppercase;
       }
-      .head button:hover{ background:var(--np-accent-bg); border-color:var(--np-accent-line); color:#fff; }
+      .head button:hover{ background:var(--nq-accent-bg); border-color:var(--nq-accent-line); color:#fff; }
       .head .close{ background:transparent; border:0; color:rgba(255,255,255,.65); font-size:16px; padding:0 6px; }
       .head .close:hover{ color:#fff; }
       .body{
@@ -2320,7 +2320,7 @@ function startHud() {
         padding:6px 8px; border-radius:7px;
         background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.06);
       }
-      .item:hover{ background:var(--np-accent-soft); }
+      .item:hover{ background:var(--nq-accent-soft); }
       .item .ico{ width:24px; height:24px; background:center/contain no-repeat; filter:drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
       .item .lbl{ min-width:0; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .iconBtnMini{
@@ -2330,7 +2330,7 @@ function startHud() {
         display:flex; align-items:center; justify-content:center;
         font:700 12px/1 system-ui,sans-serif;
       }
-      .iconBtnMini:hover{ background:var(--np-accent-bg); color:#fff; }
+      .iconBtnMini:hover{ background:var(--nq-accent-bg); color:#fff; }
       .iconBtnMini.dim{ opacity:.55; }
       .iconBtnMini.dim:hover{ opacity:1; }
       .iconBtnMini.del:hover{ background:#ff5a5a; color:#fff; }
@@ -2346,12 +2346,12 @@ function startHud() {
       .add .row{ display:flex; gap:6px; }
       .add .row > *{ flex:1; min-width:0; }
       .add button{
-        background:var(--np-accent-bg); color:#fff;
-        border:1px solid var(--np-accent-line); border-radius:6px;
+        background:var(--nq-accent-bg); color:#fff;
+        border:1px solid var(--nq-accent-line); border-radius:6px;
         padding:5px 10px; font:700 11px/1 system-ui,sans-serif; cursor:pointer;
         white-space:nowrap; letter-spacing:.08em;
       }
-      .add button:hover{ background:var(--np-accent-hover); }
+      .add button:hover{ background:var(--nq-accent-hover); }
 
       @media (max-width: 820px){
         .body{ grid-template-columns: 1fr; }

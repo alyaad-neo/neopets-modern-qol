@@ -9,7 +9,7 @@
   const LSset = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
   const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const shadow = () => { const h = $('#npx-host'); return h && h.shadowRoot; };
+  const shadow = () => { const h = $('#nq-host'); return h && h.shadowRoot; };
 
   const NP_RUN_ON_PHONES = false;
   const npIsPhone = () => {
@@ -34,7 +34,7 @@
     return false;
   };
   if (!npBaseOff()) {
-    try { document.documentElement.dataset.npModernInterface = '1'; } catch {}
+    try { document.documentElement.dataset.nqModernInterface = '1'; } catch {}
     NQ.base = true;
   }
 
@@ -116,7 +116,7 @@
   (function noAdblockPopup() {
     try { sessionStorage.setItem('ta_session_pv', '0'); } catch {}
     const st = document.createElement('style');
-    st.id = 'npp-no-adblock-popup';
+    st.id = 'nq-no-adblock-popup';
     st.textContent = '#ta-ab-overlay, .ta-ab-overlay, .ta-ab-modal { display: none !important; visibility: hidden !important; pointer-events: none !important; }';
     (document.head || root).appendChild(st);
     const strip = () => { const o = document.getElementById('ta-ab-overlay'); if (o) o.remove(); };

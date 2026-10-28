@@ -2,14 +2,14 @@
   function setupDailyFold() {
     if (isNc || isPopup) return;
     let st = {}; try { st = JSON.parse(LSget(FOLD_KEY) || '{}') || {}; } catch {}
-    const card = $('#nppDaily');
-    if (!card || card.querySelector(':scope > .nppFold')) return;
+    const card = $('#nqDaily');
+    if (!card || card.querySelector(':scope > .nqFold')) return;
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'nppFold nppEye'; b.title = 'Hide notices'; b.setAttribute('aria-label', 'Hide notices');
+    b.type = 'button'; b.className = 'nqFold nqEye'; b.title = 'Hide notices'; b.setAttribute('aria-label', 'Hide notices');
     b.innerHTML = EYE;
     const apply = () => {
       const f = !!st.daily;
-      card.classList.toggle('nppFolded', f);
+      card.classList.toggle('nqFolded', f);
       b.classList.toggle('up', f);
       b.innerHTML = f ? EYE : EYE_OFF;
       b.title = f ? 'Show notices' : 'Hide notices'; b.setAttribute('aria-label', b.title);
@@ -19,9 +19,9 @@
     apply();
   }
   function setupScrollTop() {
-    if (isNc || isPopup || !document.body || document.getElementById('nppTop')) return;
+    if (isNc || isPopup || !document.body || document.getElementById('nqTop')) return;
     const b = document.createElement('button');
-    b.id = 'nppTop'; b.type = 'button'; b.title = 'Back to top'; b.setAttribute('aria-label', 'Back to top');
+    b.id = 'nqTop'; b.type = 'button'; b.title = 'Back to top'; b.setAttribute('aria-label', 'Back to top');
     b.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 9.5 8 5l4.5 4.5"/></svg>';
     b.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     document.body.appendChild(b);
@@ -36,7 +36,7 @@
     document.querySelectorAll('.shop-item .item-img[data-price]').forEach(img => {
       if (!targets.has((img.dataset.price || '').trim())) return;
       const cost = [...img.closest('.shop-item').querySelectorAll('.item-stock')].find(p => /Cost:/i.test(p.textContent));
-      if (cost) cost.classList.add('nppBigPrice');
+      if (cost) cost.classList.add('nqBigPrice');
     });
   }
 
@@ -52,8 +52,8 @@
     };
     ['click', 'mousedown', 'pointerdown', 'auxclick'].forEach(t => window.addEventListener(t, block, true));
     if (!locked()) return;
-    document.documentElement.classList.add('npp-shop-lock');
-    setTimeout(() => document.documentElement.classList.remove('npp-shop-lock'), SHOP_LOCK_MS - performance.now());
+    document.documentElement.classList.add('nq-shop-lock');
+    setTimeout(() => document.documentElement.classList.remove('nq-shop-lock'), SHOP_LOCK_MS - performance.now());
   }
 
   function openHeaderMenu(id) {
@@ -64,7 +64,7 @@
   function closeAllPanels() {
     const sr = shadow();
     if (sr) sr.querySelectorAll('.menu').forEach(m => { m.style.display = 'none'; });
-    document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'none' }));
+    document.dispatchEvent(new CustomEvent('nq:drawer', { detail: 'none' }));
     document.querySelectorAll('.bankSettingsBackdrop').forEach(el => el.remove());
     if (dockOpen) setDock(false);
   }
@@ -91,7 +91,7 @@
     if (el.textContent !== out) el.textContent = out;
   }
   function updateNc() {
-    const el = $('#npNp .ncVal');
+    const el = $('#nqNp .ncVal');
     if (!el) return;
     const live = (($('#ncanchor') || {}).textContent || '').trim();
     if (live) LSset('nq_nc_last', live);
@@ -99,18 +99,18 @@
     if (v && el.dataset.raw !== v) { el.dataset.raw = v; el.textContent = v; }
   }
   function setupBank() {
-    const np = $('#npNp'), bank = $('#npBank');
-    if (!np || !bank || np.dataset.acc || !$('#npBal', bank)) return;
+    const np = $('#nqNp'), bank = $('#nqBank');
+    if (!np || !bank || np.dataset.acc || !$('#nqBal', bank)) return;
     np.dataset.acc = '1';
-    const val = $('.npVal', np), img = $('img', np);
+    const val = $('.nqVal', np), img = $('img', np);
     np.innerHTML = '';
     const top = document.createElement('div');
-    top.className = 'np-top-row';
-    top.innerHTML = `<div class="np-amounts"><a class="np-amount" href="https://www.neopets.com/inventory.phtml" title="Inventory"><span class="npVal">${esc(val ? val.textContent : '…')}</span>${img ? img.outerHTML : ''}</a><a class="np-nc" href="https://ncmall.neopets.com/mall/shop.phtml?layout=new" title="NC Mall"><span class="ncVal">…</span><img src="https://images.neopets.com/themes/h5/basic/images/nc-icon.svg" alt="" onerror="this.remove()"></a><a class="np-bank" href="https://www.neopets.com/bank.phtml" title="Bank" aria-label="Bank"></a></div>`;
-    top.querySelector('.np-bank').innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 1 1.5 4.5V6h13V4.5z"/><rect x="2.5" y="7" width="2" height="5"/><rect x="7" y="7" width="2" height="5"/><rect x="11.5" y="7" width="2" height="5"/><rect x="1.5" y="13" width="13" height="1.8" rx=".4"/></svg>';
+    top.className = 'nq-top-row';
+    top.innerHTML = `<div class="nq-amounts"><a class="nq-amount" href="https://www.neopets.com/inventory.phtml" title="Inventory"><span class="nqVal">${esc(val ? val.textContent : '…')}</span>${img ? img.outerHTML : ''}</a><a class="nq-nc" href="https://ncmall.neopets.com/mall/shop.phtml?layout=new" title="NC Mall"><span class="ncVal">…</span><img src="https://images.neopets.com/themes/h5/basic/images/nc-icon.svg" alt="" onerror="this.remove()"></a><a class="nq-bank" href="https://www.neopets.com/bank.phtml" title="Bank" aria-label="Bank"></a></div>`;
+    top.querySelector('.nq-bank').innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 1 1.5 4.5V6h13V4.5z"/><rect x="2.5" y="7" width="2" height="5"/><rect x="7" y="7" width="2" height="5"/><rect x="11.5" y="7" width="2" height="5"/><rect x="1.5" y="13" width="13" height="1.8" rx=".4"/></svg>';
     np.append(top);
     updateNc();
-    ['.npVal', '.ncVal'].forEach(sel => {
+    ['.nqVal', '.ncVal'].forEach(sel => {
       const el = top.querySelector(sel);
       if (!el) return;
       new MutationObserver(() => abbrNum(el)).observe(el, { childList: true, characterData: true, subtree: true });

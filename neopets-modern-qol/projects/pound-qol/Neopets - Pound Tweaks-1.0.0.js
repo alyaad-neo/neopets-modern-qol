@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Pound Tweaks
 // @namespace    neopets-qol-patcher
-// @version      1.0.0
+// @version      1.0.1
 // @description  Neopets Pound: modern layout, Show more Neopets, search header, pet card chips (Painted / Well named / New), visited pet purple names, report row, adopt button.
 // @match        *://*.neopets.com/pound*
 // @match        *://*.neopets.com/transfer*
@@ -36,7 +36,7 @@
   const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 8.6 6.6 12 13 4.6"/></svg>';
 
   /* ─────────────────────────────────────────── pound CSS ─────────────────────────────────────────────── */
-  const POUND_CSS = `#nppPoundRefresh { position: fixed; top: 74px; right: 28px; z-index: 900; display: flex; align-items: center; gap: 9px; height: 46px; padding: 0 22px 0 17px; border: 1px solid rgba(0,0,0,.2); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #fff) 80%, #fff) 0%, var(--np-accent, #fff) 50%, color-mix(in srgb, var(--np-accent, #fff) 86%, #000) 100%); color: var(--npp-accent-fg, #1a1330); text-shadow: var(--npp-accent-fg-shadow, none); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 2px 6px rgba(0,0,0,.14); cursor: pointer; transition: transform .15s, filter .15s; }
+  const POUND_CSS = `#nppPoundRefresh { position: fixed; top: 74px; right: 28px; z-index: 900; display: flex; align-items: center; gap: 9px; height: 46px; padding: 0 22px 0 17px; border: 1px solid rgba(0,0,0,.2); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--nq-accent, #fff) 80%, #fff) 0%, var(--nq-accent, #fff) 50%, color-mix(in srgb, var(--nq-accent, #fff) 86%, #000) 100%); color: var(--nq-accent-fg, #1a1330); text-shadow: var(--nq-accent-fg-shadow, none); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 2px 6px rgba(0,0,0,.14); cursor: pointer; transition: transform .15s, filter .15s; }
 #nppPoundRefresh span { font: 400 19px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; }
 #nppPoundRefresh svg { width: 20px; height: 20px; transition: transform .5s cubic-bezier(.22, 1, .36, 1); }
 #nppPoundRefresh:hover { filter: brightness(1.06); transform: translateY(-1px); }
@@ -53,7 +53,7 @@ html.npp-pound #search.nppSearchMoved { display: none !important; }
 html.npp-pound .contentModuleHeader.nppHeadBar { padding: 14px 20px !important; }
 html.npp-pound .nppHeadInner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 html.npp-pound .nppHeadInner form { display: flex; align-items: center; gap: 14px; flex: 1 1 380px; margin: 0; min-width: 0; }
-html.npp-pound .nppHeadInner form > span { color: var(--npp-accent-fg, #1a1330); font-size: 19px !important; font-weight: 700 !important; letter-spacing: .01em; text-shadow: var(--npp-accent-fg-shadow, none); white-space: nowrap; }
+html.npp-pound .nppHeadInner form > span { color: var(--nq-accent-fg, #1a1330); font-size: 19px !important; font-weight: 700 !important; letter-spacing: .01em; text-shadow: var(--nq-accent-fg-shadow, none); white-space: nowrap; }
 html.npp-pound .nppHeadInner input[type="submit"] { display: none !important; }
 html.npp-pound .nppHeadInner #search_name { background: #fff; border-color: rgba(0,0,0,.08); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 html.npp-pound .nppHeadInner #search_name:hover { background: #fff; border-color: rgba(0,0,0,.16); }
@@ -66,17 +66,17 @@ html.npp-pound #search_name { color: #111827; }
 html.npp-pound #search_name::placeholder { color: #9ca3af; font-weight: 500; opacity: 1; }
 html.npp-pound #search_name:not(:placeholder-shown) { text-transform: lowercase; }
 html.npp-pound #search_name:hover { border-color: #d1d5db; background: #f3f4f6; }
-html.npp-pound #search_name:focus { border-color: var(--np-accent, #8b5cf6); background: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--np-accent, #8b5cf6) 24%, transparent); }
+html.npp-pound #search_name:focus { border-color: var(--nq-accent, #8b5cf6); background: #fff; box-shadow: 0 0 0 4px color-mix(in srgb, var(--nq-accent, #8b5cf6) 24%, transparent); }
 html.npp-pound .nppSearchGo { position: absolute; right: 6px; top: 50%; width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; transform: translateY(-50%); border: 0; border-radius: 50%; background: transparent; cursor: pointer; transition: background .15s, transform .2s cubic-bezier(.3, 1.4, .5, 1); }
-html.npp-pound .nppSearchGo:hover { background: color-mix(in srgb, var(--np-accent, #8b5cf6) 22%, transparent); transform: translateY(-50%) scale(1.08); }
-html.npp-pound .nppSearchGo img { width: 30px; height: 30px; display: block; filter: var(--npp-ico-shadow, drop-shadow(0 2px 3px rgba(0,0,0,.35))); }
+html.npp-pound .nppSearchGo:hover { background: color-mix(in srgb, var(--nq-accent, #8b5cf6) 22%, transparent); transform: translateY(-50%) scale(1.08); }
+html.npp-pound .nppSearchGo img { width: 30px; height: 30px; display: block; filter: var(--nq-ico-shadow, drop-shadow(0 2px 3px rgba(0,0,0,.35))); }
 html.npp-search-go #search input[type="submit"] { display: none !important; }
 html.npp-pound #view_more { visibility: visible !important; float: none !important; margin: 0 0 0 auto !important; }
 html.npp-pound #nppPoundRefresh.inline { height: 48px; margin: 0; padding: 0 24px 0 20px; border-color: rgba(0,0,0,.1); }
 html.npp-pound #nppPoundRefresh.inline span { font-size: 18px !important; }
 html.npp-pound .contentModule { height: auto !important; border: 0 !important; border-radius: 22px; background: #fff; box-shadow: 0 10px 34px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.06); overflow: hidden; }
 html.npp-pound .contentModuleTable { width: 100%; border-collapse: collapse; border: 0; }
-html.npp-pound .contentModuleHeader { padding: 14px 24px !important; background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #8b5cf6) 78%, #fff), var(--np-accent, #8b5cf6)) !important; color: var(--npp-accent-fg, #1a1330) !important; font: 400 22px/1 'CafeteriaBlack', Georgia, serif !important; text-shadow: var(--npp-accent-fg-shadow, none); }
+html.npp-pound .contentModuleHeader { padding: 14px 24px !important; background: linear-gradient(180deg, color-mix(in srgb, var(--nq-accent, #8b5cf6) 78%, #fff), var(--nq-accent, #8b5cf6)) !important; color: var(--nq-accent-fg, #1a1330) !important; font: 400 22px/1 'CafeteriaBlack', Georgia, serif !important; text-shadow: var(--nq-accent-fg-shadow, none); }
 html.npp-pound .contentModuleContent { padding: 26px 24px 28px !important; background: transparent !important; }
 html.npp-pound table[style*="801px"] { display: block !important; width: 100% !important; }
 html.npp-pound table[style*="801px"] > tbody { display: block !important; }
@@ -130,7 +130,7 @@ html.npp-adopt-btn #processAdoptBtn { display: none !important; }
 #nppAdoptBtn:disabled { background: #d9dce1 !important; color: #8b919c !important; border-color: rgba(0,0,0,.08); text-shadow: none; box-shadow: none; cursor: not-allowed; filter: none; transform: none; }
 #nppAdoptBtn:disabled:hover { filter: none; transform: none; }
 #nppAdoptBtn:disabled:hover svg { transform: none; }
-#nppAdoptBtn { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 24px 0 0 auto; height: 54px; padding: 0 36px; border: 1px solid rgba(0,0,0,.2); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--np-accent, #8b5cf6) 80%, #fff) 0%, var(--np-accent, #8b5cf6) 50%, color-mix(in srgb, var(--np-accent, #8b5cf6) 86%, #000) 100%); color: var(--npp-accent-fg, #1a1330); text-shadow: var(--npp-accent-fg-shadow, none); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 8px 22px rgba(0,0,0,.22); cursor: pointer; transition: transform .15s, filter .15s; }
+#nppAdoptBtn { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 24px 0 0 auto; height: 54px; padding: 0 36px; border: 1px solid rgba(0,0,0,.2); border-radius: 999px; background: linear-gradient(180deg, color-mix(in srgb, var(--nq-accent, #8b5cf6) 80%, #fff) 0%, var(--nq-accent, #8b5cf6) 50%, color-mix(in srgb, var(--nq-accent, #8b5cf6) 86%, #000) 100%); color: var(--nq-accent-fg, #1a1330); text-shadow: var(--nq-accent-fg-shadow, none); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 8px 22px rgba(0,0,0,.22); cursor: pointer; transition: transform .15s, filter .15s; }
 #nppAdoptBtn span { font: 400 22px/1 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; }
 #nppAdoptBtn svg { width: 20px; height: 20px; transition: transform .25s cubic-bezier(.3, 1.4, .5, 1); }
 #nppAdoptBtn:hover { filter: brightness(1.06); transform: translateY(-2px); }

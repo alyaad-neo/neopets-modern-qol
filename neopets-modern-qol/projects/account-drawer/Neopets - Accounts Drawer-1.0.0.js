@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.22
+// @version      1.3.23
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -61,163 +61,163 @@
   /* ───────────────────────────────── CSS ───────────────────────────────── */
   // The panel CSS is duplicated here so the drawer looks right without the core.
   // When the core is installed, its copies of the same selectors win (loaded earlier,
-  // higher specificity from the html[data-np-modern-interface] scope); this block
+  // higher specificity from the html[data-nq-modern-interface] scope); this block
   // exists purely so standalone mode gets the same visual.
   const ACCT_CSS = `
-#nppAcctTab { position: absolute; top: 8px; right: 8px; z-index: 3; width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; transition: background .15s, transform .15s, color .15s; }
-#nppAcctTab svg { width: 14px; height: 14px; display: block; }
-#nppAcctTab:hover, #nppAcctTab.on { background: var(--np-accent, #ff8a1f); color: var(--npp-accent-fg, #1a1330); border-color: transparent; }
-#nppAcctTab.on { transform: scale(1.06); }
-#nppAcctTab.attn::after { content: ""; position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #2fd873; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 1px 3px rgba(0,0,0,.35); }
-#nppAcctDrawer { position: fixed; left: 244px; top: 70px; z-index: 1002; box-sizing: border-box; width: 252px; height: min(500px, calc(100vh - 100px)); display: flex; flex-direction: column; padding: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: #3a3350; color: #fff; opacity: 0; transform: translateX(-18px) scale(.97); transform-origin: left top; pointer-events: none; transition: opacity .22s ease, transform .32s cubic-bezier(.22, 1, .36, 1); }
-#nppAcctDrawer.open { opacity: 1; transform: none; pointer-events: auto; }
-#nppAcctDrawer .nppAcctHead { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; }
-#nppAcctDrawer .nppAcctHeadL { display: flex; align-items: center; gap: 8px; min-width: 0; }
-#nppAcctDrawer .nppAcctTitle { font: 400 21px/1 'CafeteriaBlack', Georgia, serif; }
-#nppAcctDrawer .nppAcctSwap { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 13px; border-radius: 999px; background: linear-gradient(180deg, #52525e 0%, #3b3b46 50%, #2b2b34 100%); color: #fff !important; text-decoration: none !important; transition: filter .15s, transform .15s; }
-#nppAcctDrawer .nppAcctSwap svg { width: 13px; height: 13px; flex: none; }
-#nppAcctDrawer .nppAcctSwap span { font: 400 14px/1 'CafeteriaBlack', Georgia, serif; letter-spacing: .02em; }
-#nppAcctDrawer .nppAcctSwap:hover { filter: brightness(1.18); transform: translateY(-1px); }
-#nppAcctDrawer .nppAcctSwap.busy { opacity: .75; pointer-events: none; }
-#nppAcctDrawer .nppAcctHint { margin: 0 2px 10px; padding: 8px 10px; border: 1px solid rgba(255,209,102,.35); border-radius: 10px; background: rgba(255,209,102,.13); color: #ffe7a8; font: 500 11.5px/1.35 'Outfit', system-ui, sans-serif; }
-#nppAcctDrawer .nppAcctHint:empty { display: none; }
-#nppAcctDrawer .nppAcctBody { flex: 1 1 auto; min-height: 0; padding-right: 6px; overflow-x: hidden; overflow-y: scroll; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.42) rgba(255,255,255,.07); }
-#nppAcctDrawer .nppAcctSec + .nppAcctSec { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
-#nppAcctDrawer .nppAcctSecHead { display: flex; align-items: center; gap: 8px; padding: 0 4px 6px; }
-#nppAcctDrawer .nppAcctSecHead span { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.78); }
-#nppAcctDrawer .nppAcctSecHead em { padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.12); font: normal 700 10px/1.4 'Outfit', system-ui, sans-serif; }
-#nppAcctDrawer .nppAcctSecHead em:empty { display: none; }
-#nppAcctDrawer .nppAcctList { display: flex; flex-direction: column; gap: 4px; }
-#nppAcctDrawer .nppAcctRow { display: flex; align-items: center; gap: 2px; padding: 3px 0 3px 3px; border-radius: 14px; transition: background .18s; }
-#nppAcctDrawer .nppAcctRow:hover { background: rgba(255,255,255,.06); }
-#nppAcctDrawer .nppAcctRow.me { box-shadow: inset 0 0 0 1px var(--np-accent-line, rgba(255,255,255,.35)); }
-#nppAcctDrawer .nppAcctLink { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 3px 4px; border-radius: 12px; color: #fff !important; text-decoration: none !important; }
-#nppAcctDrawer .nppAcctAv { flex: none; width: 34px; height: 34px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.16) center / cover no-repeat; font: normal 400 16px/1 'CafeteriaBlack', Georgia, serif; }
-#nppAcctDrawer .nppAcctTxt { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; }
-#nppAcctDrawer .nppAcctTxt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px/1.2 'Outfit', system-ui, sans-serif; }
-#nppAcctDrawer .nppAcctTxt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 11px/1.2 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.68); }
-#nppAcctDrawer .nppAcctStar { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: rgba(255,255,255,.55); font-size: 17px; line-height: 1; cursor: pointer; transition: color .15s, background .15s; }
-#nppAcctDrawer .nppAcctStar:hover { color: #ffd166; background: rgba(255,255,255,.1); }
-#nppAcctDrawer .nppAcctRow.main .nppAcctStar { color: #ffd166; }
-#nppAcctDrawer .nppAcctX { flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.3); color: rgba(255,255,255,.85); font-size: 15px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s; }
-#nppAcctDrawer .nppAcctRow:hover .nppAcctX { opacity: 1; }
-#nppAcctDrawer .nppAcctX:hover { background: #e0535f; color: #fff; }
-#nppAcctDrawer .nppAcctNote { margin-top: 8px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); font: 500 11.5px/1.4 'Outfit', system-ui, sans-serif; }
-#nppAcctDrawer .nppAcctNote:empty { display: none; }
-#nppAcctDrawer .nppAcctSync { display: block; width: 100%; margin-top: 8px; height: 32px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; font: 600 12.5px 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
-#nppAcctDrawer .nppAcctSync:hover:not(:disabled) { background: var(--np-accent, #ff8a1f); color: var(--npp-accent-fg, #1a1330); border-color: transparent; }
-#nppAcctDrawer .nppAcctSync.busy { opacity: .7; cursor: progress; }
-#nppAcctDrawer .nppAcctSec[hidden], #nppAcctDrawer .nppAcctAdd[hidden], #nppAcctDrawer .nppAcctAddBtn[hidden] { display: none !important; }
-#nppAcctDrawer .nppAcctAddWrap { margin-top: 10px; }
-#nppAcctDrawer .nppAcctAddBtn { height: 26px; padding: 0 12px; border: 1px dashed rgba(255,255,255,.34); border-radius: 999px; background: transparent; color: rgba(255,255,255,.85); font: 600 12px 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
-#nppAcctDrawer .nppAcctAddBtn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.6); color: #fff; }
-#nppAcctDrawer .nppAcctAdd { display: flex; align-items: center; gap: 5px; }
-#nppAcctDrawer .nppAcctAdd input { flex: 1; min-width: 0; height: 28px; padding: 0 12px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; font: 500 12.5px 'Outfit', system-ui, sans-serif; outline: 0; }
-#nppAcctDrawer .nppAcctAdd input::placeholder { color: rgba(255,255,255,.6); }
-#nppAcctDrawer .nppAcctAdd input:focus { border-color: var(--np-accent, #ff8a1f); background: rgba(255,255,255,.16); }
-#nppAcctDrawer .nppAcctAddOk { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--np-accent, #ff8a1f); color: var(--npp-accent-fg, #1a1330); font: 700 12px 'Outfit', system-ui, sans-serif; cursor: pointer; }
-#nppAcctDrawer .nppAcctAddOk:hover { filter: brightness(1.07); }
-#nppAcctDrawer .nppAcctAddCancel { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); font-size: 15px; line-height: 1; cursor: pointer; transition: background .15s; }
-#nppAcctDrawer .nppAcctAddCancel:hover { background: rgba(255,255,255,.24); }
-#nppAcctDrawer .nppAcctMsg { text-align: center; padding: 6px 6px 0; font: 500 11px/1.35 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.7); }
-#nppAcctDrawer .nppAcctMsg:empty { display: none; }
-#nppAcctDrawer .nppAcctStandaloneFoot { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
-#nppAcctDrawer .nppAcctStandaloneFoot a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.28); color: #fff !important; text-decoration: none !important; font: 400 14px/1 'CafeteriaBlack', Georgia, serif; }
-#nppAcctDrawer .nppAcctStandaloneFoot a:hover { background: rgba(255,255,255,.18); }
-#nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout { background: var(--np-accent, #ff8a1f); color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); border-color: transparent; }
-#nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout:hover { filter: brightness(1.07); }
-#nppAcctDrawer .nppAcctStandaloneFoot svg { width: 13px; height: 13px; flex: none; }
+#nqAcctTab { position: absolute; top: 8px; right: 8px; z-index: 3; width: 24px; height: 24px; padding: 0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; cursor: pointer; transition: background .15s, transform .15s, color .15s; }
+#nqAcctTab svg { width: 14px; height: 14px; display: block; }
+#nqAcctTab:hover, #nqAcctTab.on { background: var(--nq-accent, #ff8a1f); color: var(--nq-accent-fg, #1a1330); border-color: transparent; }
+#nqAcctTab.on { transform: scale(1.06); }
+#nqAcctTab.attn::after { content: ""; position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #2fd873; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 1px 3px rgba(0,0,0,.35); }
+#nqAcctDrawer { position: fixed; left: 244px; top: 70px; z-index: 1002; box-sizing: border-box; width: 252px; height: min(500px, calc(100vh - 100px)); display: flex; flex-direction: column; padding: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 14px; background: #3a3350; color: #fff; opacity: 0; transform: translateX(-18px) scale(.97); transform-origin: left top; pointer-events: none; transition: opacity .22s ease, transform .32s cubic-bezier(.22, 1, .36, 1); }
+#nqAcctDrawer.open { opacity: 1; transform: none; pointer-events: auto; }
+#nqAcctDrawer .nqAcctHead { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px; }
+#nqAcctDrawer .nqAcctHeadL { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#nqAcctDrawer .nqAcctTitle { font: 400 21px/1 'CafeteriaBlack', Georgia, serif; }
+#nqAcctDrawer .nqAcctSwap { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 13px; border-radius: 999px; background: linear-gradient(180deg, #52525e 0%, #3b3b46 50%, #2b2b34 100%); color: #fff !important; text-decoration: none !important; transition: filter .15s, transform .15s; }
+#nqAcctDrawer .nqAcctSwap svg { width: 13px; height: 13px; flex: none; }
+#nqAcctDrawer .nqAcctSwap span { font: 400 14px/1 'CafeteriaBlack', Georgia, serif; letter-spacing: .02em; }
+#nqAcctDrawer .nqAcctSwap:hover { filter: brightness(1.18); transform: translateY(-1px); }
+#nqAcctDrawer .nqAcctSwap.busy { opacity: .75; pointer-events: none; }
+#nqAcctDrawer .nqAcctHint { margin: 0 2px 10px; padding: 8px 10px; border: 1px solid rgba(255,209,102,.35); border-radius: 10px; background: rgba(255,209,102,.13); color: #ffe7a8; font: 500 11.5px/1.35 'Outfit', system-ui, sans-serif; }
+#nqAcctDrawer .nqAcctHint:empty { display: none; }
+#nqAcctDrawer .nqAcctBody { flex: 1 1 auto; min-height: 0; padding-right: 6px; overflow-x: hidden; overflow-y: scroll; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.42) rgba(255,255,255,.07); }
+#nqAcctDrawer .nqAcctSec + .nqAcctSec { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
+#nqAcctDrawer .nqAcctSecHead { display: flex; align-items: center; gap: 8px; padding: 0 4px 6px; }
+#nqAcctDrawer .nqAcctSecHead span { font: 700 11px/1 'Outfit', system-ui, sans-serif; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.78); }
+#nqAcctDrawer .nqAcctSecHead em { padding: 1px 7px; border-radius: 999px; background: rgba(255,255,255,.12); font: normal 700 10px/1.4 'Outfit', system-ui, sans-serif; }
+#nqAcctDrawer .nqAcctSecHead em:empty { display: none; }
+#nqAcctDrawer .nqAcctList { display: flex; flex-direction: column; gap: 4px; }
+#nqAcctDrawer .nqAcctRow { display: flex; align-items: center; gap: 2px; padding: 3px 0 3px 3px; border-radius: 14px; transition: background .18s; }
+#nqAcctDrawer .nqAcctRow:hover { background: rgba(255,255,255,.06); }
+#nqAcctDrawer .nqAcctRow.me { box-shadow: inset 0 0 0 1px var(--nq-accent-line, rgba(255,255,255,.35)); }
+#nqAcctDrawer .nqAcctLink { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 3px 4px; border-radius: 12px; color: #fff !important; text-decoration: none !important; }
+#nqAcctDrawer .nqAcctAv { flex: none; width: 34px; height: 34px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,.55); border-radius: 50%; background: rgba(255,255,255,.16) center / cover no-repeat; font: normal 400 16px/1 'CafeteriaBlack', Georgia, serif; }
+#nqAcctDrawer .nqAcctTxt { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; text-align: left; }
+#nqAcctDrawer .nqAcctTxt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 14px/1.2 'Outfit', system-ui, sans-serif; }
+#nqAcctDrawer .nqAcctTxt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 11px/1.2 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.68); }
+#nqAcctDrawer .nqAcctStar { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: rgba(255,255,255,.55); font-size: 17px; line-height: 1; cursor: pointer; transition: color .15s, background .15s; }
+#nqAcctDrawer .nqAcctStar:hover { color: #ffd166; background: rgba(255,255,255,.1); }
+#nqAcctDrawer .nqAcctRow.main .nqAcctStar { color: #ffd166; }
+#nqAcctDrawer .nqAcctX { flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: rgba(0,0,0,.3); color: rgba(255,255,255,.85); font-size: 15px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s; }
+#nqAcctDrawer .nqAcctRow:hover .nqAcctX { opacity: 1; }
+#nqAcctDrawer .nqAcctX:hover { background: #e0535f; color: #fff; }
+#nqAcctDrawer .nqAcctNote { margin-top: 8px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); font: 500 11.5px/1.4 'Outfit', system-ui, sans-serif; }
+#nqAcctDrawer .nqAcctNote:empty { display: none; }
+#nqAcctDrawer .nqAcctSync { display: block; width: 100%; margin-top: 8px; height: 32px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; font: 600 12.5px 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+#nqAcctDrawer .nqAcctSync:hover:not(:disabled) { background: var(--nq-accent, #ff8a1f); color: var(--nq-accent-fg, #1a1330); border-color: transparent; }
+#nqAcctDrawer .nqAcctSync.busy { opacity: .7; cursor: progress; }
+#nqAcctDrawer .nqAcctSec[hidden], #nqAcctDrawer .nqAcctAdd[hidden], #nqAcctDrawer .nqAcctAddBtn[hidden] { display: none !important; }
+#nqAcctDrawer .nqAcctAddWrap { margin-top: 10px; }
+#nqAcctDrawer .nqAcctAddBtn { height: 26px; padding: 0 12px; border: 1px dashed rgba(255,255,255,.34); border-radius: 999px; background: transparent; color: rgba(255,255,255,.85); font: 600 12px 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+#nqAcctDrawer .nqAcctAddBtn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.6); color: #fff; }
+#nqAcctDrawer .nqAcctAdd { display: flex; align-items: center; gap: 5px; }
+#nqAcctDrawer .nqAcctAdd input { flex: 1; min-width: 0; height: 28px; padding: 0 12px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; background: rgba(255,255,255,.1); color: #fff; font: 500 12.5px 'Outfit', system-ui, sans-serif; outline: 0; }
+#nqAcctDrawer .nqAcctAdd input::placeholder { color: rgba(255,255,255,.6); }
+#nqAcctDrawer .nqAcctAdd input:focus { border-color: var(--nq-accent, #ff8a1f); background: rgba(255,255,255,.16); }
+#nqAcctDrawer .nqAcctAddOk { flex: none; height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--nq-accent, #ff8a1f); color: var(--nq-accent-fg, #1a1330); font: 700 12px 'Outfit', system-ui, sans-serif; cursor: pointer; }
+#nqAcctDrawer .nqAcctAddOk:hover { filter: brightness(1.07); }
+#nqAcctDrawer .nqAcctAddCancel { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); font-size: 15px; line-height: 1; cursor: pointer; transition: background .15s; }
+#nqAcctDrawer .nqAcctAddCancel:hover { background: rgba(255,255,255,.24); }
+#nqAcctDrawer .nqAcctMsg { text-align: center; padding: 6px 6px 0; font: 500 11px/1.35 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.7); }
+#nqAcctDrawer .nqAcctMsg:empty { display: none; }
+#nqAcctDrawer .nqAcctStandaloneFoot { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.12); }
+#nqAcctDrawer .nqAcctStandaloneFoot a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.28); color: #fff !important; text-decoration: none !important; font: 400 14px/1 'CafeteriaBlack', Georgia, serif; }
+#nqAcctDrawer .nqAcctStandaloneFoot a:hover { background: rgba(255,255,255,.18); }
+#nqAcctDrawer .nqAcctStandaloneFoot a.nqLogout { background: var(--nq-accent, #ff8a1f); color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.35); border-color: transparent; }
+#nqAcctDrawer .nqAcctStandaloneFoot a.nqLogout:hover { filter: brightness(1.07); }
+#nqAcctDrawer .nqAcctStandaloneFoot svg { width: 13px; height: 13px; flex: none; }
 /* restyle: match All Pets overlay */
-#nppAcctDrawer { --ap-bg: #fbf7ee; --ap-line: #e6dcf5; --ap-text: #392d5c; --ap-mute: #6c6290; --ap-acc: #7c5cf0; --ap-soft: #efe8ff; z-index: 2147482000; padding: 0; border: 3px solid #fff; border-radius: 24px; background: var(--ap-bg); color: var(--ap-text); font-family: 'Outfit', system-ui, sans-serif; box-shadow: 0 24px 70px rgba(70,52,110,.35); transform: scale(.97) translateY(8px); transform-origin: left top; transition: opacity .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
-#nppAcctDrawer.open { transform: none; }
-#nppAcctDrawer :focus-visible { outline: 3px solid #5b8def; outline-offset: 2px; }
-#nppAcctDrawer .nppAcctHead { padding: 14px 14px 10px 18px; background: linear-gradient(180deg, #f3ecff 0%, #fbf7ee 100%); border-bottom: 1px solid var(--ap-line); }
-#nppAcctDrawer .nppAcctTitle { font: 800 22px/30px 'Outfit', system-ui, sans-serif; letter-spacing: -.02em; color: var(--ap-text); }
-#nppAcctDrawer .nppAcctCount { font-size: 13px; font-weight: 500; color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctHeadR { display: flex; align-items: center; gap: 6px; }
-#nppAcctDrawer .nppAcctHeadL { align-items: baseline; }
-#nppAcctDrawer .nppAcctSwap { height: 34px; padding: 0 14px; background: #fff; border: 1px solid var(--ap-line); color: var(--ap-text) !important; box-shadow: none; }
-#nppAcctDrawer .nppAcctSwap span { font: 700 13px/20px 'Outfit', system-ui, sans-serif; letter-spacing: 0; }
-#nppAcctDrawer .nppAcctSwap:hover { filter: none; transform: none; background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
-#nppAcctDrawer .nppAcctClose { flex: none; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ap-line); border-radius: 999px; background: #fff; color: var(--ap-text); font: 700 20px/1 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s; }
-#nppAcctDrawer .nppAcctClose:hover { background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
-#nppAcctDrawer .nppAcctHint { margin: 10px 12px 0; border-color: #f0d28a; background: #fff4d6; color: #7a5200; }
-#nppAcctDrawer .nppAcctBody { padding: 10px 6px 12px 12px; scrollbar-color: #cbbaf2 transparent; }
-#nppAcctDrawer .nppAcctSec + .nppAcctSec { border-top-color: var(--ap-line); }
-#nppAcctDrawer .nppAcctSecHead span { color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctSecHead em { background: var(--ap-soft); color: var(--ap-acc); }
-#nppAcctDrawer .nppAcctRow:hover { background: var(--ap-soft); }
-#nppAcctDrawer .nppAcctRow.me { box-shadow: inset 0 0 0 1px #cbbaf2; background: #fff; }
-#nppAcctDrawer .nppAcctLink { color: var(--ap-text) !important; }
-#nppAcctDrawer .nppAcctAv { border-color: #fff; background-color: var(--ap-soft); color: var(--ap-text); box-shadow: 0 0 0 1px var(--ap-line); }
-#nppAcctDrawer .nppAcctTxt small { color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctStar { color: #c9c2dc; }
-#nppAcctDrawer .nppAcctStar:hover, #nppAcctDrawer .nppAcctRow.main .nppAcctStar { color: #f5a623; background: #fff; }
-#nppAcctDrawer .nppAcctX { background: #fff; border: 1px solid var(--ap-line); color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctRow:focus-within .nppAcctX { opacity: 1; }
-#nppAcctDrawer .nppAcctNote { border-color: var(--ap-line); background: var(--ap-soft); color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctSync, #nppAcctDrawer .nppAcctStandaloneFoot a { border: 1px solid var(--ap-line); background: #fff; color: var(--ap-text) !important; font-weight: 700; }
-#nppAcctDrawer .nppAcctSync:hover:not(:disabled), #nppAcctDrawer .nppAcctStandaloneFoot a:hover { background: var(--ap-soft); border-color: #cbbaf2; color: var(--ap-text); box-shadow: 0 2px 8px rgba(124,92,240,.18); }
-#nppAcctDrawer .nppAcctStandaloneFoot { border-top-color: var(--ap-line); }
-#nppAcctDrawer .nppAcctAddBtn { border-color: #cbbaf2; color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctAddBtn:hover { background: #fff; border-color: var(--ap-acc); color: var(--ap-text); }
-#nppAcctDrawer .nppAcctAdd input { border-color: var(--ap-line); background: #fff; color: var(--ap-text); }
-#nppAcctDrawer .nppAcctAdd input::placeholder { color: var(--ap-mute); opacity: .8; }
-#nppAcctDrawer .nppAcctAdd input:focus { border-color: var(--ap-acc); background: #fff; }
-#nppAcctDrawer .nppAcctAddOk, #nppAcctDrawer .nppAcctStandaloneFoot a.nppLogout { background: var(--ap-acc); color: #fff !important; text-shadow: none; }
-#nppAcctDrawer .nppAcctAddCancel { background: #fff; border: 1px solid var(--ap-line); color: var(--ap-mute); }
-#nppAcctDrawer .nppAcctAddCancel:hover { background: var(--ap-soft); }
-#nppAcctDrawer .nppAcctMsg { color: var(--ap-mute); }
-@media (prefers-reduced-motion: reduce) { #nppAcctDrawer, #nppAcctDrawer.open { transition: none; transform: none; } }
+#nqAcctDrawer { --ap-bg: #fbf7ee; --ap-line: #e6dcf5; --ap-text: #392d5c; --ap-mute: #6c6290; --ap-acc: #7c5cf0; --ap-soft: #efe8ff; z-index: 2147482000; padding: 0; border: 3px solid #fff; border-radius: 24px; background: var(--ap-bg); color: var(--ap-text); font-family: 'Outfit', system-ui, sans-serif; box-shadow: 0 24px 70px rgba(70,52,110,.35); transform: scale(.97) translateY(8px); transform-origin: left top; transition: opacity .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
+#nqAcctDrawer.open { transform: none; }
+#nqAcctDrawer :focus-visible { outline: 3px solid #5b8def; outline-offset: 2px; }
+#nqAcctDrawer .nqAcctHead { padding: 14px 14px 10px 18px; background: linear-gradient(180deg, #f3ecff 0%, #fbf7ee 100%); border-bottom: 1px solid var(--ap-line); }
+#nqAcctDrawer .nqAcctTitle { font: 800 22px/30px 'Outfit', system-ui, sans-serif; letter-spacing: -.02em; color: var(--ap-text); }
+#nqAcctDrawer .nqAcctCount { font-size: 13px; font-weight: 500; color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctHeadR { display: flex; align-items: center; gap: 6px; }
+#nqAcctDrawer .nqAcctHeadL { align-items: baseline; }
+#nqAcctDrawer .nqAcctSwap { height: 34px; padding: 0 14px; background: #fff; border: 1px solid var(--ap-line); color: var(--ap-text) !important; box-shadow: none; }
+#nqAcctDrawer .nqAcctSwap span { font: 700 13px/20px 'Outfit', system-ui, sans-serif; letter-spacing: 0; }
+#nqAcctDrawer .nqAcctSwap:hover { filter: none; transform: none; background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nqAcctDrawer .nqAcctClose { flex: none; width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--ap-line); border-radius: 999px; background: #fff; color: var(--ap-text); font: 700 20px/1 'Outfit', system-ui, sans-serif; cursor: pointer; transition: background .15s, border-color .15s, box-shadow .15s; }
+#nqAcctDrawer .nqAcctClose:hover { background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nqAcctDrawer .nqAcctHint { margin: 10px 12px 0; border-color: #f0d28a; background: #fff4d6; color: #7a5200; }
+#nqAcctDrawer .nqAcctBody { padding: 10px 6px 12px 12px; scrollbar-color: #cbbaf2 transparent; }
+#nqAcctDrawer .nqAcctSec + .nqAcctSec { border-top-color: var(--ap-line); }
+#nqAcctDrawer .nqAcctSecHead span { color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctSecHead em { background: var(--ap-soft); color: var(--ap-acc); }
+#nqAcctDrawer .nqAcctRow:hover { background: var(--ap-soft); }
+#nqAcctDrawer .nqAcctRow.me { box-shadow: inset 0 0 0 1px #cbbaf2; background: #fff; }
+#nqAcctDrawer .nqAcctLink { color: var(--ap-text) !important; }
+#nqAcctDrawer .nqAcctAv { border-color: #fff; background-color: var(--ap-soft); color: var(--ap-text); box-shadow: 0 0 0 1px var(--ap-line); }
+#nqAcctDrawer .nqAcctTxt small { color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctStar { color: #c9c2dc; }
+#nqAcctDrawer .nqAcctStar:hover, #nqAcctDrawer .nqAcctRow.main .nqAcctStar { color: #f5a623; background: #fff; }
+#nqAcctDrawer .nqAcctX { background: #fff; border: 1px solid var(--ap-line); color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctRow:focus-within .nqAcctX { opacity: 1; }
+#nqAcctDrawer .nqAcctNote { border-color: var(--ap-line); background: var(--ap-soft); color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctSync, #nqAcctDrawer .nqAcctStandaloneFoot a { border: 1px solid var(--ap-line); background: #fff; color: var(--ap-text) !important; font-weight: 700; }
+#nqAcctDrawer .nqAcctSync:hover:not(:disabled), #nqAcctDrawer .nqAcctStandaloneFoot a:hover { background: var(--ap-soft); border-color: #cbbaf2; color: var(--ap-text); box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nqAcctDrawer .nqAcctStandaloneFoot { border-top-color: var(--ap-line); }
+#nqAcctDrawer .nqAcctAddBtn { border-color: #cbbaf2; color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctAddBtn:hover { background: #fff; border-color: var(--ap-acc); color: var(--ap-text); }
+#nqAcctDrawer .nqAcctAdd input { border-color: var(--ap-line); background: #fff; color: var(--ap-text); }
+#nqAcctDrawer .nqAcctAdd input::placeholder { color: var(--ap-mute); opacity: .8; }
+#nqAcctDrawer .nqAcctAdd input:focus { border-color: var(--ap-acc); background: #fff; }
+#nqAcctDrawer .nqAcctAddOk, #nqAcctDrawer .nqAcctStandaloneFoot a.nqLogout { background: var(--ap-acc); color: #fff !important; text-shadow: none; }
+#nqAcctDrawer .nqAcctAddCancel { background: #fff; border: 1px solid var(--ap-line); color: var(--ap-mute); }
+#nqAcctDrawer .nqAcctAddCancel:hover { background: var(--ap-soft); }
+#nqAcctDrawer .nqAcctMsg { color: var(--ap-mute); }
+@media (prefers-reduced-motion: reduce) { #nqAcctDrawer, #nqAcctDrawer.open { transition: none; transform: none; } }
 
-#nppStandaloneAcct { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
-#nppStandaloneAcct.aboveDailies { bottom: 74px; }
-#nppStandaloneAcctToggle { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
-#nppStandaloneAcctToggle:hover { background: #f3f4f6; }
-#nppStandaloneAcctToggle svg { width: 18px; height: 18px; }
+#nqStandaloneAcct { position: fixed; right: 20px; bottom: 20px; z-index: 2140; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; font: 500 13px 'Outfit', system-ui, sans-serif; }
+#nqStandaloneAcct.aboveDailies { bottom: 74px; }
+#nqStandaloneAcctToggle { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(0,0,0,.16); background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+#nqStandaloneAcctToggle:hover { background: #f3f4f6; }
+#nqStandaloneAcctToggle svg { width: 18px; height: 18px; }
 
-#nppAvatar { grid-column: 1; grid-row: 1 / span 2; position: relative; text-decoration: none !important; cursor: pointer; width: 48px; height: 48px; border-radius: 50%; background: center / cover no-repeat rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 2px 8px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font: 400 24px/1 'CafeteriaBlack', Georgia, serif; color: #fff; transition: border-color .15s, transform .15s; }
-#nppAvatar:hover { border-color: #fff; transform: scale(1.06); }
-#nppAvatar .nppAvInit { pointer-events: none; }
-#nppAcctBtns { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
-#npLogoutBtn, #npSwapBtn { box-sizing: border-box; display: flex !important; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 30px; padding: 0 8px !important; border: 1px solid var(--npp-card-line, rgba(255,255,255,.14)) !important; border-radius: 10px !important; font: 600 12px/1 'Outfit', system-ui, sans-serif !important; letter-spacing: 0; text-decoration: none !important; white-space: nowrap; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
-#npLogoutBtn svg, #npSwapBtn svg { width: 13px; height: 13px; flex: none; }
-#npLogoutBtn span, #npSwapBtn span { display: inline !important; font: inherit !important; letter-spacing: inherit; }
-#npLogoutBtn, #npSwapBtn { background: rgba(255,255,255,.07) !important; color: rgba(255,255,255,.82) !important; text-shadow: none; box-shadow: none; }
-#nppListsMod { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; font-family: 'Outfit', system-ui, sans-serif; }
-#nppListsMod .nppLt { box-sizing: border-box; min-width: 0; display: grid; grid-template-columns: auto 1fr; column-gap: 7px; align-items: center; padding: 9px 10px; text-align: left; background: var(--npp-card, rgba(20,18,28,.42)); border: 1px solid var(--npp-card-line, rgba(255,255,255,.14)); border-radius: 14px; color: #fff; cursor: pointer; font: inherit; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: border-color .15s, background .15s; }
-#nppListsMod .nppLt:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.1); }
-#nppListsMod .nppLt:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-#nppListsMod .nppLt svg { grid-row: 1 / span 2; width: 18px; height: 18px; }
-#nppListsMod .nppLt b { font-weight: 700; font-size: 13px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#nppListsMod .nppLt em { font-style: normal; font-size: 11px; line-height: 1.2; color: rgba(255,255,255,.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-@media (max-height: 820px) { #nppListsMod { gap: 6px; margin-bottom: 6px; } #nppListsMod .nppLt { padding: 6px 8px; } }
-#nppAcctTab { display: none !important; }
-#npSwapBtn:hover { background: rgba(255,255,255,.16) !important; border-color: rgba(255,255,255,.3) !important; }
-#npLogoutBtn:hover { background: rgba(255,90,90,.18) !important; border-color: rgba(255,120,120,.5) !important; color: #ff8a8a !important; }
-#npLogoutBtn:focus-visible, #npSwapBtn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
-#npSwapBtn.busy svg { animation: nppSpinAcct .8s linear infinite; }
-@keyframes nppSpinAcct { to { transform: rotate(360deg); } }
+#nqAvatar { grid-column: 1; grid-row: 1 / span 2; position: relative; text-decoration: none !important; cursor: pointer; width: 48px; height: 48px; border-radius: 50%; background: center / cover no-repeat rgba(255,255,255,.14); border: 2px solid rgba(255,255,255,.55); box-shadow: 0 2px 8px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font: 400 24px/1 'CafeteriaBlack', Georgia, serif; color: #fff; transition: border-color .15s, transform .15s; }
+#nqAvatar:hover { border-color: #fff; transform: scale(1.06); }
+#nqAvatar .nqAvInit { pointer-events: none; }
+#nqAcctBtns { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+#nqLogoutBtn, #nqSwapBtn { box-sizing: border-box; display: flex !important; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 30px; padding: 0 8px !important; border: 1px solid var(--nq-card-line, rgba(255,255,255,.14)) !important; border-radius: 10px !important; font: 600 12px/1 'Outfit', system-ui, sans-serif !important; letter-spacing: 0; text-decoration: none !important; white-space: nowrap; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+#nqLogoutBtn svg, #nqSwapBtn svg { width: 13px; height: 13px; flex: none; }
+#nqLogoutBtn span, #nqSwapBtn span { display: inline !important; font: inherit !important; letter-spacing: inherit; }
+#nqLogoutBtn, #nqSwapBtn { background: rgba(255,255,255,.07) !important; color: rgba(255,255,255,.82) !important; text-shadow: none; box-shadow: none; }
+#nqListsMod { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; font-family: 'Outfit', system-ui, sans-serif; }
+#nqListsMod .nqLt { box-sizing: border-box; min-width: 0; display: grid; grid-template-columns: auto 1fr; column-gap: 7px; align-items: center; padding: 9px 10px; text-align: left; background: var(--nq-card, rgba(20,18,28,.42)); border: 1px solid var(--nq-card-line, rgba(255,255,255,.14)); border-radius: 14px; color: #fff; cursor: pointer; font: inherit; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); transition: border-color .15s, background .15s; }
+#nqListsMod .nqLt:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.1); }
+#nqListsMod .nqLt:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+#nqListsMod .nqLt svg { grid-row: 1 / span 2; width: 18px; height: 18px; }
+#nqListsMod .nqLt b { font-weight: 700; font-size: 13px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#nqListsMod .nqLt em { font-style: normal; font-size: 11px; line-height: 1.2; color: rgba(255,255,255,.6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-height: 820px) { #nqListsMod { gap: 6px; margin-bottom: 6px; } #nqListsMod .nqLt { padding: 6px 8px; } }
+#nqAcctTab { display: none !important; }
+#nqSwapBtn:hover { background: rgba(255,255,255,.16) !important; border-color: rgba(255,255,255,.3) !important; }
+#nqLogoutBtn:hover { background: rgba(255,90,90,.18) !important; border-color: rgba(255,120,120,.5) !important; color: #ff8a8a !important; }
+#nqLogoutBtn:focus-visible, #nqSwapBtn:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+#nqSwapBtn.busy svg { animation: nqSpinAcct .8s linear infinite; }
+@keyframes nqSpinAcct { to { transform: rotate(360deg); } }
 /* dark mode (follows sidebar toggle) */
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer { --ap-bg: #1d1a2b; --ap-panel: #272238; --ap-line: rgba(255,255,255,.12); --ap-text: #f1ecff; --ap-mute: rgba(241,236,255,.62); --ap-acc: #a58bff; --ap-soft: rgba(165,139,255,.16); border-color: rgba(255,255,255,.14); color-scheme: dark; box-shadow: 0 24px 70px rgba(0,0,0,.55); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctHead { background: linear-gradient(180deg, #2a2440 0%, #1d1a2b 100%); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSwap, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctClose, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctX, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSync, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStandaloneFoot a, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddCancel, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAdd input, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctRow.me { background: var(--ap-panel); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSwap:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctClose:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctSync:hover:not(:disabled), html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStandaloneFoot a:hover { background: var(--ap-soft); border-color: rgba(165,139,255,.45); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddCancel:hover { background: var(--ap-soft); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddBtn { border-color: rgba(165,139,255,.45); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddBtn:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAdd input:focus { background: var(--ap-panel); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctRow.me { box-shadow: inset 0 0 0 1px rgba(165,139,255,.45); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctHint { background: rgba(255,209,102,.12); border-color: rgba(255,209,102,.3); color: #ffe2a0; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctBody { scrollbar-color: rgba(165,139,255,.45) transparent; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAv { border-color: rgba(255,255,255,.14); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStar { color: rgba(255,255,255,.28); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctStar:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctRow.main .nppAcctStar { background: var(--ap-panel); color: #f5a623; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAdd input::placeholder { color: var(--ap-mute); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAcctDrawer .nppAcctAddOk { color: #1d1a2b !important; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer { --ap-bg: #1d1a2b; --ap-panel: #272238; --ap-line: rgba(255,255,255,.12); --ap-text: #f1ecff; --ap-mute: rgba(241,236,255,.62); --ap-acc: #a58bff; --ap-soft: rgba(165,139,255,.16); border-color: rgba(255,255,255,.14); color-scheme: dark; box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctHead { background: linear-gradient(180deg, #2a2440 0%, #1d1a2b 100%); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctSwap, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctClose, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctX, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctSync, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctStandaloneFoot a, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddCancel, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAdd input, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctRow.me { background: var(--ap-panel); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctSwap:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctClose:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctSync:hover:not(:disabled), html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctStandaloneFoot a:hover { background: var(--ap-soft); border-color: rgba(165,139,255,.45); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddCancel:hover { background: var(--ap-soft); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddBtn { border-color: rgba(165,139,255,.45); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddBtn:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAdd input:focus { background: var(--ap-panel); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctRow.me { box-shadow: inset 0 0 0 1px rgba(165,139,255,.45); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctHint { background: rgba(255,209,102,.12); border-color: rgba(255,209,102,.3); color: #ffe2a0; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctBody { scrollbar-color: rgba(165,139,255,.45) transparent; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAv { border-color: rgba(255,255,255,.14); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctStar { color: rgba(255,255,255,.28); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctStar:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctRow.main .nqAcctStar { background: var(--ap-panel); color: #f5a623; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAdd input::placeholder { color: var(--ap-mute); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { color: #1d1a2b !important; }
 `;
 
   const styleEl = document.createElement('style');
-  styleEl.id = 'npp-acct-css';
+  styleEl.id = 'nq-acct-css';
   styleEl.textContent = ACCT_CSS;
   (document.head || root).appendChild(styleEl);
 
@@ -527,226 +527,226 @@ function npLoadBlob(src, cb) {
   }
 
   const AP_CSS = `
-#nppAP { --ap-bg: #fbf7ee; --ap-panel: #fffdf8; --ap-line: #e6dcf5; --ap-text: #392d5c; --ap-mute: #6c6290; --ap-acc: #7c5cf0; --ap-soft: #efe8ff; position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: stretch; justify-content: center; padding: 24px; background: rgba(70,52,110,.38); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-family: 'Outfit', system-ui, sans-serif; color: var(--ap-text); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s linear .2s; }
-#nppAP.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .2s ease; }
-#nppAP *, #nppAP *::before, #nppAP *::after { box-sizing: border-box; }
-#nppAP .apWin { width: min(1240px, 100%); display: flex; flex-direction: column; min-height: 0; background: var(--ap-bg); border: 3px solid #fff; border-radius: 28px; box-shadow: 0 24px 70px rgba(70,52,110,.35); overflow: hidden; position: relative; transform: scale(.97) translateY(8px); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
-#nppAP.open .apWin { transform: none; }
-#nppAP .apTop { position: sticky; top: 0; z-index: 5; background: linear-gradient(180deg, #f3ecff 0%, #fbf7ee 100%); border-bottom: 1px solid var(--ap-line); }
-#nppAP .apBar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 16px 20px 8px; }
-#nppAP .apBar h2 { margin: 0 10px 0 0; font-size: 24px; line-height: 32px; font-weight: 800; letter-spacing: -.02em; color: var(--ap-text); }
-#nppAP .apStar { display: inline-block; color: #f5a623; margin-left: 6px; font-size: 18px; vertical-align: 2px; }
-#nppAP input[type=search], #nppAP input[type=text], #nppAP select { font: inherit; font-size: 14px; line-height: 20px; color: var(--ap-text); background: #fff; border: 1px solid var(--ap-line); border-radius: 999px; padding: 8px 16px; min-width: 0; }
-#nppAP input::placeholder { color: var(--ap-mute); opacity: .8; }
-#nppAP .apSearch { flex: 1 1 200px; }
-#nppAP button, #nppAP a.apBtn { font: inherit; font-size: 13px; font-weight: 700; line-height: 20px; cursor: pointer; color: var(--ap-text); background: #fff; border: 1px solid var(--ap-line); border-radius: 999px; padding: 7px 14px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, transform .15s, border-color .15s, box-shadow .15s; }
-#nppAP button:hover, #nppAP a.apBtn:hover { background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
-#nppAP .apPrimary { background: var(--ap-acc); color: #fff; border-color: transparent; }
-#nppAP .apPrimary:hover { background: #6a49e0; border-color: transparent; }
-#nppAP :focus-visible { outline: 3px solid #5b8def; outline-offset: 2px; }
-#nppAP svg { width: 16px; height: 16px; flex: none; }
-#nppAP .apIcon { width: 34px; height: 34px; padding: 0; }
-#nppAP .apGroup { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ap-mute); cursor: pointer; padding: 0 6px; }
-#nppAP .apGroup input { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; }
-#nppAP .apRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 20px 12px; }
-#nppAP .apSeg { display: inline-flex; padding: 3px; gap: 2px; background: var(--ap-soft); border-radius: 999px; max-width: 100%; overflow-x: auto; }
-#nppAP .apSeg button { border: 0; background: transparent; padding: 5px 14px; color: var(--ap-mute); white-space: nowrap; box-shadow: none; }
-#nppAP .apSeg button:hover { background: rgba(255,255,255,.7); color: var(--ap-text); box-shadow: none; }
-#nppAP .apSeg button.on { background: #fff; color: var(--ap-acc); box-shadow: 0 1px 4px rgba(124,92,240,.25); }
-#nppAP .apChip { padding: 3px 12px; font-size: 12px; color: var(--ap-mute); background: transparent; border-style: dashed; }
-#nppAP .apChip.on { color: var(--ap-text); background: #fff; border-style: solid; border-color: #cbbaf2; }
-#nppAP .apStatus { padding: 8px 20px 0; font-size: 13px; color: var(--ap-mute); min-height: 28px; }
-#nppAP .apBody { flex: 1; overflow: auto; padding: 0 20px 28px; background: radial-gradient(circle, #ddd2f7 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
-#nppAP .apHead { display: flex; align-items: center; gap: 8px; margin: 26px 0 6px; font-weight: 800; font-size: 16px; line-height: 24px; flex-wrap: wrap; color: var(--ap-text); }
-#nppAP .apHead small { font-weight: 500; color: var(--ap-mute); font-size: 13px; }
-#nppAP .apHead .apMain { color: #f5a623; }
-#nppAP .apFoot .apWipe { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: #d9534f; cursor: pointer; }
-#nppAP .apFoot .apWipe:hover { text-decoration: underline; }
-#nppAP .apFoot .apUnblk { border: 1px solid var(--ap-line); border-radius: 999px; background: none; padding: 1px 9px; font: inherit; font-size: 12px; font-weight: 600; color: var(--ap-mute); cursor: pointer; }
-#nppAP .apFoot .apUnblk:hover { color: #d9534f; border-color: #d9534f; }
-#nppAP .apAcRow { display: flex; align-items: center; gap: 2px; }
-#nppAP .apAcRow .apOpt { flex: 1; min-width: 0; }
-#nppAP .apAcRow .apAcX { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--ap-mute); cursor: pointer; opacity: .55; }
-#nppAP .apAcRow .apAcX svg { width: 14px; height: 14px; }
-#nppAP .apAcRow:hover .apAcX, #nppAP .apAcRow .apAcX:focus-visible { opacity: 1; }
-#nppAP .apAcRow .apAcX:hover { background: var(--ap-soft); color: #d9534f; }
-#nppAP .apOv .apIco.apDel:hover { color: #d9534f; }
-#nppAP .apGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px 14px; padding-top: 14px; }
-#nppAP .apCard { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-#nppAP .apImg { position: relative; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px var(--ap-line); transition: box-shadow .15s; }
-#nppAP:not(.apEditing) .apCard:hover .apImg, #nppAP:not(.apEditing) .apCard:focus-within .apImg, #nppAP .apCard.tap .apImg { box-shadow: 0 0 0 1px #cbbaf2, 0 8px 22px rgba(124,92,240,.2); }
-#nppAP .apCard.sel .apImg { box-shadow: 0 0 0 2px var(--ap-acc); }
-#nppAP .apPic { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, #fff 0%, #f6f0ff 58%, #e7dcff 100%); }
-#nppAP .apPic img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform .25s ease; }
-#nppAP:not(.apEditing) .apCard:hover .apPic img { transform: scale(1.04); }
-#nppAP .apOv { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 6px; padding: 26px 10px 8px; color: #fff; background: linear-gradient(to top, rgba(38,26,68,.86) 0%, rgba(38,26,68,.55) 60%, rgba(38,26,68,0) 100%); opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .16s ease, transform .18s ease; }
-#nppAP:not(.apEditing) .apCard:hover .apOv, #nppAP:not(.apEditing) .apCard:focus-within .apOv, #nppAP:not(.apEditing) .apCard.tap .apOv { opacity: 1; transform: none; pointer-events: auto; }
-#nppAP .apInfo { min-width: 0; line-height: 15px; }
-#nppAP .apInfo b { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#nppAP .apInfo small { display: block; font-size: 11px; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#nppAP .apIcos { display: flex; gap: 6px; }
-#nppAP .apOv .apIco { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: var(--ap-text); box-shadow: none; }
-#nppAP .apOv .apIco:hover { background: #fff; color: var(--ap-acc); box-shadow: none; }
-#nppAP .apOv .apIco svg { width: 14px; height: 14px; }
-#nppAP .apCap { display: flex; align-items: center; gap: 8px; min-height: 20px; padding: 0 2px; }
-#nppAP .apLk { color: inherit; text-decoration: none; } #nppAP .apLk:hover { text-decoration: underline; }
-#nppAP .apCard.apTonePending .apName { opacity: 0 !important; }
-#nppAP .apName { transition: opacity .15s; position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 4; font-family: 'CafeteriaBlack', Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
-#nppAP .apName .apLk { pointer-events: auto; color: #fff; }
-#nppAP:not(.apEditing) .apCard:hover .apName, #nppAP:not(.apEditing) .apCard:focus-within .apName, #nppAP .apCard.tap .apName { opacity: 0; }
-#nppAP .apBadges { position: absolute; top: 8px; right: 8px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
-#nppAP .apTb { font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 1px 8px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
-#nppAP .apTb.uft { background: #f0a92e; } #nppAP .apTb.perm { background: #4cc784; } #nppAP .apTb.maybe { background: #4a9be8; }
-#nppAP .apCard.apNameDark .apName, #nppAP .apCard.apNameDark .apName .apLk { color: #1c1830; text-shadow: none; }
-#nppAP .apInfo b, #nppAP .apInfo small, #nppAP .apInfo b *, #nppAP .apInfo small *, #nppAP .apInfo .apLk { font-family: 'CafeteriaBlack', Georgia, serif !important; font-weight: 400; }
-#nppAP .apName, #nppAP .apName .apLk, #nppAP .apCard .apName a { font-family: 'CafeteriaBlack', Georgia, serif !important; }
-#nppAP .apInfo b { font-size: 14px; } #nppAP .apInfo small { font-size: 12px; }
-#nppAP .apAct { box-shadow: 0 1px 4px rgba(0,0,0,.25); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1c8f55; background: #e3f7ec; border-radius: 4px; padding: 1px 6px; }
-#nppAP .apNote { margin: -4px 2px 0; font-size: 12px; line-height: 16px; color: var(--ap-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#nppAP .apChk { position: absolute; top: 8px; left: 8px; z-index: 4; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); border-radius: 6px; box-shadow: 0 0 0 1px var(--ap-line); cursor: pointer; }
-#nppAP .apChk input { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; cursor: pointer; }
-#nppAP .apEd { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #fff; border: 1px solid var(--ap-line); border-radius: 12px; }
-#nppAP .apSegT { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-#nppAP .apTg { height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 600; gap: 6px; box-shadow: none; white-space: nowrap; }
-#nppAP .apTg::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #c9c2dc; flex: none; }
-#nppAP .apTg.uft::before { background: #f0a92e; } #nppAP .apTg.perm::before { background: #4cc784; } #nppAP .apTg.maybe::before { background: #4a9be8; }
-#nppAP .apTg:hover { box-shadow: none; }
-#nppAP .apTg.on { color: var(--ap-text); border-color: #bdb4d6; background: #e8e4f1; }
-#nppAP .apTg.on.uft { background: #ffd57d; border-color: #f0a92e; } #nppAP .apTg.on.perm { background: #9fe6b9; border-color: #4cc784; } #nppAP .apTg.on.maybe { background: #a5d6ff; border-color: #4a9be8; }
-#nppAP .apEd input[type=text] { width: 100%; height: 30px; border-radius: 8px; padding: 0 10px; font-size: 13px; }
-#nppAP .apEd input[type=text]:focus { outline: none; border-color: var(--ap-acc); box-shadow: 0 0 0 3px rgba(124,92,240,.18); }
-#nppAP .apSaved { font-size: 11px; line-height: 14px; height: 14px; color: #1c8f55; opacity: 0; }
-#nppAP .apSaved.show { animation: apSv 1.6s ease forwards; }
+#nqAP { --ap-bg: #fbf7ee; --ap-panel: #fffdf8; --ap-line: #e6dcf5; --ap-text: #392d5c; --ap-mute: #6c6290; --ap-acc: #7c5cf0; --ap-soft: #efe8ff; position: fixed; inset: 0; z-index: 2147483000; display: flex; align-items: stretch; justify-content: center; padding: 24px; background: rgba(70,52,110,.38); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-family: 'Outfit', system-ui, sans-serif; color: var(--ap-text); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .2s ease, visibility 0s linear .2s; }
+#nqAP.open { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity .2s ease; }
+#nqAP *, #nqAP *::before, #nqAP *::after { box-sizing: border-box; }
+#nqAP .apWin { width: min(1240px, 100%); display: flex; flex-direction: column; min-height: 0; background: var(--ap-bg); border: 3px solid #fff; border-radius: 28px; box-shadow: 0 24px 70px rgba(70,52,110,.35); overflow: hidden; position: relative; transform: scale(.97) translateY(8px); transition: transform .22s cubic-bezier(.2,.8,.2,1); }
+#nqAP.open .apWin { transform: none; }
+#nqAP .apTop { position: sticky; top: 0; z-index: 5; background: linear-gradient(180deg, #f3ecff 0%, #fbf7ee 100%); border-bottom: 1px solid var(--ap-line); }
+#nqAP .apBar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 16px 20px 8px; }
+#nqAP .apBar h2 { margin: 0 10px 0 0; font-size: 24px; line-height: 32px; font-weight: 800; letter-spacing: -.02em; color: var(--ap-text); }
+#nqAP .apStar { display: inline-block; color: #f5a623; margin-left: 6px; font-size: 18px; vertical-align: 2px; }
+#nqAP input[type=search], #nqAP input[type=text], #nqAP select { font: inherit; font-size: 14px; line-height: 20px; color: var(--ap-text); background: #fff; border: 1px solid var(--ap-line); border-radius: 999px; padding: 8px 16px; min-width: 0; }
+#nqAP input::placeholder { color: var(--ap-mute); opacity: .8; }
+#nqAP .apSearch { flex: 1 1 200px; }
+#nqAP button, #nqAP a.apBtn { font: inherit; font-size: 13px; font-weight: 700; line-height: 20px; cursor: pointer; color: var(--ap-text); background: #fff; border: 1px solid var(--ap-line); border-radius: 999px; padding: 7px 14px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, transform .15s, border-color .15s, box-shadow .15s; }
+#nqAP button:hover, #nqAP a.apBtn:hover { background: var(--ap-soft); border-color: #cbbaf2; box-shadow: 0 2px 8px rgba(124,92,240,.18); }
+#nqAP .apPrimary { background: var(--ap-acc); color: #fff; border-color: transparent; }
+#nqAP .apPrimary:hover { background: #6a49e0; border-color: transparent; }
+#nqAP :focus-visible { outline: 3px solid #5b8def; outline-offset: 2px; }
+#nqAP svg { width: 16px; height: 16px; flex: none; }
+#nqAP .apIcon { width: 34px; height: 34px; padding: 0; }
+#nqAP .apGroup { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ap-mute); cursor: pointer; padding: 0 6px; }
+#nqAP .apGroup input { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; }
+#nqAP .apRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 20px 12px; }
+#nqAP .apSeg { display: inline-flex; padding: 3px; gap: 2px; background: var(--ap-soft); border-radius: 999px; max-width: 100%; overflow-x: auto; }
+#nqAP .apSeg button { border: 0; background: transparent; padding: 5px 14px; color: var(--ap-mute); white-space: nowrap; box-shadow: none; }
+#nqAP .apSeg button:hover { background: rgba(255,255,255,.7); color: var(--ap-text); box-shadow: none; }
+#nqAP .apSeg button.on { background: #fff; color: var(--ap-acc); box-shadow: 0 1px 4px rgba(124,92,240,.25); }
+#nqAP .apChip { padding: 3px 12px; font-size: 12px; color: var(--ap-mute); background: transparent; border-style: dashed; }
+#nqAP .apChip.on { color: var(--ap-text); background: #fff; border-style: solid; border-color: #cbbaf2; }
+#nqAP .apStatus { padding: 8px 20px 0; font-size: 13px; color: var(--ap-mute); min-height: 28px; }
+#nqAP .apBody { flex: 1; overflow: auto; padding: 0 20px 28px; background: radial-gradient(circle, #ddd2f7 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
+#nqAP .apHead { display: flex; align-items: center; gap: 8px; margin: 26px 0 6px; font-weight: 800; font-size: 16px; line-height: 24px; flex-wrap: wrap; color: var(--ap-text); }
+#nqAP .apHead small { font-weight: 500; color: var(--ap-mute); font-size: 13px; }
+#nqAP .apHead .apMain { color: #f5a623; }
+#nqAP .apFoot .apWipe { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: #d9534f; cursor: pointer; }
+#nqAP .apFoot .apWipe:hover { text-decoration: underline; }
+#nqAP .apFoot .apUnblk { border: 1px solid var(--ap-line); border-radius: 999px; background: none; padding: 1px 9px; font: inherit; font-size: 12px; font-weight: 600; color: var(--ap-mute); cursor: pointer; }
+#nqAP .apFoot .apUnblk:hover { color: #d9534f; border-color: #d9534f; }
+#nqAP .apAcRow { display: flex; align-items: center; gap: 2px; }
+#nqAP .apAcRow .apOpt { flex: 1; min-width: 0; }
+#nqAP .apAcRow .apAcX { flex: none; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 6px; background: none; color: var(--ap-mute); cursor: pointer; opacity: .55; }
+#nqAP .apAcRow .apAcX svg { width: 14px; height: 14px; }
+#nqAP .apAcRow:hover .apAcX, #nqAP .apAcRow .apAcX:focus-visible { opacity: 1; }
+#nqAP .apAcRow .apAcX:hover { background: var(--ap-soft); color: #d9534f; }
+#nqAP .apOv .apIco.apDel:hover { color: #d9534f; }
+#nqAP .apGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 18px 14px; padding-top: 14px; }
+#nqAP .apCard { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+#nqAP .apImg { position: relative; aspect-ratio: 1 / 1; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px var(--ap-line); transition: box-shadow .15s; }
+#nqAP:not(.apEditing) .apCard:hover .apImg, #nqAP:not(.apEditing) .apCard:focus-within .apImg, #nqAP .apCard.tap .apImg { box-shadow: 0 0 0 1px #cbbaf2, 0 8px 22px rgba(124,92,240,.2); }
+#nqAP .apCard.sel .apImg { box-shadow: 0 0 0 2px var(--ap-acc); }
+#nqAP .apPic { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 38%, #fff 0%, #f6f0ff 58%, #e7dcff 100%); }
+#nqAP .apPic img { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform .25s ease; }
+#nqAP:not(.apEditing) .apCard:hover .apPic img { transform: scale(1.04); }
+#nqAP .apOv { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: flex; flex-direction: column; gap: 6px; padding: 26px 10px 8px; color: #fff; background: linear-gradient(to top, rgba(38,26,68,.86) 0%, rgba(38,26,68,.55) 60%, rgba(38,26,68,0) 100%); opacity: 0; transform: translateY(6px); pointer-events: none; transition: opacity .16s ease, transform .18s ease; }
+#nqAP:not(.apEditing) .apCard:hover .apOv, #nqAP:not(.apEditing) .apCard:focus-within .apOv, #nqAP:not(.apEditing) .apCard.tap .apOv { opacity: 1; transform: none; pointer-events: auto; }
+#nqAP .apInfo { min-width: 0; line-height: 15px; }
+#nqAP .apInfo b { display: block; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nqAP .apInfo small { display: block; font-size: 11px; opacity: .72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nqAP .apIcos { display: flex; gap: 6px; }
+#nqAP .apOv .apIco { width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: var(--ap-text); box-shadow: none; }
+#nqAP .apOv .apIco:hover { background: #fff; color: var(--ap-acc); box-shadow: none; }
+#nqAP .apOv .apIco svg { width: 14px; height: 14px; }
+#nqAP .apCap { display: flex; align-items: center; gap: 8px; min-height: 20px; padding: 0 2px; }
+#nqAP .apLk { color: inherit; text-decoration: none; } #nqAP .apLk:hover { text-decoration: underline; }
+#nqAP .apCard.apTonePending .apName { opacity: 0 !important; }
+#nqAP .apName { transition: opacity .15s; position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 4; font-family: 'CafeteriaBlack', Georgia, serif; font-size: 20px; line-height: 24px; font-weight: 400; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+#nqAP .apName .apLk { pointer-events: auto; color: #fff; }
+#nqAP:not(.apEditing) .apCard:hover .apName, #nqAP:not(.apEditing) .apCard:focus-within .apName, #nqAP .apCard.tap .apName { opacity: 0; }
+#nqAP .apBadges { position: absolute; top: 8px; right: 8px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
+#nqAP .apTb { font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #fff; border-radius: 999px; padding: 1px 8px; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+#nqAP .apTb.uft { background: #f0a92e; } #nqAP .apTb.perm { background: #4cc784; } #nqAP .apTb.maybe { background: #4a9be8; }
+#nqAP .apCard.apNameDark .apName, #nqAP .apCard.apNameDark .apName .apLk { color: #1c1830; text-shadow: none; }
+#nqAP .apInfo b, #nqAP .apInfo small, #nqAP .apInfo b *, #nqAP .apInfo small *, #nqAP .apInfo .apLk { font-family: 'CafeteriaBlack', Georgia, serif !important; font-weight: 400; }
+#nqAP .apName, #nqAP .apName .apLk, #nqAP .apCard .apName a { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+#nqAP .apInfo b { font-size: 14px; } #nqAP .apInfo small { font-size: 12px; }
+#nqAP .apAct { box-shadow: 0 1px 4px rgba(0,0,0,.25); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1c8f55; background: #e3f7ec; border-radius: 4px; padding: 1px 6px; }
+#nqAP .apNote { margin: -4px 2px 0; font-size: 12px; line-height: 16px; color: var(--ap-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nqAP .apChk { position: absolute; top: 8px; left: 8px; z-index: 4; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); border-radius: 6px; box-shadow: 0 0 0 1px var(--ap-line); cursor: pointer; }
+#nqAP .apChk input { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; cursor: pointer; }
+#nqAP .apEd { display: flex; flex-direction: column; gap: 6px; padding: 8px; background: #fff; border: 1px solid var(--ap-line); border-radius: 12px; }
+#nqAP .apSegT { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+#nqAP .apTg { height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 600; gap: 6px; box-shadow: none; white-space: nowrap; }
+#nqAP .apTg::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #c9c2dc; flex: none; }
+#nqAP .apTg.uft::before { background: #f0a92e; } #nqAP .apTg.perm::before { background: #4cc784; } #nqAP .apTg.maybe::before { background: #4a9be8; }
+#nqAP .apTg:hover { box-shadow: none; }
+#nqAP .apTg.on { color: var(--ap-text); border-color: #bdb4d6; background: #e8e4f1; }
+#nqAP .apTg.on.uft { background: #ffd57d; border-color: #f0a92e; } #nqAP .apTg.on.perm { background: #9fe6b9; border-color: #4cc784; } #nqAP .apTg.on.maybe { background: #a5d6ff; border-color: #4a9be8; }
+#nqAP .apEd input[type=text] { width: 100%; height: 30px; border-radius: 8px; padding: 0 10px; font-size: 13px; }
+#nqAP .apEd input[type=text]:focus { outline: none; border-color: var(--ap-acc); box-shadow: 0 0 0 3px rgba(124,92,240,.18); }
+#nqAP .apSaved { font-size: 11px; line-height: 14px; height: 14px; color: #1c8f55; opacity: 0; }
+#nqAP .apSaved.show { animation: apSv 1.6s ease forwards; }
 @keyframes apSv { 0% { opacity: 0; } 12%, 70% { opacity: 1; } 100% { opacity: 0; } }
-#nppAP .apBulk { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 10px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 4px 14px rgba(70,52,110,.12); }
-#nppAP .apBulk button { height: 34px; border-radius: 8px; padding: 0 12px; font-weight: 600; box-shadow: none; }
-#nppAP .apBulk .apTg { height: 34px; }
-#nppAP .apBulk button:hover { box-shadow: none; }
-#nppAP .apSelN { font-size: 13px; font-weight: 700; min-width: 84px; }
-#nppAP .apBulkL { font-size: 13px; color: var(--ap-mute); }
-#nppAP .apBulkT { display: flex; flex-wrap: wrap; gap: 4px; }
-#nppAP .apSp { flex: 1 1 0; }
-#nppAP .apGrid { padding-top: 14px; }
-#nppAP .apBulk + .apGrid, #nppAP .apBulk + .apHead { margin-top: 0; }
-#nppAP .apTop .apEditBtn.on { background: var(--ap-acc); border-color: transparent; color: #fff; }
-#nppAP .apTop .apEditBtn.on:hover { background: #6a49e0; }
-#nppAP .apNoImg { font-size: 48px; font-weight: 800; color: #a595d6; }
-#nppAP .sk .apPic { background: linear-gradient(110deg, #f1eafc 30%, #fff 50%, #f1eafc 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
-#nppAP .sk .apLine { height: 12px; border-radius: 6px; background: #ece7f7; }
+#nqAP .apBulk { position: sticky; top: 0; z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 10px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 4px 14px rgba(70,52,110,.12); }
+#nqAP .apBulk button { height: 34px; border-radius: 8px; padding: 0 12px; font-weight: 600; box-shadow: none; }
+#nqAP .apBulk .apTg { height: 34px; }
+#nqAP .apBulk button:hover { box-shadow: none; }
+#nqAP .apSelN { font-size: 13px; font-weight: 700; min-width: 84px; }
+#nqAP .apBulkL { font-size: 13px; color: var(--ap-mute); }
+#nqAP .apBulkT { display: flex; flex-wrap: wrap; gap: 4px; }
+#nqAP .apSp { flex: 1 1 0; }
+#nqAP .apGrid { padding-top: 14px; }
+#nqAP .apBulk + .apGrid, #nqAP .apBulk + .apHead { margin-top: 0; }
+#nqAP .apTop .apEditBtn.on { background: var(--ap-acc); border-color: transparent; color: #fff; }
+#nqAP .apTop .apEditBtn.on:hover { background: #6a49e0; }
+#nqAP .apNoImg { font-size: 48px; font-weight: 800; color: #a595d6; }
+#nqAP .sk .apPic { background: linear-gradient(110deg, #f1eafc 30%, #fff 50%, #f1eafc 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
+#nqAP .sk .apLine { height: 12px; border-radius: 6px; background: #ece7f7; }
 @keyframes apSk { to { background-position: -200% 0; } }
-#nppAP .apNone { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px; color: var(--ap-mute); border: 2px dashed #cbbaf2; border-radius: 18px; background: rgba(255,255,255,.6); }
-#nppAP .apEmpty { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 56px 16px; text-align: center; color: var(--ap-mute); font-size: 15px; }
-#nppAP .apFace { position: relative; width: 84px; height: 76px; border-radius: 50% 50% 46% 46%; background: #e7dcff; box-shadow: inset 0 -6px 0 rgba(124,92,240,.12); }
-#nppAP .apFace::before, #nppAP .apFace::after { content: ""; position: absolute; top: -12px; width: 26px; height: 26px; background: #e7dcff; border-radius: 6px 22px 6px 22px; }
-#nppAP .apFace::before { left: 6px; transform: rotate(-8deg); } #nppAP .apFace::after { right: 6px; transform: rotate(98deg); }
-#nppAP .apFace i { position: absolute; top: 32px; width: 9px; height: 11px; border-radius: 50%; background: #392d5c; } #nppAP .apFace i:nth-child(1) { left: 24px; } #nppAP .apFace i:nth-child(2) { right: 24px; }
-#nppAP .apFace b { position: absolute; left: 50%; top: 50px; width: 16px; height: 8px; margin-left: -8px; border-bottom: 3px solid #392d5c; border-radius: 0 0 16px 16px; }
-#nppAP .apToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 18px; border-radius: 999px; background: #392d5c; color: #fff; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 9; }
-#nppAP .apToast.on { opacity: 1; transform: translate(-50%, 0); }
-.nppAcctAllPets { width: 100%; margin: 8px 0 0; }
-#nppAP .apTop .apBar { flex-wrap: nowrap; gap: 10px; padding: 16px 20px 10px; }
-#nppAP .apTop .apBar h2 { display: flex; align-items: baseline; gap: 10px; margin: 0 6px 0 0; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 30px; line-height: 1.1; font-weight: 400; white-space: nowrap; }
-#nppAP .apBar h2 .apCount { font-family: inherit; }
-#nppAP .apCount { font-size: 13px; font-weight: 500; color: var(--ap-mute); }
-#nppAP .apTop input[type=search] { height: 34px; border-radius: 8px; padding: 0 12px; flex: 1 1 auto; }
-#nppAP .apTop input[type=search]:focus { outline: none; border-color: var(--ap-acc); box-shadow: 0 0 0 3px rgba(124,92,240,.18); }
-#nppAP .apTop button { height: 34px; border-radius: 8px; padding: 0 12px; font-weight: 600; box-shadow: none; }
-#nppAP .apTop button:hover { box-shadow: none; }
-#nppAP .apTop .apIcon { width: 34px; padding: 0; color: var(--ap-mute); }
-#nppAP .apTop .apIcon:hover { color: var(--ap-text); }
-#nppAP .apTop .apRow { position: relative; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; padding: 0 20px 12px; }
-#nppAP .apTop .apSeg { padding: 3px; gap: 2px; border-radius: 10px; height: 38px; align-items: center; }
-#nppAP .apTop .apSeg button { height: 30px; border-radius: 7px; padding: 0 10px; gap: 7px; color: var(--ap-mute); }
-#nppAP .apTop .apSeg button.on { color: var(--ap-text); background: #fff; box-shadow: 0 0 0 1px var(--ap-line), 0 1px 2px rgba(70,52,110,.12); }
-#nppAP .apTop .apSeg button.on .apN { color: var(--ap-acc); }
-#nppAP .apN { font-weight: 500; font-size: 12px; color: var(--ap-mute); opacity: .9; }
-#nppAP .apTd { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-#nppAP .apTd.uft { background: #f0a92e; } #nppAP .apTd.perm { background: #4cc784; } #nppAP .apTd.maybe { background: #4a9be8; }
-#nppAP .apTools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-#nppAP .apPopWrap { position: relative; }
-#nppAP .apTop .apDd { gap: 6px; }
-#nppAP .apDdl { color: var(--ap-mute); font-weight: 500; }
-#nppAP .apDd b { font-weight: 600; }
-#nppAP .apDd svg:last-child { width: 14px; height: 14px; color: var(--ap-mute); }
-#nppAP .apDd[aria-expanded=true] { border-color: var(--ap-acc); background: var(--ap-soft); }
-#nppAP .apTop .apTrade { color: var(--ap-text); }
-#nppAP .apTop .apTrade.hot { background: var(--ap-acc); border-color: transparent; color: #fff; }
-#nppAP .apTop .apTrade.hot:hover { background: #6a49e0; }
-#nppAP .apPop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; min-width: 220px; max-width: calc(100vw - 24px); max-height: 60vh; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 10px 30px rgba(70,52,110,.22); }
-#nppAP .apPop[hidden] { display: none; }
-#nppAP .apPopHead { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ap-mute); }
-#nppAP .apTop .apLink { height: auto; border: 0; background: none; padding: 0; font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--ap-acc); }
-#nppAP .apTop .apLink:hover { background: none; text-decoration: underline; }
-#nppAP .apOpt { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
-#nppAP .apOpt:hover { background: var(--ap-soft); }
-#nppAP .apOpt input[type=checkbox], #nppAP .apOpt input[type=radio] { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; flex: none; }
-#nppAP .apMainS { margin-left: auto; font-style: normal; color: #f5a623; }
-#nppAP .apSep { height: 1px; margin: 6px 4px; background: var(--ap-line); }
-#nppAP .apSw { justify-content: space-between; position: relative; }
-#nppAP .apSw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-#nppAP .apTrack { position: relative; width: 32px; height: 18px; border-radius: 999px; background: #d6cfe6; transition: background .15s; flex: none; }
-#nppAP .apTrack::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
-#nppAP .apSw input:checked ~ .apTrack { background: var(--ap-acc); }
-#nppAP .apSw input:checked ~ .apTrack::after { transform: translateX(14px); }
-#nppAP .apSw input:focus-visible ~ .apTrack { outline: 3px solid #5b8def; outline-offset: 2px; }
+#nqAP .apNone { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; font-size: 14px; color: var(--ap-mute); border: 2px dashed #cbbaf2; border-radius: 18px; background: rgba(255,255,255,.6); }
+#nqAP .apEmpty { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 56px 16px; text-align: center; color: var(--ap-mute); font-size: 15px; }
+#nqAP .apFace { position: relative; width: 84px; height: 76px; border-radius: 50% 50% 46% 46%; background: #e7dcff; box-shadow: inset 0 -6px 0 rgba(124,92,240,.12); }
+#nqAP .apFace::before, #nqAP .apFace::after { content: ""; position: absolute; top: -12px; width: 26px; height: 26px; background: #e7dcff; border-radius: 6px 22px 6px 22px; }
+#nqAP .apFace::before { left: 6px; transform: rotate(-8deg); } #nqAP .apFace::after { right: 6px; transform: rotate(98deg); }
+#nqAP .apFace i { position: absolute; top: 32px; width: 9px; height: 11px; border-radius: 50%; background: #392d5c; } #nqAP .apFace i:nth-child(1) { left: 24px; } #nqAP .apFace i:nth-child(2) { right: 24px; }
+#nqAP .apFace b { position: absolute; left: 50%; top: 50px; width: 16px; height: 8px; margin-left: -8px; border-bottom: 3px solid #392d5c; border-radius: 0 0 16px 16px; }
+#nqAP .apToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 18px; border-radius: 999px; background: #392d5c; color: #fff; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 9; }
+#nqAP .apToast.on { opacity: 1; transform: translate(-50%, 0); }
+.nqAcctAllPets { width: 100%; margin: 8px 0 0; }
+#nqAP .apTop .apBar { flex-wrap: nowrap; gap: 10px; padding: 16px 20px 10px; }
+#nqAP .apTop .apBar h2 { display: flex; align-items: baseline; gap: 10px; margin: 0 6px 0 0; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 30px; line-height: 1.1; font-weight: 400; white-space: nowrap; }
+#nqAP .apBar h2 .apCount { font-family: inherit; }
+#nqAP .apCount { font-size: 13px; font-weight: 500; color: var(--ap-mute); }
+#nqAP .apTop input[type=search] { height: 34px; border-radius: 8px; padding: 0 12px; flex: 1 1 auto; }
+#nqAP .apTop input[type=search]:focus { outline: none; border-color: var(--ap-acc); box-shadow: 0 0 0 3px rgba(124,92,240,.18); }
+#nqAP .apTop button { height: 34px; border-radius: 8px; padding: 0 12px; font-weight: 600; box-shadow: none; }
+#nqAP .apTop button:hover { box-shadow: none; }
+#nqAP .apTop .apIcon { width: 34px; padding: 0; color: var(--ap-mute); }
+#nqAP .apTop .apIcon:hover { color: var(--ap-text); }
+#nqAP .apTop .apRow { position: relative; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; padding: 0 20px 12px; }
+#nqAP .apTop .apSeg { padding: 3px; gap: 2px; border-radius: 10px; height: 38px; align-items: center; }
+#nqAP .apTop .apSeg button { height: 30px; border-radius: 7px; padding: 0 10px; gap: 7px; color: var(--ap-mute); }
+#nqAP .apTop .apSeg button.on { color: var(--ap-text); background: #fff; box-shadow: 0 0 0 1px var(--ap-line), 0 1px 2px rgba(70,52,110,.12); }
+#nqAP .apTop .apSeg button.on .apN { color: var(--ap-acc); }
+#nqAP .apN { font-weight: 500; font-size: 12px; color: var(--ap-mute); opacity: .9; }
+#nqAP .apTd { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+#nqAP .apTd.uft { background: #f0a92e; } #nqAP .apTd.perm { background: #4cc784; } #nqAP .apTd.maybe { background: #4a9be8; }
+#nqAP .apTools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#nqAP .apPopWrap { position: relative; }
+#nqAP .apTop .apDd { gap: 6px; }
+#nqAP .apDdl { color: var(--ap-mute); font-weight: 500; }
+#nqAP .apDd b { font-weight: 600; }
+#nqAP .apDd svg:last-child { width: 14px; height: 14px; color: var(--ap-mute); }
+#nqAP .apDd[aria-expanded=true] { border-color: var(--ap-acc); background: var(--ap-soft); }
+#nqAP .apTop .apTrade { color: var(--ap-text); }
+#nqAP .apTop .apTrade.hot { background: var(--ap-acc); border-color: transparent; color: #fff; }
+#nqAP .apTop .apTrade.hot:hover { background: #6a49e0; }
+#nqAP .apPop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; min-width: 220px; max-width: calc(100vw - 24px); max-height: 60vh; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 10px 30px rgba(70,52,110,.22); }
+#nqAP .apPop[hidden] { display: none; }
+#nqAP .apPopHead { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ap-mute); }
+#nqAP .apTop .apLink { height: auto; border: 0; background: none; padding: 0; font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--ap-acc); }
+#nqAP .apTop .apLink:hover { background: none; text-decoration: underline; }
+#nqAP .apOpt { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+#nqAP .apOpt:hover { background: var(--ap-soft); }
+#nqAP .apOpt input[type=checkbox], #nqAP .apOpt input[type=radio] { accent-color: var(--ap-acc); width: 16px; height: 16px; margin: 0; flex: none; }
+#nqAP .apMainS { margin-left: auto; font-style: normal; color: #f5a623; }
+#nqAP .apSep { height: 1px; margin: 6px 4px; background: var(--ap-line); }
+#nqAP .apSw { justify-content: space-between; position: relative; }
+#nqAP .apSw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+#nqAP .apTrack { position: relative; width: 32px; height: 18px; border-radius: 999px; background: #d6cfe6; transition: background .15s; flex: none; }
+#nqAP .apTrack::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+#nqAP .apSw input:checked ~ .apTrack { background: var(--ap-acc); }
+#nqAP .apSw input:checked ~ .apTrack::after { transform: translateX(14px); }
+#nqAP .apSw input:focus-visible ~ .apTrack { outline: 3px solid #5b8def; outline-offset: 2px; }
 @media (max-width: 600px) {
-  #nppAP { padding: 0; }
-  #nppAP .apWin { border-radius: 0; border: 0; width: 100%; }
-  #nppAP .apTop .apBar { flex-wrap: wrap; padding: 12px 12px 8px; }
-  #nppAP .apTop .apBar h2 { flex: 1; }
-  #nppAP .apTop .apSearch { order: 5; flex-basis: 100%; }
-  #nppAP .apTop .apRow { padding: 0 12px 10px; }
-  #nppAP .apTop .apSeg { width: 100%; }
-  #nppAP .apTools { width: 100%; }
-  #nppAP .apTools .apTrade { margin-left: auto; }
-  #nppAP .apPopWrap { position: static; }
-  #nppAP .apPop { left: 12px; right: 12px; top: auto; margin-top: 6px; }
-  #nppAP .apBody { padding: 0 12px 24px; }
-  #nppAP .apGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
+  #nqAP { padding: 0; }
+  #nqAP .apWin { border-radius: 0; border: 0; width: 100%; }
+  #nqAP .apTop .apBar { flex-wrap: wrap; padding: 12px 12px 8px; }
+  #nqAP .apTop .apBar h2 { flex: 1; }
+  #nqAP .apTop .apSearch { order: 5; flex-basis: 100%; }
+  #nqAP .apTop .apRow { padding: 0 12px 10px; }
+  #nqAP .apTop .apSeg { width: 100%; }
+  #nqAP .apTools { width: 100%; }
+  #nqAP .apTools .apTrade { margin-left: auto; }
+  #nqAP .apPopWrap { position: static; }
+  #nqAP .apPop { left: 12px; right: 12px; top: auto; margin-top: 6px; }
+  #nqAP .apBody { padding: 0 12px 24px; }
+  #nqAP .apGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
 }
-@media (min-width: 601px) and (max-width: 900px) { #nppAP .apGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: reduce) { #nppAP, #nppAP *, #nppAP .apWin { transition: none !important; animation: none !important; } #nppAP .apWin, #nppAP .apCard, #nppAP .apPic img, #nppAP .apOv { transform: none !important; } }
+@media (min-width: 601px) and (max-width: 900px) { #nqAP .apGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { #nqAP, #nqAP *, #nqAP .apWin { transition: none !important; animation: none !important; } #nqAP .apWin, #nqAP .apCard, #nqAP .apPic img, #nqAP .apOv { transform: none !important; } }
 /* dark mode (follows sidebar toggle) */
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP { --ap-bg: #1d1a2b; --ap-panel: #272238; --ap-line: rgba(255,255,255,.12); --ap-text: #f1ecff; --ap-mute: rgba(241,236,255,.62); --ap-acc: #a58bff; --ap-soft: rgba(165,139,255,.16); color-scheme: dark; background: rgba(8,6,16,.6); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apWin { border-color: rgba(255,255,255,.14); box-shadow: 0 24px 70px rgba(0,0,0,.55); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop { background: linear-gradient(180deg, #2a2440 0%, #1d1a2b 100%); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP input[type=search], html[data-np-modern-interface]:not(.npp-side-light) #nppAP input[type=text], html[data-np-modern-interface]:not(.npp-side-light) #nppAP select, html[data-np-modern-interface]:not(.npp-side-light) #nppAP button, html[data-np-modern-interface]:not(.npp-side-light) #nppAP a.apBtn, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apEd, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apBulk, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apPop { background: var(--ap-panel); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP select option { background: #272238; color: #f1ecff; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP button:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAP a.apBtn:hover { background: var(--ap-soft); border-color: rgba(165,139,255,.45); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apPrimary, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apEditBtn.on, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apTrade.hot { background: var(--ap-acc); color: #1d1a2b; border-color: transparent; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apPrimary:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apEditBtn.on:hover, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apTrade.hot:hover { background: #b8a2ff; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSeg button { background: transparent; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSeg button:hover { background: rgba(255,255,255,.08); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSeg button.on, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apSeg button.on { background: var(--ap-panel); color: var(--ap-acc); box-shadow: 0 0 0 1px var(--ap-line), 0 1px 4px rgba(0,0,0,.35); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop .apSeg button.on { color: var(--ap-text); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apChip { background: transparent; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apChip.on { background: var(--ap-panel); border-color: rgba(165,139,255,.45); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apBody { background: radial-gradient(circle, rgba(255,255,255,.08) 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP:not(.apEditing) .apCard:hover .apImg, html[data-np-modern-interface]:not(.npp-side-light) #nppAP:not(.apEditing) .apCard:focus-within .apImg, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apCard.tap .apImg { box-shadow: 0 0 0 1px rgba(165,139,255,.45), 0 8px 22px rgba(0,0,0,.45); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apCard.sel .apImg { box-shadow: 0 0 0 2px var(--ap-acc); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apOv .apIco { background: rgba(255,255,255,.92); color: #392d5c; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apOv .apIco:hover { background: #fff; color: #7c5cf0; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apAct { background: rgba(76,199,132,.18); color: #7be0a6; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSaved { color: #7be0a6; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apChk { background: rgba(39,34,56,.92); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg::before { background: rgba(255,255,255,.3); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.uft::before { background: #f0a92e; } html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.perm::before { background: #4cc784; } html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.maybe::before { background: #4a9be8; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on { color: var(--ap-text); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.1); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on.uft { background: rgba(240,169,46,.22); border-color: #f0a92e; color: #ffe2a0; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on.perm { background: rgba(76,199,132,.2); border-color: #4cc784; color: #b5f0cd; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTg.on.maybe { background: rgba(74,155,232,.22); border-color: #4a9be8; color: #bfe0ff; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apEd input[type=text]:focus, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTop input[type=search]:focus { box-shadow: 0 0 0 3px rgba(165,139,255,.25); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apBulk { box-shadow: 0 4px 14px rgba(0,0,0,.4); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apNoImg { color: rgba(255,255,255,.35); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .sk .apPic { background: linear-gradient(110deg, rgba(255,255,255,.06) 30%, rgba(255,255,255,.14) 50%, rgba(255,255,255,.06) 70%); background-size: 200% 100%; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .sk .apLine { background: rgba(255,255,255,.08); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apNone { border-color: rgba(165,139,255,.45); background: rgba(255,255,255,.04); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace::before, html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace::after { background: rgba(255,255,255,.08); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace i { background: var(--ap-text); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apFace b { border-bottom-color: var(--ap-text); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apToast { background: #f1ecff; color: #1d1a2b; }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apTrack { background: rgba(255,255,255,.18); }
-html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~ .apTrack { background: var(--ap-acc); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP { --ap-bg: #1d1a2b; --ap-panel: #272238; --ap-line: rgba(255,255,255,.12); --ap-text: #f1ecff; --ap-mute: rgba(241,236,255,.62); --ap-acc: #a58bff; --ap-soft: rgba(165,139,255,.16); color-scheme: dark; background: rgba(8,6,16,.6); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apWin { border-color: rgba(255,255,255,.14); box-shadow: 0 24px 70px rgba(0,0,0,.55); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop { background: linear-gradient(180deg, #2a2440 0%, #1d1a2b 100%); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP input[type=search], html[data-nq-modern-interface]:not(.nq-side-light) #nqAP input[type=text], html[data-nq-modern-interface]:not(.nq-side-light) #nqAP select, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP button, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP a.apBtn, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apEd, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBulk, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apPop { background: var(--ap-panel); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP select option { background: #272238; color: #f1ecff; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP button:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP a.apBtn:hover { background: var(--ap-soft); border-color: rgba(165,139,255,.45); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apPrimary, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apEditBtn.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apTrade.hot { background: var(--ap-acc); color: #1d1a2b; border-color: transparent; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apPrimary:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apEditBtn.on:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apTrade.hot:hover { background: #b8a2ff; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button { background: transparent; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button:hover { background: rgba(255,255,255,.08); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { background: var(--ap-panel); color: var(--ap-acc); box-shadow: 0 0 0 1px var(--ap-line), 0 1px 4px rgba(0,0,0,.35); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { color: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChip { background: transparent; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChip.on { background: var(--ap-panel); border-color: rgba(165,139,255,.45); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBody { background: radial-gradient(circle, rgba(255,255,255,.08) 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP:not(.apEditing) .apCard:hover .apImg, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP:not(.apEditing) .apCard:focus-within .apImg, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apCard.tap .apImg { box-shadow: 0 0 0 1px rgba(165,139,255,.45), 0 8px 22px rgba(0,0,0,.45); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apCard.sel .apImg { box-shadow: 0 0 0 2px var(--ap-acc); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apOv .apIco { background: rgba(255,255,255,.92); color: #392d5c; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apOv .apIco:hover { background: #fff; color: #7c5cf0; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apAct { background: rgba(76,199,132,.18); color: #7be0a6; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSaved { color: #7be0a6; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChk { background: rgba(39,34,56,.92); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg::before { background: rgba(255,255,255,.3); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.uft::before { background: #f0a92e; } html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.perm::before { background: #4cc784; } html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.maybe::before { background: #4a9be8; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.on { color: var(--ap-text); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.1); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.on.uft { background: rgba(240,169,46,.22); border-color: #f0a92e; color: #ffe2a0; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.on.perm { background: rgba(76,199,132,.2); border-color: #4cc784; color: #b5f0cd; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTg.on.maybe { background: rgba(74,155,232,.22); border-color: #4a9be8; color: #bfe0ff; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apEd input[type=text]:focus, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop input[type=search]:focus { box-shadow: 0 0 0 3px rgba(165,139,255,.25); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBulk { box-shadow: 0 4px 14px rgba(0,0,0,.4); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apNoImg { color: rgba(255,255,255,.35); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .sk .apPic { background: linear-gradient(110deg, rgba(255,255,255,.06) 30%, rgba(255,255,255,.14) 50%, rgba(255,255,255,.06) 70%); background-size: 200% 100%; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .sk .apLine { background: rgba(255,255,255,.08); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apNone { border-color: rgba(165,139,255,.45); background: rgba(255,255,255,.04); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apFace, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apFace::before, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apFace::after { background: rgba(255,255,255,.08); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apFace i { background: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apFace b { border-bottom-color: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apToast { background: #f1ecff; color: #1d1a2b; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTrack { background: rgba(255,255,255,.18); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .apTrack { background: var(--ap-acc); }
 `;
 
   let apEl = null, apToastT = null;
@@ -773,7 +773,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     apCollect();
     if (!apEl) {
       const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
-      apEl = document.createElement('div'); apEl.id = 'nppAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
+      apEl = document.createElement('div'); apEl.id = 'nqAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
       apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which Up for Trade pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><button type="button" class="apTrade" title="Copy Up for Trade pets as text">' + AP_COPY + '<span>Copy trade list</span></button></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
       document.body.appendChild(apEl);
       apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
@@ -864,7 +864,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       });
     }
     apEl.querySelectorAll('input[name=apSortR]').forEach(r => { r.checked = r.value === apState.sort; }); $('.apGroupCb', apEl).checked = apState.group;
-    document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'allpets' }));
+    document.dispatchEvent(new CustomEvent('nq:drawer', { detail: 'allpets' }));
     apEl.classList.add('open');
     apStatus('');
     apRender();
@@ -974,7 +974,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
   /* ───────────────────────────────── drawer ───────────────────────────────── */
   let MODE = 'standalone';
   const detectMode = () => {
-    MODE = document.getElementById('npUser') ? 'modern' : 'standalone';   // main script present (with or without the core)
+    MODE = document.getElementById('nqUser') ? 'modern' : 'standalone';   // main script present (with or without the core)
     return MODE;
   };
 
@@ -982,21 +982,21 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
   function buildDrawer() {
     const drawer = document.createElement('div');
-    drawer.id = 'nppAcctDrawer';
+    drawer.id = 'nqAcctDrawer';
     drawer.innerHTML =
-      '<div class="nppAcctHead"><div class="nppAcctHeadL"><span class="nppAcctTitle">Accounts</span><small class="nppAcctCount"></small></div><div class="nppAcctHeadR">' +
+      '<div class="nqAcctHead"><div class="nqAcctHeadL"><span class="nqAcctTitle">Accounts</span><small class="nqAcctCount"></small></div><div class="nqAcctHeadR">' +
       (MODE === 'modern'
-        ? '<a class="nppAcctSwap" href="' + SWAP_URL + '" target="_blank" rel="noopener" title="Swap account: log out and go straight to the login page">' + USERS_ICON + '<span>Swap</span></a>'
+        ? '<a class="nqAcctSwap" href="' + SWAP_URL + '" target="_blank" rel="noopener" title="Swap account: log out and go straight to the login page">' + USERS_ICON + '<span>Swap</span></a>'
         : '') +
-      '<button type="button" class="nppAcctClose" aria-label="Close" title="Close">&times;</button></div></div>' +
-      '<div class="nppAcctHint"></div>' +
-      '<div class="nppAcctBody">' +
-        '<section class="nppAcctSec"><div class="nppAcctSecHead"><span>NeoPass</span><em class="nppCntNp"></em></div><div class="nppAcctList" data-list="np"></div><div class="nppAcctNote" data-note="np"></div><button type="button" class="nppAcctSync">Sync from NeoPass</button><div class="nppAcctMsg" data-msg="np"></div></section>' +
-        '<section class="nppAcctSec" data-sec="ex" hidden><div class="nppAcctSecHead"><span>Additional accounts</span><em class="nppCntEx"></em></div><div class="nppAcctList" data-list="ex"></div></section>' +
-        '<div class="nppAcctAddWrap"><button type="button" class="nppAcctAddBtn">+ Add account</button><form class="nppAcctAdd" autocomplete="off" hidden><input type="text" placeholder="Account name…" aria-label="Account name" spellcheck="false"><button type="submit" class="nppAcctAddOk">Add</button><button type="button" class="nppAcctAddCancel" aria-label="Cancel" title="Cancel">×</button></form><div class="nppAcctMsg" data-msg="ex"></div></div>' +
+      '<button type="button" class="nqAcctClose" aria-label="Close" title="Close">&times;</button></div></div>' +
+      '<div class="nqAcctHint"></div>' +
+      '<div class="nqAcctBody">' +
+        '<section class="nqAcctSec"><div class="nqAcctSecHead"><span>NeoPass</span><em class="nqCntNp"></em></div><div class="nqAcctList" data-list="np"></div><div class="nqAcctNote" data-note="np"></div><button type="button" class="nqAcctSync">Sync from NeoPass</button><div class="nqAcctMsg" data-msg="np"></div></section>' +
+        '<section class="nqAcctSec" data-sec="ex" hidden><div class="nqAcctSecHead"><span>Additional accounts</span><em class="nqCntEx"></em></div><div class="nqAcctList" data-list="ex"></div></section>' +
+        '<div class="nqAcctAddWrap"><button type="button" class="nqAcctAddBtn">+ Add account</button><form class="nqAcctAdd" autocomplete="off" hidden><input type="text" placeholder="Account name…" aria-label="Account name" spellcheck="false"><button type="submit" class="nqAcctAddOk">Add</button><button type="button" class="nqAcctAddCancel" aria-label="Cancel" title="Cancel">×</button></form><div class="nqAcctMsg" data-msg="ex"></div></div>' +
       '</div>' +
       (MODE === 'standalone'
-        ? '<div class="nppAcctStandaloneFoot"><a class="nppLogout" href="https://www.neopets.com/logout.phtml">' + LOGOUT_ICON + '<span>Log Out</span></a><a class="nppSwap" href="' + SWAP_URL + '" target="_blank" rel="noopener">' + USERS_ICON + '<span>Swap</span></a></div>'
+        ? '<div class="nqAcctStandaloneFoot"><a class="nqLogout" href="https://www.neopets.com/logout.phtml">' + LOGOUT_ICON + '<span>Log Out</span></a><a class="nqSwap" href="' + SWAP_URL + '" target="_blank" rel="noopener">' + USERS_ICON + '<span>Swap</span></a></div>'
         : '');
     document.body.appendChild(drawer);
     return drawer;
@@ -1004,9 +1004,9 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
   function wireDrawer(drawer) {
     const q = (sel) => $(sel, drawer);
-    const input = q('input'), hint = q('.nppAcctHint');
-    const listNp = q('[data-list="np"]'), listEx = q('[data-list="ex"]'), noteNp = q('[data-note="np"]'), secEx = q('[data-sec="ex"]'), addBtn = q('.nppAcctAddBtn'), addForm = q('.nppAcctAdd'), msgNp = q('[data-msg="np"]'), msgEx = q('[data-msg="ex"]');
-    const card = $('#npUser');
+    const input = q('input'), hint = q('.nqAcctHint');
+    const listNp = q('[data-list="np"]'), listEx = q('[data-list="ex"]'), noteNp = q('[data-note="np"]'), secEx = q('[data-sec="ex"]'), addBtn = q('.nqAcctAddBtn'), addForm = q('.nqAcctAdd'), msgNp = q('[data-msg="np"]'), msgEx = q('[data-msg="ex"]');
+    const card = $('#nqUser');
 
     acctTabRefresh = () => { if (tabEl) tabEl.classList.toggle('attn', !mainAcct() && allAccts().length > 1); };
 
@@ -1021,10 +1021,10 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
         const mine = n.toLowerCase() === me, isMain = n.toLowerCase() === main, removable = !mine;
         const pr = readProf(n), av = pr && pr.avatar ? pr.avatar.replace(/["'\\\n\r()]/g, '') : '';
         const sub = mine ? (isMain ? 'You · Main account' : 'You') : (isMain ? 'Main account' : 'View profile');
-        return `<div class="nppAcctRow${mine ? ' me' : ''}${isMain ? ' main' : ''}"><a class="nppAcctLink" href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(n)}" target="_blank" rel="noopener" title="View ${esc(n)}'s profile"><span class="nppAcctAv"${av ? ` style="background-image:url('${esc(av)}')"` : ''}>${av ? '' : esc(n.charAt(0).toUpperCase())}</span><span class="nppAcctTxt"><b>${esc(n)}</b><small>${esc(sub)}</small></span></a>${removable ? `<button type="button" class="nppAcctX" data-n="${esc(n)}" title="Remove from this computer" aria-label="Remove ${esc(n)}">×</button>` : ''}<button type="button" class="nppAcctStar" data-n="${esc(n)}" title="${isMain ? 'Main account (click to unset)' : 'Make this my main account'}" aria-label="${isMain ? 'Unset main account' : 'Make main account'}">${isMain ? '★' : '☆'}</button></div>`;
+        return `<div class="nqAcctRow${mine ? ' me' : ''}${isMain ? ' main' : ''}"><a class="nqAcctLink" href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(n)}" target="_blank" rel="noopener" title="View ${esc(n)}'s profile"><span class="nqAcctAv"${av ? ` style="background-image:url('${esc(av)}')"` : ''}>${av ? '' : esc(n.charAt(0).toUpperCase())}</span><span class="nqAcctTxt"><b>${esc(n)}</b><small>${esc(sub)}</small></span></a>${removable ? `<button type="button" class="nqAcctX" data-n="${esc(n)}" title="Remove from this computer" aria-label="Remove ${esc(n)}">×</button>` : ''}<button type="button" class="nqAcctStar" data-n="${esc(n)}" title="${isMain ? 'Main account (click to unset)' : 'Make this my main account'}" aria-label="${isMain ? 'Unset main account' : 'Make main account'}">${isMain ? '★' : '☆'}</button></div>`;
       };
-      q('.nppCntNp').textContent = npNames.length || '';
-      q('.nppCntEx').textContent = extra.length || '';
+      q('.nqCntNp').textContent = npNames.length || '';
+      q('.nqCntEx').textContent = extra.length || '';
       hint.textContent = (!main && all.length > 1) ? 'Sync from NeoPass to find your main account, or pick it with the ☆.' : '';
       listNp.innerHTML = npNames.map(row).join('');
       listEx.innerHTML = extra.map(row).join('');
@@ -1038,7 +1038,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
     const closeAdd = () => { addForm.hidden = true; addBtn.hidden = false; input.value = ''; };
     addBtn.addEventListener('click', () => { addBtn.hidden = true; addForm.hidden = false; msgEx.textContent = ''; input.focus(); });
-    $('.nppAcctAddCancel', drawer).addEventListener('click', () => { closeAdd(); msgEx.textContent = ''; });
+    $('.nqAcctAddCancel', drawer).addEventListener('click', () => { closeAdd(); msgEx.textContent = ''; });
     input.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeAdd(); } });
 
     const place = () => {
@@ -1050,28 +1050,28 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     };
     const setOpen = (o) => {
       open = !!o;
-      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('npp:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nppAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = ''; msgEx.textContent = ''; }
+      if (open) { closeAllPets(); document.dispatchEvent(new CustomEvent('nq:drawer', { detail: 'accts' })); closeAdd(); try { const cn = drawer.querySelector('.nqAcctCount'); if (cn) cn.textContent = allAccts().length; } catch (er) {} render(); place(); msgNp.textContent = ''; msgEx.textContent = ''; }
       drawer.classList.toggle('open', open);
       if (tabEl) tabEl.classList.toggle('on', open);
     };
 
     drawerSetOpen = setOpen;
-    drawer.querySelector('.nppAcctClose').addEventListener('click', () => setOpen(false));
+    drawer.querySelector('.nqAcctClose').addEventListener('click', () => setOpen(false));
     tabEl.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); });
-    document.addEventListener('pointerdown', (e) => { if (open && !e.target.closest('#nppAcctDrawer, #nppAcctTab, #nppListsMod, #nppStandaloneAcctToggle')) setOpen(false); }, true);
+    document.addEventListener('pointerdown', (e) => { if (open && !e.target.closest('#nqAcctDrawer, #nqAcctTab, #nqListsMod, #nqStandaloneAcctToggle')) setOpen(false); }, true);
     document.addEventListener('keydown', (e) => { if (open && e.key === 'Escape') setOpen(false); });
-    document.addEventListener('npp:drawer', (e) => { if (open && e.detail !== 'accts') setOpen(false); });
+    document.addEventListener('nq:drawer', (e) => { if (open && e.detail !== 'accts') setOpen(false); });
     window.addEventListener('resize', () => { if (open) place(); });
 
     if (MODE === 'modern') {
-      const swapLink = q('.nppAcctSwap');
+      const swapLink = q('.nqAcctSwap');
       if (swapLink) swapLink.addEventListener('click', (e) => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
         e.preventDefault();
         swapAccount(() => { swapLink.lastElementChild.textContent = 'Swapping…'; swapLink.classList.add('busy'); }, () => { swapLink.lastElementChild.textContent = 'Swap'; swapLink.classList.remove('busy'); });
       });
     } else {
-      const swapLink = q('.nppAcctStandaloneFoot a.nppSwap');
+      const swapLink = q('.nqAcctStandaloneFoot a.nqSwap');
       if (swapLink) swapLink.addEventListener('click', (e) => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
         e.preventDefault();
@@ -1079,28 +1079,28 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       });
     }
 
-    const syncBtn = q('.nppAcctSync:not(.nppAcctAllPets)');
+    const syncBtn = q('.nqAcctSync:not(.nqAcctAllPets)');
     syncBtn.addEventListener('click', async (e) => {
       e.preventDefault(); e.stopPropagation();
       if (syncBtn.disabled) return;
       syncBtn.disabled = true; syncBtn.classList.add('busy'); syncBtn.textContent = 'Syncing…';
       try {
         const { list, main } = await syncNeoPass();
-        render(); document.dispatchEvent(new CustomEvent('npp:main'));
+        render(); document.dispatchEvent(new CustomEvent('nq:main'));
         msgNp.textContent = `Synced ${list.length} account${list.length === 1 ? '' : 's'}${main ? ' · main: ' + main.name : ''}.`;
       } catch (err) { msgNp.textContent = 'Couldn’t sync: ' + (err && err.message || 'error'); }
       finally { syncBtn.disabled = false; syncBtn.classList.remove('busy'); syncBtn.textContent = 'Sync from NeoPass'; }
     });
 
     drawer.addEventListener('click', (e) => {
-      const st = e.target.closest('.nppAcctStar');
+      const st = e.target.closest('.nqAcctStar');
       if (st) {
         const n = st.dataset.n;
         LSset(MAIN_KEY, mainAcct().toLowerCase() === n.toLowerCase() ? '' : n);
-        render(); document.dispatchEvent(new CustomEvent('npp:main'));
+        render(); document.dispatchEvent(new CustomEvent('nq:main'));
         return;
       }
-      const x = e.target.closest('.nppAcctX');
+      const x = e.target.closest('.nqAcctX');
       if (!x || !x.dataset.n) return;
       const nm = x.dataset.n;
       if (nm.toLowerCase() === curUser().toLowerCase()) return;
@@ -1109,7 +1109,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       render();
     });
 
-    q('.nppAcctAdd').addEventListener('submit', (e) => {
+    q('.nqAcctAdd').addEventListener('submit', (e) => {
       e.preventDefault();
       const names = input.value.split(/[\s,;]+/).filter(Boolean);
       if (!names.length) return;
@@ -1132,28 +1132,28 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
   /* ───────────────────────────────── sidebar lists widget ───────────────────────────────── */
   function mountLists(card) {
-    const hud = document.getElementById('npHud');
-    if (!hud || $('#nppListsMod') || !card || card.parentNode !== hud) return;
+    const hud = document.getElementById('nqHud');
+    if (!hud || $('#nqListsMod') || !card || card.parentNode !== hud) return;
     const mod = document.createElement('div');
-    mod.id = 'nppListsMod';
-    const tile = (cls, label, icon) => '<button type="button" class="nppLt ' + cls + '" aria-label="' + label + '">' + icon + '<b>' + label + '</b></button>';
+    mod.id = 'nqListsMod';
+    const tile = (cls, label, icon) => '<button type="button" class="nqLt ' + cls + '" aria-label="' + label + '">' + icon + '<b>' + label + '</b></button>';
     mod.innerHTML =
-      tile('nppLtAcct', 'Accounts', '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13c.3-2.4 2.2-3.8 4.5-3.8s4.2 1.4 4.5 3.8M10.8 3.4a2.3 2.3 0 0 1 0 4.2M12.5 9.6c1.2.5 2 1.6 2.2 3.1"/></svg>') +
-      tile('nppLtPets', 'All Pets', '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="4" cy="6.5" r="1.6"/><circle cx="7" cy="3.8" r="1.6"/><circle cx="10.5" cy="3.8" r="1.6"/><circle cx="13" cy="6.5" r="1.6"/><path d="M8.7 7.6c2 0 4 2 4 3.9 0 1.4-1.2 2-2.2 2-.9 0-1.3-.5-1.8-.5s-.9.5-1.8.5c-1 0-2.2-.6-2.2-2 0-1.9 2-3.9 4-3.9z"/></svg>');
+      tile('nqLtAcct', 'Accounts', '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5.5" r="2.5"/><path d="M1.5 13c.3-2.4 2.2-3.8 4.5-3.8s4.2 1.4 4.5 3.8M10.8 3.4a2.3 2.3 0 0 1 0 4.2M12.5 9.6c1.2.5 2 1.6 2.2 3.1"/></svg>') +
+      tile('nqLtPets', 'All Pets', '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="4" cy="6.5" r="1.6"/><circle cx="7" cy="3.8" r="1.6"/><circle cx="10.5" cy="3.8" r="1.6"/><circle cx="13" cy="6.5" r="1.6"/><path d="M8.7 7.6c2 0 4 2 4 3.9 0 1.4-1.2 2-2.2 2-.9 0-1.3-.5-1.8-.5s-.9.5-1.8.5c-1 0-2.2-.6-2.2-2 0-1.9 2-3.9 4-3.9z"/></svg>');
     card.after(mod);
     const upd = () => {
-      const nmEl = $('#npUserTitle'); if (nmEl) nmEl.title = nmEl.textContent.trim();
-      const uc = $('#npUser'); if (uc) uc.dataset.main = (mainAcct() && mainAcct().toLowerCase() === curUser().toLowerCase()) ? '1' : '0';
+      const nmEl = $('#nqUserTitle'); if (nmEl) nmEl.title = nmEl.textContent.trim();
+      const uc = $('#nqUser'); if (uc) uc.dataset.main = (mainAcct() && mainAcct().toLowerCase() === curUser().toLowerCase()) ? '1' : '0';
     };
     upd(); setInterval(upd, 3000);
-    mod.querySelector('.nppLtAcct').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (apEl && apEl.classList.contains('open')) closeAllPets(); if (drawerSetOpen) drawerSetOpen(!open); else if (tabEl) tabEl.click(); });
-    mod.querySelector('.nppLtPets').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAllPets(); });
+    mod.querySelector('.nqLtAcct').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (apEl && apEl.classList.contains('open')) closeAllPets(); if (drawerSetOpen) drawerSetOpen(!open); else if (tabEl) tabEl.click(); });
+    mod.querySelector('.nqLtPets').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openAllPets(); });
   }
 
   /* ───────────────────────────────── mounts ───────────────────────────────── */
   function mountModern() {
-    const card = $('#npUser');
-    if (!card || $('#nppAcctTab')) return;
+    const card = $('#nqUser');
+    if (!card || $('#nqAcctTab')) return;
     const side = card.querySelector('.rightSide');
     if (!side) return;
 
@@ -1167,27 +1167,27 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
     // Add the tab button to the user card.
     const tab = document.createElement('button');
-    tab.id = 'nppAcctTab'; tab.type = 'button'; tab.title = 'Your accounts'; tab.setAttribute('aria-label', 'Your accounts');
+    tab.id = 'nqAcctTab'; tab.type = 'button'; tab.title = 'Your accounts'; tab.setAttribute('aria-label', 'Your accounts');
     tab.innerHTML = USERS_ICON;
     card.appendChild(tab);
     tabEl = tab;
 
     // Add the avatar (if not already there from the core).
-    if (!$('#nppAvatar')) {
+    if (!$('#nqAvatar')) {
       const av = document.createElement('a');
-      av.id = 'nppAvatar'; av.href = 'https://www.neopets.com/settings/neoboards'; av.title = 'Neoboard settings';
-      av.innerHTML = '<span class="nppAvInit"></span>';
+      av.id = 'nqAvatar'; av.href = 'https://www.neopets.com/settings/neoboards'; av.title = 'Neoboard settings';
+      av.innerHTML = '<span class="nqAvInit"></span>';
       side.prepend(av);
     }
 
     // Log Out / Swap pill (if not already there from the core).
-    if (!$('#npLogoutBtn')) {
+    if (!$('#nqLogoutBtn')) {
       const wrap = document.createElement('div');
-      wrap.id = 'nppAcctBtns';
+      wrap.id = 'nqAcctBtns';
       const lo = document.createElement('a');
-      lo.id = 'npLogoutBtn'; lo.href = 'https://www.neopets.com/logout.phtml'; lo.innerHTML = LOGOUT_ICON + '<span>Log Out</span>';
+      lo.id = 'nqLogoutBtn'; lo.href = 'https://www.neopets.com/logout.phtml'; lo.innerHTML = LOGOUT_ICON + '<span>Log Out</span>';
       const sw = document.createElement('a');
-      sw.id = 'npSwapBtn'; sw.href = SWAP_URL; sw.target = '_blank'; sw.rel = 'noopener'; sw.title = 'Swap account: log out and go straight to the login page';
+      sw.id = 'nqSwapBtn'; sw.href = SWAP_URL; sw.target = '_blank'; sw.rel = 'noopener'; sw.title = 'Swap account: log out and go straight to the login page';
       sw.innerHTML = USERS_ICON + '<span>Swap</span>';
       sw.addEventListener('click', (e) => {
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
@@ -1208,14 +1208,14 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
     setInterval(updateAvatar, 1500);
 
     // Also react to the core reporting an account change.
-    document.addEventListener('npp:main', () => updateAvatar());
+    document.addEventListener('nq:main', () => updateAvatar());
 
     // Refresh the tab attention dot if the drawer's data changes.
     return true;
   }
 
   function mountStandalone() {
-    if (document.getElementById('nppStandaloneAcct')) return;
+    if (document.getElementById('nqStandaloneAcct')) return;
     if (!document.body) return;
 
     // The drawer is the same component; build it now that we have a body.
@@ -1224,11 +1224,11 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
     // A floating "Accounts" button bottom-right. Above the dailies button if it's there.
     const wrap = document.createElement('div');
-    wrap.id = 'nppStandaloneAcct';
-    if (document.getElementById('nppDailiesRoot')) wrap.classList.add('aboveDailies');
-    wrap.innerHTML = '<button type="button" id="nppStandaloneAcctToggle" title="Your accounts">' + USERS_ICON + '<span>Accounts</span></button>';
+    wrap.id = 'nqStandaloneAcct';
+    if (document.getElementById('nqDailiesRoot')) wrap.classList.add('aboveDailies');
+    wrap.innerHTML = '<button type="button" id="nqStandaloneAcctToggle" title="Your accounts">' + USERS_ICON + '<span>Accounts</span></button>';
     document.body.appendChild(wrap);
-    const toggle = wrap.querySelector('#nppStandaloneAcctToggle');
+    const toggle = wrap.querySelector('#nqStandaloneAcctToggle');
     toggle.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); api.setOpen(true); });
 
     // Tab button is used only for the drawer's internal open/close logic in modern mode.
@@ -1237,14 +1237,14 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
     // React to the dailies button appearing later.
     watchDoc(() => {
-      wrap.classList.toggle('aboveDailies', !!document.getElementById('nppDailiesRoot'));
+      wrap.classList.toggle('aboveDailies', !!document.getElementById('nqDailiesRoot'));
     });
 
     setInterval(() => { try { api.render(); } catch {} }, 4000);   // (in case the account list changes elsewhere)
   }
 
   function updateAvatar() {
-    const av = $('#nppAvatar');
+    const av = $('#nqAvatar');
     if (!av) return;
     const user = String(W.appInsightsUserName || LSget('nq_hud_username') || '').trim();
     let url = '';
@@ -1261,7 +1261,7 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
       try { const lg = JSON.parse(LSget('nq_active_pet_img_v1') || 'null'); if (lg && /\/cp\//.test(lg.url || '')) url = lg.url.replace(/\/9\.png/, '/1.png'); } catch {}
     }
     if (url.startsWith('//')) url = 'https:' + url;
-    const init = av.querySelector('.nppAvInit');
+    const init = av.querySelector('.nqAvInit');
     if (url) {
       if (av.dataset.u !== url) { av.dataset.u = url; av.style.backgroundImage = `url("${url.replace(/["\\\n\r]/g, '')}")`; if (init) init.textContent = ''; }
     } else if (init && !init.textContent) {
@@ -1341,8 +1341,8 @@ html[data-np-modern-interface]:not(.npp-side-light) #nppAP .apSw input:checked ~
 
   // If the main script arrives later (e.g. on a client-side navigation), re-mount in modern mode.
   watchDoc(() => {
-    if ($('#nppAcctTab') || !document.getElementById('npUser')) return;
-    const floating = document.getElementById('nppStandaloneAcct');
+    if ($('#nqAcctTab') || !document.getElementById('nqUser')) return;
+    const floating = document.getElementById('nqStandaloneAcct');
     const oldDrawer = floating ? drawerEl : null;
     MODE = 'modern';
     if (!mountModern()) return;

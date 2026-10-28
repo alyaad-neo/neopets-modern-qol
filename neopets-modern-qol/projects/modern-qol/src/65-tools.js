@@ -2,43 +2,43 @@
   const themeOf = () => NQ.getBtnTheme() || 'basic';
   const iconUrl = (name) => NQ.btnIconUrl(name, themeOf());
   function setupTools() {
-    if (isNc || isPopup || $('#nppTools') || !document.body) return;
+    if (isNc || isPopup || $('#nqTools') || !document.body) return;
     const col = $('#btnOverlay .col.left');
     if (!col) return;
     const tools = document.createElement('div');
-    tools.id = 'nppTools';
+    tools.id = 'nqTools';
     tools.innerHTML =
-      '<div class="nppSep"></div>' +
-      `<form class="nppSearch" action="${SEARCH_URL}" method="get"><button type="submit" aria-label="Search" title="Search"><img alt=""></button><input name="string" placeholder="Search the site" autocomplete="off" aria-label="Search the site"></form>`;
+      '<div class="nqSep"></div>' +
+      `<form class="nqSearch" action="${SEARCH_URL}" method="get"><button type="submit" aria-label="Search" title="Search"><img alt=""></button><input name="string" placeholder="Search the site" autocomplete="off" aria-label="Search the site"></form>`;
     document.body.appendChild(tools);
-    const sImg = $('.nppSearch img', tools), form = $('.nppSearch', tools), input = $('input', form);
-    const host = $('#npx-host');
+    const sImg = $('.nqSearch img', tools), form = $('.nqSearch', tools), input = $('input', form);
+    const host = $('#nq-host');
     const place = () => {
       if (!host) return;
       const r = host.getBoundingClientRect();
       if (!r.height) return;
-      rs.setProperty('--npp-tools-top', Math.round(r.top + r.height / 2) + 'px');
-      rs.setProperty('--npp-header-h', Math.round(r.height) + 'px');
+      rs.setProperty('--nq-tools-top', Math.round(r.top + r.height / 2) + 'px');
+      rs.setProperty('--nq-header-h', Math.round(r.height) + 'px');
     };
     place();
     if (host) { new ResizeObserver(place).observe(host); window.addEventListener('resize', place); }
 
     const measure = () => {
-      const live = [...col.children].filter(k => !k.hasAttribute('data-npp-nested') && k.getBoundingClientRect().width > 8);
+      const live = [...col.children].filter(k => !k.hasAttribute('data-nq-nested') && k.getBoundingClientRect().width > 8);
       if (!live.length) return;
       const size = 36;
       let gap = 10;
       if (live.length > 1) { const r0 = live[0].getBoundingClientRect(), r1 = live[1].getBoundingClientRect(); gap = Math.max(4, Math.min(28, Math.round(Math.abs(r1.top - r0.top) - r0.height))); }
-      rs.setProperty('--npp-ic', size + 'px'); rs.setProperty('--npp-ig', gap + 'px');
+      rs.setProperty('--nq-ic', size + 'px'); rs.setProperty('--nq-ig', gap + 'px');
       try {
         const cands = [live[0], live[0].querySelector('img')].filter(Boolean);
         const f = cands.map(c => getComputedStyle(c).filter).find(v => v && v !== 'none' && /drop-shadow/.test(v));
-        if (f) rs.setProperty('--npp-ico-shadow', f);
+        if (f) rs.setProperty('--nq-ico-shadow', f);
       } catch {}
     };
     measure();
     const remeasure = () => { measure(); };
-    rs.setProperty('--npp-tools-h', '0px');
+    rs.setProperty('--nq-tools-h', '0px');
     new MutationObserver(remeasure).observe(col, { childList: true });
     new ResizeObserver(remeasure).observe(col);
 
@@ -51,8 +51,8 @@
     paintIcons();
 
     const setSearch = (open) => {
-      form.classList.toggle('nppOpen', open);
-      if (host) host.classList.toggle('npp-search-open', open);
+      form.classList.toggle('nqOpen', open);
+      if (host) host.classList.toggle('nq-search-open', open);
       if (open) input.focus();
     };
     const closeSearch = () => setSearch(false);
@@ -61,14 +61,14 @@
     $('button', form).addEventListener('click', (e) => {
       if (input.value.trim()) return;
       e.preventDefault();
-      if (form.classList.contains('nppOpen')) { closeSearch(); input.blur(); }
+      if (form.classList.contains('nqOpen')) { closeSearch(); input.blur(); }
       else setSearch(true);
     });
     document.addEventListener('pointerdown', (e) => {
-      if (form.classList.contains('nppOpen') && !e.target.closest('#nppTools .nppSearch')) closeSearch();
+      if (form.classList.contains('nqOpen') && !e.target.closest('#nqTools .nqSearch')) closeSearch();
     }, true);
     document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape' || !form.classList.contains('nppOpen')) return;
+      if (e.key !== 'Escape' || !form.classList.contains('nqOpen')) return;
       closeSearch(); input.blur();
     });
 
@@ -92,13 +92,13 @@
   function setupNest() {
     if (isNc || isPopup) return;
     const col = $('#btnOverlay .col.left');
-    if (!col || col.dataset.nppNest) return;
-    col.dataset.nppNest = '1';
-    const pop = document.createElement('div'); pop.id = 'nppNestPop';
+    if (!col || col.dataset.nqNest) return;
+    col.dataset.nqNest = '1';
+    const pop = document.createElement('div'); pop.id = 'nqNestPop';
     const inner = document.createElement('div'); inner.className = 'col'; inner.style.setProperty('display', 'contents', 'important'); pop.appendChild(inner);
     const mount = () => { if (!pop.isConnected) (document.getElementById('btnOverlay') || document.body).appendChild(pop); };
     mount();
-    const menu = document.createElement('div'); menu.id = 'nppNestMenu'; document.body.appendChild(menu);
+    const menu = document.createElement('div'); menu.id = 'nqNestMenu'; document.body.appendChild(menu);
     let hideT = null;
 
     const kidsByKey = () => { const m = new Map(); [...col.children].forEach(k => { const key = itemKey(k); if (key && !m.has(key)) m.set(key, k); }); return m; };
@@ -107,9 +107,9 @@
       [...col.children].forEach(k => {
         const key = itemKey(k);
         const isChild = kids.has(key) && !(key in nest);
-        k.toggleAttribute('data-npp-nested', isChild);
+        k.toggleAttribute('data-nq-nested', isChild);
         const has = key in nest && nest[key].some(c => by.has(c));
-        k.classList.toggle('nppHasNest', has);
+        k.classList.toggle('nqHasNest', has);
         if (has && getComputedStyle(k).position === 'static') k.style.position = 'relative';
       });
     };
@@ -129,14 +129,14 @@
         inner.textContent = '';
         list.forEach((orig, i) => {
           const c = orig.cloneNode(true);
-          c.removeAttribute('data-npp-nested'); c.classList.remove('nppHasNest', 'nppBgIcon'); c.style.removeProperty('display');
+          c.removeAttribute('data-nq-nested'); c.classList.remove('nqHasNest', 'nqBgIcon'); c.style.removeProperty('display');
           c.dataset.i = i; c.style.setProperty('--i', i);
           inner.appendChild(c);
         });
         pop._sig = sig;
       }
       pop._list = list;
-      const modEl = col.closest('#nppIcons');
+      const modEl = col.closest('#nqIcons');
       if (modEl) { const pr = parent.getBoundingClientRect(), mr = modEl.getBoundingClientRect(); pop.style.setProperty('--tx', Math.round(pr.left + pr.width / 2 - mr.left) + 'px'); }
       const r = parent.getBoundingClientRect();
       pop.style.left = Math.round(r.right) + 'px'; pop.style.top = Math.round(r.top + r.height / 2) + 'px';
@@ -144,12 +144,12 @@
     };
     const hidePop = () => { clearTimeout(hideT); hideT = setTimeout(() => pop.classList.remove('open'), 300); };
     const canHover = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches; } catch { return true; } };
-    const inMod = () => !!col.closest('#nppIcons');
+    const inMod = () => !!col.closest('#nqIcons');
     const hoverOpen = (e) => {
       if (inMod() && !canHover()) return;
       const item = [...col.children].find(k => k.contains(e.target));
       if (!item) return;
-      if (item.classList.contains('nppHasNest')) { showPop(item); pop._key = itemKey(item); } else if (pop.classList.contains('open')) hidePop();
+      if (item.classList.contains('nqHasNest')) { showPop(item); pop._key = itemKey(item); } else if (pop.classList.contains('open')) hidePop();
     };
     col.addEventListener('mouseover', hoverOpen);
     col.addEventListener('focusin', hoverOpen);
@@ -158,18 +158,18 @@
     pop.addEventListener('mouseenter', () => clearTimeout(hideT)); pop.addEventListener('mouseover', () => clearTimeout(hideT)); pop.addEventListener('pointerenter', () => clearTimeout(hideT));
     pop.addEventListener('focusin', () => clearTimeout(hideT));
     pop.addEventListener('focusout', () => { if (inMod()) hidePop(); });
-    pop.addEventListener('mouseleave', (e) => { if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#nppIcons #btnOverlay .col > .nppHasNest')) return; if (!inMod() || canHover()) hidePop(); });
+    pop.addEventListener('mouseleave', (e) => { if (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('#nqIcons #btnOverlay .col > .nqHasNest')) return; if (!inMod() || canHover()) hidePop(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && inMod() && pop.classList.contains('open')) pop.classList.remove('open'); });
     col.addEventListener('click', (e) => {
       if (!inMod() || canHover() || pop._via || e.ctrlKey || e.metaKey || e.shiftKey || e.button) return;
       const item = [...col.children].find(k => k.contains(e.target));
-      if (!item || !item.classList.contains('nppHasNest')) return;
+      if (!item || !item.classList.contains('nqHasNest')) return;
       e.preventDefault(); e.stopPropagation();
       const k = itemKey(item);
       if (pop.classList.contains('open') && pop._key === k) pop.classList.remove('open'); else { showPop(item); pop._key = k; }
     }, true);
     pop.addEventListener('click', (e) => {
-      const a = e.target.closest('#nppNestPop .col > *'); if (!a) return;
+      const a = e.target.closest('#nqNestPop .col > *'); if (!a) return;
       if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
       e.preventDefault(); e.stopPropagation();
       const orig = pop._list && pop._list[+a.dataset.i];
@@ -177,7 +177,7 @@
       pop.classList.remove('open');
     });
 
-    document.addEventListener('pointerdown', (e) => { if (inMod() && pop.classList.contains('open') && !e.target.closest('#nppIcons')) pop.classList.remove('open'); }, true);
+    document.addEventListener('pointerdown', (e) => { if (inMod() && pop.classList.contains('open') && !e.target.closest('#nqIcons')) pop.classList.remove('open'); }, true);
     const closeMenu = () => { menu.classList.remove('open'); };
     const openMenu = (x, y, entries) => {
       menu.innerHTML = entries.map((e, i) => `<button type="button" data-i="${i}">${esc(e.label)}</button>`).join('');
@@ -186,13 +186,13 @@
       menu.classList.add('open');
     };
     menu.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; const en = menu._entries[+b.dataset.i]; closeMenu(); if (en) { en.run(); apply(); } });
-    document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#nppNestMenu')) closeMenu(); }, true);
+    document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#nqNestMenu')) closeMenu(); }, true);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
     col.addEventListener('contextmenu', (e) => {
       const item = [...col.children].find(k => k.contains(e.target));
       if (!item) return;
       const key = itemKey(item); if (!key) return;
-      const nest = readNest(), top = [...col.children].filter(k => !k.hasAttribute('data-npp-nested'));
+      const nest = readNest(), top = [...col.children].filter(k => !k.hasAttribute('data-nq-nested'));
       const idx = top.indexOf(item), prev = idx > 0 ? top[idx - 1] : null, entries = [];
       if (prev && itemKey(prev)) entries.push({ label: 'Nest under the icon above', run: () => {
         const pk = itemKey(prev), o = readNest();
@@ -204,7 +204,7 @@
       e.preventDefault(); openMenu(e.clientX, e.clientY, entries);
     });
     pop.addEventListener('contextmenu', (e) => {
-      const a = e.target.closest('#nppNestPop .col > *'); if (!a) return;
+      const a = e.target.closest('#nqNestPop .col > *'); if (!a) return;
       const orig = pop._list && pop._list[+a.dataset.i]; if (!orig) return;
       const ck = itemKey(orig);
       e.preventDefault();
@@ -213,21 +213,21 @@
   }
 
   function decorateEditorNest() {
-    const h = $('#npxSideBtnHost'), sr = h && h.shadowRoot, col = $('#btnOverlay .col.left');
+    const h = $('#nqSideBtnHost'), sr = h && h.shadowRoot, col = $('#btnOverlay .col.left');
     if (!sr || !col || !nestKeyOf || !nestApplyFn) return;
     const body = sr.querySelector('.body');
     if (!body) return;
     const rows = [...sr.querySelectorAll('.col:not([data-side="right"]) .items > .item')], kids = [...col.children];
     if (!rows.length || rows.length !== kids.length) return;
-    if (!sr.querySelector('.nppNestHint')) { const hint = document.createElement('div'); hint.className = 'nppNestHint'; hint.textContent = '↳ nests an icon under the icon above it. To nest a new icon: press ADD, move it right below the icon you want to group it with, then press its ↳. Nested icons open in a pop-out when you hover the icon above.'; body.appendChild(hint); }
+    if (!sr.querySelector('.nqNestHint')) { const hint = document.createElement('div'); hint.className = 'nqNestHint'; hint.textContent = '↳ nests an icon under the icon above it. To nest a new icon: press ADD, move it right below the icon you want to group it with, then press its ↳. Nested icons open in a pop-out when you hover the icon above.'; body.appendChild(hint); }
     const nest = readNest(), parentOf = {};
     Object.entries(nest).forEach(([pk, cs]) => cs.forEach(c => { parentOf[c] = pk; }));
     let prevTop = null;
     rows.forEach((row, i) => {
       const key = nestKeyOf(kids[i]), isChild = key in parentOf, isParent = key in nest && nest[key].length > 0;
-      let btn = row.querySelector('.nppNestBtn');
+      let btn = row.querySelector('.nqNestBtn');
       if (!btn) {
-        btn = document.createElement('button'); btn.type = 'button'; btn.className = 'nppNestBtn iconBtnMini';
+        btn = document.createElement('button'); btn.type = 'button'; btn.className = 'nqNestBtn iconBtnMini';
         btn.addEventListener('click', (e) => {
           e.preventDefault(); e.stopPropagation();
           const rowsNow = [...sr.querySelectorAll('.col:not([data-side="right"]) .items > .item')], kidsNow = [...col.children];
@@ -252,18 +252,18 @@
       btn.title = isChild ? 'Move out of the group' : (prevTop ? 'Nest under the icon above' : 'Nothing above to nest under');
       btn.disabled = !isChild && !prevTop;
       btn.classList.toggle('on', isChild);
-      row.classList.toggle('nppNested', isChild); row.classList.toggle('nppParent', isParent);
+      row.classList.toggle('nqNested', isChild); row.classList.toggle('nqParent', isParent);
       if (!isChild) prevTop = key;
     });
   }
 
   function patchEditor() {
-    const h = $('#npxSideBtnHost'), sr = h && h.shadowRoot;
-    if (!sr || sr.getElementById('npp-editor')) return;
+    const h = $('#nqSideBtnHost'), sr = h && h.shadowRoot;
+    if (!sr || sr.getElementById('nq-editor')) return;
     const tab = sr.querySelector('.tab'), panel = sr.querySelector('.panel');
     if (!tab || !panel) return;
     const st = document.createElement('style');
-    st.id = 'npp-editor'; st.textContent = EDITOR_CSS;
+    st.id = 'nq-editor'; st.textContent = EDITOR_CSS;
     sr.appendChild(st);
     tab.innerHTML = CHEV;
     new MutationObserver(() => tab.classList.toggle('isOpen', panel.classList.contains('open'))).observe(panel, { attributes: true, attributeFilter: ['class'] });

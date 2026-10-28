@@ -28,11 +28,11 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 | Feature | File | Search for |
 | --- | --- | --- |
 | MIT credit, strict mode, `PW`, top-frame guard | 05-utils.js | `Based on` |
-| JellyNeo item popup | 10-jellyneo.js | `nppJN`, `nppJnCard` |
+| JellyNeo item popup | 10-jellyneo.js | `nqJN`, `nqJnCard` |
 | Host guard, phone/path exclusions, 403 backoff, patcher helpers (`W`, `$`, `LSget`, `esc`, `shadow`), GM sync, icons | 15-core.js | `npBaseOff`, `np403BackoffActive`, `SYNC_KEYS`, `noAdblockPopup` |
-| Base: layout, native hiding, top bar `#npx-host`, accent and button-theme APIs, scrollbar | 20-layout.js | `np-core-layout`, `exposeBtnThemes`, `exposeAccent`, `customScrollbar` |
-| Base: sidebar `#npHud`, user card, bank, QuickRef, NP, icon column, side-button editor | 25-hud.js | `userModule`, `bankModule`, `qrModule`, `npModule`, `colsModule`, `sideBtnEditor` |
-| Base: background boot, `#npBgSidebar` | 30-backgrounds.js | `npBgBoot` |
+| Base: layout, native hiding, top bar `#nq-host`, accent and button-theme APIs, scrollbar | 20-layout.js | `nq-core-layout`, `exposeBtnThemes`, `exposeAccent`, `customScrollbar` |
+| Base: sidebar `#nqHud`, user card, bank, QuickRef, NP, icon column, side-button editor | 25-hud.js | `userModule`, `bankModule`, `qrModule`, `npModule`, `colsModule`, `sideBtnEditor` |
+| Base: background boot, `#nqBgSidebar` | 30-backgrounds.js | `nqBgBoot` |
 | Patcher CSS and bar styling | 40-styles.js | `PAGE_CSS`, `LAYOUT_CSS`, `NC_CSS`, `BAR_CSS`, `SHADOW_CSS`, `EDITOR_CSS` |
 | Colour picker, DTI backgrounds | 45-colors.js | `injectPicker`, `discoverBgs`, `paintAll` |
 | Right background sidebar wiring | 50-sidebar.js | `wireSidebar` |
