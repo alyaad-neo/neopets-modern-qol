@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.7
+// @version      1.0.8
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -586,6 +586,7 @@
       d = document.createElement('div');
       d.id = 'nppDaily'; d.className = 'npCard';
       pet.insertAdjacentElement('afterend', d);
+      cardListeners.forEach(fn => { try { fn(d); } catch {} });
     }
     const hero = (name, h, icon, href) => {
       const theme = name === 'Snowager' ? 'nppTh-snow' : name === "Tarla's Toolbar" ? 'nppTh-gift' : 'nppTh-cave';
@@ -631,7 +632,9 @@
   }
 
   /* ─── Public API for the core to consume ─── */
+  const cardListeners = [];
   NQ.dailies = {
+    onCard: (fn) => { cardListeners.push(fn); },
     PREMIUM_CD, cdLoad, cdSet, cdLeft, cdText, seenLoad, ackLoad, ackSet, isAcked,
     snowagerState, snowAcked, ackSnow, snowText, snowBadge, snowRowHTML, SNOWFLAKE,
     symolLoad, tarlaLoad, symolState, symolEnsure, parseSymol, parseTarla,

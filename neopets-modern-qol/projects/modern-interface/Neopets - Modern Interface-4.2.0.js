@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface
 // @namespace    neopets-qol
-// @version      4.2.7
+// @version      4.2.8
 // @author       marius@clraik
 // @license      MIT
 // @description  Fixes Neopets.com's UI in one coherent, fully customizable skin: layout, icons, colors, backgrounds. 1) fixed top bar (search, NST clock, alerts) + drag-resizable content frame 2) left sidebar: user info, Bank graph & shortcuts, NP balance, QuickRef card 3) right sidebar: color theme + DTI backgrounds. 100% UI, zero automation. (Formerly "① Core & Layout": now absorbs "② HUD" and "③ Background & Decor" — uninstall those two, settings carry over automatically.)
@@ -3387,7 +3387,9 @@
     const cpn = (n) => `https://pets.neopets.com/cpn/${encodeURIComponent(n)}/1/4.png`;
 
     const readCache = () => { try { const s = localStorage.getItem(LS_DATA); return s ? JSON.parse(s) : null; } catch { return null; } };
-    const writeCache = (data) => { try { localStorage.setItem(LS_DATA, JSON.stringify({ ts:now(), data })); } catch {} };
+    const qrListeners = [];
+    NQ.onQrData = (fn) => { qrListeners.push(fn); };
+    const writeCache = (data) => { try { localStorage.setItem(LS_DATA, JSON.stringify({ ts:now(), data })); } catch {} qrListeners.forEach(fn => { try { fn(); } catch {} }); };
     const readLast = () => { try { return ((localStorage.getItem(LS_DATA+'_lastFetch')||0)|0); } catch { return 0; } };
     const writeLast = () => { try { localStorage.setItem(LS_DATA+'_lastFetch', String(now())); } catch {} };
 

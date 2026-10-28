@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      4.1.34
+// @version      4.1.35
 // @description  Core runtime patches for "Neopets - Modern Interface": header, sidebar, colours, accounts, background picker, pet card.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1444,7 +1444,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         }
       };
       ensure();
-      new MutationObserver(ensure).observe(menu, { childList: true });
+      new MutationObserver(() => { ensure(); fixNcNavLinks(); }).observe(menu, { childList: true });
 
       const recenter = () => {
         const b = sr.querySelector(`.btn.cat[data-id="${id}"]`);
@@ -2213,7 +2213,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Swap Active'; btn.setAttribute('aria-label', 'Swap Active'); btn.innerHTML = SWAP + '<span>Swap Active</span>';
     card.appendChild(btn);
     renderPetInfo(); fixPetImg();
-    new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+    new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'src'] });
     card.addEventListener('click', (e) => {
       const sbtn = e.target.closest('.nppStatsBtn');
       if (sbtn) {
@@ -2431,6 +2431,12 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   let petSyncUntil = 0;
   let acctChecked = false;
   let petSettled = true;
+  let petWaited = false;
+  const unwait = () => {
+    if (!root.classList.contains('npp-wait')) return;
+    const np = $('#npNp');
+    if ($('#nppFoot') && $('#nppTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('npp-wait');
+  };
   const cachedAtStart = LSget('npqol_hud_username');
   let tabUser = '';
   const staleTab = () => { const o = LSget('npp_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
@@ -2439,7 +2445,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const iv = setInterval(() => {
       let u = '';
       try { u = String(W.appInsightsUserName || '').trim(); } catch {}
-      if (!u) { if (++tries > 100) { clearInterval(iv); acctChecked = true; } return; }
+      if (!u) { if (++tries > 100) { clearInterval(iv); acctChecked = true; unwait(); } return; }
       clearInterval(iv);
       tabUser = u;
       const owner = LSget('npp_owner') || cachedAtStart;
@@ -2453,8 +2459,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
             if (t && THEME_KEYS.some(k => (LSget(k) || '') !== (t[k] || ''))) { writeTheme(t); location.reload(); return; }
           }
         } catch {}
-        try { if (sessionStorage.getItem('npp_swapped') === u) { sessionStorage.removeItem('npp_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false; } } catch {}
-        acctChecked = true;
+        try {
+          if (sessionStorage.getItem('npp_swapped') === u) {
+            sessionStorage.removeItem('npp_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false;
+            const sync = setInterval(() => { syncPetImg(); if (petSettled || Date.now() > petSyncUntil) { clearInterval(sync); unwait(); } }, 200);
+          }
+        } catch {}
+        acctChecked = true; unwait();
         return;
       }
       try { sessionStorage.setItem('npp_swapped', u); } catch {}
@@ -2471,7 +2482,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         if (saved) Object.keys(saved).forEach(k => LSset(k, saved[k]));
       } catch {}
       LSset('npp_owner', u);
-      if (owner) location.reload(); else acctChecked = true;
+      if (owner) location.reload(); else { acctChecked = true; unwait(); }
     }, 100);
   }
   accountGuard();
@@ -2673,7 +2684,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!isNc && !isPopup) {
       root.classList.add('npp-wait');
       root.classList.remove('npp-pre');
-      setTimeout(() => root.classList.remove('npp-wait'), 3500);
+      setTimeout(() => { petWaited = true; unwait(); }, 2200);
+      setTimeout(() => root.classList.remove('npp-wait'), 3000);
     }
 
     const css = document.createElement('style');
@@ -2709,13 +2721,20 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     patchShadow();
     globalListeners();
     setupKeys();
-    let n = 0;
-    const iv = setInterval(() => {
-      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); lockShopkeeper(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupBell(); setupNest(); layoutSidebar(); setupDrawer(); decorateEditorNest(); syncPetImg(); setupBank(); petUI(); wireSidebar();
-      if (root.classList.contains('npp-wait') && (($('#nppFoot') && $('#nppTools') && $('#npNp') && $('#npNp').dataset.acc && acctChecked && (petSettled || n > 10)) || n > 14)) root.classList.remove('npp-wait');
-      if (++n > 100) clearInterval(iv);
-    }, 200);
-    setInterval(() => { if (staleTab()) return; renderPetInfo(); fixPetImg(); updateNc(); }, 1500);
+    setupClock(); fixNcNavLinks(); setupPremium(); lockShortcuts(); lockShopkeeper();
+    const build = () => {
+      buildFooter(); setupTools(); setupScrollTop(); setupBell(); setupNest(); patchEditor(); layoutSidebar(); setupDrawer();
+      setupBank(); petUI(); setupDailyFold(); wireSidebar(); setupPremium(); highlightShopPrices(); updateNc();
+      unwait();
+    };
+    if (document.body) build();
+    else new MutationObserver((_, o) => { if (document.body) { o.disconnect(); build(); } }).observe(root, { childList: true });
+    document.addEventListener('DOMContentLoaded', build, { once: true });
+    window.addEventListener('load', build, { once: true });
+    if (NQ.dailies && NQ.dailies.onCard) NQ.dailies.onCard(setupDailyFold);
+    const petInfo = () => { if (!staleTab()) renderPetInfo(); };
+    if (NQ.onQrData) NQ.onQrData(petInfo);
+    window.addEventListener('storage', (e) => { if (e.key === 'npqol_qr_data') petInfo(); });
   }
 
   if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {

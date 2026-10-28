@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.7
+// @version      5.5.8
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -3395,7 +3395,9 @@ const NQ = {};
     const cpn = (n) => `https://pets.neopets.com/cpn/${encodeURIComponent(n)}/1/4.png`;
 
     const readCache = () => { try { const s = localStorage.getItem(LS_DATA); return s ? JSON.parse(s) : null; } catch { return null; } };
-    const writeCache = (data) => { try { localStorage.setItem(LS_DATA, JSON.stringify({ ts:now(), data })); } catch {} };
+    const qrListeners = [];
+    NQ.onQrData = (fn) => { qrListeners.push(fn); };
+    const writeCache = (data) => { try { localStorage.setItem(LS_DATA, JSON.stringify({ ts:now(), data })); } catch {} qrListeners.forEach(fn => { try { fn(); } catch {} }); };
     const readLast = () => { try { return ((localStorage.getItem(LS_DATA+'_lastFetch')||0)|0); } catch { return 0; } };
     const writeLast = () => { try { localStorage.setItem(LS_DATA+'_lastFetch', String(now())); } catch {} };
 
@@ -6136,6 +6138,7 @@ const NQ = {};
       d = document.createElement('div');
       d.id = 'nppDaily'; d.className = 'npCard';
       pet.insertAdjacentElement('afterend', d);
+      cardListeners.forEach(fn => { try { fn(d); } catch {} });
     }
     const hero = (name, h, icon, href) => {
       const theme = name === 'Snowager' ? 'nppTh-snow' : name === "Tarla's Toolbar" ? 'nppTh-gift' : 'nppTh-cave';
@@ -6181,7 +6184,9 @@ const NQ = {};
   }
 
   /* ─── Public API for the core to consume ─── */
+  const cardListeners = [];
   NQ.dailies = {
+    onCard: (fn) => { cardListeners.push(fn); },
     PREMIUM_CD, cdLoad, cdSet, cdLeft, cdText, seenLoad, ackLoad, ackSet, isAcked,
     snowagerState, snowAcked, ackSnow, snowText, snowBadge, snowRowHTML, SNOWFLAKE,
     symolLoad, tarlaLoad, symolState, symolEnsure, parseSymol, parseTarla,
@@ -7629,7 +7634,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         }
       };
       ensure();
-      new MutationObserver(ensure).observe(menu, { childList: true });
+      new MutationObserver(() => { ensure(); fixNcNavLinks(); }).observe(menu, { childList: true });
 
       const recenter = () => {
         const b = sr.querySelector(`.btn.cat[data-id="${id}"]`);
@@ -8398,7 +8403,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     btn.id = 'npPetDockBtn'; btn.type = 'button'; btn.title = 'Swap Active'; btn.setAttribute('aria-label', 'Swap Active'); btn.innerHTML = SWAP + '<span>Swap Active</span>';
     card.appendChild(btn);
     renderPetInfo(); fixPetImg();
-    new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style'] });
+    new MutationObserver(fixPetImg).observe(card, { subtree: true, childList: true, attributes: true, attributeFilter: ['style', 'src'] });
     card.addEventListener('click', (e) => {
       const sbtn = e.target.closest('.nppStatsBtn');
       if (sbtn) {
@@ -8616,6 +8621,12 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
   let petSyncUntil = 0;
   let acctChecked = false;
   let petSettled = true;
+  let petWaited = false;
+  const unwait = () => {
+    if (!root.classList.contains('npp-wait')) return;
+    const np = $('#npNp');
+    if ($('#nppFoot') && $('#nppTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('npp-wait');
+  };
   const cachedAtStart = LSget('npqol_hud_username');
   let tabUser = '';
   const staleTab = () => { const o = LSget('npp_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
@@ -8624,7 +8635,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     const iv = setInterval(() => {
       let u = '';
       try { u = String(W.appInsightsUserName || '').trim(); } catch {}
-      if (!u) { if (++tries > 100) { clearInterval(iv); acctChecked = true; } return; }
+      if (!u) { if (++tries > 100) { clearInterval(iv); acctChecked = true; unwait(); } return; }
       clearInterval(iv);
       tabUser = u;
       const owner = LSget('npp_owner') || cachedAtStart;
@@ -8638,8 +8649,13 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
             if (t && THEME_KEYS.some(k => (LSget(k) || '') !== (t[k] || ''))) { writeTheme(t); location.reload(); return; }
           }
         } catch {}
-        try { if (sessionStorage.getItem('npp_swapped') === u) { sessionStorage.removeItem('npp_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false; } } catch {}
-        acctChecked = true;
+        try {
+          if (sessionStorage.getItem('npp_swapped') === u) {
+            sessionStorage.removeItem('npp_swapped'); petSyncUntil = Date.now() + 9000; petSettled = false;
+            const sync = setInterval(() => { syncPetImg(); if (petSettled || Date.now() > petSyncUntil) { clearInterval(sync); unwait(); } }, 200);
+          }
+        } catch {}
+        acctChecked = true; unwait();
         return;
       }
       try { sessionStorage.setItem('npp_swapped', u); } catch {}
@@ -8656,7 +8672,7 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
         if (saved) Object.keys(saved).forEach(k => LSset(k, saved[k]));
       } catch {}
       LSset('npp_owner', u);
-      if (owner) location.reload(); else acctChecked = true;
+      if (owner) location.reload(); else { acctChecked = true; unwait(); }
     }, 100);
   }
   accountGuard();
@@ -8858,7 +8874,8 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     if (!isNc && !isPopup) {
       root.classList.add('npp-wait');
       root.classList.remove('npp-pre');
-      setTimeout(() => root.classList.remove('npp-wait'), 3500);
+      setTimeout(() => { petWaited = true; unwait(); }, 2200);
+      setTimeout(() => root.classList.remove('npp-wait'), 3000);
     }
 
     const css = document.createElement('style');
@@ -8894,13 +8911,20 @@ html[data-np-modern-interface][data-npp-bar="solid"] {
     patchShadow();
     globalListeners();
     setupKeys();
-    let n = 0;
-    const iv = setInterval(() => {
-      patchShadow(); setupClock(); fixNcNavLinks(); highlightShopPrices(); lockShopkeeper(); setupDailyFold(); setupScrollTop(); setupPremium(); patchEditor(); lockShortcuts(); buildFooter(); setupTools(); setupBell(); setupNest(); layoutSidebar(); setupDrawer(); decorateEditorNest(); syncPetImg(); setupBank(); petUI(); wireSidebar();
-      if (root.classList.contains('npp-wait') && (($('#nppFoot') && $('#nppTools') && $('#npNp') && $('#npNp').dataset.acc && acctChecked && (petSettled || n > 10)) || n > 14)) root.classList.remove('npp-wait');
-      if (++n > 100) clearInterval(iv);
-    }, 200);
-    setInterval(() => { if (staleTab()) return; renderPetInfo(); fixPetImg(); updateNc(); }, 1500);
+    setupClock(); fixNcNavLinks(); setupPremium(); lockShortcuts(); lockShopkeeper();
+    const build = () => {
+      buildFooter(); setupTools(); setupScrollTop(); setupBell(); setupNest(); patchEditor(); layoutSidebar(); setupDrawer();
+      setupBank(); petUI(); setupDailyFold(); wireSidebar(); setupPremium(); highlightShopPrices(); updateNc();
+      unwait();
+    };
+    if (document.body) build();
+    else new MutationObserver((_, o) => { if (document.body) { o.disconnect(); build(); } }).observe(root, { childList: true });
+    document.addEventListener('DOMContentLoaded', build, { once: true });
+    window.addEventListener('load', build, { once: true });
+    if (NQ.dailies && NQ.dailies.onCard) NQ.dailies.onCard(setupDailyFold);
+    const petInfo = () => { if (!staleTab()) renderPetInfo(); };
+    if (NQ.onQrData) NQ.onQrData(petInfo);
+    window.addEventListener('storage', (e) => { if (e.key === 'npqol_qr_data') petInfo(); });
   }
 
   if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {
