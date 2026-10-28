@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.16
+// @version      5.5.17
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -43,6 +43,23 @@ const NQ = {};
         try { if (localStorage.getItem(rename(k)) === null) localStorage.setItem(rename(k), localStorage.getItem(k)); } catch {}
       });
       localStorage.setItem('nq_migrated', '1');
+    }
+    if (localStorage.getItem('nq_migrated') !== '2') {
+      Object.keys(localStorage).forEach(k => {
+        if (!/^nq_(acct|theme)_/.test(k)) return;
+        try {
+          const o = JSON.parse(localStorage.getItem(k));
+          if (!o || typeof o !== 'object') return;
+          let changed = false;
+          Object.keys(o).forEach(s => {
+            if (!OLD.test(s)) return;
+            if (!(rename(s) in o)) o[rename(s)] = o[s];
+            delete o[s]; changed = true;
+          });
+          if (changed) localStorage.setItem(k, JSON.stringify(o));
+        } catch {}
+      });
+      localStorage.setItem('nq_migrated', '2');
     }
   } catch {}
   if (typeof GM_getValue !== 'function' || typeof GM_setValue !== 'function') return;

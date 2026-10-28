@@ -9,6 +9,23 @@
       });
       localStorage.setItem('nq_migrated', '1');
     }
+    if (localStorage.getItem('nq_migrated') !== '2') {
+      Object.keys(localStorage).forEach(k => {
+        if (!/^nq_(acct|theme)_/.test(k)) return;
+        try {
+          const o = JSON.parse(localStorage.getItem(k));
+          if (!o || typeof o !== 'object') return;
+          let changed = false;
+          Object.keys(o).forEach(s => {
+            if (!OLD.test(s)) return;
+            if (!(rename(s) in o)) o[rename(s)] = o[s];
+            delete o[s]; changed = true;
+          });
+          if (changed) localStorage.setItem(k, JSON.stringify(o));
+        } catch {}
+      });
+      localStorage.setItem('nq_migrated', '2');
+    }
   } catch {}
   if (typeof GM_getValue !== 'function' || typeof GM_setValue !== 'function') return;
   try {
