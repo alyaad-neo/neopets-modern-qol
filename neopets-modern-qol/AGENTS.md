@@ -13,7 +13,7 @@ Read this whole file before every task. Follow it exactly.
 ```
 AGENTS.md            this file
 build.js             combines split projects into one file
-bundle.js            builds the final combined upload from four projects
+bundle.js            builds the final combined upload from five projects
 projects/<name>/     one folder per script project
   NOTES.md           the map of that project. READ IT FIRST.
   <name>.user.js     single-file project: the script itself
@@ -22,7 +22,8 @@ projects/<name>/     one folder per script project
 projects/_bundle/    final combined header + NOTES (build-only)
 dist/                final combined upload. NEVER edit by hand.
 projects/_template/  blank NOTES.md for new projects
-vendor/              other people's scripts. READ ONLY. NEVER EDIT.
+vendor/              pristine copies of other people's scripts. READ ONLY. NEVER EDIT.
+                     (Editable copies live in projects/, e.g. projects/modern-interface/.)
 ```
 
 ## Every task: follow these steps in order
@@ -82,7 +83,7 @@ vendor/              other people's scripts. READ ONLY. NEVER EDIT.
 
 ## Final bundle
 
-`dailies-qol`, `modern-interface-patcher`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the four projects; never edit the bundle output. After any change to one of the four, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the four separate scripts must be disabled.
+`modern-interface`, `dailies-qol`, `modern-interface-patcher`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing, bundled in that order (base skin first; dailies before the patcher). The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the five projects; never edit the bundle output. After any change to one of the five, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the separate scripts, including the Greasy Fork "Neopets - Modern Interface", must be disabled. The bundle header and the top of `projects/modern-interface` must keep the MIT credit line `Based on "Neopets - Modern Interface" by marius@clraik, MIT License.` Never add `@downloadURL`/`@updateURL`.
 
 ## Splitting a project
 
@@ -118,7 +119,8 @@ These are the folders in `projects/`. Each project's NOTES.md has the details. I
 
 - `_bundle` - build-only: final combined header and NOTES. Not a feature project.
 - `account-drawer`
-- `modern-interface-patcher` — Aly's PATCHER that restyles the third-party "Neopets - Modern Interface" script at runtime. Edit ONLY the patcher. The main Modern Interface script lives in `vendor/` for reference: read it to find class names and element IDs, NEVER edit it.
+- `modern-interface` — Aly's own copy of the base skin "Neopets - Modern Interface" 4.2.0 (MIT, marius@clraik). Editable. The pristine original stays in `vendor/` (never edit that). Being merged with the patcher: see `HANDOFF-merge.md`.
+- `modern-interface-patcher` — Aly's PATCHER that restyles the base skin at runtime. Workarounds here are being removed in favour of editing `modern-interface` directly (`HANDOFF-merge.md` stage 2).
 - `neoboards-qol`
 - `page-pins-qol` — recently viewed pages and pinned pages.
 - `pet-trading-qol` — Pet Trading boards helper: a tradelist of UFT (Up For Trade) pets, plus Pet Auction House listing and bidding helpers. Never auto-bid or auto-submit.
