@@ -128,8 +128,8 @@
     width:100%;
     text-decoration:none !important; color:#fff !important;
     font-size:14px; font-weight:700;
-    cursor:pointer !important;
-    pointer-events:auto !important;
+    cursor:pointer;
+    pointer-events:auto;
     position:relative;
     z-index:1;
   }
@@ -1058,7 +1058,7 @@ function startHud() {
     const st = document.createElement('style');
     st.textContent = `
       #btnOverlay{
-        position:fixed !important; inset:0 !important;
+        position:fixed; inset:0;
         z-index:calc(var(--nq-z-hud, 1000) + 2);
         pointer-events:none !important;
         --frame-left: max(
@@ -1072,19 +1072,19 @@ function startHud() {
         position:absolute !important;
         top:50% !important;
         display:flex !important;
-        flex-direction:column !important;
+        flex-direction:column;
         align-items:center !important;
-        gap:14px !important;
-        pointer-events:none !important;
+        gap:14px;
+        pointer-events:none;
         flex-wrap:wrap !important;
-        max-height:calc(100vh - 96px) !important;
+        max-height:calc(100vh - 96px);
         align-content:center;
         transform: translate(-50%, -50%) !important;
       }
-      #btnOverlay .col .iconBtn{ pointer-events:auto !important; }
+      #btnOverlay .col .iconBtn{ pointer-events:auto; }
       #btnOverlay .col.left{ left: var(--frame-left) !important; }
 
-      #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none !important; padding:0 !important; margin:0 !important; line-height:0 !important; -webkit-tap-highlight-color:transparent; opacity:1 !important; visibility:visible !important; }
+      #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none; padding:0 !important; margin:0 !important; line-height:0; -webkit-tap-highlight-color:transparent; opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn img{ width:36px !important; height:36px !important; max-width:none !important; display:block !important; transform:scale(1); transition:transform .12s ease; will-change:transform; transform-origin:center center; filter:drop-shadow(0 1px 4px rgba(0,0,0,.45)); opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn:hover img{ transform:scale(1.08) !important; }
       #btnOverlay .iconBtn:active img{ transform:scale(1.02) !important; }
