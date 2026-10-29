@@ -206,7 +206,7 @@ function blocker(D) {
       if (!mayHit(a, b)) continue;
       if (C.d.imp) {
         if (S.has(C)) continue;
-        if (process.argv.includes('--blockers')) console.log('BLOCK ' + (C.sh.file || 'KILL').split('/').pop() + ' ' + b.slice(0, 90));
+        if (process.argv.includes('--blockers')) console.log('BLOCK ' + (C.sh.file || 'KILL').split('/').pop() + ' ' + b.slice(0, 90) + ' { ' + C.d.prop + ' }  =>  ' + a.slice(0, 90) + ' { ' + D.d.prop + ' }');
         return 'competes with a !important that keeps its flag';
       }
       const sa = specificity(a), sb = specificity(b);

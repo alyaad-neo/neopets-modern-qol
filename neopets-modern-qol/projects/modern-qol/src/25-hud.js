@@ -1059,7 +1059,7 @@ function startHud() {
     st.textContent = `
       #btnOverlay{
         position:fixed !important; inset:0 !important;
-        z-index:calc(var(--nq-z-hud, 1000) + 2) !important;
+        z-index:calc(var(--nq-z-hud, 1000) + 2);
         pointer-events:none !important;
         --frame-left: max(
           calc((100vw - var(--nq-frame-width, 1100px)) / 2),

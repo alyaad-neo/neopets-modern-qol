@@ -20,6 +20,8 @@ const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser'
   nqTools: 'tools', nqNestMenu: 'nestmenu', nqScrollTrack: 'scroll', nqScrollThumb: 'scroll', nqAcctDrawer: 'drawer', nqNst: 'barshadow',
   nqHud: 'hud', nqNavMod: 'nqNavMod', nqBgHandle: 'bghandle', nqTop: 'top', nqBell: 'bell', nqAP: 'ap' };
 const CLASS_OF = { qrPet: 'dock', qrOverlay: 'dock', qrPetName: 'dock' };
+const PARENT = { nqUser: 'nqHud', nqNp: 'nqHud', nqActivePet: 'nqHud', nqDaily: 'nqHud', nqFoot: 'nqHud', nqIcons: 'nqHud', nqNavMod: 'nqHud', btnOverlay: 'nqIcons', nqNestPop: 'btnOverlay', qrDock: 'qrDockWrap',
+  nqHud: '', qrDockWrap: '', nqBgHandle: '', nqBgSidebar: '', nqTop: '', nqBell: '', nqAP: '', nqQas: '', nqDrawerClose: '', nqMenuBtn: '', nqScrim: '', nqNestMenu: '' };
 const HUD_CARDS = new Set(['nqUser', 'nqNp', 'nqActivePet', 'nqListsMod', 'nqFoot', 'nqDaily', 'nqIcons', 'nqNavMod']);
 const markup = { sets: [], dynamic: new Set(), tags: new Map() };
 if (MARKUP) {
@@ -51,6 +53,7 @@ function neverMeet(selA, selB) {
   const ca = cardsOf(selA), cb = cardsOf(selB);
   if (ca.size && cb.size && !groupsMeet(ca, cb)) return true;
   if (MARKUP && (selfInside(selA, selB) || selfInside(selB, selA))) return true;
+  if (MARKUP && (outsideTree(selA, selB) || outsideTree(selB, selA))) return true;
   const xa = classesOf(lastCompound(selA)), xb = classesOf(lastCompound(selB));
   if (xa.some(a => xb.some(b => a !== b && structural(a) && structural(b) && !together(a, b)))) return true;
   const tagOnly = (tag, cls) => tag && cls.some(c => structural(c) && !markup.tags.get(c).has(null) && !markup.tags.get(c).has(tag));
@@ -62,6 +65,17 @@ function selfInside(selA, selB) {
   if (!id) return false;
   const lastB = lastCompound(selB);
   return new RegExp('#' + id[1] + '(?![A-Za-z0-9_-])').test(selB.slice(0, selB.length - lastB.length)) && !/#[\w-]+/.test(lastB);
+}
+
+function outsideTree(selA, selB) {
+  if (/[+~]/.test(selB)) return false;
+  const z = [...lastCompound(selA).replace(/:(not|is|where|has)\((?:[^()]|\([^()]*\))*\)/g, '').matchAll(/#([\w-]+)/g)].map(m => m[1]).find(id => id in PARENT);
+  if (!z) return false;
+  const anc = [];
+  for (let p = PARENT[z]; p; p = PARENT[p]) anc.push(p);
+  const lastB = lastCompound(selB);
+  const ids = [...selB.slice(0, selB.length - lastB.length).replace(/:(not|is|where|has)\((?:[^()]|\([^()]*\))*\)/g, '').matchAll(/#([\w-]+)/g)].map(m => m[1]);
+  return ids.some(y => /^(nq|qr|btnOverlay$)/.test(y) && !anc.includes(y));
 }
 
 function lastCompound(sel) {
