@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.26
+// @version      5.0.27
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*

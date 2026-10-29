@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.33
+// @version      1.3.34
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -323,6 +323,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
   const apLk = (url, txt) => `<a class="apLk" href="${esc(url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">${esc(txt)}</a>`;
   const apPetLk = (n) => apLk(apPetUrl(n), n), apUserLk = (n) => apLk(apUserUrl(n), n);
   const apHiRes = (p) => `https://pets.neopets.com/cpn/${encodeURIComponent(p.name)}/1/7.png`;
+  const apBorn = (s) => { const m = String(s || '').replace(/,/g, '').match(/(\d+)\s*(year|month|week|day|hour|minute)/i); return m ? Date.now() - m[1] * { year: 365.25 * 864e5, month: 30.44 * 864e5, week: 7 * 864e5, day: 864e5, hour: 36e5, minute: 6e4 }[m[2].toLowerCase()] : 0; };
   const apOf = (c, a) => { const l = String(a).toLowerCase(), k = Object.keys(c).find(x => x.toLowerCase() === l); return k ? c[k] : null; };
   const apOrdered = () => { const m = mainAcct().toLowerCase(), bl = apBlocked(), list = allAccts().slice(); Object.keys(apRead()).forEach(k => { if (!list.some(x => x.toLowerCase() === k.toLowerCase())) list.push(k); }); return list.filter(x => !bl.has(x.toLowerCase())).sort((a, b) => (b.toLowerCase() === m) - (a.toLowerCase() === m)); };
   const AP_I = (d) => '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
@@ -342,8 +343,8 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
     const put = (o) => {
       const name = String(o.name || '').trim();
       if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) return;
-      const k = name.toLowerCase(), p = byName.get(k) || { name, img: '', species: '', color: '', gender: '', level: 0, active: false };
-      p.gender = p.gender || o.gender || ''; p.img = p.img || o.img || ''; p.species = p.species || o.species || ''; p.color = p.color || o.color || ''; p.level = p.level || o.level || 0; p.active = p.active || !!o.active;
+      const k = name.toLowerCase(), p = byName.get(k) || { name, img: '', species: '', color: '', gender: '', level: 0, born: 0, active: false };
+      p.born = p.born || apBorn(o.age); p.gender = p.gender || o.gender || ''; p.img = p.img || o.img || ''; p.species = p.species || o.species || ''; p.color = p.color || o.color || ''; p.level = p.level || o.level || 0; p.active = p.active || !!o.active;
       byName.set(k, p);
     };
     let activeName = '';
@@ -355,7 +356,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
         if (!v || typeof v !== 'object' || depth > 3) return;
         if (Array.isArray(v)) { v.forEach(x => walk(x, depth + 1)); return; }
         // Quick Ref pets are { name, isActive, actions, species, colour, gender, level }.
-        if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, gender: v.gender, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
+        if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, age: v.age, gender: v.gender, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
         else Object.values(v).forEach(x => walk(x, depth + 1));
       };
       walk(data, 0);
@@ -394,7 +395,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
     const prev = new Map(((old && old.pets) || []).map(p => [p.name.toLowerCase(), p]));
     const pets = [...byName.values()].map(p => { const o = prev.get(p.name.toLowerCase()) || {}; return { ...p,
       img: /^(https?:)?\/\/pets\.neopets\.com\//i.test(p.img) ? p.img.replace(/^\/\//, 'https://') : `https://pets.neopets.com/cpn/${encodeURIComponent(p.name)}/1/4.png`,
-      gender: p.gender || o.gender || '', species: p.species || o.species || '', color: p.color || o.color || '', level: p.level || o.level || 0,
+      gender: p.gender || o.gender || '', species: p.species || o.species || '', color: p.color || o.color || '', level: p.level || o.level || 0, born: !p.born ? o.born || 0 : o.born && Math.abs(p.born - o.born) < 1.5 * 864e5 ? o.born : p.born,
       active: activeName ? p.name.toLowerCase() === activeName.toLowerCase() : p.active }; });
     // Stale-cache guard: pet names are unique, so when half or more of these pets are saved under another account the
     // Quick Ref cache still holds that account's snapshot (restored on swap). Saving it would let apDedupe move those pets
@@ -718,6 +719,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
   }
   try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; apState.cpNote = !!pr.cpNote; apState.cpSp = pr.cpSp !== false; } } catch {}
+  NQ.ap = { read: apRead, tags: apTags, ordered: apOrdered, of: apOf, user: curUser, prof: readProf, main: mainAcct, picked: () => apState.pick && apState.picked.size ? new Set(apState.picked) : null };
   const apSavePrefs = () => { try { LSset('nq_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group, cpNote: apState.cpNote, cpSp: apState.cpSp })); } catch {} };
   const fmtAgo = (t) => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   const apToast = (m) => { if (!apEl) return; const t = $('.apToast', apEl); t.textContent = m; t.classList.add('on'); clearTimeout(apToastT); apToastT = setTimeout(() => t.classList.remove('on'), 1800); };
@@ -733,7 +735,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (!apEl) {
       const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
       apEl = document.createElement('div'); apEl.id = 'nqAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
-      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy Up for Trade pets, or the picked pets, as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="Copy options" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copy with</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
+      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy Up for Trade pets, or the picked pets, as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="Copy options" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copy with</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn apPpBtn" data-act="petpage" title="Build a petpage from Up for Trade or picked pets">' + AP_PAGE + '<span>Petpage</span></button></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
       document.body.appendChild(apEl);
       apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
       $('.apClose', apEl).addEventListener('click', closeAllPets);
@@ -788,7 +790,8 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
           return;
         }
         const n = b.dataset.n, acct = b.dataset.a;
-        if (b.dataset.act === 'copy') apCopy(n, 'Copied ' + n);
+        if (b.dataset.act === 'petpage') { if (NQ.petpage) NQ.petpage.open(); }
+        else if (b.dataset.act === 'copy') apCopy(n, 'Copied ' + n);
         else if (b.dataset.act === 'tag') { apSaveTag(b.dataset.k, { s: b.dataset.v }); apState.saved = b.dataset.k; apRender(); }
         else if (b.dataset.act === 'bulk') {
           if (!apState.sel.size) { apToast('Select some pets first'); return; }

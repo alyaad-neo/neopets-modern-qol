@@ -405,7 +405,7 @@ function startHud() {
         const ul = idBase ? dom.querySelector(`#${CSS.escape(idBase)}_menu`) : null;
         const actions = ul ? [...ul.querySelectorAll('a')].map(a => { const href = a.getAttribute('href')||''; const abs = href.startsWith('http') ? href : new URL(href,'https://www.neopets.com/').href; return { href:abs, text:(a.textContent||'').replace(/»\s*/,'').trim() }; }) : [];
         const kv = idBase ? statsOf(dom.querySelector(`#${CSS.escape(idBase)}_details`)) : {};
-        return { name, sci, actions, isActive: td.classList.contains('active_pet'), species: kv['species'] || '', colour: kv['colour'] || '', gender: kv['gender'] || '', level: kv['level'] || '' };
+        return { name, sci, actions, isActive: td.classList.contains('active_pet'), species: kv['species'] || '', colour: kv['colour'] || '', gender: kv['gender'] || '', level: kv['level'] || '', age: kv['age'] || '' };
       });
       const ai = pets.findIndex(p => p.isActive); if (ai > 0) pets.unshift(pets.splice(ai,1)[0]);
       const activeDiv = [...dom.querySelectorAll('div[id$="_details"]')].find(d => (d.getAttribute('style')||'').includes('display: block')) || dom.querySelector('div[id$="_details"]');

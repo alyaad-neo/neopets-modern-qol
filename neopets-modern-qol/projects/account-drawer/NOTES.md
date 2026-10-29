@@ -86,3 +86,6 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 ## 1.3.19
 - All Pets trade pick mode: toolbar "Pick pets" (.apPickBtn, data-act=pick) switches to the UFT tab and adds data-pick checkboxes on UFT cards; apState.picked; the copy button (apTradeLbl) then copies only picked pets. Edit mode turns pick mode off.
 - Since bundle 5.5.36 Quick Ref data gives colour/species/gender/level for every pet (`data.pets[]`), not just the active one.
+
+## 1.3.34
+- apCollect stores born (timestamp from Quick Ref age). NQ.ap exposes read/tags/ordered/of/user/prof/main/picked for petpage-gen; toolbar Petpage button (data-act=petpage) calls NQ.petpage.open().

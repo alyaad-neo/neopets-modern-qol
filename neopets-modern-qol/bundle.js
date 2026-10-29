@@ -20,6 +20,7 @@ const sources = [
   ['modern-qol', path.join(root, 'projects', 'modern-qol')],
   ['dailies-qol', path.join(root, 'projects', 'dailies-qol')],
   ['account-drawer', path.join(root, 'projects', 'account-drawer')],
+  ['petpage-gen', path.join(root, 'projects', 'petpage-gen')],
   ['page-pins-qol', path.join(root, 'projects', 'page-pins-qol')]
 ];
 // modern-qol sets NQ.base and defines NQ.boot; boot runs after dailies so NQ.dailies exists by then.

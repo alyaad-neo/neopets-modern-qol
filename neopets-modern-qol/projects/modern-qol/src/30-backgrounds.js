@@ -103,7 +103,7 @@ function startBackgrounds() {
       border:2px solid #000;
       background:transparent;
       contain:paint;
-      visibility:visible!important;
+      visibility:visible;
       opacity:1!important;
     }
     #nqLeftBarBg{
