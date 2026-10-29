@@ -203,8 +203,6 @@
   `;
 
 function startHud() {
-  if (document.getElementById('nqHud')) return;
-
   try {
     const qr = JSON.parse(LSget('nq_qr_data') || 'null');
     if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
@@ -1345,5 +1343,3 @@ function startHud() {
   })();
 
 }
-
-if (NQ.base) startHud();

@@ -40,7 +40,7 @@
     const vars = { '--nq-nav-fg': '#111827', '--nq-nav-shadow': 'none', '--nq-nav-hover': 'rgba(0,0,0,.08)', '--nq-nav-ring': 'rgba(0,0,0,.14)' };
     Object.keys(vars).forEach(k => light ? rs.setProperty(k, vars[k]) : rs.removeProperty(k));
   }
-  let draft = saved(), clearImg = { main: false, left: false }, saving = false;
+  let draft = {}, clearImg = { main: false, left: false }, saving = false;
   let pendingImg = { main: null, left: null };
   let accentPick = null, accentBase = '', ownAccent = false;
 

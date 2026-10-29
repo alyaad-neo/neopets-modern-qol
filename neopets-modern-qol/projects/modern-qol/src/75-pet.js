@@ -78,7 +78,6 @@
   }
   const toneCache = new Map();
   const TONE_KEY = 'nq_pet_tone_v4';
-  LSdel('nq_pet_tone_v1'); LSdel('nq_pet_tone_v2'); LSdel('nq_pet_tone_v3');
   function toneRead() { try { const o = JSON.parse(LSget(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function toneSave(src, dark) {
     try {
@@ -108,7 +107,6 @@
       loadBlob(src, (u) => { if (!u) return done(true, false); burl = u; im.src = u; });
     } catch { done(true, false); }
   }
-  NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
     if (toneCache.has(src)) return set(toneCache.get(src));

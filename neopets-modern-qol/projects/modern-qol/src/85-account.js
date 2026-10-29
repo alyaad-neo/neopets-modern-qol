@@ -59,7 +59,7 @@
     const np = $('#nqNp');
     if ($('#nqFoot') && $('#nqTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('nq-wait');
   };
-  const cachedAtStart = LSget('nq_hud_username');
+  let cachedAtStart = '';
   let tabUser = '';
   const staleTab = () => { const o = LSget('nq_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
   function accountGuard() {
@@ -107,8 +107,6 @@
       if (owner) location.reload(); else { acctChecked = true; unwait(); }
     }, 100);
   }
-  accountGuard();
-  ['visibilitychange', 'focus', 'pageshow', 'storage'].forEach(ev => window.addEventListener(ev, (e) => { if (staleTab()) e.stopImmediatePropagation(); }, true));
 
   const AUTH_RE = /^\/(log(in|out)[^/]*|loginpage\.phtml|signin|neopass|hub\/login|index\.phtml)(\/|\.|$)/i;
   const isAuth = AUTH_RE.test(location.pathname);
@@ -133,7 +131,6 @@
       return true;
     };
     const run = () => { if (check()) [300, 1000, 2500].forEach(t => setTimeout(stripUi, t)); };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
+    onReady(run);
     window.addEventListener('load', () => { check(); }, { once: true });
   }
-  checkLoggedOutHome();

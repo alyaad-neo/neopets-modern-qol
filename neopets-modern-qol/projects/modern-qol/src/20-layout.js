@@ -412,8 +412,6 @@
   let closeTimer = null;
 
 function startLayout() {
-  if (document.getElementById('nq-core-layout')) return;
-
   if (KEEP_NATIVE_BG_PATHS.some(p => location.pathname.startsWith(p))) {
     document.documentElement.classList.add('nq-keep-native-bg');
   }
@@ -1032,11 +1030,7 @@ function startLayout() {
       }
     }
     const run = () => { try { align(); } catch {} };
-    if (document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', run, { once: true });
-    } else {
-      run();
-    }
+    onReady(run);
     window.addEventListener('load', run);
     window.addEventListener('pageshow', run);
     setTimeout(run, 800);
@@ -1167,5 +1161,3 @@ function startLayout() {
     document.addEventListener('DOMContentLoaded', schedule, { once: true });
   })();
 }
-
-if (NQ.base) startLayout();

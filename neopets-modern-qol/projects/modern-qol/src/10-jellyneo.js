@@ -34,7 +34,7 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
     };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
     window.addEventListener('blur', () => window.close());
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once: true }); else show();
+    onReady(show);
     return;
   }
   if (!/^(www\.)?neopets\.com$/i.test(location.hostname)) return;

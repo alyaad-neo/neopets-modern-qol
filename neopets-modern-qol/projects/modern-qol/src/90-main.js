@@ -143,7 +143,8 @@
     if (mq.addEventListener) mq.addEventListener('change', wide); else if (mq.addListener) mq.addListener(wide);
   }
 
-  if (!isAuth && !isNc && !isPopup) {
+  function preHide() {
+    if (isAuth || isNc || isPopup) return;
     root.classList.add('nq-pre');
     try { if (LSget('nq_side_light') === '1') root.classList.add('nq-side-light'); } catch (er) {}
     const pre = document.createElement('style');
@@ -153,8 +154,6 @@
     setTimeout(() => root.classList.remove('nq-pre'), 5000);
   }
   function boot() {
-    if (root.dataset.nqBoot) return;
-    root.dataset.nqBoot = '1';
     if (isAuth) { stripUi(); document.addEventListener('DOMContentLoaded', stripUi, { once: true }); return; }
     if (isPopup) root.classList.add('nq-popup');
     if (path.startsWith('/reg/page4.phtml')) root.classList.add('nq-reg4');
@@ -182,11 +181,6 @@
         if (cut > 0) core.textContent = t.slice(0, cut);
       }
     }
-
-    ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
-      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1',
-      'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1', 'nq_bank_btn_settings_v1'].forEach(LSdel);
-    try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
     applyBarStyle(LSget('nq_topbar_bg_v1'));
@@ -218,10 +212,35 @@
     window.addEventListener('storage', (e) => { if (e.key === 'nq_qr_data') petInfo(); });
   }
 
-  if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {
+  function homeBgFix() {
+    if (isNc || isPopup || !/^\/home(\/|$)/.test(path)) return;
     const fixHomeBg = () => { try { if (typeof W.bodyHeightAdjust2020 === 'function') W.bodyHeightAdjust2020(); } catch {} };
     let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(fixHomeBg, 150); });
     window.addEventListener('load', () => { [200, 900, 2200, 4500].forEach(t => setTimeout(fixHomeBg, t)); });
   }
 
-  NQ.boot = () => { if (NQ.base) boot(); };
+  function dropOldKeys() {
+    ['nq_dti_bgs_v6', 'nq_bg_favs_v1', 'nq_bg_hidden_v1', 'nq_inv_menubar_v1', 'nq_pet_tone_v1', 'nq_pet_tone_v2', 'nq_pet_tone_v3',
+      'nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1',
+      'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1', 'nq_bank_btn_settings_v1'].forEach(LSdel);
+    try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
+  }
+
+  function start() {
+    if (!baseOff()) { root.dataset.nqModernInterface = '1'; NQ.base = true; }
+    syncGM();
+    dropOldKeys();
+    noAdblockPopup();
+    if (NQ.base) { startLayout(); startHud(); startBackgrounds(); }
+    draft = saved();
+    NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
+    cachedAtStart = LSget('nq_hud_username');
+    accountGuard();
+    ['visibilitychange', 'focus', 'pageshow', 'storage'].forEach(ev => window.addEventListener(ev, (e) => { if (staleTab()) e.stopImmediatePropagation(); }, true));
+    checkLoggedOutHome();
+    preHide();
+    homeBgFix();
+    NQ.boot = () => { if (NQ.base) boot(); };
+  }
+  start();

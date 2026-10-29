@@ -26,17 +26,8 @@
     bar.innerHTML = `<div id="nqLeftBarBg"></div><div id="nqLeftBarShade"></div>`;
     (document.body || document.documentElement).appendChild(bar);
   }
-  function onReady(fn){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
-    else fn();
-  }
 
 function startBackgrounds() {
-  if (document.documentElement.dataset.nqBgBoot === '1') return;
-  document.documentElement.dataset.nqBgBoot = '1';
-
-  ['nq_dti_bgs_v6', 'nq_bg_favs_v1', 'nq_bg_hidden_v1', 'nq_inv_menubar_v1'].forEach(k => { LSdel(k); });
-
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 
   function applyMainBg(url){
@@ -667,5 +658,3 @@ function startBackgrounds() {
   });
 
 }
-
-if (NQ.base) startBackgrounds();

@@ -10,6 +10,10 @@
   const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#nq-host'); return h && h.shadowRoot; };
+  function onReady(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
+    else fn();
+  }
 
   const RUN_ON_PHONES = false;
   const isPhone = () => {
@@ -33,10 +37,6 @@
     }
     return false;
   };
-  if (!baseOff()) {
-    try { document.documentElement.dataset.nqModernInterface = '1'; } catch {}
-    NQ.base = true;
-  }
 
   const BACKOFF_KEY = 'nq_403_backoff_until_v1';
   const STRIKE_KEY  = 'nq_403_strikes_v1';
@@ -79,7 +79,8 @@
   const DATA_KEYS = ['nq_hud_username', 'nq_np_last',
     'nq_qr_data', 'nq_active_pet_img_v1', 'nq_user_stub'];
   const isNc = location.hostname.toLowerCase() === 'ncmall.neopets.com';
-  if (typeof GM_getValue === 'function' && typeof GM_setValue === 'function') {
+  function syncGM() {
+    if (typeof GM_getValue !== 'function' || typeof GM_setValue !== 'function') return;
     if (isNc) {
       try { const snap = JSON.parse(GM_getValue('nq_sync', '{}') || '{}'); Object.keys(snap).forEach(k => LSset(k, snap[k])); } catch {}
       LSset('nq_403_backoff_until_v1', String(Date.now() + 365 * 24 * 3600 * 1000));
@@ -113,7 +114,7 @@
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
   let handleEl = null, tabEl = null, panelEl = null, dockOpen = false;
 
-  (function noAdblockPopup() {
+  function noAdblockPopup() {
     try { sessionStorage.setItem('ta_session_pv', '0'); } catch {}
     const st = document.createElement('style');
     st.id = 'nq-no-adblock-popup';
@@ -123,4 +124,4 @@
     const mo = new MutationObserver(strip);
     mo.observe(root, { childList: true, subtree: true });
     setTimeout(() => mo.disconnect(), 90000);
-  })();
+  }

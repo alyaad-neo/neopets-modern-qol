@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.25
+// @version      5.0.26
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -62,7 +62,7 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
     };
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.close(); });
     window.addEventListener('blur', () => window.close());
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once: true }); else show();
+    onReady(show);
     return;
   }
   if (!/^(www\.)?neopets\.com$/i.test(location.hostname)) return;
@@ -95,6 +95,10 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
   const LSdel = (k) => { try { localStorage.removeItem(k); } catch {} };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shadow = () => { const h = $('#nq-host'); return h && h.shadowRoot; };
+  function onReady(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true });
+    else fn();
+  }
 
   const RUN_ON_PHONES = false;
   const isPhone = () => {
@@ -118,10 +122,6 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
     }
     return false;
   };
-  if (!baseOff()) {
-    try { document.documentElement.dataset.nqModernInterface = '1'; } catch {}
-    NQ.base = true;
-  }
 
   const BACKOFF_KEY = 'nq_403_backoff_until_v1';
   const STRIKE_KEY  = 'nq_403_strikes_v1';
@@ -164,7 +164,8 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
   const DATA_KEYS = ['nq_hud_username', 'nq_np_last',
     'nq_qr_data', 'nq_active_pet_img_v1', 'nq_user_stub'];
   const isNc = location.hostname.toLowerCase() === 'ncmall.neopets.com';
-  if (typeof GM_getValue === 'function' && typeof GM_setValue === 'function') {
+  function syncGM() {
+    if (typeof GM_getValue !== 'function' || typeof GM_setValue !== 'function') return;
     if (isNc) {
       try { const snap = JSON.parse(GM_getValue('nq_sync', '{}') || '{}'); Object.keys(snap).forEach(k => LSset(k, snap[k])); } catch {}
       LSset('nq_403_backoff_until_v1', String(Date.now() + 365 * 24 * 3600 * 1000));
@@ -198,7 +199,7 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
   const isPopup = /popup/.test(path) || (!!window.opener && window.outerWidth < 900);
   let handleEl = null, tabEl = null, panelEl = null, dockOpen = false;
 
-  (function noAdblockPopup() {
+  function noAdblockPopup() {
     try { sessionStorage.setItem('ta_session_pv', '0'); } catch {}
     const st = document.createElement('style');
     st.id = 'nq-no-adblock-popup';
@@ -208,7 +209,7 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
     const mo = new MutationObserver(strip);
     mo.observe(root, { childList: true, subtree: true });
     setTimeout(() => mo.disconnect(), 90000);
-  })();
+  }
 
 // ---------- src/20-layout.js ----------
   const KEEP_NATIVE_BG_PATHS = [
@@ -625,8 +626,6 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
   let closeTimer = null;
 
 function startLayout() {
-  if (document.getElementById('nq-core-layout')) return;
-
   if (KEEP_NATIVE_BG_PATHS.some(p => location.pathname.startsWith(p))) {
     document.documentElement.classList.add('nq-keep-native-bg');
   }
@@ -1245,11 +1244,7 @@ function startLayout() {
       }
     }
     const run = () => { try { align(); } catch {} };
-    if (document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', run, { once: true });
-    } else {
-      run();
-    }
+    onReady(run);
     window.addEventListener('load', run);
     window.addEventListener('pageshow', run);
     setTimeout(run, 800);
@@ -1380,8 +1375,6 @@ function startLayout() {
     document.addEventListener('DOMContentLoaded', schedule, { once: true });
   })();
 }
-
-if (NQ.base) startLayout();
 
 // ---------- src/25-hud.js ----------
   const ACTIVE_IMG_LS = 'nq_active_pet_img_v1';
@@ -1589,8 +1582,6 @@ if (NQ.base) startLayout();
   `;
 
 function startHud() {
-  if (document.getElementById('nqHud')) return;
-
   try {
     const qr = JSON.parse(LSget('nq_qr_data') || 'null');
     if (qr?.data?.pets?.length && !qr.data.pets.some(p => p.sci)){
@@ -2732,8 +2723,6 @@ function startHud() {
 
 }
 
-if (NQ.base) startHud();
-
 // ---------- src/30-backgrounds.js ----------
   const LEFT_BAR_PX = 330;
   const TOP_BAR_PX  = 0;
@@ -2763,17 +2752,8 @@ if (NQ.base) startHud();
     bar.innerHTML = `<div id="nqLeftBarBg"></div><div id="nqLeftBarShade"></div>`;
     (document.body || document.documentElement).appendChild(bar);
   }
-  function onReady(fn){
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once:true });
-    else fn();
-  }
 
 function startBackgrounds() {
-  if (document.documentElement.dataset.nqBgBoot === '1') return;
-  document.documentElement.dataset.nqBgBoot = '1';
-
-  ['nq_dti_bgs_v6', 'nq_bg_favs_v1', 'nq_bg_hidden_v1', 'nq_inv_menubar_v1'].forEach(k => { LSdel(k); });
-
   const safeUrl = (u) => String(u || '').replace(/["\\\n\r]/g, '');
 
   function applyMainBg(url){
@@ -3404,8 +3384,6 @@ function startBackgrounds() {
   });
 
 }
-
-if (NQ.base) startBackgrounds();
 
 // ---------- src/40-styles.js ----------
   const PAGE_CSS = `
@@ -4156,7 +4134,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     const vars = { '--nq-nav-fg': '#111827', '--nq-nav-shadow': 'none', '--nq-nav-hover': 'rgba(0,0,0,.08)', '--nq-nav-ring': 'rgba(0,0,0,.14)' };
     Object.keys(vars).forEach(k => light ? rs.setProperty(k, vars[k]) : rs.removeProperty(k));
   }
-  let draft = saved(), clearImg = { main: false, left: false }, saving = false;
+  let draft = {}, clearImg = { main: false, left: false }, saving = false;
   let pendingImg = { main: null, left: null };
   let accentPick = null, accentBase = '', ownAccent = false;
 
@@ -5177,7 +5155,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
   }
   const toneCache = new Map();
   const TONE_KEY = 'nq_pet_tone_v4';
-  LSdel('nq_pet_tone_v1'); LSdel('nq_pet_tone_v2'); LSdel('nq_pet_tone_v3');
   function toneRead() { try { const o = JSON.parse(LSget(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function toneSave(src, dark) {
     try {
@@ -5207,7 +5184,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       loadBlob(src, (u) => { if (!u) return done(true, false); burl = u; im.src = u; });
     } catch { done(true, false); }
   }
-  NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
   function pickNameTone(card, src) {
     const set = (dark) => { if (nameToneSrc !== src) return; card.classList.toggle('nq-name-dark', dark); card.classList.toggle('nq-name-light', !dark); card.classList.remove('nq-tone-pending'); };
     if (toneCache.has(src)) return set(toneCache.get(src));
@@ -5469,7 +5445,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     const np = $('#nqNp');
     if ($('#nqFoot') && $('#nqTools') && np && np.dataset.acc && acctChecked && (petSettled || petWaited)) root.classList.remove('nq-wait');
   };
-  const cachedAtStart = LSget('nq_hud_username');
+  let cachedAtStart = '';
   let tabUser = '';
   const staleTab = () => { const o = LSget('nq_owner'); return !!(tabUser && o && o.toLowerCase() !== tabUser.toLowerCase()); };
   function accountGuard() {
@@ -5517,8 +5493,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       if (owner) location.reload(); else { acctChecked = true; unwait(); }
     }, 100);
   }
-  accountGuard();
-  ['visibilitychange', 'focus', 'pageshow', 'storage'].forEach(ev => window.addEventListener(ev, (e) => { if (staleTab()) e.stopImmediatePropagation(); }, true));
 
   const AUTH_RE = /^\/(log(in|out)[^/]*|loginpage\.phtml|signin|neopass|hub\/login|index\.phtml)(\/|\.|$)/i;
   const isAuth = AUTH_RE.test(location.pathname);
@@ -5543,10 +5517,9 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       return true;
     };
     const run = () => { if (check()) [300, 1000, 2500].forEach(t => setTimeout(stripUi, t)); };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true }); else run();
+    onReady(run);
     window.addEventListener('load', () => { check(); }, { once: true });
   }
-  checkLoggedOutHome();
 
 // ---------- src/90-main.js ----------
   function ensureDefaults() {
@@ -5694,7 +5667,8 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     if (mq.addEventListener) mq.addEventListener('change', wide); else if (mq.addListener) mq.addListener(wide);
   }
 
-  if (!isAuth && !isNc && !isPopup) {
+  function preHide() {
+    if (isAuth || isNc || isPopup) return;
     root.classList.add('nq-pre');
     try { if (LSget('nq_side_light') === '1') root.classList.add('nq-side-light'); } catch (er) {}
     const pre = document.createElement('style');
@@ -5704,8 +5678,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     setTimeout(() => root.classList.remove('nq-pre'), 5000);
   }
   function boot() {
-    if (root.dataset.nqBoot) return;
-    root.dataset.nqBoot = '1';
     if (isAuth) { stripUi(); document.addEventListener('DOMContentLoaded', stripUi, { once: true }); return; }
     if (isPopup) root.classList.add('nq-popup');
     if (path.startsWith('/reg/page4.phtml')) root.classList.add('nq-reg4');
@@ -5733,11 +5705,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
         if (cut > 0) core.textContent = t.slice(0, cut);
       }
     }
-
-    ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
-      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1',
-      'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1', 'nq_bank_btn_settings_v1'].forEach(LSdel);
-    try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
     applyBarStyle(LSget('nq_topbar_bg_v1'));
@@ -5769,11 +5736,36 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     window.addEventListener('storage', (e) => { if (e.key === 'nq_qr_data') petInfo(); });
   }
 
-  if (!isNc && !isPopup && /^\/home(\/|$)/.test(path)) {
+  function homeBgFix() {
+    if (isNc || isPopup || !/^\/home(\/|$)/.test(path)) return;
     const fixHomeBg = () => { try { if (typeof W.bodyHeightAdjust2020 === 'function') W.bodyHeightAdjust2020(); } catch {} };
     let rz = 0; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(fixHomeBg, 150); });
     window.addEventListener('load', () => { [200, 900, 2200, 4500].forEach(t => setTimeout(fixHomeBg, t)); });
   }
 
-  NQ.boot = () => { if (NQ.base) boot(); };
+  function dropOldKeys() {
+    ['nq_dti_bgs_v6', 'nq_bg_favs_v1', 'nq_bg_hidden_v1', 'nq_inv_menubar_v1', 'nq_pet_tone_v1', 'nq_pet_tone_v2', 'nq_pet_tone_v3',
+      'nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1',
+      'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1', 'nq_bank_btn_settings_v1'].forEach(LSdel);
+    try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
+  }
+
+  function start() {
+    if (!baseOff()) { root.dataset.nqModernInterface = '1'; NQ.base = true; }
+    syncGM();
+    dropOldKeys();
+    noAdblockPopup();
+    if (NQ.base) { startLayout(); startHud(); startBackgrounds(); }
+    draft = saved();
+    NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
+    cachedAtStart = LSget('nq_hud_username');
+    accountGuard();
+    ['visibilitychange', 'focus', 'pageshow', 'storage'].forEach(ev => window.addEventListener(ev, (e) => { if (staleTab()) e.stopImmediatePropagation(); }, true));
+    checkLoggedOutHome();
+    preHide();
+    homeBgFix();
+    NQ.boot = () => { if (NQ.base) boot(); };
+  }
+  start();
 })();
