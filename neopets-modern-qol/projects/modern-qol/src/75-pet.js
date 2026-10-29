@@ -77,8 +77,8 @@
     } catch { cb(null); }
   }
   const toneCache = new Map();
-  const TONE_KEY = 'nq_pet_tone_v2';
-  LSdel('nq_pet_tone_v1');
+  const TONE_KEY = 'nq_pet_tone_v3';
+  LSdel('nq_pet_tone_v1'); LSdel('nq_pet_tone_v2');
   function toneRead() { try { const o = JSON.parse(LSget(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function toneSave(src, dark) {
     try {
@@ -90,24 +90,24 @@
   function toneProbe(src, cb) {
     let fin = false, burl = null, tm = 0;
     const done = (dark, ok) => { if (fin) return; fin = true; clearTimeout(tm); if (burl) { try { URL.revokeObjectURL(burl); } catch {} } cb(!!dark, !!ok); };
-    tm = setTimeout(() => done(false, false), 3000);
+    tm = setTimeout(() => done(true, false), 10000);
     try {
       const im = new Image();
-      im.onerror = () => done(false, false);
+      im.onerror = () => done(true, false);
       im.onload = () => {
         try {
           const W0 = 48, cv = document.createElement('canvas'); cv.width = cv.height = W0;
           const cx = cv.getContext('2d', { willReadFrequently: true });
           cx.fillStyle = '#fff'; cx.fillRect(0, 0, W0, W0); cx.drawImage(im, 0, 0, W0, W0);
-          const q = Math.round(W0 * 0.25), d = cx.getImageData(0, W0 - q, W0, q).data;
+          const d = cx.getImageData(Math.round(W0 * 0.15), Math.round(W0 * 0.76), Math.round(W0 * 0.7), Math.round(W0 * 0.2)).data;
           const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
           let L = 0, n = 0;
           for (let i = 0; i < d.length; i += 4) { L += 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]); n++; }
           done(n > 0 && L / n > 0.38, true);
-        } catch { done(false, false); }
+        } catch { done(true, false); }
       };
-      loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });
-    } catch { done(false, false); }
+      loadBlob(src, (u) => { if (!u) return done(true, false); burl = u; im.src = u; });
+    } catch { done(true, false); }
   }
   NQ.tone = { read: toneRead, save: toneSave, probe: toneProbe };
   function pickNameTone(card, src) {

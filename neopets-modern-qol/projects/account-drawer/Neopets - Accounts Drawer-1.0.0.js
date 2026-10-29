@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.26
+// @version      1.3.27
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -449,7 +449,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
     const tg = apTags(); let tch = false; gone.forEach(k => { if (!still.has(k) && tg[k]) { delete tg[k]; tch = true; } }); if (tch) gmSet(AP_TAGS, tg);
   }
 
-  // Name colour per card: white over art, dark when the pet image has a plain white background (mirrors the sidebar).
+  // Name colour per card: dark over light art, white over dark art, dark until checked (mirrors the sidebar).
   const { read: toneRead, save: toneSave, probe: toneProbe } = NQ.tone;
   const apToneCache = new Map(), apInflight = new Map(), apQueue = [];
   let apToneIO = null, apActive = 0;
@@ -480,7 +480,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
       const v = stored[src];
       if (v === 'd' || v === 'l') { apToneCache.set(src, v === 'd'); apply(cd, v === 'd'); return; }
       if (apToneCache.has(src)) { apply(cd, apToneCache.get(src)); return; }
-      cd.classList.add('apTonePending');
+      cd.classList.add('apNameDark');
       if (apToneIO) apToneIO.observe(cd); else run(cd, src);
     });
   }
