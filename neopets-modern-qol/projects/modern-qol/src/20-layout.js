@@ -642,7 +642,7 @@ function startLayout() {
 
     .btn{
       display:flex; align-items:center; text-decoration:none; cursor:pointer; user-select:none;
-      position: relative; gap: 10px; padding: 9px 15px !important; border-radius: 999px !important; color: var(--nq-nav-fg, #fff) !important; text-shadow: var(--nq-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; -webkit-text-stroke: var(--nq-nav-stroke, 0 transparent); paint-order: stroke fill; transition: background .18s, box-shadow .18s !important;
+      position: relative; gap: 10px; padding: 9px 15px !important; border-radius: 999px !important; color: var(--nq-nav-fg, #fff) !important; text-shadow: var(--nq-nav-shadow, 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.4)) !important; -webkit-text-stroke: var(--nq-nav-stroke, 0 transparent); paint-order: stroke fill; transition: background .18s, box-shadow .18s;
     }
     .btn, .btn span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 24px !important; font-weight: 400 !important; letter-spacing: .01em; }
     .btn span { display: inline !important; }
@@ -654,13 +654,13 @@ function startLayout() {
     .menu{
       position:fixed; top:${BAR_H + 6}px; left:0; display:none;
       max-width:min(640px,92vw); z-index:2000;
-      min-width: 264px; padding: 8px !important; overflow: visible; border: 1px solid rgba(255,255,255,.2); border-radius: var(--nq-menu-radius, 0 0 16px 16px); background: rgba(14,12,22,.2) !important; -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); box-shadow: 0 18px 44px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08); margin-top: var(--nq-menu-lift, 0px);
+      min-width: 264px; padding: 8px; overflow: visible; border: 1px solid rgba(255,255,255,.2); border-radius: var(--nq-menu-radius, 0 0 16px 16px); background: rgba(14,12,22,.2) !important; -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); box-shadow: 0 18px 44px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.08); margin-top: var(--nq-menu-lift, 0px);
     }
     .menu::before { content: ""; position: absolute; inset: -24px; z-index: -1; background: linear-gradient(rgba(14,12,22,.38), rgba(14,12,22,.38)), var(--nqLeftBarImg, none) center / cover no-repeat, var(--nqLeftBarSolid, #2a292e); filter: blur(14px) saturate(1.15); clip-path: inset(24px round var(--nq-menu-radius, 0 0 16px 16px)); pointer-events: none; }
     .menu::after { content: ""; display: var(--nq-menu-caret, none); position: absolute; top: -7px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: rgba(40,36,52,.92); border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); border-radius: 3px 0 0 0; pointer-events: none; }
     .menu a{
       display:flex; align-items:center; text-decoration:none;
-      gap: 14px; margin-bottom: 2px; padding: 11px 14px !important; border-radius: 12px !important; transition: background .18s, transform .18s cubic-bezier(.3,1.4,.5,1) !important;
+      gap: 14px; margin-bottom: 2px; padding: 11px 14px !important; border-radius: 12px !important; transition: background .18s, transform .18s cubic-bezier(.3,1.4,.5,1);
       position:relative;
     }
     .menu a, .menu a span { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 21px !important; font-weight: 400 !important; color: #fff !important; text-shadow: 0 2px 4px rgba(0,0,0,.85), 0 1px 1px rgba(0,0,0,.9) !important; }

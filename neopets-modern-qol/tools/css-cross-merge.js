@@ -25,7 +25,7 @@ const OTHERS = BAR ? [] : [
   ['15-core.js', "st.textContent = '"], ['90-main.js', "pre.textContent = '"], ['85-account.js', "st.textContent = '"],
 ];
 const EXTRA = BAR ? '.menu { display: none !important; }' : null;
-const SCOPE = BAR ? /./ : /#(nqHud|nqLeftBar|btnOverlay|nqSideBtnHost|qrDockWrap|nqFoot|nqBgHandle|nqBgSidebar)(?![\w-])/;
+const SCOPE = BAR ? /./ : /#(nqHud|nqLeftBar|btnOverlay|nqSideBtnHost|qrDockWrap|qrDock|nqFoot|nqBgHandle|nqBgSidebar)(?![\w-])/;
 const APPLY = process.argv.includes('--apply');
 
 const files = {};

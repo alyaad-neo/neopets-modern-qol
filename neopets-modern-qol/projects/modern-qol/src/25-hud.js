@@ -166,72 +166,22 @@
       top .45s cubic-bezier(.22, 1, .36, 1),
       opacity .28s ease;
   }
-  #qrDock{
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
-    margin: 0; padding: 0; gap: 0;
-    list-style: none;
-    background: rgba(20, 14, 32, 0.95);
-    -webkit-backdrop-filter: blur(var(--nq-blur, 8px));
-    backdrop-filter: blur(var(--nq-blur, 8px));
-    overflow: hidden;
-  }
   #qrDock .qrPet{
     width: 100%;
-    position: relative;
-    overflow: hidden;
     cursor: pointer;
     background: rgba(0,0,0,.5) no-repeat center / cover;
-    min-height: 0;
-    flex-grow: 0;
-    flex-shrink: 1;
-    flex-basis: 0;
     opacity: 0;
     transition:
       flex-grow .45s cubic-bezier(.22, 1, .36, 1),
       opacity .3s ease;
   }
   #qrDock .qrPet.active{
-    flex-grow: 1;
     opacity: 1;
     box-shadow: inset 0 0 0 2px var(--nq-accent, #dcb8ff);
   }
-  #qrDockWrap.open .qrPet{
-    flex-grow: 1;
-    opacity: 1;
-  }
+  #qrDockWrap.open .qrPet{ opacity: 1; }
   #qrDock .qrPet + .qrPet{ border-top: 2px solid #000; }
   #qrDock .qrPet:hover{ filter: brightness(1.10); }
-  #qrDock .qrOverlay{
-    position:absolute; inset:0;
-    padding: 8px;
-    display:flex; flex-direction:column; gap:6px;
-    justify-content: center;
-    background: rgba(0,0,0,.42);
-    opacity:0; pointer-events:none;
-    transition: opacity .14s linear;
-  }
-  #qrDock .qrOverlay a{
-    min-height:32px; display:flex; align-items:center; justify-content:center; text-align:center;
-    padding:6px 8px; border-radius:var(--nq-radius-sm, 10px);
-    text-decoration:none !important; color:#fff !important;
-    font-size:12px; font-weight:700; line-height:1.1;
-    background:var(--nq-btn, rgba(255,255,255,.06));
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
-    transition:background .12s ease, transform .08s ease;
-  }
-  #qrDock .qrOverlay a:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
-  #qrDock .qrOverlay a:active{ transform:translateY(1px); }
-  #qrDock .qrPetName{
-    font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
-    font-size: 20px; font-weight: 400; color: #fff;
-    text-align: center; padding: 0 4px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    letter-spacing: .02em;
-    text-shadow: 0 1px 2px rgba(0,0,0,.7);
-  }
 
   body.nqDockActive #nqUser,
   body.nqDockActive #nqNp,
@@ -1062,21 +1012,21 @@ function startHud() {
       #btnOverlay .center{ display:contents !important; }
       #btnOverlay .col{
         position:absolute !important;
-        top:50% !important;
+        top:50%;
         display:flex !important;
         flex-direction:column;
         align-items:center !important;
         gap:14px;
         pointer-events:none;
-        flex-wrap:wrap !important;
+        flex-wrap:wrap;
         max-height:calc(100vh - 96px);
         align-content:center;
         transform: translate(-50%, -50%) !important;
       }
       #btnOverlay .col .iconBtn{ pointer-events:auto; }
-      #btnOverlay .col.left{ left: var(--frame-left) !important; }
+      #btnOverlay .col.left{ left: var(--frame-left); }
 
-      #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none; padding:0 !important; margin:0 !important; line-height:0; -webkit-tap-highlight-color:transparent; opacity:1 !important; visibility:visible !important; }
+      #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none; padding:0 !important; margin:0 !important; line-height:0; -webkit-tap-highlight-color:transparent; opacity:1; visibility:visible; }
       #btnOverlay .iconBtn img{ width:36px !important; height:36px !important; max-width:none !important; display:block !important; transform:scale(1); transition:transform .12s ease; will-change:transform; transform-origin:center center; filter:drop-shadow(0 1px 4px rgba(0,0,0,.45)); opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn:hover img{ transform:scale(1.08) !important; }
       #btnOverlay .iconBtn:active img{ transform:scale(1.02) !important; }

@@ -103,7 +103,7 @@ function startBackgrounds() {
     }
 
     #nqLeftBar{
-      position:fixed!important; top:0; left:0;
+      position:fixed; top:0; left:0;
       width: var(--nq-col-width, ${LEFT_BAR_PX}px); height:100vh;
       z-index:18;
       pointer-events:none;
@@ -121,7 +121,7 @@ function startBackgrounds() {
       background-image:var(--nqLeftBarImg);
       background-size:cover;
       background-position:center;
-      opacity:1!important;
+      opacity:1;
       visibility:visible;
     }
     #nqLeftBarShade{
