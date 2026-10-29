@@ -15,14 +15,28 @@ for (const name of ['literalEnd', 'family', 'rightmost', 'specificity']) {
   eval('global.' + name + ' = ' + merge.slice(s, merge.indexOf('\n}\n', s) + 2));
 }
 
-const SRC = path.join(__dirname, '..', 'projects', 'modern-qol', 'src');
+const PROJ = path.join(__dirname, '..', 'projects');
+const MQ = 'modern-qol/src/';
+const DAILY = 'dailies-qol/Neopets - Dailies Tracker-1.0.0.js';
+const DRAWER = 'account-drawer/Neopets - Accounts Drawer-1.0.0.js';
+const PINS = 'page-pins-qol/Neopets - Recently Viewed + Pin Pages-1.0.0.js';
 const ROOTS = {
-  bar: [['20-layout.js', 'barStyle.textContent = `'], ['40-styles.js', 'const SHADOW_CSS = `']],
-  editor: [['25-hud.js', '    css.textContent = `'], ['40-styles.js', 'const EDITOR_CSS = `']],
+  bar: [[MQ + '20-layout.js', 'barStyle.textContent = `'], [MQ + '40-styles.js', 'const SHADOW_CSS = `']],
+  editor: [[MQ + '25-hud.js', '    css.textContent = `'], [MQ + '40-styles.js', 'const EDITOR_CSS = `']],
+  doc: [
+    [MQ + '20-layout.js', 'const THEME = `'], [MQ + '20-layout.js', 'const FRAME = `'], 'KILL',
+    [MQ + '25-hud.js', 'const HUD_CSS = `'], [MQ + '25-hud.js', 'st.textContent = `', '#btnOverlay{'],
+    [MQ + '30-backgrounds.js', '  style.textContent = `'], [MQ + '30-backgrounds.js', 'recolorStyle.textContent = `'],
+    [MQ + '15-core.js', "st.textContent = '"], [MQ + '85-account.js', "st.textContent = '"],
+    [MQ + '40-styles.js', 'const PAGE_CSS = `'], [MQ + '40-styles.js', 'const LAYOUT_CSS = `'],
+    [MQ + '40-styles.js', 'const NC_CSS = `'], [MQ + '40-styles.js', 'const BAR_CSS = `'], [MQ + '90-main.js', "pre.textContent = '"],
+    [DAILY, 'const QAS_CSS = `'], [DAILY, 'const DAILY_CSS = `'], [DRAWER, 'const ACCT_CSS = `'], [DRAWER, 'const AP_CSS = `'], [PINS, 'const RECENT_CSS = `'],
+  ],
 };
 const [which] = process.argv.slice(2);
 const APPLY = process.argv.includes('--apply');
-if (!ROOTS[which]) { console.log('usage: node tools/css-unimportant.js <bar|editor> [--apply]'); process.exit(1); }
+if (!ROOTS[which]) { console.log('usage: node tools/css-unimportant.js <bar|editor|doc> [--why] [--apply]'); process.exit(1); }
+const DOC = which === 'doc';
 
 const INLINE = {
   bar: [
@@ -34,19 +48,57 @@ const INLINE = {
     [/\.ico(?![\w-])/, ['background-image']],
     [/^div$/, ['opacity', 'font-size', 'text-align', 'padding']],
   ],
+  doc: [
+    [/#nq-host(?![\w-])/, ['position', 'top', 'left', 'right', 'z-index', 'pointer-events']],
+    [/#nqScrollTrack(?![\w-])/, ['position', 'right', 'top', 'bottom', 'width', 'z-index', 'background', 'pointer-events', 'touch-action']],
+    [/#nqScrollThumb(?![\w-])/, ['position', 'right', 'top', 'width', 'height', 'border-radius', 'background', 'box-shadow', 'opacity', 'transition', 'cursor']],
+    [/#nqSideBtnHost(?![\w-])/, ['position', 'left', 'right', 'bottom', 'z-index', 'pointer-events']],
+    [/#nqAcctDrawer(?![\w-])/, ['left', 'right', 'top', 'bottom', 'width', 'height']],
+    [/#nqBgSidebar(?![\w-])/, ['transform']],
+    [/#nqBgHandle(?![\w-])/, ['visibility']],
+    [/#nqNestPop(?![\w-])/, ['left', 'top', '--tx']],
+    [/#nqNestMenu(?![\w-])/, ['left', 'top']],
+    [/#nqAvatar(?![\w-])/, ['background-image']],
+    [/#nqActivePet(?![\w-])/, ['--nq-img-h']],
+    [/\.qrPet(?![\w-])/, ['background-image']],
+    [/\.nqSmall(?![\w-])/, ['margin-bottom']],
+    [/\.col(?![\w-])/, ['display']],
+    [/\.iconBtn(?![\w-])/, ['position', 'display', '--i']],
+    [/\.nq-amount(?![\w-])|\.nq-nc(?![\w-])/, ['flex-grow']],
+    [/\.nqVal(?![\w-])|\.ncVal(?![\w-])/, ['font-size']],
+    [/^img|[^\w-]img/, ['display', 'object-position', 'object-fit', 'width', 'height', 'aspect-ratio', 'max-width', 'max-height', 'transform', 'background', 'border-radius', 'opacity', 'margin', 'box-shadow']],
+    [/^a|[^\w-]a/, ['display']],
+  ],
 };
+const OWN_ID = /^#(nq|qr|btnOverlay(?![\w-]))/;
+function owned(sel) {
+  if (/__|#nqBell(?![\w-])/.test(sel)) return false;
+  const ids = sel.match(/#[\w-]+/g) || [];
+  return ids.length > 0 && ids.every(i => OWN_ID.test(i));
+}
 function inlineWritten(sel, p) {
   const last = sel.trim().split(/[\s>+~]+/).pop().replace(/::?[\w-]+(\([^)]*\))?/g, '');
   const vague = !/[.#]/.test(last);
   return INLINE[which].some(([re, props]) => (vague || re.test(last)) && props.some(q => overlap(p, q)));
 }
 
-const sheets = ROOTS[which].map(([file, head], si) => {
-  const src = fs.readFileSync(path.join(SRC, file), 'utf8');
-  const at = src.indexOf(head);
-  if (at < 0 || src.indexOf(head, at + 1) >= 0) throw new Error('head not unique in ' + file + ': ' + head);
-  const s = at + head.length, e = literalEnd(src, s);
-  const text = src.slice(s, e).replace(/\$\{[^}]*\}/g, m => 'X'.repeat(m.length));
+function killText() {
+  const src = fs.readFileSync(path.join(PROJ, MQ, '20-layout.js'), 'utf8');
+  const s = src.indexOf('const KILL = [');
+  const sels = [...src.slice(s, src.indexOf('];', s)).matchAll(/'([^']*)'/g)].map(m => m[1]);
+  return sels.join(',\n') + '{display:none !important;visibility:hidden !important;height:0 !important;width:0 !important;overflow:hidden !important;}';
+}
+const sheets = ROOTS[which].map((spec, si) => {
+  if (spec === 'KILL') { const text = killText(); return { file: null, si, items: parseBlock(text, 0, text.length).items }; }
+  const [file, head, anchor] = spec;
+  const src = fs.readFileSync(path.join(PROJ, file), 'utf8');
+  let at = src.indexOf(head);
+  if (anchor) at = src.lastIndexOf(head, src.indexOf(anchor));
+  else if (at >= 0 && src.indexOf(head, at + 1) >= 0) throw new Error('head not unique in ' + file + ': ' + head);
+  if (at < 0) throw new Error('head missing in ' + file + ': ' + head);
+  const s = at + head.length, q = head[head.length - 1];
+  const e = q === '`' ? literalEnd(src, s) : src.indexOf(q, s);
+  const text = src.slice(s, e).replace(/\$\{[^}]*\}/g, m => 'X'.repeat(m.length)).replace(/\\n/g, '  ');
   return { file, src, s, si, items: parseBlock(text, 0, text.length).items };
 });
 
@@ -66,6 +118,50 @@ for (const sh of sheets) {
 
 const neverMeet = new Function('fs', 'path', '__dirname', 'rightmost', 'const MARKUP = true;\n' +
   merge.slice(merge.indexOf('const CARD_OF'), merge.indexOf('function literalEnd')) + '\nreturn neverMeet;')(fs, path, __dirname, rightmost);
+const markup = new Function('fs', 'path', '__dirname', 'const MARKUP = true;\n' +
+  merge.slice(merge.indexOf('const markup'), merge.indexOf('const structural')) + '\nreturn markup;')(fs, path, __dirname);
+const OUR_TAGS = new Set(['html', 'body']);
+const KNOWN = new Set([...markup.tags.keys(), ...markup.dynamic]);
+if (DOC) {
+  const all = [...fs.readdirSync(path.join(PROJ, MQ)).map(f => MQ + f), DAILY, DRAWER, PINS].map(f => fs.readFileSync(path.join(PROJ, f), 'utf8')).join('\n');
+  for (const m of all.matchAll(/createElement\(['"](\w+)['"]\)|<([a-z][a-z0-9]*)[\s>\/]/g)) OUR_TAGS.add(m[1] || m[2]);
+  for (const D of decls) for (const s of D.sels) if (owned(s)) for (const m of s.matchAll(/\.([\w-]+)/g)) KNOWN.add(m[1]);
+}
+function splitTopLevel(s, re) {
+  const out = []; let d = 0, cur = '';
+  for (const ch of s) {
+    if (ch === '(' || ch === '[') d++; else if (ch === ')' || ch === ']') d--;
+    if (!d && re.test(ch)) { if (cur.trim()) out.push(cur.trim()); cur = ''; } else cur += ch;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+function foreignAttr(c) {
+  for (const m of c.matchAll(/\[\s*(id|class)\s*([~|^$*]?)=\s*["']?([^"'\]]*)["']?\s*\]/g)) {
+    const [, attr, op, v] = m;
+    const test = (x) => op === '^' ? x.startsWith(v) : op === '$' ? x.endsWith(v) : op === '*' ? x.includes(v) : op === '|' ? x === v || x.startsWith(v + '-') : x === v;
+    if (attr === 'id' && !/^(nq|qr|btnOverlay)/.test(v) && !(op === '*' || op === '$') ) return true;
+    if (attr === 'class' && ![...KNOWN].some(test)) return true;
+  }
+  return false;
+}
+function foreignAlt(c) {
+  if (foreignAttr(c)) return true;
+  c = c.replace(/:not\((?:[^()]|\([^()]*\))*\)/g, '').replace(/\[[^\]]*\]/g, '').replace(/::?[\w-]+(\((?:[^()]|\([^()]*\))*\))?/g, m => /^:(where|is)\(/.test(m) ? m : '');
+  const tag = /^[a-z][\w-]*/i.exec(c);
+  if (tag && /^(html|body)$/i.test(tag[0])) return false;
+  const inner = /:(where|is)\(((?:[^()]|\([^()]*\))*)\)/.exec(c);
+  if (inner && splitTopLevel(inner[2], /,/).every(foreignAlt)) return true;
+  const own = c.replace(/:(where|is)\((?:[^()]|\([^()]*\))*\)/g, '');
+  if ((own.match(/#[\w-]+/g) || []).some(i => !OWN_ID.test(i))) return true;
+  if ((own.match(/\.([\w-]+)/g) || []).some(k => k.includes('__') || !KNOWN.has(k.slice(1)))) return true;
+  const t = /^[a-z][\w-]*/i.exec(own);
+  return !!(t && !OUR_TAGS.has(t[0].toLowerCase()));
+}
+function foreign(sel) {
+  if (owned(sel)) return false;
+  return splitTopLevel(sel.replace(/\s*([>+~])\s*/g, ' '), /\s/).some(foreignAlt);
+}
 
 const RADIUS = /^border(-[a-z]+)*-radius$/;
 function overlap(p, q) {
@@ -84,6 +180,7 @@ function overlap(p, q) {
 }
 
 function mayHit(a, b) {
+  if (DOC && (foreign(b) || /^(html|body)$/i.test(rightmost(b).tag || ''))) return false;
   const x = rightmost(a), y = rightmost(b);
   if (x.pe !== y.pe) return false;
   if (x.id && y.id && x.id !== y.id) return false;
@@ -99,6 +196,7 @@ for (const D of decls) {
   if (D.sels.some(s => s.includes(':host'))) { keep(D, ':host'); continue; }
   if (D.sels.some(s => specificity(s) === null)) { keep(D, ':is/:where/:not/:has'); continue; }
   if (D.sels.some(s => inlineWritten(s, D.d.prop))) { keep(D, 'property written inline by JS'); continue; }
+  if (DOC && (!(D.sh.file || '').startsWith(MQ) || !D.sels.every(owned))) { keep(D, 'not only our elements'); continue; }
   S.add(D);
 }
 function blocker(D) {
@@ -106,7 +204,11 @@ function blocker(D) {
     if (C === D || !overlap(D.d.prop, C.d.prop)) continue;
     for (const a of D.sels) for (const b of C.sels) {
       if (!mayHit(a, b)) continue;
-      if (C.d.imp) { if (!S.has(C)) return 'competes with a !important that keeps its flag'; continue; }
+      if (C.d.imp) {
+        if (S.has(C)) continue;
+        if (process.argv.includes('--blockers')) console.log('BLOCK ' + (C.sh.file || 'KILL').split('/').pop() + ' ' + b.slice(0, 90));
+        return 'competes with a !important that keeps its flag';
+      }
       const sa = specificity(a), sb = specificity(b);
       if (sb === null || sa < sb || (sa === sb && C.order > D.order)) {
         if (process.argv.includes('--why')) console.log('  keep ' + a + ' { ' + D.d.prop + ' }  <-  ' + b + ' { ' + C.d.prop + ' }');
@@ -126,18 +228,15 @@ for (const D of strip) console.log(D.sh.file + '  ' + D.sels.join(', ').slice(0,
 console.log('\nstrip ' + strip.length + ', keep ' + Object.entries(kept).map(([k, v]) => v + ' (' + k + ')').join(', '));
 
 if (APPLY) {
-  for (const sh of sheets) {
-    let src = sh.src;
-    const mine = strip.filter(D => D.sh === sh).sort((a, b) => b.d.s - a.d.s);
+  for (const f of new Set(strip.map(D => D.sh.file))) {
+    let src = fs.readFileSync(path.join(PROJ, f), 'utf8');
+    const mine = strip.filter(D => D.sh.file === f).sort((a, b) => (b.sh.s + b.d.s) - (a.sh.s + a.d.s));
     for (const D of mine) {
-      const s = sh.s + D.d.s, e = sh.s + D.d.e;
+      const s = D.sh.s + D.d.s, e = D.sh.s + D.d.e;
       const raw = src.slice(s, e), m = /\s*!\s*important/i.exec(raw);
       src = src.slice(0, s) + raw.slice(0, m.index) + raw.slice(m.index + m[0].length) + src.slice(e);
     }
-    sh.src = src;
-    sheets.filter(o => o.file === sh.file && o !== sh).forEach(o => { o.src = src; });
+    fs.writeFileSync(path.join(PROJ, f), src);
   }
-  const files = [...new Set(sheets.map(sh => sh.file))];
-  for (const f of files) fs.writeFileSync(path.join(SRC, f), sheets.filter(sh => sh.file === f).pop().src);
   console.log('applied');
 }

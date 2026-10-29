@@ -15,7 +15,9 @@ const APPLY = process.argv.includes('--apply');
 const MARKUP = process.argv.includes('--markup');
 
 const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser', nqSwapBtn: 'nqUser', nqNp: 'nqNp', nqActivePet: 'nqActivePet', nqPetInfo: 'nqActivePet', nqListsMod: 'nqListsMod', nqFoot: 'nqFoot', nqPinsMod: 'nqFoot', nqDaily: 'nqDaily', nqPetDockBtn: 'nqActivePet',
-  nqBgSidebar: 'bg', nqBgBody: 'bg', nqColors: 'bg', nqShuffle: 'bg', nqDiscBar: 'bg', nqDiscMsg: 'bg', nqBgList: 'bg', nqBgFooter: 'bg', nqRecolorSite: 'bg' };
+  nqBgSidebar: 'bg', nqBgBody: 'bg', nqColors: 'bg', nqShuffle: 'bg', nqDiscBar: 'bg', nqDiscMsg: 'bg', nqBgList: 'bg', nqBgFooter: 'bg', nqRecolorSite: 'bg',
+  nqIcons: 'nqIcons', btnOverlay: 'nqIcons', nqNestPop: 'nqIcons', nqLeftBar: 'leftbar', nqLeftBarBg: 'leftbar', nqLeftBarShade: 'leftbar', qrDockWrap: 'dock', qrDock: 'dock',
+  nqTools: 'tools', nqNestMenu: 'nestmenu', nqScrollTrack: 'scroll', nqScrollThumb: 'scroll', nqAcctDrawer: 'drawer', nqNst: 'barshadow' };
 const markup = { sets: [], dynamic: new Set(), tags: new Map() };
 if (MARKUP) {
   const proj = path.join(__dirname, '..', 'projects');
