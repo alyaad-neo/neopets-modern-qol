@@ -197,7 +197,10 @@ for (const D of decls) {
   if (D.sels.some(s => s.includes(':host'))) { keep(D, ':host'); continue; }
   if (D.sels.some(s => specificity(s) === null)) { keep(D, ':is/:where/:not/:has'); continue; }
   if (D.sels.some(s => inlineWritten(s, D.d.prop))) { keep(D, 'property written inline by JS'); continue; }
-  if (DOC && (!(D.sh.file || '').startsWith(MQ) || !D.sels.every(owned))) { keep(D, 'not only our elements'); continue; }
+  if (DOC && (!(D.sh.file || '').startsWith(MQ) || !D.sels.every(owned))) {
+    if (process.argv.includes('--notours')) console.log('NOTOURS ' + (D.sh.file || 'KILL').split('/').pop() + '  ' + D.sels.filter(s => !owned(s)).join(', ').slice(0, 120));
+    keep(D, 'not only our elements'); continue;
+  }
   if (DOC && D.sels.some(s => PINNED.test(s))) { keep(D, 'pinned: broke on the page'); continue; }
   S.add(D);
 }
