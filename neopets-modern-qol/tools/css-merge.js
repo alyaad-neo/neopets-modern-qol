@@ -17,7 +17,10 @@ const MARKUP = process.argv.includes('--markup');
 const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser', nqSwapBtn: 'nqUser', nqNp: 'nqNp', nqActivePet: 'nqActivePet', nqPetInfo: 'nqActivePet', nqListsMod: 'nqListsMod', nqFoot: 'nqFoot', nqPinsMod: 'nqFoot', nqDaily: 'nqDaily', nqPetDockBtn: 'nqActivePet',
   nqBgSidebar: 'bg', nqBgBody: 'bg', nqColors: 'bg', nqShuffle: 'bg', nqDiscBar: 'bg', nqDiscMsg: 'bg', nqBgList: 'bg', nqBgFooter: 'bg', nqRecolorSite: 'bg',
   nqIcons: 'nqIcons', btnOverlay: 'nqIcons', nqNestPop: 'nqIcons', nqLeftBar: 'leftbar', nqLeftBarBg: 'leftbar', nqLeftBarShade: 'leftbar', qrDockWrap: 'dock', qrDock: 'dock',
-  nqTools: 'tools', nqNestMenu: 'nestmenu', nqScrollTrack: 'scroll', nqScrollThumb: 'scroll', nqAcctDrawer: 'drawer', nqNst: 'barshadow' };
+  nqTools: 'tools', nqNestMenu: 'nestmenu', nqScrollTrack: 'scroll', nqScrollThumb: 'scroll', nqAcctDrawer: 'drawer', nqNst: 'barshadow',
+  nqHud: 'hud', nqNavMod: 'nqNavMod', nqBgHandle: 'bghandle', nqTop: 'top', nqBell: 'bell', nqAP: 'ap' };
+const CLASS_OF = { qrPet: 'dock', qrOverlay: 'dock', qrPetName: 'dock' };
+const HUD_CARDS = new Set(['nqUser', 'nqNp', 'nqActivePet', 'nqListsMod', 'nqFoot', 'nqDaily', 'nqIcons', 'nqNavMod']);
 const markup = { sets: [], dynamic: new Set(), tags: new Map() };
 if (MARKUP) {
   const proj = path.join(__dirname, '..', 'projects');
@@ -37,11 +40,16 @@ if (MARKUP) {
 const structural = (c) => markup.tags.has(c) && !markup.dynamic.has(c);
 const together = (a, b) => markup.sets.some(s => s.includes(a) && s.includes(b));
 const classesOf = (compound) => [...compound.replace(/:(not|is|where|has)\([^)]*\)/g, '').matchAll(/\.([\w-]+)/g)].map(m => m[1]);
-const cardsOf = (sel) => new Set([...sel.matchAll(/#([\w-]+)/g)].map(m => CARD_OF[m[1]]).filter(Boolean));
+const cardsOf = (sel) => {
+  const s = new Set([...[...sel.matchAll(/#([\w-]+)/g)].map(m => CARD_OF[m[1]]), ...[...sel.matchAll(/\.([\w-]+)/g)].map(m => CLASS_OF[m[1]])].filter(Boolean));
+  if ([...s].some(g => HUD_CARDS.has(g))) s.delete('hud');
+  return s;
+};
+const groupsMeet = (ca, cb) => [...ca].some(c => cb.has(c) || (c === 'hud' && [...cb].some(g => HUD_CARDS.has(g))) || (cb.has('hud') && HUD_CARDS.has(c)));
 
 function neverMeet(selA, selB) {
   const ca = cardsOf(selA), cb = cardsOf(selB);
-  if (ca.size && cb.size && ![...ca].some(c => cb.has(c))) return true;
+  if (ca.size && cb.size && !groupsMeet(ca, cb)) return true;
   if (MARKUP && (selfInside(selA, selB) || selfInside(selB, selA))) return true;
   const xa = classesOf(lastCompound(selA)), xb = classesOf(lastCompound(selB));
   if (xa.some(a => xb.some(b => a !== b && structural(a) && structural(b) && !together(a, b)))) return true;
@@ -50,7 +58,7 @@ function neverMeet(selA, selB) {
 }
 
 function selfInside(selA, selB) {
-  const id = /^#([\w-]+)$/.exec(lastCompound(selA).replace(/^html\[data-nq-modern-interface\]\s*/, ''));
+  const id = /^#([\w-]+)(?:#\1)*$/.exec(lastCompound(selA).replace(/^html\[data-nq-modern-interface\]\s*/, ''));
   if (!id) return false;
   const lastB = lastCompound(selB);
   return new RegExp('#' + id[1] + '(?![A-Za-z0-9_-])').test(selB.slice(0, selB.length - lastB.length)) && !/#[\w-]+/.test(lastB);
