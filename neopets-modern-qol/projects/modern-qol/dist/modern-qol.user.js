@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.27
+// @version      5.0.28
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -4253,6 +4253,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
       onerror: () => reject(new Error('network')), ontimeout: () => reject(new Error('timeout')),
     });
   });
+  NQ.dtiPage = dtiPage;
   const BG_SKIP = [/altador cup/i, /advent/i, /birthday|anniversar|\b\d+[- ]?years?\b/i];
   async function discoverBgs() {
     let end = parseInt(LSget('nq_disc_end'), 10) || 0;

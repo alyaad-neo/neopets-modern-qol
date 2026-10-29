@@ -159,6 +159,7 @@
       onerror: () => reject(new Error('network')), ontimeout: () => reject(new Error('timeout')),
     });
   });
+  NQ.dtiPage = dtiPage;
   const BG_SKIP = [/altador cup/i, /advent/i, /birthday|anniversar|\b\d+[- ]?years?\b/i];
   async function discoverBgs() {
     let end = parseInt(LSget('nq_disc_end'), 10) || 0;
