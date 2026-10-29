@@ -71,6 +71,7 @@ const INLINE = {
   ],
 };
 const OWN_ID = /^#(nq|qr|btnOverlay(?![\w-]))/;
+const PINNED = /#nqListsMod \.nqLt/;
 function owned(sel) {
   if (/__|#nqBell(?![\w-])/.test(sel)) return false;
   const ids = sel.match(/#[\w-]+/g) || [];
@@ -197,6 +198,7 @@ for (const D of decls) {
   if (D.sels.some(s => specificity(s) === null)) { keep(D, ':is/:where/:not/:has'); continue; }
   if (D.sels.some(s => inlineWritten(s, D.d.prop))) { keep(D, 'property written inline by JS'); continue; }
   if (DOC && (!(D.sh.file || '').startsWith(MQ) || !D.sels.every(owned))) { keep(D, 'not only our elements'); continue; }
+  if (DOC && D.sels.some(s => PINNED.test(s))) { keep(D, 'pinned: broke on the page'); continue; }
   S.add(D);
 }
 function blocker(D) {

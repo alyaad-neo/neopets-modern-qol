@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.18
+// @version      5.0.19
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -3892,9 +3892,9 @@ html[data-nq-modern-interface] {
   #nqHud #nqListsMod .nqLt { flex-wrap: nowrap; white-space: nowrap; transition: background .18s, transform .18s, box-shadow .18s; }
   #nqHud #nqListsMod .nqLt + .nqLt { position: relative; } #nqHud #nqListsMod .nqLt + .nqLt::before { content: ""; position: absolute; left: -2px; top: 8px; bottom: 8px; width: 1px; background: rgba(255,255,255,.10); pointer-events: none; display: none; }
   #nqHud #nqListsMod .nqLt svg { color: var(--pn-t2); width: 16px !important; height: 16px !important; flex: none; }
-  #nqHud #nqListsMod .nqLt b { color: #fff; font: 400 16px/1 'CafeteriaBlack', Georgia, serif; font-family: 'CafeteriaBlack', Georgia, serif; letter-spacing: normal; flex: 0 0 auto !important; overflow: visible; text-overflow: clip; white-space: nowrap; font-size: 16px !important; font-weight: 400 !important; }
-  #nqHud #nqListsMod .nqLt em { flex: none; text-align: center; animation: nqLtPop .5s cubic-bezier(.3,1.6,.5,1) .15s both; box-sizing: border-box; display: inline-flex !important; align-items: center; justify-content: center; height: 16px !important; min-width: 16px; padding: 0 5px; line-height: 1; font-size: 10px !important; font-weight: 600 !important; border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: inherit !important; margin-left: auto !important; }
-   #nqHud #nqListsMod .nqLt:hover, #nqHud #nqListsMod .nqLt:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); } #nqHud #nqListsMod .nqLt:hover svg, #nqHud #nqListsMod .nqLt:focus-visible svg { animation: nqLtWiggle .5s ease; }  @keyframes nqLtWiggle { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-14deg) translateY(-2px); } 55% { transform: rotate(10deg) translateY(-1px); } 80% { transform: rotate(-4deg); } } @keyframes nqLtPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { #nqHud #nqListsMod .nqLt, #nqHud #nqListsMod .nqLt em, #nqHud #nqListsMod .nqLt svg { animation: none; transition: none !important; transform: none !important; } }
+  #nqHud #nqListsMod .nqLt b { color: #fff; font: 400 16px/1 'CafeteriaBlack', Georgia, serif; font-family: 'CafeteriaBlack', Georgia, serif !important; letter-spacing: normal; flex: 0 0 auto !important; overflow: visible; text-overflow: clip; white-space: nowrap; font-size: 16px !important; font-weight: 400 !important; }
+  #nqHud #nqListsMod .nqLt em { flex: none; text-align: center; animation: nqLtPop .5s cubic-bezier(.3,1.6,.5,1) .15s both; box-sizing: border-box; display: inline-flex !important; align-items: center; justify-content: center !important; height: 16px !important; min-width: 16px; padding: 0 5px !important; line-height: 1; font-size: 10px !important; font-weight: 600 !important; border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: inherit !important; margin-left: auto !important; }
+   #nqHud #nqListsMod .nqLt:hover, #nqHud #nqListsMod .nqLt:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); } #nqHud #nqListsMod .nqLt:hover svg, #nqHud #nqListsMod .nqLt:focus-visible svg { animation: nqLtWiggle .5s ease; }  @keyframes nqLtWiggle { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-14deg) translateY(-2px); } 55% { transform: rotate(10deg) translateY(-1px); } 80% { transform: rotate(-4deg); } } @keyframes nqLtPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { #nqHud #nqListsMod .nqLt, #nqHud #nqListsMod .nqLt em, #nqHud #nqListsMod .nqLt svg { animation: none !important; transition: none !important; transform: none !important; } }
 
   #nqHud #nqPinsMod { border: 0; background: none; border-radius: 0; overflow: visible; height: auto; min-height: 0; flex: 0 0 auto; -webkit-backdrop-filter: none; backdrop-filter: none; }
   #nqHud #nqPinsMod .pTabs { position: relative; display: flex; gap: 2px; padding: 3px; margin: 0 0 8px; border-radius: 10px; background: rgba(255,255,255,.08); }
@@ -3987,8 +3987,8 @@ html[data-nq-modern-interface] {
   #nqHud #nqUser #nqSwapBtn:hover { background: var(--nq-pill-bg-h) !important; }
   #nqHud > #nqListsMod { display: grid; gap: 8px; padding: 8px !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); order: 3; }
   #nqHud #nqListsMod .nqLtAcct, #nqHud #nqListsMod .nqLtPets { grid-column: auto; grid-row: auto; }
-  #nqHud #nqListsMod .nqLt { display: flex !important; align-items: center; height: var(--nq-pill-h); border: 0; border-radius: var(--nq-pill-r); background: var(--nq-pill-bg); -webkit-backdrop-filter: none; backdrop-filter: none; box-sizing: border-box; min-width: 0; width: 100%; justify-content: flex-start; gap: 8px; padding: 0 12px; }
-  #nqHud #nqListsMod .nqLt:hover { background: var(--nq-pill-bg-h); }
+  #nqHud #nqListsMod .nqLt { display: flex !important; align-items: center; height: var(--nq-pill-h) !important; border: 0 !important; border-radius: var(--nq-pill-r); background: var(--nq-pill-bg) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-sizing: border-box; min-width: 0; width: 100% !important; justify-content: flex-start !important; gap: 8px !important; padding: 0 12px !important; }
+  #nqHud #nqListsMod .nqLt:hover { background: var(--nq-pill-bg-h) !important; }
   &.nq-side-light #nqHud #nqUser #nqUserTitle, &.nq-side-light #nqHud #nqUser .name, &.nq-side-light #nqHud #nqUser .name * { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqUser[data-main="1"] .rightSide::after { color: #1c1830; }
   &.nq-side-light #nqHud #nqUser #nqLogoutBtn, &.nq-side-light #nqHud #nqUser #nqSwapBtn, &.nq-side-light #nqHud #nqUser #nqSwapBtn:hover { color: #1c1830 !important; }
@@ -4054,8 +4054,8 @@ html[data-nq-modern-interface] {
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqStatsBody .nqStat b { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqStatsBody .nqStat b.gF { color: #c2377e !important; }
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqStatsBody .nqStat b.gM { color: #2f6fc4 !important; }
-  &.nq-side-light #nqHud #nqListsMod .nqLt { background: #fff; box-shadow: 0 1px 3px rgba(40,30,80,.08); }
-  &.nq-side-light #nqHud #nqListsMod .nqLt:hover { background: #f3f0fa; }
+  &.nq-side-light #nqHud #nqListsMod .nqLt { background: #fff !important; box-shadow: 0 1px 3px rgba(40,30,80,.08) !important; }
+  &.nq-side-light #nqHud #nqListsMod .nqLt:hover { background: #f3f0fa !important; }
 }`;
 
   const NC_CSS = `
