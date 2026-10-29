@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.28
+// @version      1.3.29
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -354,7 +354,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
       const walk = (v, depth) => {
         if (!v || typeof v !== 'object' || depth > 3) return;
         if (Array.isArray(v)) { v.forEach(x => walk(x, depth + 1)); return; }
-        // Quick Ref pets are { name, isActive, actions }; only data.active carries colour/species/level.
+        // Quick Ref pets are { name, isActive, actions, species, colour, gender, level }.
         if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, gender: v.gender, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
         else Object.values(v).forEach(x => walk(x, depth + 1));
       };

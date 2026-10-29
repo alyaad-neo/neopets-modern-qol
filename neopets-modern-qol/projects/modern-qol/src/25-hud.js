@@ -405,6 +405,11 @@ function startHud() {
     const readLast = () => { try { return ((LSget(LS_DATA+'_lastFetch')||0)|0); } catch { return 0; } };
     const writeLast = () => { LSset(LS_DATA+'_lastFetch', String(now())); };
 
+    const statsOf = (div) => {
+      const kv = {};
+      div?.querySelectorAll('.pet_stats tr').forEach(tr => { const th = tr.querySelector('th'), td = tr.querySelector('td'); if (!th||!td) return; kv[(th.textContent||'').replace(':','').trim().toLowerCase()] = (td.textContent||'').trim(); });
+      return kv;
+    };
     function parse(html){
       const dom = new DOMParser().parseFromString(html, 'text/html');
       const pets = [...dom.querySelectorAll('#nav td.active_pet, #nav td.inactive_pet')].slice(0, PETS_MAX).map(td => {
@@ -416,7 +421,8 @@ function startHud() {
         const idBase = td.querySelector('.pet_menu_launcher')?.id?.replace('_menu_launcher','');
         const ul = idBase ? dom.querySelector(`#${CSS.escape(idBase)}_menu`) : null;
         const actions = ul ? [...ul.querySelectorAll('a')].map(a => { const href = a.getAttribute('href')||''; const abs = href.startsWith('http') ? href : new URL(href,'https://www.neopets.com/').href; return { href:abs, text:(a.textContent||'').replace(/»\s*/,'').trim() }; }) : [];
-        return { name, sci, actions, isActive: td.classList.contains('active_pet') };
+        const kv = idBase ? statsOf(dom.querySelector(`#${CSS.escape(idBase)}_details`)) : {};
+        return { name, sci, actions, isActive: td.classList.contains('active_pet'), species: kv['species'] || '', colour: kv['colour'] || '', gender: kv['gender'] || '', level: kv['level'] || '' };
       });
       const ai = pets.findIndex(p => p.isActive); if (ai > 0) pets.unshift(pets.splice(ai,1)[0]);
       const activeDiv = [...dom.querySelectorAll('div[id$="_details"]')].find(d => (d.getAttribute('style')||'').includes('display: block')) || dom.querySelector('div[id$="_details"]');
@@ -424,8 +430,7 @@ function startHud() {
       if (activeDiv){
         const headerTh = activeDiv.querySelector('th[class^="contentModuleHeader"]');
         const name = headerTh?.querySelector('a')?.textContent?.trim() || 'Active';
-        const kv = {};
-        activeDiv.querySelectorAll('.pet_stats tr').forEach(tr => { const th = tr.querySelector('th'), td = tr.querySelector('td'); if (!th||!td) return; kv[(th.textContent||'').replace(':','').trim().toLowerCase()] = (td.textContent||'').trim(); });
+        const kv = statsOf(activeDiv);
         a = {
           name,
           species:      kv['species']      || '',

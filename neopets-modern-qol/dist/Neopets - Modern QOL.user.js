@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.35
+// @version      5.5.36
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1857,6 +1857,11 @@ function startHud() {
     const readLast = () => { try { return ((LSget(LS_DATA+'_lastFetch')||0)|0); } catch { return 0; } };
     const writeLast = () => { LSset(LS_DATA+'_lastFetch', String(now())); };
 
+    const statsOf = (div) => {
+      const kv = {};
+      div?.querySelectorAll('.pet_stats tr').forEach(tr => { const th = tr.querySelector('th'), td = tr.querySelector('td'); if (!th||!td) return; kv[(th.textContent||'').replace(':','').trim().toLowerCase()] = (td.textContent||'').trim(); });
+      return kv;
+    };
     function parse(html){
       const dom = new DOMParser().parseFromString(html, 'text/html');
       const pets = [...dom.querySelectorAll('#nav td.active_pet, #nav td.inactive_pet')].slice(0, PETS_MAX).map(td => {
@@ -1868,7 +1873,8 @@ function startHud() {
         const idBase = td.querySelector('.pet_menu_launcher')?.id?.replace('_menu_launcher','');
         const ul = idBase ? dom.querySelector(`#${CSS.escape(idBase)}_menu`) : null;
         const actions = ul ? [...ul.querySelectorAll('a')].map(a => { const href = a.getAttribute('href')||''; const abs = href.startsWith('http') ? href : new URL(href,'https://www.neopets.com/').href; return { href:abs, text:(a.textContent||'').replace(/»\s*/,'').trim() }; }) : [];
-        return { name, sci, actions, isActive: td.classList.contains('active_pet') };
+        const kv = idBase ? statsOf(dom.querySelector(`#${CSS.escape(idBase)}_details`)) : {};
+        return { name, sci, actions, isActive: td.classList.contains('active_pet'), species: kv['species'] || '', colour: kv['colour'] || '', gender: kv['gender'] || '', level: kv['level'] || '' };
       });
       const ai = pets.findIndex(p => p.isActive); if (ai > 0) pets.unshift(pets.splice(ai,1)[0]);
       const activeDiv = [...dom.querySelectorAll('div[id$="_details"]')].find(d => (d.getAttribute('style')||'').includes('display: block')) || dom.querySelector('div[id$="_details"]');
@@ -1876,8 +1882,7 @@ function startHud() {
       if (activeDiv){
         const headerTh = activeDiv.querySelector('th[class^="contentModuleHeader"]');
         const name = headerTh?.querySelector('a')?.textContent?.trim() || 'Active';
-        const kv = {};
-        activeDiv.querySelectorAll('.pet_stats tr').forEach(tr => { const th = tr.querySelector('th'), td = tr.querySelector('td'); if (!th||!td) return; kv[(th.textContent||'').replace(':','').trim().toLowerCase()] = (td.textContent||'').trim(); });
+        const kv = statsOf(activeDiv);
         a = {
           name,
           species:      kv['species']      || '',
@@ -6837,7 +6842,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
       const walk = (v, depth) => {
         if (!v || typeof v !== 'object' || depth > 3) return;
         if (Array.isArray(v)) { v.forEach(x => walk(x, depth + 1)); return; }
-        // Quick Ref pets are { name, isActive, actions }; only data.active carries colour/species/level.
+        // Quick Ref pets are { name, isActive, actions, species, colour, gender, level }.
         if (typeof v.name === 'string' && ('isActive' in v || v.species || v.colour || v.color || v.level)) put({ name: v.name, gender: v.gender, species: v.species, color: v.colour || v.color, level: parseInt(v.level, 10) || 0, img: v.image || v.img || v.imageUrl || '', active: !!v.isActive });
         else Object.values(v).forEach(x => walk(x, depth + 1));
       };
