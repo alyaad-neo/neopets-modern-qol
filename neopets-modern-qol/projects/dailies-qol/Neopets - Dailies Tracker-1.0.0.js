@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Dailies Tracker
 // @namespace    neopets-qol-patcher
-// @version      1.0.11
+// @version      1.0.12
 // @description  Neopets dailies: cooldowns, JellyNeo windows (Symol Hole / Tarla's Toolbar), Snowager, Qasalan Expellibox, plus a floating dailies panel and a sidebar card when the Modern Interface is installed.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -466,7 +466,7 @@
   const DAILY_CSS = `
 #nqDaily[hidden] { display: none !important; }
 #nqDaily:not(:has(.nqDHero)) { display: none !important; }
-#nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+#nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; }
 #nqDaily, #nqDaily * { box-sizing: border-box; text-shadow: none !important; }
 #nqDaily .nqDBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 #nqDaily .nqDHero { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 13px; background: rgba(255,255,255,.08); color: #fff !important; text-decoration: none !important; overflow: hidden; transition: background .15s, transform .15s, border-color .15s; }

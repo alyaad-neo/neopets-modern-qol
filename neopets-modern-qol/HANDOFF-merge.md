@@ -145,6 +145,9 @@ After stage 2, tell Aly what to test (list below). Report and stop.
 - Aly confirmed 5.5.28.
 - Noticed, not done: `#nqNst` (clock) lives in the header bar shadow root, so its document-sheet rules in 40-styles never apply (dead).
 - Next: dead dailies `#nqDaily` none-overrides (separate project, CRLF); then look at the biggest kept-flag chains (`--blockers`: `#nqHud#nqHud`, `#btnOverlay .col/.iconBtn`, `.qrOverlay a`, `#nqBgHandle`).
+- Aly confirmed 5.5.28 (by starting this chat).
+- Bundle 5.5.29 (modern-qol 5.0.17, dailies 1.0.12), waiting on Aly's test: dailies `#nqDaily` background/border/box-shadow/backdrop-filter `!important` overrides deleted (PAGE_CSS `html[data-nq-modern-interface] #nqDaily` always beats them; on NC Mall NC_CSS hides `#nqHud`, so the card never shows without PAGE_CSS). Its `padding: 0 !important` stays (nothing else sets it). Dead `#nqNst` document rules deleted (clock lives in the header shadow root): its entry in the CafeteriaBlack font list and the 40-styles `#nqNst {...}` rule.
+- Next: the biggest kept-flag chains (`node tools/css-unimportant.js doc --blockers`: `#nqHud#nqHud`, `#btnOverlay .col/.iconBtn`, `.qrOverlay a`, `#nqBgHandle`).
 - Start a new chat with: "Read neopets-modern-qol/HANDOFF-merge.md and AGENTS.md, then continue stage 3."
 - CSS dedupe tool: `node tools/css-dedupe.js <base.js> <patcher.js> --report out.txt` lists dead declarations (add `--apply` to delete them). It only removes a declaration when a rule matching the same element always beats it (same media or broader, importance, specificity, order, shorthands). Its facts are hardcoded: the HUD cards are direct children of `#npHud`, `npp-css` is present wherever `#npHud` shows, and PET_IMG_STYLE is inline. Check those still hold before you re-use it. A comment heading a group gets deleted with the group's first rule if that rule is dead, so restore it by hand.
 - Lessons from this run:

@@ -11,8 +11,7 @@ html[data-nq-modern-interface] {
   --nq-ico-shadow: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
-  .qrOverlay a, .qrPetName, #nqUserTitle,
-  #nqNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+  .qrOverlay a, .qrPetName, #nqUserTitle { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
   div#boardTopic { border: 0 !important; }
@@ -255,7 +254,6 @@ html[data-nq-modern-interface] {
   #nqBell .nqBellDot { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
 
   #nqBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
-  #nqNst { display: inline-block; padding: 0; font-size: 20px !important; color: #fff !important; background: none !important; border: 0 !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   #nqLeftBarBg { background-image: none !important; overflow: hidden; }
   &[data-nq-bar="none"] #nqLeftBarBg::after { top: 0; }

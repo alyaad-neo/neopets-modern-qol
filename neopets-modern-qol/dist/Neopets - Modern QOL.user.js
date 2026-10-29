@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.28
+// @version      5.5.29
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -3555,8 +3555,7 @@ html[data-nq-modern-interface] {
   --nq-ico-shadow: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
-  .qrOverlay a, .qrPetName, #nqUserTitle,
-  #nqNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+  .qrOverlay a, .qrPetName, #nqUserTitle { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
   div#boardTopic { border: 0 !important; }
@@ -3799,7 +3798,6 @@ html[data-nq-modern-interface] {
   #nqBell .nqBellDot { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
 
   #nqBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
-  #nqNst { display: inline-block; padding: 0; font-size: 20px !important; color: #fff !important; background: none !important; border: 0 !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   #nqLeftBarBg { background-image: none !important; overflow: hidden; }
   &[data-nq-bar="none"] #nqLeftBarBg::after { top: 0; }
@@ -6427,7 +6425,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
   const DAILY_CSS = `
 #nqDaily[hidden] { display: none !important; }
 #nqDaily:not(:has(.nqDHero)) { display: none !important; }
-#nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; background: transparent !important; border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+#nqDaily { display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 100%; min-width: 0; align-self: stretch; overflow: visible; padding: 0 !important; }
 #nqDaily, #nqDaily * { box-sizing: border-box; text-shadow: none !important; }
 #nqDaily .nqDBody { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 #nqDaily .nqDHero { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 0 10px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 13px; background: rgba(255,255,255,.08); color: #fff !important; text-decoration: none !important; overflow: hidden; transition: background .15s, transform .15s, border-color .15s; }
