@@ -242,13 +242,6 @@
     transition: opacity .25s ease;
   }
 
-  #nqUser .name #nqUserTitle{
-    font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
-    font-weight: 400;
-    letter-spacing: .02em;
-    font-size: 20px;
-    line-height: 1.1;
-  }
 
   #nqNp{ display:flex; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
   #nqNp .nqVal{ font-variant-numeric:tabular-nums; }
@@ -258,9 +251,6 @@
   #nqActivePet{
     cursor:pointer;
     justify-content:center;
-  }
-  #nqActivePet:hover{
-    background: transparent;
   }
   #nqActivePet img{
     width:auto; height:auto;

@@ -1,6 +1,6 @@
 // Cascade dedupe for the sidebar/HUD CSS.
 // Finds declarations that can never win and (with --apply) deletes them from the source files.
-// Usage: node dedupe.js <base.js> <patcher.js> [--apply] [--report out.txt] [--supports out.json]
+// Usage: node tools/css-dedupe.js src/25-hud.js src/40-styles.js --pet src/75-pet.js [--loose] [--apply] [--report out.txt] [--supports out.json]
 'use strict';
 const fs = require('fs');
 const [baseFile, patchFile] = process.argv.slice(2, 4);
@@ -171,13 +171,14 @@ function spec(sel) {
 }
 function cmp(x, y) { for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i]; return 0; }
 
-// Facts: these base cards are created as direct children of #npHud and never moved.
-const DIRECT_KIDS = ['#npUser', '#npBank', '#npNp', '#npQrActive', '#npActivePet'];
+// Facts: these base cards are created as direct children of #nqHud and never moved.
+const DIRECT_KIDS = ['#nqUser', '#nqNp', '#nqActivePet'];
 function canon(sel) {
+  if (compounds(sel).some((p, i) => i > 0 && !p.k && /^html([^\w-]|$)/i.test(p.c))) return '!never';
   let parts = compounds(sel).map(p => {
     if (p.k) return p;
     let ss = simples(p.c);
-    if (ss[0] === 'html') ss = ss.filter(x => x !== '[data-np-modern-interface]');
+    if (ss[0] === 'html') ss = ss.filter(x => x !== '[data-nq-modern-interface]');
     ss = [...new Set(ss)];
     const head = /^[a-z*]/i.test(ss[0] || '') ? [ss.shift()] : [];
     const pe = ss.filter(x => x.startsWith('::') || LEGACY_PE.test(x));
@@ -186,9 +187,9 @@ function canon(sel) {
   });
   // drop a leading bare html (always an ancestor) with its combinator
   while (parts.length > 2 && parts[0].c === 'html' && (parts[1].k === ' ' || parts[1].k === '>')) parts = parts.slice(2);
-  // drop "#npHud >/space" before a direct kid
+  // drop "#nqHud >/space" before a direct kid
   for (let i = 0; i + 2 < parts.length; i++) {
-    if (parts[i].c === '#npHud' && (parts[i + 1].k === ' ' || parts[i + 1].k === '>') && DIRECT_KIDS.some(id => simples(parts[i + 2].c).includes(id))) {
+    if (parts[i].c === '#nqHud' && (parts[i + 1].k === ' ' || parts[i + 1].k === '>') && DIRECT_KIDS.some(id => simples(parts[i + 2].c).includes(id))) {
       parts.splice(i, 2); i--;
     }
   }
@@ -252,7 +253,7 @@ const sheets = [
   { file: 'patch', src: patchSrc, name: 'BAR_CSS', base: 3e7, part: 'bar' },
 ];
 // Which parts are always present when the loser's part is present (and its element visible).
-// hud: npp-css (page+layout+bar) is present on every page where #npHud is visible (NC hides it, auth strips it).
+// hud: nq-css (page+layout+bar) is present on every page where #nqHud is visible (NC hides it, auth strips it).
 const CAN_KILL = { hud: ['hud', 'page', 'layout', 'bar', 'inline'], page: ['page', 'layout', 'bar', 'inline'], layout: ['page', 'layout', 'bar', 'inline'], bar: ['bar'] };
 const all = [];
 for (const sh of sheets) {
@@ -262,14 +263,14 @@ for (const sh of sheets) {
   flatten(sh.tree, [''], [], all, { part: sh.part, base: sh.base, sheet: sh });
 }
 // HUD_CSS: only touch rules about the HUD itself (hidden on NC by NC_CSS, stripped on auth pages).
-const HUD_IDS = ['#npHud', ...DIRECT_KIDS];
-// Inline PET_IMG_STYLE on the first #npActivePet > img (fixPetImg: every 1.5s, on mutation, ResizeObserver).
+const HUD_IDS = ['#nqHud', ...DIRECT_KIDS];
+// Inline PET_IMG_STYLE on the first #nqActivePet > img (fixPetImg: every 1.5s, on mutation, ResizeObserver).
 {
-  const m = /const PET_IMG_STYLE = '([^']*)'/.exec(patchSrc);
+  const m = /const PET_IMG_STYLE = '([^']*)'/.exec(argVal('--pet') ? fs.readFileSync(argVal('--pet'), 'utf8') : patchSrc);
   for (const dec of m[1].split(';')) {
     const c = dec.indexOf(':'); if (c < 0) continue;
     let v = dec.slice(c + 1).trim(); const imp = /!important$/.test(v); v = v.replace(/!important$/, '').trim();
-    all.push({ part: 'inline', d: { value: v }, sel: '#npActivePet > img', key: canon('#npActivePet > img'), sp: [9, 9, 9], media: [], prop: dec.slice(0, c).trim(), imp, order: 9e7, inline: true });
+    all.push({ part: 'inline', d: { value: v }, sel: '#nqActivePet > img', key: canon('#nqActivePet > img'), sp: [9, 9, 9], media: [], prop: dec.slice(0, c).trim(), imp, order: 9e7, inline: true });
   }
 }
 
@@ -285,8 +286,41 @@ for (const x of all) { if (!byKey.has(x.key)) byKey.set(x.key, []); byKey.get(x.
 for (const x of all) {
   if (x.inline) continue;
   if (x.part === 'hud' && !HUD_IDS.some(id => x.key.includes(id))) continue;
-  const w = byKey.get(x.key).find(y => y !== x && CAN_KILL[x.part].includes(y.part) && covers(y.prop, x.prop) && y.media.every(m => x.media.includes(m)) && beats(y, x));
+  const w = x.key === '!never' ? null : byKey.get(x.key).find(y => y !== x && CAN_KILL[x.part].includes(y.part) && covers(y.prop, x.prop) && y.media.every(m => x.media.includes(m)) && beats(y, x));
   if (w) x.deadBy = w;
+}
+// --loose: the winner's selector matches every element the loser's matches, judged structurally.
+const ALWAYS = new Set(['html', 'body', '[data-nq-modern-interface]']);
+function shape(key) {
+  const parts = compounds(key);
+  if (parts.some(p => p.k === '+' || p.k === '~')) return null;
+  const comps = parts.filter(p => !p.k).map(p => simples(p.c).filter(s => s !== '*'));
+  const subj = comps.pop();
+  return { child: parts.some(p => p.k === '>'), anc: comps, subj: subj.filter(s => !(s.startsWith('::') || LEGACY_PE.test(s))), pe: subj.filter(s => s.startsWith('::') || LEGACY_PE.test(s)).join('') };
+}
+function within(w, l) {
+  if (!w || !l || w.child || w.pe !== l.pe) return false;
+  if (!w.subj.every(s => l.subj.includes(s))) return false;
+  const lAll = l.anc.concat([l.subj]);
+  let at = 0;
+  for (const c of w.anc) {
+    if (c.every(s => ALWAYS.has(s))) continue;
+    if (c.length === 1 && c[0] === '#nqHud' && lAll.some(lc => DIRECT_KIDS.some(id => lc.includes(id)))) continue;
+    let i = at;
+    while (i < l.anc.length && !c.every(s => l.anc[i].includes(s))) i++;
+    if (i >= l.anc.length) return false;
+    at = i + 1;
+  }
+  return true;
+}
+if (process.argv.includes('--loose')) {
+  for (const x of all) x.shape = x.inline || x.key === '!never' ? null : shape(x.key);
+  for (const x of all) {
+    if (x.inline || x.deadBy || !x.shape) continue;
+    if (x.part === 'hud' && !HUD_IDS.some(id => x.key.includes(id))) continue;
+    const w = all.find(y => y !== x && !y.inline && CAN_KILL[x.part].includes(y.part) && covers(y.prop, x.prop) && y.media.every(m => x.media.includes(m)) && beats(y, x) && within(y.shape, x.shape));
+    if (w) x.deadBy = w;
+  }
 }
 // A declaration is dead only if dead for every selector of its rule.
 const declInfo = new Map();
@@ -301,7 +335,7 @@ for (const [d, inf] of declInfo) {
   if (inf.list.every(x => x.deadBy)) {
     dead.add(d);
     const w = inf.list[0].deadBy;
-    report.push(`${inf.sheet.name} | ${inf.list.map(x => x.sel.replace('html[data-np-modern-interface] ', '')).join(', ')} | ${d.prop}: ${d.value}${d.imp ? ' !important' : ''}  <= ${w.part}:${w.sel.replace('html[data-np-modern-interface] ', '')} {${w.prop}: ${w.d.value}${w.imp ? ' !important' : ''}}${w.media.length ? ' @' + w.media.join(' & ') : ''}`);
+    report.push(`${inf.sheet.name} | ${inf.list.map(x => x.sel.replace('html[data-nq-modern-interface] ', '')).join(', ')} | ${d.prop}: ${d.value}${d.imp ? ' !important' : ''}  <= ${w.part}:${w.sel.replace('html[data-np-modern-interface] ', '')} {${w.prop}: ${w.d.value}${w.imp ? ' !important' : ''}}${w.media.length ? ' @' + w.media.join(' & ') : ''}`);
   }
 }
 const winners = new Map();

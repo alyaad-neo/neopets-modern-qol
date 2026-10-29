@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern QOL core
 // @namespace    neopets-qol-patcher
-// @version      5.0.11
+// @version      5.0.12
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin with Aly's header, sidebar, colours and page patches. Built into the Modern QOL bundle by bundle.js.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1628,13 +1628,6 @@ if (NQ.base) startLayout();
     transition: opacity .25s ease;
   }
 
-  #nqUser .name #nqUserTitle{
-    font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
-    font-weight: 400;
-    letter-spacing: .02em;
-    font-size: 20px;
-    line-height: 1.1;
-  }
 
   #nqNp{ display:flex; justify-content:center; gap:8px; font-size:14px; font-weight:700; }
   #nqNp .nqVal{ font-variant-numeric:tabular-nums; }
@@ -1644,9 +1637,6 @@ if (NQ.base) startLayout();
   #nqActivePet{
     cursor:pointer;
     justify-content:center;
-  }
-  #nqActivePet:hover{
-    background: transparent;
   }
   #nqActivePet img{
     width:auto; height:auto;
@@ -3539,7 +3529,6 @@ html[data-nq-modern-interface] {
   #nqPetInfo .nqTitle a:hover { text-decoration: underline !important; }
   #nqPetInfo .nqLinks { display: flex; justify-content: center; font-size: 11px; }
   #nqPetInfo .nqCopy { flex: 0 0 auto; padding: 2px; border: 0; background: transparent; cursor: pointer; }
-  #nqPetInfo .nqCopy:hover { color: #fff; }
   #nqPetInfo .nqDetails { grid-template-columns: auto 1fr; font-size: 11px; color: rgba(255,255,255,.88); }
   #nqPetInfo .nqDetails span { color: rgba(255,255,255,.55) !important; opacity: 1 !important; font-weight: 400 !important; }
   #nqPetInfo .nqDetails b { color: #fff !important; font-weight: 700 !important; font-size: inherit !important; }
@@ -3667,10 +3656,10 @@ html[data-nq-modern-interface] {
   #nqPetInfo .nqSub { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 500; line-height: 1.25; color: rgba(255,255,255,.82); }
   #nqPetInfo .nqTitle .nqCopy { position: absolute; top: 0; right: 0; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border-radius: 7px; transition: background .15s, color .15s, transform .1s; }
   #nqPetInfo .nqTitle .nqCopy svg { width: 14px; height: 14px; display: block; }
-  #nqPetInfo .nqTitle .nqCopy:hover { background: rgba(255,255,255,.16); color: #fff; }
+  #nqPetInfo .nqTitle .nqCopy:hover { background: rgba(255,255,255,.16); }
   #nqPetInfo .nqTitle .nqCopy:active { transform: scale(.86); }
-  #nqPetInfo .nqTitle .nqCopy.done { background: rgba(123,224,142,.22); color: #7be08e; animation: nqCopyPop .35s cubic-bezier(.3,1.6,.5,1); }
-  #nqPetInfo .nqTitle .nqCopy.fail { background: rgba(255,90,90,.22); color: #ff8a8a; font-size: 18px; line-height: 1; animation: nqCopyPop .35s cubic-bezier(.3,1.6,.5,1); }
+  #nqPetInfo .nqTitle .nqCopy.done { background: rgba(123,224,142,.22); animation: nqCopyPop .35s cubic-bezier(.3,1.6,.5,1); }
+  #nqPetInfo .nqTitle .nqCopy.fail { background: rgba(255,90,90,.22); font-size: 18px; line-height: 1; animation: nqCopyPop .35s cubic-bezier(.3,1.6,.5,1); }
   #nqPetInfo .nqTitle a .nqG.gF { color: #ffa6d2 !important; }
   #nqPetInfo .nqTitle a .nqG.gM { color: #8cc4ff !important; }
   #nqPetInfo .nqCopy { color: rgba(255,255,255,.85) !important; }
@@ -3864,7 +3853,6 @@ html[data-nq-modern-interface] {
   #nqUser .rightSide { align-items: center !important; }
   #nqUser #nqAvatar { align-self: center !important; }
 
-  html #nqHud #nqFoot { position: relative !important; z-index: 0; flex: 0 0 auto !important; min-height: 0; }
   #nqPinsMod { position: relative; }
 
   #nqHud { --pn-pad: 12px; --pn-r: 16px; --pn-t2: rgba(255,255,255,.72); --pn-t3: rgba(255,255,255,.55); font-family: 'Outfit', system-ui, sans-serif; --nq-pill-h: 36px; --nq-pill-r: 10px; --nq-pill-bg: rgba(255,255,255,.08); --nq-pill-bg-h: rgba(255,255,255,.15); }
@@ -3913,7 +3901,6 @@ html[data-nq-modern-interface] {
   #nqHud #nqPetInfo .nqLinks button.on { background: color-mix(in srgb, var(--nq-accent, #fff) 45%, transparent); }
   #nqHud #nqPetInfo .nqDetails { order: 4; flex: 0 0 100%; }
   #nqHud #nqActivePet:not(:has(.nqTitle))::before { content: ""; position: absolute; inset: 12px; border-radius: 12px; z-index: 0; background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.16) 50%, rgba(255,255,255,.04) 70%) 0 0 / 200% 100%; animation: nqShimmer 1.4s linear infinite; }
-  #nqHud #nqActivePet:not(:has(.nqTitle)) { min-height: 194px; }
   @keyframes nqShimmer { to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { #nqHud #nqActivePet:not(:has(.nqTitle))::before { animation: none; } }
 
@@ -3923,7 +3910,7 @@ html[data-nq-modern-interface] {
   #nqHud #nqListsMod .nqLt svg { color: var(--pn-t2); width: 16px !important; height: 16px !important; flex: none; }
   #nqHud #nqListsMod .nqLt b { color: #fff; }
   #nqHud #nqListsMod .nqLt em { flex: none; text-align: center; animation: nqLtPop .5s cubic-bezier(.3,1.6,.5,1) .15s both; box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; height: 16px !important; min-width: 16px !important; padding: 0 5px !important; line-height: 1 !important; font-size: 10px !important; font-weight: 600 !important; }
-   #nqHud #nqListsMod .nqLt:hover, #nqHud #nqListsMod .nqLt:focus-visible { transform: translateY(-2px); background: rgba(255,255,255,.14); box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); } #nqHud #nqListsMod .nqLt:hover svg, #nqHud #nqListsMod .nqLt:focus-visible svg { animation: nqLtWiggle .5s ease; }  @keyframes nqLtWiggle { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-14deg) translateY(-2px); } 55% { transform: rotate(10deg) translateY(-1px); } 80% { transform: rotate(-4deg); } } @keyframes nqLtPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { #nqHud #nqListsMod .nqLt, #nqHud #nqListsMod .nqLt em, #nqHud #nqListsMod .nqLt svg { animation: none !important; transition: none !important; transform: none !important; } }
+   #nqHud #nqListsMod .nqLt:hover, #nqHud #nqListsMod .nqLt:focus-visible { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.18); } #nqHud #nqListsMod .nqLt:hover svg, #nqHud #nqListsMod .nqLt:focus-visible svg { animation: nqLtWiggle .5s ease; }  @keyframes nqLtWiggle { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-14deg) translateY(-2px); } 55% { transform: rotate(10deg) translateY(-1px); } 80% { transform: rotate(-4deg); } } @keyframes nqLtPop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } } @media (prefers-reduced-motion: reduce) { #nqHud #nqListsMod .nqLt, #nqHud #nqListsMod .nqLt em, #nqHud #nqListsMod .nqLt svg { animation: none !important; transition: none !important; transform: none !important; } }
 
   #nqHud #nqPinsMod { border: 0; background: none; border-radius: 0; overflow: visible; height: auto; min-height: 0; flex: 0 0 auto; -webkit-backdrop-filter: none; backdrop-filter: none; }
   #nqHud #nqPinsMod .pTabs { position: relative; display: flex; gap: 2px; padding: 3px; margin: 0 0 8px; border-radius: 10px; background: rgba(255,255,255,.08); }
@@ -3953,8 +3940,8 @@ html[data-nq-modern-interface] {
   &.nq-side-light #nqHud #nqUserTitle, &.nq-side-light #nqHud #nqPetInfo .nqTitle a, &.nq-side-light #nqHud #nqPetInfo .nqName { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqNp .nq-top-row .nqVal, &.nq-side-light #nqHud #nqNp .nq-top-row .ncVal, &.nq-side-light #nqHud #nqNp, &.nq-side-light #nqHud #nqNp .nq-amount, &.nq-side-light #nqHud #nqNp .nq-nc { color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqPetInfo .nqSub, &.nq-side-light #nqHud #nqPetInfo { color: rgba(28,24,48,.68); }
-  &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy { color: rgba(28,24,48,.6); } &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy:hover { background: rgba(0,0,0,.07); color: #1c1830; }
-  &.nq-side-light #nqHud #nqListsMod .nqLt em { color: #1c1830; background: rgba(0,0,0,.08) !important; }
+  &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy:hover { background: rgba(0,0,0,.07); }
+  &.nq-side-light #nqHud #nqListsMod .nqLt em { background: rgba(0,0,0,.08) !important; }
   &.nq-side-light #nqHud #nqListsMod .nqLt + .nqLt::before { background: rgba(0,0,0,.10); }
   &.nq-side-light #nqHud #nqPinsMod .pTabs { background: rgba(0,0,0,.06); }
   &.nq-side-light #nqHud #nqPinsMod .pTabs button, &.nq-side-light #nqHud #nqPinsMod .rPin { color: rgba(28,24,48,.6); }
