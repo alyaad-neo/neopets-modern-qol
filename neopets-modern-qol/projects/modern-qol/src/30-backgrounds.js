@@ -122,13 +122,13 @@ function startBackgrounds() {
       background-size:cover;
       background-position:center;
       opacity:1!important;
-      visibility:visible!important;
+      visibility:visible;
     }
     #nqLeftBarShade{
       position:absolute; inset:0;
       background:linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.28));
       opacity:var(--nqLeftBarShadeA);
-      visibility:visible!important;
+      visibility:visible;
     }
 
     @media (max-width: 900px){

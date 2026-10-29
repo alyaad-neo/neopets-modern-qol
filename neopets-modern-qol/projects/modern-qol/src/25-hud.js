@@ -1064,8 +1064,8 @@ function startHud() {
         --frame-left: max(
           calc((100vw - var(--nq-frame-width, 1100px)) / 2),
           var(--nq-frame-shift, 0px)
-        ) !important;
-        --frame-right: calc(var(--frame-left) + var(--nq-frame-width, 1100px)) !important;
+        );
+        --frame-right: calc(var(--frame-left) + var(--nq-frame-width, 1100px));
       }
       #btnOverlay .center{ display:contents !important; }
       #btnOverlay .col{
@@ -1078,7 +1078,7 @@ function startHud() {
         pointer-events:none !important;
         flex-wrap:wrap !important;
         max-height:calc(100vh - 96px) !important;
-        align-content:center !important;
+        align-content:center;
         transform: translate(-50%, -50%) !important;
       }
       #btnOverlay .col .iconBtn{ pointer-events:auto !important; }
