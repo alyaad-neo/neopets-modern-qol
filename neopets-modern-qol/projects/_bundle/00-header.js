@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.45
+// @version      5.5.53
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -16,6 +16,8 @@
 // @exclude      *://www.neopets.com/loginpage.phtml*
 // @exclude      *://www.neopets.com/signin*
 // @exclude      *://www.neopets.com/neopass*
+// @exclude      *://*.neopets.com/~*
+// @exclude      *://*.neopets.com/preview_homepage.phtml*
 // @grant        unsafeWindow
 // @grant        GM_getValue
 // @grant        GM_setValue

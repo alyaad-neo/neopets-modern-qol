@@ -1,0 +1,48 @@
+<style>
+//
+*{}
+.ppt14{background:linear-gradient(90deg,#7c5cf0,#47e1d7);box-shadow:0 8px 20px -6px #7c5cf0;letter-spacing:-0.5px;font-family:'Trebuchet MS',Verdana,sans-serif}
+.ppt15:hover{background:#7c5cf0;color:#ffffff}
+.ppt25{background:rgba(255,255,255,0.6)}
+.ppt26{opacity:0.6}
+.ppt27{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////TAAJlQOXR0b45QAAAABJRU5ErkJggg==)}
+.ppt28{backdrop-filter:blur(8px)}
+.ppt29{background-image:url(https://images.neopets.com/images/homepage_banner.gif);background-repeat:repeat}
+.ppt30{background-color:#7c5cf0;background-image:url(https://images.neopets.com/images/homepage_banner.gif);background-size:cover;background-attachment:fixed;background-position:center}
+</style>
+<div style="max-width:640px;margin:20px auto;padding:20px;background:#f4f1ff;border-radius:20px;font-family:Verdana,sans-serif;font-size:13px;line-height:20px;color:#222222">
+<div style="font-size:18px;font-weight:bold;margin-bottom:12px">Petpage filter test</div>
+<div id="t01" style="margin:8px 0;padding:8px;background:#ffffff;font-family:Trebuchet MS,Verdana,sans-serif">01 unquoted Trebuchet MS</div>
+<div id="t02" style="margin:8px 0;padding:8px;background:#ffffff;font-family:&quot;Trebuchet MS&quot;,Verdana,sans-serif">02 &amp;quot; quoted Trebuchet MS</div>
+<div id="t03" style="margin:8px 0;padding:8px;background:#ffffff;letter-spacing:-1px">03 negative letter-spacing -1px</div>
+<div id="t04" style="margin:8px 0;padding:8px;background:#ffffff;letter-spacing:0.5px">04 letter-spacing 0.5px with leading zero</div>
+<div id="t05" style="margin:8px 0;padding:8px;background:#ffffff;line-height:1.6">05 unitless line-height 1.6</div>
+<div id="t06" style="margin:8px 0;padding:8px;background:#ffffff;font:bold 16px Verdana">06 font shorthand without slash</div>
+<div id="t07" style="margin:8px 0;padding:8px;background:#ffffff;box-shadow:0 6px 16px #b9a8f5">07 box-shadow, no negatives</div>
+<div id="t08" style="margin:8px 0;padding:8px;background:#ffffff;box-shadow:0 6px 16px -6px #7c5cf0">08 box-shadow with negative spread</div>
+<div id="t09" style="margin:8px 0;padding:8px;color:#ffffff;background-image:linear-gradient(90deg,#7c5cf0,#47e1d7)">09 background-image linear-gradient</div>
+<div id="t10" style="margin:8px 0;padding:8px;color:#ffffff;background:linear-gradient(to right,#7c5cf0,#47e1d7)">10 background linear-gradient to right</div>
+<div id="t11" style="margin:8px 0;padding:8px;color:#ffffff;background:#7c5cf0 url(https://images.neopets.com/images/homepage_banner.gif)">11 background url to images.neopets.com</div>
+<div id="t12" style="margin:8px 0;padding:8px;background:#ffffff;text-shadow:0 2px 0 #c9bdf7">12 text-shadow</div>
+<div id="t13" style="margin:20px 0 8px;padding:8px;background:#ffffff"><div style="margin-top:-18px;display:inline-block;padding:2px 8px;background:#7c5cf0;color:#ffffff">13 negative margin-top -18px</div></div>
+<div id="t14" class="ppt14" style="margin:8px 0;padding:8px;color:#ffffff">14 style block with the //*{} prefix (gradient, shadow, font)</div>
+<div id="t15" class="ppt15" style="margin:8px 0;padding:8px;background:#ffffff">15 style block hover: turns purple on hover</div>
+<div id="t16" style="margin:8px 0;padding:8px;background:#ffffff;opacity:0.6">16 opacity 0.6</div>
+<div id="t17" style="margin:8px 0;padding:8px;background:#ffffff;transform:rotate(-2deg)">17 transform rotate</div>
+<div id="t18" style="margin:8px 0;padding:8px;background:#ffffff;border-radius:50%">18 border-radius 50%</div>
+<div id="t19" style="margin:8px 0;padding:8px;color:#ffffff;background:rgba(124,92,240,0.8)">19 rgba background</div>
+<div id="t20" style="margin:8px 0;padding:8px;background:#ffffff;border-bottom:4px solid #cfc3f7">20 border-bottom fake shadow</div>
+<table cellpadding="0" cellspacing="0" style="width:100%;height:10px;margin:8px 0"><tr><td style="background:#7c5cf0"></td><td style="background:#6f72ea"></td><td style="background:#6288e4"></td><td style="background:#559ede"></td><td style="background:#48b4d8"></td><td style="background:#47cbd7"></td><td style="background:#47e1d7"></td></tr></table>
+<div id="t21">21 above: solid-colour step gradient made from table cells</div>
+<div id="t22" style="margin:8px 0;padding:8px;color:#ffffff;background:#7c5cf0;background-image:url(data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%22100%22%20height=%22100%22%20preserveAspectRatio=%22none%22%3E%3ClinearGradient%20id=%22g%22%3E%3Cstop%20stop-color=%22%237c5cf0%22/%3E%3Cstop%20offset=%221%22%20stop-color=%22%2347e1d7%22/%3E%3C/linearGradient%3E%3Crect%20width=%22100%22%20height=%22100%22%20fill=%22url(%23g)%22/%3E%3C/svg%3E);background-size:100% 100%">22 SVG data URL gradient image</div>
+<div id="t23" style="margin:8px 0;padding:8px;color:#ffffff;background:#7c5cf0;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAIAAAB7QOjdAAAAEElEQVR4nGOs+c/AwMAAAA0aAvVWlq6pAAAAAElFTkSuQmCC);background-size:100% 100%">23 PNG data URL image (2px, stretched)</div>
+<div class="ppt29" style="margin:8px 0;padding:16px 8px">
+<div id="t25" class="ppt25" style="margin:6px 0;padding:8px">25 style-block rgba white (see-through to the banner image behind)</div>
+<div id="t26" class="ppt26" style="margin:6px 0;padding:8px;background:#ffffff">26 style-block opacity 0.6</div>
+<div id="t27" class="ppt27" style="margin:6px 0;padding:8px">27 style-block see-through PNG data URL</div>
+<div id="t28" class="ppt28" style="margin:6px 0;padding:8px">28 style-block backdrop-filter blur</div>
+<div style="padding:4px 8px;background:#ffffff">29 the box around 25-28 has a style-block background image</div>
+</div>
+<div id="t30" class="ppt30" style="margin:8px 0;padding:30px 8px;color:#ffffff">30 style-block background cover + fixed</div>
+<div id="t24"style="margin:8px 0;padding:8px;color:#ffffff;background-color:#7c5cf0;background-image:url(https://pets.neopets.com/cpn/Arvvy/1/7.png);background-size:60px 60px;background-repeat:no-repeat;background-position:right center">24 background-image url to pets.neopets.com</div>
+</div>

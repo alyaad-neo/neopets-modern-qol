@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.34
+// @version      1.3.35
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -719,7 +719,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
   }
   try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; apState.cpNote = !!pr.cpNote; apState.cpSp = pr.cpSp !== false; } } catch {}
-  NQ.ap = { read: apRead, tags: apTags, ordered: apOrdered, of: apOf, user: curUser, prof: readProf, main: mainAcct, picked: () => apState.pick && apState.picked.size ? new Set(apState.picked) : null };
+  NQ.ap = { read: apRead, tags: apTags, ordered: apOrdered, of: apOf, user: curUser, prof: readProf, refreshProf: (u) => refreshProfile(u), main: mainAcct, picked: () => apState.pick && apState.picked.size ? new Set(apState.picked) : null };
   const apSavePrefs = () => { try { LSset('nq_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group, cpNote: apState.cpNote, cpSp: apState.cpSp })); } catch {} };
   const fmtAgo = (t) => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   const apToast = (m) => { if (!apEl) return; const t = $('.apToast', apEl); t.textContent = m; t.classList.add('on'); clearTimeout(apToastT); apToastT = setTimeout(() => t.classList.remove('on'), 1800); };

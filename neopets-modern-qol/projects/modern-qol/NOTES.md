@@ -15,7 +15,7 @@ The Modern Interface skin (based on "Neopets - Modern Interface" by marius@clrai
 
 ## Pages it runs on
 
-All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net` only for the JellyNeo popup.
+All of neopets.com and ncmall.neopets.com (bundle `@match`), except petpages (`/~*`, bundle `@exclude`: nothing in the bundle runs there). `items.jellyneo.net` only for the JellyNeo popup.
 
 ## Load order
 
