@@ -11,7 +11,7 @@ The Modern Interface skin (based on "Neopets - Modern Interface" by marius@clrai
 - Split. Edit files in `src/`. `node bundle.js` builds it (it runs `node build.js modern-qol`). Upload only the bundle: `dist/Neopets - Modern QOL.user.js`.
 - `src/00-header.js` is only used by `build.js`; the real header is `projects/_bundle/00-header.js`.
 - The two single-file scripts this was split from are in git history (commit `de59c3b`, `projects/modern-qol/original/`).
-- Line endings: LF.
+- Line endings: 20-layout, 25-hud, 40-styles are CRLF; the rest LF.
 
 ## Pages it runs on
 
@@ -31,7 +31,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 | JellyNeo item popup | 10-jellyneo.js | `nqJN`, `nqJnCard` |
 | Host guard, phone/path exclusions, 403 backoff, patcher helpers (`W`, `$`, `LSget`, `esc`, `shadow`), GM sync, icons | 15-core.js | `npBaseOff`, `np403BackoffActive`, `SYNC_KEYS`, `noAdblockPopup` |
 | Base: layout, native hiding, top bar `#nq-host`, accent and button-theme APIs, scrollbar | 20-layout.js | `nq-core-layout`, `exposeBtnThemes`, `exposeAccent`, `customScrollbar` |
-| Base: sidebar `#nqHud`, user card, bank, QuickRef, NP, icon column, side-button editor | 25-hud.js | `userModule`, `bankModule`, `qrModule`, `npModule`, `colsModule`, `sideBtnEditor` |
+| Base: sidebar `#nqHud`, user card, QuickRef, NP, icon column, side-button editor | 25-hud.js | `userModule`, `qrModule`, `npModule`, `colsModule`, `sideBtnEditor` |
 | Base: background boot, `#nqBgSidebar` | 30-backgrounds.js | `nqBgBoot` |
 | Patcher CSS and bar styling | 40-styles.js | `PAGE_CSS`, `LAYOUT_CSS`, `NC_CSS`, `BAR_CSS`, `SHADOW_CSS`, `EDITOR_CSS` |
 | Colour picker, DTI backgrounds | 45-colors.js | `injectPicker`, `discoverBgs`, `paintAll` |
@@ -41,7 +41,7 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 | Search tools, icon nesting, editor patches | 65-tools.js | `setupTools`, `setupNest`, `patchEditor` |
 | Neopets bell, footer, clock | 70-bell-clock.js | `setupBell`, `setupClock` |
 | Accounts list, pet card, pet image, name tone, dock | 75-pet.js | `renderPetInfo`, `syncPetImg`, `fixPetImg`, `petUI`, `NQ.tone` (also used by the drawer) |
-| Daily fold, scroll-top, shop prices, shopkeeper lock, keys, NC, bank | 80-page-tweaks.js | `setupDailyFold`, `highlightShopPrices`, `lockShopkeeper` |
+| Daily fold, scroll-top, shop prices, shopkeeper lock, keys, NC, NP pill (`setupBank`) | 80-page-tweaks.js | `setupDailyFold`, `highlightShopPrices`, `lockShopkeeper` |
 | Global listeners, per-account theme, account guard, login/logout stripping | 85-account.js | `accountGuard`, `swapTheme`, `stripUi` |
 | Defaults, synced settings, sidebar layout, nav, drawer, `boot()`, `build()`, home bg fix | 90-main.js | `boot`, `build`, `layoutSidebar` |
 

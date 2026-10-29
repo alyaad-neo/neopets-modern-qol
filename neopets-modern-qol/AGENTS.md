@@ -147,7 +147,7 @@ Aly's priorities: 1) account safety, 2) minimal tokens. Read `HANDOFF-merge.md` 
 **Shell and editing on this Windows machine (Git Bash).**
 - `sed -i` converts CRLF to LF. Never use it.
 - Backslashes and apostrophes inside shell-quoted JS get mangled; a heredoc `\\b` arrived as `\b`. Use the Edit tool, or a node script that reads its replacement text from a file. Prefer regexes without backslashes (e.g. `[^A-Za-z0-9_]` instead of `\b`).
-- account-drawer and dailies use CRLF; page-pins-qol and modern-qol/src are LF. Check with node after editing: count `\n` vs `\r\n`.
+- account-drawer and dailies use CRLF; page-pins-qol and most of modern-qol/src are LF (20-layout, 25-hud, 40-styles are CRLF). Check with node after editing: count `\n` vs `\r\n`.
 
 **Token budget (measured 2026-10-27).** One long session cost ~$9 and hit the 5-hour limit: 15.7M cache-read tokens (the main chat re-reading its own long history every turn) vs subagents ~30%. Each subagent costs 55-90k tokens just to start cold and find its place. So:
 - **Keep chats short.** The biggest cost is a long main chat. After ~10-15 rounds, or when a feature is done, update HANDOFF.md and tell Aly to start a new chat.

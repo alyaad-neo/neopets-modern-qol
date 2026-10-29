@@ -17,9 +17,7 @@
       --nq-ink-soft:rgba(255,255,255,.62);
 
       --nq-glass:rgba(0,0,0,.22);
-      --nq-glass-hover:rgba(0,0,0,.30);
       --nq-line:rgba(255,255,255,.16);
-      --nq-line-hover:rgba(255,255,255,.30);
 
       --nq-btn:rgba(255,255,255,.06);
       --nq-btn-hover:rgba(255,255,255,.10);

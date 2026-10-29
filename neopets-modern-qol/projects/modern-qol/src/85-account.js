@@ -40,8 +40,7 @@
     }, true);
   }
 
-  const ACCT_KEYS = ['nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1',
-    'nq_np_last', 'nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1', 'nq_user_stub', 'nq_hud_username', 'nq_cd_v1', 'nq_cd_seen_v1', 'nq_ack_v1', 'nq_nc_last'];
+  const ACCT_KEYS = ['nq_np_last', 'nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1', 'nq_user_stub', 'nq_hud_username', 'nq_cd_v1', 'nq_cd_seen_v1', 'nq_ack_v1', 'nq_nc_last'];
   const THEME_KEYS = ['nq_accent_v1', 'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_logo_white', 'nq_topbar_bg_v1'];
   const themeShared = () => LSget('nq_theme_shared') !== '0';
   const readTheme = () => { const t = {}; THEME_KEYS.forEach(k => { const v = LSget(k); if (v) t[k] = v; }); return t; };

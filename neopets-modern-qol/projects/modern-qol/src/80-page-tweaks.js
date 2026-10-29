@@ -65,7 +65,6 @@
     const sr = shadow();
     if (sr) sr.querySelectorAll('.menu').forEach(m => { m.style.display = 'none'; });
     document.dispatchEvent(new CustomEvent('nq:drawer', { detail: 'none' }));
-    document.querySelectorAll('.bankSettingsBackdrop').forEach(el => el.remove());
     if (dockOpen) setDock(false);
   }
   function setupKeys() {
@@ -99,8 +98,8 @@
     if (v && el.dataset.raw !== v) { el.dataset.raw = v; el.textContent = v; }
   }
   function setupBank() {
-    const np = $('#nqNp'), bank = $('#nqBank');
-    if (!np || !bank || np.dataset.acc || !$('#nqBal', bank)) return;
+    const np = $('#nqNp');
+    if (!np || np.dataset.acc) return;
     np.dataset.acc = '1';
     const val = $('.nqVal', np), img = $('img', np);
     np.innerHTML = '';

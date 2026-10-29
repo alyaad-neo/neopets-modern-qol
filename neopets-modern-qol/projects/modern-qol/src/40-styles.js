@@ -11,7 +11,7 @@ html[data-nq-modern-interface] {
   --nq-ico-shadow: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
-  .qrOverlay a, .qrPetName, .bankSettingsHead h3, #nqUserTitle, #nqBank .title,
+  .qrOverlay a, .qrPetName, #nqUserTitle,
   #nqNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
@@ -36,17 +36,11 @@ html[data-nq-modern-interface] {
 
 
   #nqLeftBar { border: 0 !important; box-shadow: 0 0 10px rgba(0,0,0,.4) !important; top: 0 !important; bottom: auto !important; height: 100vh !important; }
-  #nqHud > #nqBank { display: none !important; }
 
   #nqNp { flex-direction: column !important; align-items: stretch !important; cursor: default !important; }
   #nqNp .nq-amounts { flex: 1; display: flex; align-items: center; white-space: nowrap; }
   #nqNp .nq-amount, #nqNp .nq-nc { display: flex; align-items: center; gap: 5px; text-decoration: none !important; transition: background .15s; }
   #nqNp .nq-amount img, #nqNp .nq-nc img { flex: 0 0 auto; position: absolute; left: -6px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
-  #nqNp .nq-chevron { display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  #nqNp.nq-open .nq-chevron { transform: rotate(180deg); }
-  #nqNp .nq-bank-drawer { display: none; background: transparent !important; }
-  #nqNp.nq-open .nq-bank-drawer { display: block; }
-  #nqNp .nq-bank-drawer #nqBank { border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; background: transparent !important; padding: 8px 0 0 !important; margin: 0 !important; width: 100% !important; }
 
   #nqActivePet { flex: 0 0 auto !important; flex-direction: column !important; align-items: stretch !important; height: auto !important; min-height: 0 !important; max-height: none !important; }
   #nqActivePet > img { order: 0; }
@@ -155,14 +149,13 @@ html[data-nq-modern-interface] {
   #nqBgSidebar .nqBgItem { grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 6px; padding: 5px 8px; }
   #nqBgSidebar .nqBgThumb { width: 48px; height: 48px; }
 
-  #nqUser, #nqNp, #nqActivePet, #nqDaily {
+  #nqDaily {
     background: var(--nq-card) !important;
     border: 1px solid var(--nq-card-line) !important;
     -webkit-backdrop-filter: blur(10px) !important;
     backdrop-filter: blur(10px) !important;
     box-shadow: none !important;
   }
-  #nqUser:hover, #nqNp:hover, #nqActivePet:hover { border-color: rgba(255,255,255,.26) !important; }
 
   #nqHud { z-index: var(--nq-z-hud, 1000); -webkit-font-smoothing: antialiased; pointer-events: none; isolation: isolate; left: calc(var(--nq-hud-left, 14px) + 6px); width: calc(var(--nq-col-width, 240px) - 2 * (var(--nq-hud-left, 14px) + 6px)); }
 
@@ -176,17 +169,10 @@ html[data-nq-modern-interface] {
 
   #nqNp .nq-amount, #nqNp .nq-nc { font-weight: 800 !important; color: #fff !important; }
   #nqNp .nq-amount:hover, #nqNp .nq-nc:hover { background: rgba(255,255,255,.2) !important; }
-  #nqNp .nq-chevron { background: none !important; border: 0 !important; }
-  #nqNp .nq-chevron:hover { opacity: .75; }
   #nqNp .nq-amounts { gap: 10px; min-width: 0; }
   #nqNp .nqVal, #nqNp .ncVal { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #nqBank .bankCustomForm .ok, .bankSettingsFoot .nqBtn.save { color: var(--nq-accent-fg, #1a1330); }
   #nqNp .nq-amount, #nqNp .nq-nc { position: relative; box-sizing: border-box; min-height: 24px; flex: 0 1 auto; min-width: 0; padding: 2px 7px 2px 14px !important; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(255,255,255,.12); font-size: 13px !important; }
   #nqNp .nq-amount:hover, #nqNp .nq-nc:hover { border-color: rgba(255,255,255,.4); }
-  #nqNp .bankGraph text { fill: rgba(255,255,255,.85); }
-  #nqNp #nqBank .msg { opacity: .9; }
-  #nqNp #nqBank .nqBtn { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); }
-  #nqNp #nqBank .nqBtn:hover { background: rgba(255,255,255,.2); }
 
   #nqPetInfo .nqTitle { font-size: 14px !important; flex-wrap: nowrap; align-items: flex-start !important; line-height: 1.2; }
   #nqPetInfo .nqName { display: block; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 22px; font-weight: 400; line-height: 1.1; letter-spacing: .02em; overflow-wrap: anywhere; padding: 0 24px; }
@@ -386,7 +372,6 @@ html[data-nq-modern-interface] {
   #nqNp .nq-top-row .nq-amount, #nqNp .nq-top-row .nq-nc { flex-direction: row; overflow: visible; white-space: nowrap; }
   #nqNp .nq-top-row .nq-amount img, #nqNp .nq-top-row .nq-nc img { flex: 0 0 auto; order: -1; }
   #nqNp .nq-top-row .nqVal, #nqNp .nq-top-row .ncVal { flex: 0 0 auto; white-space: nowrap !important; letter-spacing: 0; }
-  #nqNp .nq-top-row .nq-chevron { flex: 0 0 auto; }
 
   #nqUser .rightSide { align-items: center !important; }
   #nqUser #nqAvatar { align-self: center !important; }
@@ -423,9 +408,6 @@ html[data-nq-modern-interface] {
   #nqHud #nqNp .nq-top-row .nq-amount::before, #nqHud #nqNp .nq-top-row .nq-nc::before { grid-row: 1; font: 600 11px/1 'Outfit', system-ui, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--pn-t3); }
   #nqHud #nqNp .nq-top-row .nqVal, #nqHud #nqNp .nq-top-row .ncVal { color: #fff !important; font: 700 17px/1.15 'Outfit', system-ui, sans-serif !important; grid-row: 1 !important; align-self: center; }
    #nqHud #nqNp .nq-top-row .nq-amount img, #nqHud #nqNp .nq-top-row .nq-nc img { position: absolute !important; top: 50% !important; transform: translateY(-50%) !important; grid-column: auto; grid-row: auto; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); width: 18px !important; height: 18px !important; left: 3px !important; } #nqHud #nqNp .nq-top-row .nq-amount::before, #nqHud #nqNp .nq-top-row .nq-nc::before, #nqHud #nqNp .nq-top-row .nqVal, #nqHud #nqNp .nq-top-row .ncVal { grid-column: 2; font-variant-numeric: tabular-nums; }
-  #nqHud #nqNp .nq-chevron { color: var(--pn-t2) !important; transition: transform .2s, color .15s, background .15s; }
-  #nqHud #nqNp .nq-chevron:hover { color: #fff !important; background: rgba(255,255,255,.12) !important; }
-  #nqHud #nqNp .nq-bank-drawer { padding: 10px 0 0; margin-top: 10px; border-top: 1px solid rgba(255,255,255,.10); }
 
   #nqHud #nqActivePet > img { -webkit-mask-image: none; mask-image: none; position: relative; z-index: 1; vertical-align: top !important; }
   #nqHud #nqPetDockBtn { top: 18px; right: 18px; height: 28px; border-radius: 999px; background: rgba(255,255,255,.85) !important; color: #1a1626 !important; border: 1px solid rgba(255,255,255,.6) !important; box-shadow: 0 2px 8px rgba(0,0,0,.28) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font: 600 11px/1 'Outfit', system-ui, sans-serif; z-index: 2; width: 28px; padding: 0; gap: 0; justify-content: center; overflow: hidden; transition: width .3s cubic-bezier(.3,.7,.3,1), padding .3s, gap .3s, background .15s, box-shadow .15s; } #nqHud #nqPetDockBtn svg { width: 13px; height: 13px; flex: none; color: inherit; transition: transform .35s cubic-bezier(.3,.7,.3,1); } #nqHud #nqPetDockBtn:hover { background: #fff !important; box-shadow: 0 3px 10px rgba(0,0,0,.34) !important; } #nqHud #nqPetDockBtn:hover svg { transform: rotate(180deg); } @media (prefers-reduced-motion: reduce) { #nqHud #nqPetDockBtn svg { transition: none; } }
@@ -482,8 +464,6 @@ html[data-nq-modern-interface] {
   &.nq-side-light #nqHud > #nqUser, &.nq-side-light #nqHud > #nqNp, &.nq-side-light #nqHud > #nqActivePet, &.nq-side-light #nqHud > #nqListsMod, &.nq-side-light #nqHud > #nqFoot { background: rgba(255,255,255,.72) !important; -webkit-backdrop-filter: blur(18px) !important; backdrop-filter: blur(18px) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 8px 24px rgba(40,30,80,.14) !important; color: #1c1830; }
   &.nq-side-light #nqHud #nqUserTitle, &.nq-side-light #nqHud #nqPetInfo .nqTitle a, &.nq-side-light #nqHud #nqPetInfo .nqName { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqNp .nq-top-row .nqVal, &.nq-side-light #nqHud #nqNp .nq-top-row .ncVal, &.nq-side-light #nqHud #nqNp, &.nq-side-light #nqHud #nqNp .nq-amount, &.nq-side-light #nqHud #nqNp .nq-nc { color: #1c1830 !important; }
-  &.nq-side-light #nqHud #nqNp .nq-chevron { color: rgba(28,24,48,.68) !important; } 
-  &.nq-side-light #nqHud #nqNp .nq-bank-drawer { border-top-color: rgba(0,0,0,.08); } &.nq-side-light #nqNp .bankGraph text { fill: rgba(28,24,48,.7); }
   &.nq-side-light #nqHud #nqPetInfo .nqSub, &.nq-side-light #nqHud #nqPetInfo { color: rgba(28,24,48,.68); }
   &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy { color: rgba(28,24,48,.6); } &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy:hover { background: rgba(0,0,0,.07); color: #1c1830; }
   &.nq-side-light #nqHud #nqListsMod .nqLt em { color: #1c1830; background: rgba(0,0,0,.08) !important; }
@@ -567,13 +547,11 @@ html[data-nq-modern-interface] {
   #nqHud #nqListsMod .nqLt { display: flex !important; align-items: center !important; height: var(--nq-pill-h) !important; border: 0 !important; border-radius: var(--nq-pill-r) !important; background: var(--nq-pill-bg) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   #nqHud #nqListsMod .nqLt:hover { background: var(--nq-pill-bg-h) !important; }
   #nqHud #nqListsMod .nqLt em { border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: inherit !important; }
-  #nqHud #nqNp .nq-chevron { width: var(--nq-pill-h) !important; height: var(--nq-pill-h) !important; border-radius: var(--nq-pill-r) !important; }
   &.nq-side-light #nqHud #nqUser #nqUserTitle, &.nq-side-light #nqHud #nqUser .name, &.nq-side-light #nqHud #nqUser .name * { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqUser[data-main="1"] .rightSide::after { color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqUser #nqLogoutBtn, &.nq-side-light #nqHud #nqUser #nqSwapBtn, &.nq-side-light #nqHud #nqUser #nqSwapBtn:hover { color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqUser #nqLogoutBtn:hover { color: #d33 !important; background: rgba(255,90,90,.16) !important; }
   &.nq-side-light #nqHud #nqListsMod .nqLt, &.nq-side-light #nqHud #nqListsMod .nqLt b { color: #1c1830 !important; }
-  &.nq-side-light #nqHud #nqNp .nq-chevron:hover { color: #1c1830 !important; background: var(--nq-pill-bg-h) !important; }
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqTitle a, &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqName, &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqLinks a, &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqLinks button { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqChip:not(.gF):not(.gM) { color: rgba(28,24,48,.68) !important; }
 

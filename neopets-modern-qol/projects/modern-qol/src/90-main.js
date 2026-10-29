@@ -184,7 +184,8 @@
     }
 
     ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
-      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1'].forEach(LSdel);
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1',
+      'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1', 'nq_bank_btn_settings_v1'].forEach(LSdel);
     try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();

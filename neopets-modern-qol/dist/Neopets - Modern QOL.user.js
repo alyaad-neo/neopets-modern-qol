@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.22
+// @version      5.5.23
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -225,9 +225,9 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
 
   const SYNC_KEYS = ['nq_accent_v1', 'nq_btn_theme_v1', 'nq_topbar_bg_v1', 'nq_recolor_site_v1',
     'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_side_btns_v2',
-    'nq_topbar_custom_v1', 'nq_bank_btn_settings_v1',
+    'nq_topbar_custom_v1',
     'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_defaults_v3'];
-  const DATA_KEYS = ['nq_hud_username', 'nq_np_last', 'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1',
+  const DATA_KEYS = ['nq_hud_username', 'nq_np_last',
     'nq_qr_data', 'nq_active_pet_img_v1', 'nq_user_stub'];
   const isNc = location.hostname.toLowerCase() === 'ncmall.neopets.com';
   if (typeof GM_getValue === 'function' && typeof GM_setValue === 'function') {
@@ -296,9 +296,7 @@ html.nqJn, html.nqJn body { overflow: hidden !important; }`;
       --nq-ink-soft:rgba(255,255,255,.62);
 
       --nq-glass:rgba(0,0,0,.22);
-      --nq-glass-hover:rgba(0,0,0,.30);
       --nq-line:rgba(255,255,255,.16);
-      --nq-line-hover:rgba(255,255,255,.30);
 
       --nq-btn:rgba(255,255,255,.06);
       --nq-btn-hover:rgba(255,255,255,.10);
@@ -1524,32 +1522,6 @@ if (NQ.base) startLayout();
     return { name: '', sci: '', mood: '1' };
   }
   let _earlyActivePetImg = null;
-  const BANK_PIN = "";
-  const BANK_PIN_LS = 'nq_bank_pin_v1';
-  function getBankPin(){
-    try {
-      const stored = (LSget(BANK_PIN_LS) || '').replace(/[^\d]/g, '').slice(0, 4);
-      if (stored.length === 4) return stored;
-    } catch {}
-    return String(BANK_PIN || '').replace(/[^\d]/g, '').slice(0, 4);
-  }
-  function promptBankPin(){
-    const v = prompt(
-      'Enter your 4-digit Neopets Bank PIN.\n\n' +
-      'Stored in this browser only (localStorage). Never leaves your machine\n' +
-      'except when you click Withdraw. Alt+click Withdraw later to clear it.\n\n' +
-      'Cancel to skip.'
-    );
-    if (v === null) return '';
-    const clean = String(v).replace(/[^\d]/g, '').slice(0, 4);
-    try {
-      if (clean.length === 4) LSset(BANK_PIN_LS, clean);
-    } catch {}
-    return clean;
-  }
-  function clearBankPin(){
-    LSdel(BANK_PIN_LS);
-  }
   const now = () => Date.now();
   const HUD_CSS = `
   #nqHud > *{ pointer-events:auto; }
@@ -1562,19 +1534,10 @@ if (NQ.base) startLayout();
   .nqCard{
     width:100%;
     box-sizing:border-box;
-    background:var(--nq-glass, rgba(0,0,0,.22));
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
     border-radius:var(--nq-radius, 14px);
-    box-shadow:var(--nq-shadow, 0 8px 24px rgba(0,0,0,.28));
-    backdrop-filter:blur(var(--nq-blur, 8px));
-    -webkit-backdrop-filter:blur(var(--nq-blur, 8px));
     color:var(--nq-ink, #fff);
     position:relative;
     transition:background .16s ease, border-color .16s ease, transform .08s ease;
-  }
-  .nqCard:hover{
-    background:var(--nq-glass-hover, rgba(0,0,0,.30));
-    border-color:var(--nq-line-hover, rgba(255,255,255,.30));
   }
   .nqCard.clickable{ cursor:pointer; user-select:none; }
   .nqCard.clickable:active{ transform:translateY(1px); }
@@ -1628,319 +1591,11 @@ if (NQ.base) startLayout();
     text-underline-offset:3px;
   }
 
-  #nqBank{ padding:10px 12px; }
-  #nqBank .head{
-    display:grid;
-    grid-template-columns: 26px 1fr 26px;
-    align-items:center;
-    margin:0 0 8px 0;
-    gap:6px;
-  }
-  #nqBank .title{
-    grid-column:2;
-    text-align:center;
-    opacity:.95;
-    cursor:pointer;
-  }
-  #nqBank .title:hover{
-    text-decoration:underline;
-    text-decoration-color:var(--nq-accent, #dcb8ff);
-    text-underline-offset:3px;
-  }
-  #nqBank .rows{ display:flex; flex-direction:column; gap:8px; }
-  #nqBank .balance{
-    width:100%; font-weight:700; letter-spacing:.2px; min-height:26px;
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    flex-wrap:wrap;
-  }
-  #nqBank .balance .balVal{ font-variant-numeric:tabular-nums; }
-  #nqBank .dailyDelta{
-    display:inline-flex; gap:6px; align-items:baseline;
-    font-size:11px; font-weight:600; line-height:1;
-    font-variant-numeric:tabular-nums;
-    opacity:.95;
-  }
-  #nqBank .dailyDelta:empty{ display:none; }
-  #nqBank .dailyDelta .dgain{ color:#7be08e; }
-  #nqBank .dailyDelta .dloss{ color:#ff8a8a; }
-  #nqBank #nqInterest{
-    width:100%;
-    background:rgba(255,90,90,.18);
-    border:1px solid #ff5a5a;
-    color:#fff; font-weight:900;
-    text-shadow:
-      0 1px 2px rgba(120,0,0,.95),
-      0 0 4px rgba(255,40,40,.6);
-    box-shadow:
-      0 0 18px rgba(255,90,90,.55),
-      0 0 0 0 rgba(255,90,90,.55);
-    animation: nqBankIntPulse 1.6s ease-in-out infinite;
-  }
-  #nqBank #nqInterest:hover{
-    background:rgba(255,90,90,.32);
-    filter:brightness(1.08);
-  }
-  @keyframes nqBankIntPulse{
-    0%, 100%{ box-shadow:0 0 0 0  rgba(255,90,90,.65), 0 0 18px rgba(255,90,90,.55); }
-    50%     { box-shadow:0 0 0 12px rgba(255,90,90,0),  0 0 26px rgba(255,90,90,.75); }
-  }
-  #nqBank .bankBtns{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:8px;
-    align-items:start;
-  }
-  #nqBank .bankBtns:empty{ display:none; }
-  #nqBank .bankCol{
-    display:flex; flex-direction:column; gap:8px;
-    min-width:0;
-  }
-  #nqBank .bankCol:empty{ display:none; }
-  #nqBank .bankBtns .nqBtn{ width:100%; height:30px; padding:0 8px; }
-  #nqBank .bankCustomForm{
-    display:flex; align-items:stretch; gap:3px;
-    width:100%; height:30px;
-    box-sizing:border-box;
-  }
-  #nqBank .bankCustomForm input{
-    flex:1 1 0;
-    min-width:0;
-    width:0;
-    height:100%;
-    padding:0 6px;
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
-    background:var(--nq-btn, rgba(255,255,255,.06));
-    color:#fff; font:inherit; font-size:12px; font-weight:600;
-    border-radius:var(--nq-radius-sm, 10px);
-    outline:0;
-    font-variant-numeric:tabular-nums;
-    text-align:right;
-  }
-  #nqBank .bankCustomForm input:focus{ border-color:var(--nq-accent, #dcb8ff); }
-  #nqBank .bankCustomForm input::placeholder{ color:rgba(255,255,255,.4); font-weight:500; }
-  #nqBank .bankCustomForm .ok{
-    flex:0 0 26px; width:26px; height:100%;
-    padding:0;
-    display:flex; align-items:center; justify-content:center;
-    background:var(--nq-accent, #dcb8ff);
-    border:0; border-radius:var(--nq-radius-sm, 10px);
-    font-weight:800; font-size:13px;
-    cursor:pointer;
-  }
-  #nqBank .bankCustomForm .ok:hover{ filter:brightness(1.08); }
-  #nqBank .msg{ font-size:11px; opacity:.62; text-align:center; min-height:12px; }
-  #nqBank .msg:empty{ display:none; }
-  #nqBank .disabled{ opacity:.55; cursor:not-allowed; pointer-events:none; }
 
-  #nqBank .bankGraph{
-    width:100%;
-    height:72px;
-    padding:0;
-    margin:0;
-  }
-  #nqBank .bankGraph:empty{ display:none; }
-  #nqBank .bankGraph svg{
-    display:block;
-    width:100%; height:100%;
-    overflow:visible;
-  }
-  #nqBank .bankGraph .gLine{
-    fill:none;
-    stroke-width:1.6;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-    filter: drop-shadow(0 1px 1px rgba(0,0,0,.4));
-  }
-  #nqBank .bankGraph .gFill{
-    fill:url(#nqBankGraphFill);
-    opacity:.18;
-  }
-  #nqBank .bankGraph text{
-    font-family: var(--nq-font, system-ui, sans-serif);
-    font-size: 7px;
-    fill: rgba(255,255,255,.55);
-    font-variant-numeric: tabular-nums;
-  }
-  #nqBank .bankGraph .axisY{ text-anchor: end; }
-  #nqBank .bankGraph .axisX{ text-anchor: middle; }
-  #nqBank .bankGraph .axisXLeft{ text-anchor: start; }
-  #nqBank .bankGraph .axisXRight{ text-anchor: end; }
-  #nqBank .bankGraph .gridLine{
-    stroke: rgba(255,255,255,.10);
-    stroke-width: 0.5;
-    stroke-dasharray: 2 2;
-  }
-  #nqBank .bankGraph .gEmpty{
-    text-align:center;
-    font-size:10px;
-    opacity:.5;
-    padding:24px 0;
-    line-height:1.2;
-  }
 
-  .bankSettingsBackdrop{
-    position:fixed; inset:0;
-    background:rgba(0,0,0,.55);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: calc(var(--nq-z-menu, 2000) + 100);
-    display:flex; align-items:center; justify-content:center;
-    padding:20px;
-    animation: bankModalIn .14s ease-out;
-  }
-  @keyframes bankModalIn{ from{ opacity:0; } to{ opacity:1; } }
-  .bankSettingsBox{
-    width:auto; max-width:min(480px, calc(100vw - 40px));
-    background:rgba(20,14,32,.96);
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
-    border-radius:var(--nq-radius, 14px);
-    box-shadow:0 14px 40px rgba(0,0,0,.55);
-    color:var(--nq-ink, #fff);
-    font-family:var(--nq-font, system-ui, sans-serif);
-    overflow:hidden;
-  }
-  .bankSettingsHead{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:12px 14px;
-    border-bottom:1px solid rgba(255,255,255,.10);
-  }
-  .bankSettingsHead h3{
-    margin:0; font-size:14px; font-weight:700;
-    letter-spacing:.03em;
-  }
-  .bankSettingsHead .closeBtn{
-    width:26px; height:26px; padding:0; border:0;
-    background:rgba(255,255,255,.06); color:#fff;
-    border-radius:6px; cursor:pointer; font-size:16px; line-height:1;
-  }
-  .bankSettingsHead .closeBtn:hover{ background:rgba(255,255,255,.14); }
-  .bankSettingsBody{
-    padding:10px 14px;
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:10px;
-  }
-  .bankSettingsCol{
-    display:flex; flex-direction:column; gap:10px;
-    min-width:0;
-  }
-  .bankSettingsColHead{
-    font-size:11px; font-weight:700;
-    letter-spacing:.08em; text-transform:uppercase;
-    color:rgba(255,255,255,.55);
-    padding:0 2px 2px;
-  }
-  .bankSettingsRow{
-    padding:8px 10px;
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
-    background:var(--nq-btn, rgba(255,255,255,.04));
-    border-radius:var(--nq-radius-sm, 10px);
-    display:flex; flex-direction:column; gap:8px;
-  }
-  .bankSettingsRow.on{
-    border-color: var(--nq-accent-line, rgba(220,184,255,.45));
-    background: var(--nq-accent-soft, rgba(220,184,255,.08));
-  }
-  .bankSettingsRow .topLine{
-    display:flex; align-items:center; gap:8px;
-  }
-  .bankSettingsRow input[type="checkbox"]{
-    width:16px; height:16px; cursor:pointer;
-    accent-color: var(--nq-accent, #dcb8ff);
-    margin:0;
-  }
-  .bankSettingsRow .lbl{
-    flex:1; font-size:13px; font-weight:600;
-    cursor:pointer; user-select:none;
-  }
-  .bankSettingsRow .sub{
-    display:flex; flex-direction:column; gap:4px;
-  }
-  .bankSettingsRow .sub label{
-    font-size:11px; opacity:.7;
-  }
-  .bankSettingsRow .sub input[type="text"],
-  .bankSettingsRow .sub select{
-    width:100%; min-width:0; box-sizing:border-box;
-    height:28px; padding:0 8px;
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
-    background:rgba(0,0,0,.22);
-    color:#fff; font:inherit; font-size:12px; font-weight:600;
-    border-radius:8px; outline:0;
-    font-variant-numeric:tabular-nums;
-    text-align:right;
-  }
-  .bankSettingsRow .sub select{ text-align:left; }
-  .bankSettingsRow .sub input:focus,
-  .bankSettingsRow .sub select:focus{ border-color:var(--nq-accent, #dcb8ff); }
-  .bankSettingsRow.off .sub{ opacity:.4; pointer-events:none; }
-  .bankSettingsFoot{
-    display:flex; gap:8px; justify-content:flex-end;
-    padding:10px 14px;
-    border-top:1px solid rgba(255,255,255,.10);
-  }
-  .bankSettingsFoot .nqBtn{
-    padding:6px 14px;
-    background:var(--nq-btn, rgba(255,255,255,.06));
-    border:1px solid var(--nq-line, rgba(255,255,255,.16));
-    color:#fff; font-size:12px; font-weight:700;
-    border-radius:var(--nq-radius-sm, 10px);
-    cursor:pointer;
-  }
-  .bankSettingsFoot .nqBtn:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
-  .bankSettingsFoot .nqBtn.save{
-    background:var(--nq-accent, #dcb8ff);
-    color:#1a1330; border-color:transparent;
-  }
-  .bankSettingsFoot .nqBtn.save:hover{ filter:brightness(1.08); }
 
-  .nqCard .cardGear{
-    position:absolute;
-    top:6px; right:6px;
-    width:26px; height:26px; padding:0;
-    display:flex; align-items:center; justify-content:center;
-    background:transparent; border:0;
-    color:rgba(255,255,255,.45);
-    font-size:16px; line-height:1; cursor:pointer;
-    border-radius:6px;
-    opacity:0;
-    transition: opacity .14s ease, background .12s ease, color .12s ease, transform .15s ease;
-    z-index:3;
-  }
-  .nqCard:hover .cardGear{ opacity:.85; }
-  .nqCard .cardGear:hover{
-    opacity:1 !important;
-    background:var(--nq-btn-hover, rgba(255,255,255,.10));
-    color:#fff;
-    transform: rotate(45deg);
-  }
 
-  .nqCard .cardRefresh{
-    position:absolute;
-    top:6px; right:36px;
-    width:26px; height:26px; padding:0;
-    display:flex; align-items:center; justify-content:center;
-    background:transparent; border:0;
-    color:rgba(255,255,255,.45);
-    font-size:15px; line-height:1; cursor:pointer;
-    border-radius:6px;
-    opacity:0;
-    transition: opacity .14s ease, background .12s ease, color .12s ease, transform .2s ease;
-    z-index:3;
-  }
-  .nqCard:hover .cardRefresh{ opacity:.85; }
-  .nqCard .cardRefresh:hover{
-    opacity:1 !important;
-    background:var(--nq-btn-hover, rgba(255,255,255,.10));
-    color:#fff;
-    transform: rotate(180deg);
-  }
 
-  .bankSettingsBody.bankSettingsBodySingle{
-    grid-template-columns: 1fr;
-  }
-  .bankSettingsRow.toggleOnly{ padding:6px 10px; }
-  .bankSettingsRow.toggleOnly .topLine{ gap:10px; }
 
   @font-face {
     font-family: 'CafeteriaBlack';
@@ -2032,7 +1687,6 @@ if (NQ.base) startLayout();
   }
 
   body.nqDockActive #nqUser,
-  body.nqDockActive #nqBank,
   body.nqDockActive #nqNp,
   body.nqDockActive #nqActivePet{
     opacity: 0;
@@ -2040,8 +1694,7 @@ if (NQ.base) startLayout();
     transition: opacity .25s ease;
   }
 
-  #nqUser .name #nqUserTitle,
-  #nqBank .title{
+  #nqUser .name #nqUserTitle{
     font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
     font-weight: 400;
     letter-spacing: .02em;
@@ -2072,7 +1725,6 @@ if (NQ.base) startLayout();
   #nqActivePet img.loaded{ opacity:1; }
 
   @media (hover: none){
-    .nqCard .cardGear, .nqCard .cardRefresh{ opacity:.85; }
     .qrOverlay{
       opacity:1;
       pointer-events:auto;
@@ -2080,7 +1732,6 @@ if (NQ.base) startLayout();
     }
   }
   #nqHud > #nqUser,
-  #nqHud > #nqBank,
   #nqHud > #nqNp{
     flex: 0 0 auto;
   }
@@ -2156,27 +1807,6 @@ function startHud() {
     </div>
   `;
 
-  const cardBank = document.createElement('div');
-  cardBank.className = 'nqCard';
-  cardBank.id = 'nqBank';
-  cardBank.innerHTML = `
-    <button type="button" class="cardGear" id="nqBankGear" title="Mini Bank settings" aria-label="Settings">⚙</button>
-    <button type="button" class="cardRefresh" id="nqBankRefresh" title="Refresh bank data" aria-label="Refresh">↻</button>
-    <div class="head">
-      <div class="title">Bank</div>
-    </div>
-    <div class="rows">
-      <div class="nqBtn balance" id="nqBal" title="Click to refresh">
-        <span class="balVal">—</span>
-        <span class="dailyDelta" id="nqBankDelta"></span>
-      </div>
-      <div class="bankGraph" id="nqBankGraph"></div>
-      <button type="button" class="nqBtn" id="nqInterest" style="display:none">Collect interest</button>
-      <div class="bankBtns" id="nqBankBtns"></div>
-      <div class="msg" id="nqBankMsg"></div>
-    </div>
-  `;
-
   const cardNp = document.createElement('div');
   cardNp.className = 'nqCard clickable';
   cardNp.id = 'nqNp';
@@ -2192,7 +1822,7 @@ function startHud() {
     cardActivePet.appendChild(_earlyActivePetImg);
   }
 
-  hud.append(cardUser, cardBank, cardNp, cardActivePet);
+  hud.append(cardUser, cardNp, cardActivePet);
 
   const dockWrap = document.createElement('div');
   dockWrap.id = 'qrDockWrap';
@@ -2278,678 +1908,6 @@ function startHud() {
       window.open(href, '_blank', 'noopener');
     }, true);
     ensureUsername(); waitForGlobal();
-  })();
-
-  (function bankModule(){
-    const STORE = 'nq_bank_state_v2';
-    const SETTINGS_LS = 'nq_bank_btn_settings_v1';
-    const DAILY_LS    = 'nq_bank_daily_v1';
-    const FORM_TTL = 5*60*1000;
-    const load = () => { try { return JSON.parse(LSget(STORE) || 'null') || {}; } catch { return {}; } };
-    const save = (s) => { LSset(STORE, JSON.stringify(s || {})); };
-    const state = Object.assign({
-      bank_balance:'',
-      bank_forms:{},
-      bank_interest:null,
-      bank_dailyInterest:'',
-      bank_rate:'',
-      bank_updatedAt:0,
-      bank_msg:'',
-    }, load());
-
-    const ROUND_OPTIONS = [
-      { value: 0,        label: 'Total (deposit all)' },
-      { value: 10,       label: '10 NP' },
-      { value: 100,      label: '100 NP' },
-      { value: 1000,     label: '1,000 NP' },
-      { value: 10000,    label: '10,000 NP' },
-      { value: 100000,   label: '100,000 NP' },
-      { value: 1000000,  label: '1,000,000 NP' },
-    ];
-    const DEFAULT_SETTINGS = {
-      rounded:        { enabled: true,  round: 100000 },
-      customDeposit:  { enabled: false },
-      autoDeposit:    { enabled: false, amount: 5000 },
-      customWithdraw: { enabled: false },
-      autoWithdraw:   { enabled: true,  amount: 500000 },
-      graph:          { enabled: false },
-    };
-    function loadSettings(){
-      try {
-        const raw = LSget(SETTINGS_LS);
-        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-        const p = JSON.parse(raw) || {};
-        return {
-          rounded:        Object.assign({}, DEFAULT_SETTINGS.rounded,        p.rounded||{}),
-          customDeposit:  Object.assign({}, DEFAULT_SETTINGS.customDeposit,  p.customDeposit||{}),
-          autoDeposit:    Object.assign({}, DEFAULT_SETTINGS.autoDeposit,    p.autoDeposit||{}),
-          customWithdraw: Object.assign({}, DEFAULT_SETTINGS.customWithdraw, p.customWithdraw||{}),
-          autoWithdraw:   Object.assign({}, DEFAULT_SETTINGS.autoWithdraw,   p.autoWithdraw||{}),
-          graph:          Object.assign({}, DEFAULT_SETTINGS.graph,          p.graph||{}),
-        };
-      } catch { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
-    }
-    function saveSettings(s){ LSset(SETTINGS_LS, JSON.stringify(s||{})); }
-    let settings = loadSettings();
-
-    const HISTORY_LS = 'nq_bank_history_v1';
-    const HISTORY_MAX = 180;
-    function loadHistory(){
-      try {
-        const j = JSON.parse(LSget(HISTORY_LS) || '[]');
-        return Array.isArray(j) ? j : [];
-      } catch { return []; }
-    }
-    function saveHistory(arr){
-      LSset(HISTORY_LS, JSON.stringify(arr.slice(-HISTORY_MAX)));
-    }
-    function pushHistory(dateKey, balance){
-      if (!dateKey || !Number.isFinite(balance)) return;
-      const hist = loadHistory();
-      const idx = hist.findIndex(e => e.d === dateKey);
-      if (idx >= 0) hist[idx] = { d: dateKey, b: balance };
-      else hist.push({ d: dateKey, b: balance });
-      saveHistory(hist);
-    }
-
-    function nstDateKey(ms){
-      const parts = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'America/Los_Angeles',
-        year:'numeric', month:'2-digit', day:'2-digit',
-      }).formatToParts(new Date(ms || Date.now()));
-      const get = (t) => parts.find(p => p.type === t).value;
-      return `${get('year')}-${get('month')}-${get('day')}`;
-    }
-    function loadDaily(){
-      try { const j = JSON.parse(LSget(DAILY_LS) || 'null'); if (j && typeof j === 'object') return j; } catch {}
-      return { date:'', baseline:null, gained:0, lost:0, lastSeen:null };
-    }
-    function saveDaily(){ LSset(DAILY_LS, JSON.stringify(daily)); }
-    let daily = loadDaily();
-    function noteBalance(rawDigits){
-      const n = parseInt(String(rawDigits||'').replace(/[^\d]/g,''), 10);
-      if (!Number.isFinite(n)) return;
-      const today = nstDateKey();
-      if (daily.date !== today){
-        if (daily.date && daily.lastSeen != null){
-          pushHistory(daily.date, daily.lastSeen);
-        }
-        pushHistory(today, n);
-        daily = { date: today, baseline: n, gained: 0, lost: 0, lastSeen: n };
-        saveDaily();
-        return;
-      }
-      pushHistory(today, n);
-      if (daily.lastSeen == null){
-        daily.baseline = (daily.baseline == null) ? n : daily.baseline;
-        daily.lastSeen = n;
-        saveDaily();
-        return;
-      }
-      const diff = n - daily.lastSeen;
-      if (diff > 0) daily.gained += diff;
-      else if (diff < 0) daily.lost += -diff;
-      daily.lastSeen = n;
-      saveDaily();
-    }
-
-    function parisDateParts(ms){
-      const parts = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Europe/Paris',
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', hour12: false,
-      }).formatToParts(new Date(ms));
-      const get = (t) => parts.find(p => p.type === t).value;
-      return { year:+get('year'), month:+get('month'), day:+get('day'), hour:+get('hour') };
-    }
-    function bankDayKey(ms){
-      const p = parisDateParts(ms);
-      if (p.hour < 9){
-        const d = new Date(p.year, p.month - 1, p.day - 1);
-        return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-      }
-      return `${p.year}-${p.month}-${p.day}`;
-    }
-    function crossedDailyReset(lastMs, nowMs){
-      if (!lastMs) return true;
-      return bankDayKey(lastMs) !== bankDayKey(nowMs);
-    }
-
-    const balEl  = $('#nqBal', cardBank);
-    const balValEl = $('#nqBal .balVal', cardBank);
-    const deltaEl  = $('#nqBankDelta', cardBank);
-    const intBtn = $('#nqInterest', cardBank);
-    const msgEl  = $('#nqBankMsg', cardBank);
-    const btnsEl = $('#nqBankBtns', cardBank);
-    const gearBtn= $('#nqBankGear', cardBank);
-    const graphEl= $('#nqBankGraph', cardBank);
-
-    let busy = false, lastAct = 0;
-    const gate = () => { const n = now(); if (n - lastAct < 450) return false; lastAct = n; return true; };
-    const strip = (s) => String(s||'').replace(/\s+/g,' ').trim();
-    const cleanDigits = (s) => (String(s||'').match(/[\d,]+/) || [])[0] || '';
-    const numComma = (x) => String(x).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const setBusy = (v) => { busy = !!v; cardBank.style.opacity = busy ? '.7' : ''; };
-    const setMsg = (t) => { state.bank_msg = String(t||''); msgEl.textContent = state.bank_msg; save(state); };
-    const tryJSON = (t) => { try { return JSON.parse(t); } catch { return null; } };
-
-    function formatShort(n){
-      n = Math.round(Number(n) || 0);
-      if (n < 1000) return String(n);
-      if (n < 1_000_000){
-        const v = n / 1000;
-        return (v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/,'')) + 'k';
-      }
-      const v = n / 1_000_000;
-      return (v >= 100 ? v.toFixed(0) : v.toFixed(1).replace(/\.0$/,'')) + 'M';
-    }
-    function renderDelta(){
-      if (daily.date && daily.date !== nstDateKey()){
-        daily = { date: nstDateKey(), baseline: daily.lastSeen, gained: 0, lost: 0, lastSeen: daily.lastSeen };
-        saveDaily();
-      }
-      const net = daily.gained - daily.lost;
-      if (net === 0){
-        deltaEl.innerHTML = '';
-        return;
-      }
-      const sign     = net > 0 ? '+' : '−';
-      const cls      = net > 0 ? 'dgain' : 'dloss';
-      const absVal   = Math.abs(net);
-      const compact  = formatShort(absVal);
-      const exact    = numComma(absVal);
-      deltaEl.innerHTML = `<span class="${cls}" title="Net today: ${sign}${exact} NP">${sign}${compact}</span>`;
-    }
-
-    function render(){
-      balValEl.textContent = state.bank_balance ? `${state.bank_balance} NP` : '—';
-      renderDelta();
-      renderGraph();
-      msgEl.textContent = state.bank_msg || '';
-      if (state.bank_interest){
-        intBtn.style.display = '';
-        const amount = state.bank_dailyInterest ? `Collect ${state.bank_dailyInterest} NP` : 'Collect interest';
-        intBtn.textContent = state.bank_rate ? `${amount} @ ${state.bank_rate}` : amount;
-      } else {
-        intBtn.style.display = 'none';
-        intBtn.textContent = 'Collect interest';
-      }
-      renderButtons();
-    }
-
-    function renderGraph(){
-      if (!graphEl) return;
-      if (!settings?.graph?.enabled){
-        graphEl.innerHTML = '';
-        return;
-      }
-      const hist = loadHistory();
-      const points = [];
-      hist.forEach(e => {
-        const b = Number(e.b);
-        if (Number.isFinite(b)) points.push({ d: e.d, b });
-      });
-      points.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0));
-      if (points.length === 0){
-        graphEl.innerHTML = '<div class="gEmpty">Open your bank once to start recording — one point is added per day.</div>';
-        return;
-      }
-
-      const GW = 220, H = 72;
-      const ML = 36, MR = 4, MT = 6, MB = 11;
-      const innerW = GW - ML - MR;
-      const innerH = H - MT - MB;
-
-      const balances = points.map(p => p.b);
-      const min = Math.min(...balances);
-      const max = Math.max(...balances);
-      const range = (max - min) || 1;
-      const isUp  = balances[balances.length - 1] >= balances[0];
-      const stroke = isUp ? '#7be08e' : '#ff8a8a';
-      const nDays = points.length;
-      const tip = `${nDays} day${nDays > 1 ? 's' : ''} · ${numComma(min)} – ${numComma(max)} NP`;
-      const fmtDate = (d) => {
-        const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-        return m ? `${m[2]}/${m[3]}` : '';
-      };
-
-      const yMaxText = formatShort(max);
-      const yMinText = formatShort(min);
-      const yLabelsSvg = (max === min)
-        ? `<text class="axisY" x="${ML - 3}" y="${MT + innerH/2 + 2.5}">${yMaxText}</text>`
-        : (
-          `<text class="axisY" x="${ML - 3}" y="${MT + 3}">${yMaxText}</text>` +
-          `<text class="axisY" x="${ML - 3}" y="${MT + innerH}">${yMinText}</text>`
-        );
-
-      const firstDate = fmtDate(points[0].d);
-      const lastDate  = fmtDate(points[points.length - 1].d);
-      const xLabelsSvg = (firstDate === lastDate)
-        ? `<text class="axisX" x="${ML + innerW/2}" y="${H - 2}">${firstDate}</text>`
-        : (
-          `<text class="axisXLeft" x="${ML}" y="${H - 2}">${firstDate}</text>` +
-          `<text class="axisXRight" x="${ML + innerW}" y="${H - 2}">${lastDate}</text>`
-        );
-
-      const gridSvg = (max === min)
-        ? `<line class="gridLine" x1="${ML}" y1="${MT + innerH/2}" x2="${ML + innerW}" y2="${MT + innerH/2}"/>`
-        : (
-          `<line class="gridLine" x1="${ML}" y1="${MT}" x2="${ML + innerW}" y2="${MT}"/>` +
-          `<line class="gridLine" x1="${ML}" y1="${MT + innerH}" x2="${ML + innerW}" y2="${MT + innerH}"/>`
-        );
-
-      if (points.length === 1){
-        graphEl.innerHTML =
-          `<svg viewBox="0 0 ${GW} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
-          gridSvg +
-          yLabelsSvg +
-          xLabelsSvg +
-          `<circle cx="${ML + innerW/2}" cy="${MT + innerH/2}" r="3" fill="${stroke}"/>` +
-          `</svg>`;
-        return;
-      }
-
-      const coords = points.map((p, i) => {
-        const x = ML + (i / (points.length - 1)) * innerW;
-        const y = MT + innerH - ((p.b - min) / range) * innerH;
-        return [x.toFixed(1), y.toFixed(1)];
-      });
-      const linePts = coords.map(c => c.join(',')).join(' ');
-      const fillPts = `${ML},${MT + innerH} ${linePts} ${ML + innerW},${MT + innerH}`;
-      graphEl.innerHTML =
-        `<svg viewBox="0 0 ${GW} ${H}" preserveAspectRatio="none" aria-label="Bank balance trend"><title>${tip}</title>` +
-        `<defs><linearGradient id="nqBankGraphFill" x1="0" y1="0" x2="0" y2="1">` +
-        `<stop offset="0%" stop-color="${stroke}" stop-opacity=".6"/>` +
-        `<stop offset="100%" stop-color="${stroke}" stop-opacity="0"/>` +
-        `</linearGradient></defs>` +
-        gridSvg +
-        yLabelsSvg +
-        xLabelsSvg +
-        `<polygon class="gFill" points="${fillPts}"/>` +
-        `<polyline class="gLine" points="${linePts}" stroke="${stroke}"/>` +
-        `</svg>`;
-    }
-
-    function npOnHand(){
-      let raw = '';
-      const el = $('#npanchor');
-      if (el) raw = el.textContent;
-      if (!raw){ try { raw = LSget('nq_np_last') || ''; } catch {} }
-      const n = parseInt(String(raw).replace(/[^\d]/g,''), 10);
-      return Number.isFinite(n) ? n : 0;
-    }
-    function applyServer(j){
-      if (!j) return;
-      const np = (j.new_neopoints != null) ? numComma(j.new_neopoints) : null;
-      const bal = (j.final_balance != null) ? j.final_balance : j.new_balance;
-      if (np != null){ const el = $('#npanchor'); if (el) el.textContent = np; LSset('nq_np_last', np); }
-      if (bal != null){
-        state.bank_balance = numComma(bal);
-        noteBalance(bal);
-      }
-    }
-
-    function grabForm(formEl, type){
-      if (!formEl) return null;
-      const action = formEl.getAttribute('action') || '/np-templates/ajax/process_bank.php';
-      const hidden = {};
-      formEl.querySelectorAll('input[name]').forEach(inp => { const n = inp.getAttribute('name'); if (n) hidden[n] = inp.value || ''; });
-      if (type) hidden.type = type;
-      return { action, hidden };
-    }
-    function parseBank(htmlText){
-      const out = { balance:null, forms:{}, interest:null, dailyInterest:'', rate:'' };
-      const doc = new DOMParser().parseFromString(htmlText, 'text/html');
-      const balNode = doc.querySelector('#txtCurrentBalance1, #txtCurrentBalance');
-      if (balNode) out.balance = cleanDigits(strip(balNode.textContent));
-      else { const m = htmlText.match(/Current\s*Balance:\s*([\d,]+)\s*NP/i); if (m) out.balance = m[1]; }
-      const depF = doc.querySelector('form input[name="type"][value="deposit"]')?.closest('form');
-      const wdF  = doc.querySelector('form input[name="type"][value="withdraw"]')?.closest('form');
-      const dep = grabForm(depF, 'deposit'); if (dep) out.forms.deposit = dep;
-      const wd  = grabForm(wdF, 'withdraw');  if (wd) out.forms.withdraw = wd;
-      const intF = doc.querySelector('#frmCollectInterest');
-      if (intF) out.interest = grabForm(intF, null);
-      const dailyEl = doc.querySelector('#txtDailyInterest');
-      if (dailyEl){
-        const m = strip(dailyEl.textContent).match(/([\d,]+)\s*NP/i);
-        if (m) out.dailyInterest = m[1];
-      }
-      const rateEl = doc.querySelector('#txtAnnualInterestRate');
-      if (rateEl){
-        const m = strip(rateEl.textContent).match(/[\d.]+\s*%/);
-        if (m) out.rate = m[0];
-      }
-      return out;
-    }
-    async function fetchBank(){ if (backoff403Active()) throw new Error('bank 403 backoff'); const r = await fetch('/bank.phtml', { credentials:'include', cache:'no-store' }); note403(r); if (!r.ok) throw new Error('bank '+r.status); return await r.text(); }
-    async function refreshBank(html){
-      const p = parseBank(html || await fetchBank());
-      if (p.balance){ state.bank_balance = p.balance; noteBalance(p.balance); }
-      state.bank_forms = p.forms || {};
-      state.bank_interest = p.interest || null;
-      state.bank_dailyInterest = p.dailyInterest || '';
-      state.bank_rate = p.rate || '';
-      state.bank_updatedAt = now();
-      save(state); render();
-    }
-    async function bankPost(action, dataObj){
-      const url = new URL(action, location.origin).toString();
-      const body = new URLSearchParams();
-      Object.entries(dataObj || {}).forEach(([k,v]) => body.set(k, v ?? ''));
-      const r = await fetch(url, { method:'POST', credentials:'include', headers:{ 'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8', 'X-Requested-With':'XMLHttpRequest', 'Accept':'*/*' }, body });
-      note403(r);
-      return { ok:r.ok, status:r.status, text: await r.text() };
-    }
-    const extractMsg = (t) => { const s = strip(String(t||'')); if (!s) return 'ok'; const j = tryJSON(s); if (j) return strip(j.message||j.msg||j.error||j.status||'ok'); return s.length>90 ? s.slice(0,90)+'…' : s; };
-    async function ensureForms(){ if (!state.bank_forms?.deposit?.action || (now()-state.bank_updatedAt) > FORM_TTL) await refreshBank(); }
-
-    async function doDepositAmount(amount){
-      setBusy(true);
-      try {
-        await ensureForms();
-        let amt = Math.max(0, Math.floor(Number(amount) || 0));
-        if (amount === 'ALL') amt = npOnHand();
-        if (amt < 1){ setMsg('Enter an amount ≥ 1'); return; }
-        if (amt > npOnHand()){ setMsg(`Only ${numComma(npOnHand())} NP on hand`); return; }
-        const form = state.bank_forms?.deposit; if (!form?.action){ setMsg('no deposit form'); return; }
-        const r = await bankPost(form.action, { ...(form.hidden||{}), type:'deposit', amount:String(amt) });
-        const j = tryJSON(r.text);
-        if (j?.success){ applyServer(j); setMsg(''); render(); }
-        else setMsg(extractMsg(r.text));
-      } catch { setMsg('deposit error'); } finally { setBusy(false); }
-    }
-    async function doWithdrawAmount(amount){
-      setBusy(true);
-      try {
-        await ensureForms();
-        const amt = Math.max(0, Math.floor(Number(amount) || 0));
-        if (amt < 1){ setMsg('Enter an amount ≥ 1'); return; }
-        const form = state.bank_forms?.withdraw; if (!form?.action){ setMsg('no withdraw form'); return; }
-
-        const post = { ...(form.hidden||{}), type:'withdraw', amount:String(amt) };
-        if (form.hidden && Object.prototype.hasOwnProperty.call(form.hidden, 'pin')){
-          let pin = getBankPin();
-          if (pin.length !== 4){
-            pin = promptBankPin();
-            if (pin.length !== 4){ setMsg('PIN required (4 digits)'); return; }
-          }
-          post.pin = pin;
-        }
-
-        const r = await bankPost(form.action, post);
-        const j = tryJSON(r.text);
-        if (j?.success){ applyServer(j); setMsg(''); render(); }
-        else setMsg(extractMsg(r.text));
-      } catch { setMsg('withdraw error'); } finally { setBusy(false); }
-    }
-    async function collectInterest(){
-      setBusy(true);
-      try {
-        if (!state.bank_interest?.action || (now()-state.bank_updatedAt) > FORM_TTL){
-          await refreshBank();
-        }
-        const form = state.bank_interest; if (!form?.action){ setMsg('no interest to collect'); return; }
-        const r = await bankPost(form.action, { ...(form.hidden||{}) });
-        const j = tryJSON(r.text);
-        if (j?.success){
-          applyServer(j);
-          state.bank_interest = null;
-          state.bank_dailyInterest = '';
-          setMsg(''); save(state); render();
-        } else {
-          setMsg(extractMsg(r.text));
-          try { await refreshBank(); } catch {}
-        }
-      } catch { setMsg('interest error'); } finally { setBusy(false); }
-    }
-
-    function renderButtons(){
-      btnsEl.innerHTML = '';
-      const colDep = document.createElement('div'); colDep.className = 'bankCol bankColDep';
-      const colWd  = document.createElement('div'); colWd.className  = 'bankCol bankColWd';
-      btnsEl.append(colDep, colWd);
-
-      if (settings.rounded.enabled)        addBtn(colDep, 'rounded',        'Rounded Deposit');
-      if (settings.customDeposit.enabled)  addBtn(colDep, 'customDeposit',  'Custom Deposit');
-      if (settings.autoDeposit.enabled)    addBtn(colDep, 'autoDeposit',    `Deposit ${formatShort(settings.autoDeposit.amount)}`);
-      if (settings.customWithdraw.enabled) addBtn(colWd,  'customWithdraw', 'Custom Withdraw');
-      if (settings.autoWithdraw.enabled)   addBtn(colWd,  'autoWithdraw',   `Withdraw ${formatShort(settings.autoWithdraw.amount)}`);
-    }
-    function addBtn(parent, key, label){
-      const b = document.createElement('div');
-      b.className = 'nqBtn bankBtn';
-      b.dataset.key = key;
-      b.textContent = label;
-      if (key === 'rounded'){
-        const r = settings.rounded.round;
-        b.title = r === 0
-          ? 'Deposit all NP on hand'
-          : `Deposit NP on hand, rounded down to ${numComma(r)}`;
-      } else if (key === 'customDeposit'){
-        b.title = 'Type a custom deposit amount';
-      } else if (key === 'autoDeposit'){
-        b.title = `Deposit ${numComma(settings.autoDeposit.amount)} NP`;
-      } else if (key === 'customWithdraw'){
-        b.title = 'Type a custom withdraw amount · Alt+click to clear the stored PIN';
-      } else if (key === 'autoWithdraw'){
-        b.title = `Withdraw ${numComma(settings.autoWithdraw.amount)} NP · Alt+click to clear the stored PIN`;
-      }
-      b.addEventListener('click', (e) => onButtonClick(e, key, b));
-      parent.appendChild(b);
-    }
-
-    function onButtonClick(e, key, btnEl){
-      e.preventDefault(); e.stopPropagation();
-      const isWithdraw = (key === 'autoWithdraw' || key === 'customWithdraw');
-      if (isWithdraw && e.altKey){ clearBankPin(); setMsg('PIN cleared'); return; }
-      if (busy || !gate()) return;
-
-      if (key === 'rounded'){
-        const r = settings.rounded.round;
-        if (r === 0){ doDepositAmount('ALL'); return; }
-        const amt = Math.floor(npOnHand() / r) * r;
-        if (amt < r){ setMsg(`< ${numComma(r)} NP on hand`); return; }
-        doDepositAmount(amt);
-        return;
-      }
-      if (key === 'autoDeposit'){ doDepositAmount(settings.autoDeposit.amount); return; }
-      if (key === 'autoWithdraw'){ doWithdrawAmount(settings.autoWithdraw.amount); return; }
-      if (key === 'customDeposit' || key === 'customWithdraw'){
-        openCustomInput(btnEl, key);
-        return;
-      }
-    }
-
-    function openCustomInput(btnEl, key){
-      const isWithdraw = (key === 'customWithdraw');
-      const form = document.createElement('div');
-      form.className = 'bankCustomForm';
-      form.innerHTML = `
-        <input type="text" inputmode="numeric" autocomplete="off" placeholder="amount">
-        <button type="button" class="ok" title="${isWithdraw ? 'Withdraw' : 'Deposit'}">✓</button>
-      `;
-      btnEl.replaceWith(form);
-      const input = form.querySelector('input');
-      const ok    = form.querySelector('.ok');
-      input.focus();
-
-      input.addEventListener('input', () => {
-        input.value = input.value.replace(/[^\d, ]/g, '');
-      });
-      const close = () => renderButtons();
-      const submit = async () => {
-        const raw = input.value.replace(/[^\d]/g, '');
-        const amt = parseInt(raw, 10);
-        if (!Number.isFinite(amt) || amt < 1){ input.focus(); input.select(); return; }
-        close();
-        if (isWithdraw) await doWithdrawAmount(amt);
-        else            await doDepositAmount(amt);
-      };
-      ok.addEventListener('click', submit);
-      input.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter'){ ev.preventDefault(); submit(); }
-        else if (ev.key === 'Escape'){ ev.preventDefault(); close(); }
-      });
-      const outside = (ev) => {
-        if (!form.isConnected){ document.removeEventListener('pointerdown', outside, true); return; }
-        if (form.contains(ev.target)) return;
-        document.removeEventListener('pointerdown', outside, true);
-        close();
-      };
-      setTimeout(() => document.addEventListener('pointerdown', outside, true), 0);
-    }
-
-    function openSettings(){
-      $('.bankSettingsBackdrop')?.remove();
-
-      const backdrop = document.createElement('div');
-      backdrop.className = 'bankSettingsBackdrop';
-      backdrop.innerHTML = `
-        <div class="bankSettingsBox" role="dialog" aria-modal="true" aria-label="Mini Bank settings">
-          <div class="bankSettingsHead">
-            <h3>Mini Bank Settings</h3>
-            <button type="button" class="closeBtn" aria-label="Close">×</button>
-          </div>
-          <div class="bankSettingsBody"></div>
-          <div class="bankSettingsFoot">
-            <button type="button" class="nqBtn cancel">Cancel</button>
-            <button type="button" class="nqBtn save">Save</button>
-          </div>
-        </div>
-      `;
-      const body = backdrop.querySelector('.bankSettingsBody');
-      const draft = JSON.parse(JSON.stringify(settings));
-
-      const colDep = document.createElement('div'); colDep.className = 'bankSettingsCol';
-      const colWd  = document.createElement('div'); colWd.className  = 'bankSettingsCol';
-      colDep.innerHTML = `<div class="bankSettingsColHead">Deposits</div>`;
-      colWd.innerHTML  = `<div class="bankSettingsColHead">Withdraws</div>`;
-      body.append(colDep, colWd);
-
-      function row(key, label, subHTML){
-        const r = document.createElement('div');
-        r.className = 'bankSettingsRow ' + (draft[key].enabled ? 'on' : 'off');
-        r.innerHTML = `
-          <div class="topLine">
-            <input type="checkbox" id="bs_${key}" ${draft[key].enabled ? 'checked' : ''}>
-            <label class="lbl" for="bs_${key}">${label}</label>
-          </div>
-          ${subHTML ? `<div class="sub">${subHTML}</div>` : ''}
-        `;
-        const cb = r.querySelector('input[type="checkbox"]');
-        cb.addEventListener('change', () => {
-          draft[key].enabled = cb.checked;
-          r.classList.toggle('on', cb.checked);
-          r.classList.toggle('off', !cb.checked);
-        });
-        return r;
-      }
-      function wireAmountInput(inputEl, draftSlot){
-        inputEl.addEventListener('input', () => {
-          inputEl.value = inputEl.value.replace(/[^\d, ]/g, '');
-        });
-        inputEl.addEventListener('blur', () => {
-          const n = parseInt(inputEl.value.replace(/[^\d]/g,''), 10);
-          if (Number.isFinite(n) && n > 0){
-            draftSlot.amount = n;
-            inputEl.value = numComma(n);
-          } else {
-            inputEl.value = numComma(draftSlot.amount);
-          }
-        });
-      }
-
-      const roundOpts = ROUND_OPTIONS.map(o =>
-        `<option value="${o.value}" ${draft.rounded.round === o.value ? 'selected' : ''}>${o.label}</option>`
-      ).join('');
-      const roundedRow = row('rounded', 'Rounded Deposit', `
-        <label for="bs_rounded_round">Round to:</label>
-        <select id="bs_rounded_round">${roundOpts}</select>
-      `);
-      roundedRow.querySelector('#bs_rounded_round').addEventListener('change', (ev) => {
-        draft.rounded.round = parseInt(ev.target.value, 10) || 0;
-      });
-      colDep.appendChild(roundedRow);
-
-      colDep.appendChild(row('customDeposit', 'Custom Deposit'));
-
-      const autoDepRow = row('autoDeposit', 'Auto Deposit', `
-        <label for="bs_autoDep_amt">Amount:</label>
-        <input type="text" inputmode="numeric" id="bs_autoDep_amt" value="${numComma(draft.autoDeposit.amount)}">
-      `);
-      const autoDepInp = autoDepRow.querySelector('#bs_autoDep_amt');
-      wireAmountInput(autoDepInp, draft.autoDeposit);
-      colDep.appendChild(autoDepRow);
-
-      colWd.appendChild(row('customWithdraw', 'Custom Withdraw'));
-
-      const autoWdRow = row('autoWithdraw', 'Auto Withdraw', `
-        <label for="bs_autoWd_amt">Amount:</label>
-        <input type="text" inputmode="numeric" id="bs_autoWd_amt" value="${numComma(draft.autoWithdraw.amount)}">
-      `);
-      const autoWdInp = autoWdRow.querySelector('#bs_autoWd_amt');
-      wireAmountInput(autoWdInp, draft.autoWithdraw);
-      colWd.appendChild(autoWdRow);
-
-      const graphRow = row('graph', 'Show balance trend graph');
-      graphRow.style.gridColumn = '1 / -1';
-      body.appendChild(graphRow);
-
-      const close = () => {
-        backdrop.remove();
-        document.removeEventListener('keydown', onKey, true);
-      };
-      function onKey(ev){
-        if (ev.key === 'Escape'){ ev.preventDefault(); close(); }
-      }
-      document.addEventListener('keydown', onKey, true);
-      backdrop.querySelector('.closeBtn').addEventListener('click', close);
-      backdrop.querySelector('.cancel').addEventListener('click', close);
-      backdrop.querySelector('.save').addEventListener('click', () => {
-        autoDepInp.dispatchEvent(new Event('blur'));
-        autoWdInp.dispatchEvent(new Event('blur'));
-        settings = draft;
-        saveSettings(settings);
-        render();
-        close();
-      });
-      backdrop.addEventListener('click', (ev) => {
-        if (ev.target === backdrop) close();
-      });
-
-      document.body.appendChild(backdrop);
-    }
-
-    balEl.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; setBusy(true); try { await refreshBank(); setMsg(''); } catch { setMsg('refresh error'); } finally { setBusy(false); } });
-    gearBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openSettings(); });
-    intBtn.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); if (busy || !gate()) return; await collectInterest(); });
-    const bankRefreshBtn = $('#nqBankRefresh', cardBank);
-    if (bankRefreshBtn){
-      bankRefreshBtn.addEventListener('click', async (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (busy || !gate()) return;
-        setBusy(true);
-        try { await refreshBank(); setMsg(''); } catch { setMsg('refresh error'); } finally { setBusy(false); }
-      });
-    }
-    cardBank.addEventListener('click', (e) => {
-      if (e.target?.closest?.('button, a, input, select, .nqBtn, .bankCustomForm')) return;
-      window.location.assign('https://www.neopets.com/bank.phtml');
-    });
-
-    if (crossedDailyReset(state.bank_updatedAt, now())){
-      state.bank_interest = null;
-      state.bank_dailyInterest = '';
-      save(state);
-    }
-
-    render();
-
-    if (/^\/bank\.phtml/.test(location.pathname)){
-      const fromPage = () => refreshBank(document.documentElement.outerHTML).catch(() => {});
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fromPage, { once:true });
-      else fromPage();
-    }
   })();
 
   (function qrModule(){
@@ -4607,7 +3565,7 @@ html[data-nq-modern-interface] {
   --nq-ico-shadow: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
-  .qrOverlay a, .qrPetName, .bankSettingsHead h3, #nqUserTitle, #nqBank .title,
+  .qrOverlay a, .qrPetName, #nqUserTitle,
   #nqNst { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
@@ -4632,17 +3590,11 @@ html[data-nq-modern-interface] {
 
 
   #nqLeftBar { border: 0 !important; box-shadow: 0 0 10px rgba(0,0,0,.4) !important; top: 0 !important; bottom: auto !important; height: 100vh !important; }
-  #nqHud > #nqBank { display: none !important; }
 
   #nqNp { flex-direction: column !important; align-items: stretch !important; cursor: default !important; }
   #nqNp .nq-amounts { flex: 1; display: flex; align-items: center; white-space: nowrap; }
   #nqNp .nq-amount, #nqNp .nq-nc { display: flex; align-items: center; gap: 5px; text-decoration: none !important; transition: background .15s; }
   #nqNp .nq-amount img, #nqNp .nq-nc img { flex: 0 0 auto; position: absolute; left: -6px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
-  #nqNp .nq-chevron { display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  #nqNp.nq-open .nq-chevron { transform: rotate(180deg); }
-  #nqNp .nq-bank-drawer { display: none; background: transparent !important; }
-  #nqNp.nq-open .nq-bank-drawer { display: block; }
-  #nqNp .nq-bank-drawer #nqBank { border: 0 !important; box-shadow: none !important; backdrop-filter: none !important; background: transparent !important; padding: 8px 0 0 !important; margin: 0 !important; width: 100% !important; }
 
   #nqActivePet { flex: 0 0 auto !important; flex-direction: column !important; align-items: stretch !important; height: auto !important; min-height: 0 !important; max-height: none !important; }
   #nqActivePet > img { order: 0; }
@@ -4751,14 +3703,13 @@ html[data-nq-modern-interface] {
   #nqBgSidebar .nqBgItem { grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 6px; padding: 5px 8px; }
   #nqBgSidebar .nqBgThumb { width: 48px; height: 48px; }
 
-  #nqUser, #nqNp, #nqActivePet, #nqDaily {
+  #nqDaily {
     background: var(--nq-card) !important;
     border: 1px solid var(--nq-card-line) !important;
     -webkit-backdrop-filter: blur(10px) !important;
     backdrop-filter: blur(10px) !important;
     box-shadow: none !important;
   }
-  #nqUser:hover, #nqNp:hover, #nqActivePet:hover { border-color: rgba(255,255,255,.26) !important; }
 
   #nqHud { z-index: var(--nq-z-hud, 1000); -webkit-font-smoothing: antialiased; pointer-events: none; isolation: isolate; left: calc(var(--nq-hud-left, 14px) + 6px); width: calc(var(--nq-col-width, 240px) - 2 * (var(--nq-hud-left, 14px) + 6px)); }
 
@@ -4772,17 +3723,10 @@ html[data-nq-modern-interface] {
 
   #nqNp .nq-amount, #nqNp .nq-nc { font-weight: 800 !important; color: #fff !important; }
   #nqNp .nq-amount:hover, #nqNp .nq-nc:hover { background: rgba(255,255,255,.2) !important; }
-  #nqNp .nq-chevron { background: none !important; border: 0 !important; }
-  #nqNp .nq-chevron:hover { opacity: .75; }
   #nqNp .nq-amounts { gap: 10px; min-width: 0; }
   #nqNp .nqVal, #nqNp .ncVal { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  #nqBank .bankCustomForm .ok, .bankSettingsFoot .nqBtn.save { color: var(--nq-accent-fg, #1a1330); }
   #nqNp .nq-amount, #nqNp .nq-nc { position: relative; box-sizing: border-box; min-height: 24px; flex: 0 1 auto; min-width: 0; padding: 2px 7px 2px 14px !important; border: 1px solid rgba(255,255,255,.2); border-radius: 999px; background: rgba(255,255,255,.12); font-size: 13px !important; }
   #nqNp .nq-amount:hover, #nqNp .nq-nc:hover { border-color: rgba(255,255,255,.4); }
-  #nqNp .bankGraph text { fill: rgba(255,255,255,.85); }
-  #nqNp #nqBank .msg { opacity: .9; }
-  #nqNp #nqBank .nqBtn { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); }
-  #nqNp #nqBank .nqBtn:hover { background: rgba(255,255,255,.2); }
 
   #nqPetInfo .nqTitle { font-size: 14px !important; flex-wrap: nowrap; align-items: flex-start !important; line-height: 1.2; }
   #nqPetInfo .nqName { display: block; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 22px; font-weight: 400; line-height: 1.1; letter-spacing: .02em; overflow-wrap: anywhere; padding: 0 24px; }
@@ -4982,7 +3926,6 @@ html[data-nq-modern-interface] {
   #nqNp .nq-top-row .nq-amount, #nqNp .nq-top-row .nq-nc { flex-direction: row; overflow: visible; white-space: nowrap; }
   #nqNp .nq-top-row .nq-amount img, #nqNp .nq-top-row .nq-nc img { flex: 0 0 auto; order: -1; }
   #nqNp .nq-top-row .nqVal, #nqNp .nq-top-row .ncVal { flex: 0 0 auto; white-space: nowrap !important; letter-spacing: 0; }
-  #nqNp .nq-top-row .nq-chevron { flex: 0 0 auto; }
 
   #nqUser .rightSide { align-items: center !important; }
   #nqUser #nqAvatar { align-self: center !important; }
@@ -5019,9 +3962,6 @@ html[data-nq-modern-interface] {
   #nqHud #nqNp .nq-top-row .nq-amount::before, #nqHud #nqNp .nq-top-row .nq-nc::before { grid-row: 1; font: 600 11px/1 'Outfit', system-ui, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--pn-t3); }
   #nqHud #nqNp .nq-top-row .nqVal, #nqHud #nqNp .nq-top-row .ncVal { color: #fff !important; font: 700 17px/1.15 'Outfit', system-ui, sans-serif !important; grid-row: 1 !important; align-self: center; }
    #nqHud #nqNp .nq-top-row .nq-amount img, #nqHud #nqNp .nq-top-row .nq-nc img { position: absolute !important; top: 50% !important; transform: translateY(-50%) !important; grid-column: auto; grid-row: auto; filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); width: 18px !important; height: 18px !important; left: 3px !important; } #nqHud #nqNp .nq-top-row .nq-amount::before, #nqHud #nqNp .nq-top-row .nq-nc::before, #nqHud #nqNp .nq-top-row .nqVal, #nqHud #nqNp .nq-top-row .ncVal { grid-column: 2; font-variant-numeric: tabular-nums; }
-  #nqHud #nqNp .nq-chevron { color: var(--pn-t2) !important; transition: transform .2s, color .15s, background .15s; }
-  #nqHud #nqNp .nq-chevron:hover { color: #fff !important; background: rgba(255,255,255,.12) !important; }
-  #nqHud #nqNp .nq-bank-drawer { padding: 10px 0 0; margin-top: 10px; border-top: 1px solid rgba(255,255,255,.10); }
 
   #nqHud #nqActivePet > img { -webkit-mask-image: none; mask-image: none; position: relative; z-index: 1; vertical-align: top !important; }
   #nqHud #nqPetDockBtn { top: 18px; right: 18px; height: 28px; border-radius: 999px; background: rgba(255,255,255,.85) !important; color: #1a1626 !important; border: 1px solid rgba(255,255,255,.6) !important; box-shadow: 0 2px 8px rgba(0,0,0,.28) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font: 600 11px/1 'Outfit', system-ui, sans-serif; z-index: 2; width: 28px; padding: 0; gap: 0; justify-content: center; overflow: hidden; transition: width .3s cubic-bezier(.3,.7,.3,1), padding .3s, gap .3s, background .15s, box-shadow .15s; } #nqHud #nqPetDockBtn svg { width: 13px; height: 13px; flex: none; color: inherit; transition: transform .35s cubic-bezier(.3,.7,.3,1); } #nqHud #nqPetDockBtn:hover { background: #fff !important; box-shadow: 0 3px 10px rgba(0,0,0,.34) !important; } #nqHud #nqPetDockBtn:hover svg { transform: rotate(180deg); } @media (prefers-reduced-motion: reduce) { #nqHud #nqPetDockBtn svg { transition: none; } }
@@ -5078,8 +4018,6 @@ html[data-nq-modern-interface] {
   &.nq-side-light #nqHud > #nqUser, &.nq-side-light #nqHud > #nqNp, &.nq-side-light #nqHud > #nqActivePet, &.nq-side-light #nqHud > #nqListsMod, &.nq-side-light #nqHud > #nqFoot { background: rgba(255,255,255,.72) !important; -webkit-backdrop-filter: blur(18px) !important; backdrop-filter: blur(18px) !important; border-color: rgba(0,0,0,.08) !important; box-shadow: 0 8px 24px rgba(40,30,80,.14) !important; color: #1c1830; }
   &.nq-side-light #nqHud #nqUserTitle, &.nq-side-light #nqHud #nqPetInfo .nqTitle a, &.nq-side-light #nqHud #nqPetInfo .nqName { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqNp .nq-top-row .nqVal, &.nq-side-light #nqHud #nqNp .nq-top-row .ncVal, &.nq-side-light #nqHud #nqNp, &.nq-side-light #nqHud #nqNp .nq-amount, &.nq-side-light #nqHud #nqNp .nq-nc { color: #1c1830 !important; }
-  &.nq-side-light #nqHud #nqNp .nq-chevron { color: rgba(28,24,48,.68) !important; } 
-  &.nq-side-light #nqHud #nqNp .nq-bank-drawer { border-top-color: rgba(0,0,0,.08); } &.nq-side-light #nqNp .bankGraph text { fill: rgba(28,24,48,.7); }
   &.nq-side-light #nqHud #nqPetInfo .nqSub, &.nq-side-light #nqHud #nqPetInfo { color: rgba(28,24,48,.68); }
   &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy { color: rgba(28,24,48,.6); } &.nq-side-light #nqHud #nqPetInfo .nqTitle .nqCopy:hover { background: rgba(0,0,0,.07); color: #1c1830; }
   &.nq-side-light #nqHud #nqListsMod .nqLt em { color: #1c1830; background: rgba(0,0,0,.08) !important; }
@@ -5163,13 +4101,11 @@ html[data-nq-modern-interface] {
   #nqHud #nqListsMod .nqLt { display: flex !important; align-items: center !important; height: var(--nq-pill-h) !important; border: 0 !important; border-radius: var(--nq-pill-r) !important; background: var(--nq-pill-bg) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
   #nqHud #nqListsMod .nqLt:hover { background: var(--nq-pill-bg-h) !important; }
   #nqHud #nqListsMod .nqLt em { border-radius: 999px !important; background: rgba(255,255,255,.14) !important; color: inherit !important; }
-  #nqHud #nqNp .nq-chevron { width: var(--nq-pill-h) !important; height: var(--nq-pill-h) !important; border-radius: var(--nq-pill-r) !important; }
   &.nq-side-light #nqHud #nqUser #nqUserTitle, &.nq-side-light #nqHud #nqUser .name, &.nq-side-light #nqHud #nqUser .name * { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqUser[data-main="1"] .rightSide::after { color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqUser #nqLogoutBtn, &.nq-side-light #nqHud #nqUser #nqSwapBtn, &.nq-side-light #nqHud #nqUser #nqSwapBtn:hover { color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqUser #nqLogoutBtn:hover { color: #d33 !important; background: rgba(255,90,90,.16) !important; }
   &.nq-side-light #nqHud #nqListsMod .nqLt, &.nq-side-light #nqHud #nqListsMod .nqLt b { color: #1c1830 !important; }
-  &.nq-side-light #nqHud #nqNp .nq-chevron:hover { color: #1c1830 !important; background: var(--nq-pill-bg-h) !important; }
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqTitle a, &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqName, &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqLinks a, &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqLinks button { color: #1c1830 !important; text-shadow: none !important; }
   &.nq-side-light #nqHud #nqActivePet #nqPetInfo .nqChip:not(.gF):not(.gM) { color: rgba(28,24,48,.68) !important; }
 
@@ -6673,7 +5609,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     const sr = shadow();
     if (sr) sr.querySelectorAll('.menu').forEach(m => { m.style.display = 'none'; });
     document.dispatchEvent(new CustomEvent('nq:drawer', { detail: 'none' }));
-    document.querySelectorAll('.bankSettingsBackdrop').forEach(el => el.remove());
     if (dockOpen) setDock(false);
   }
   function setupKeys() {
@@ -6707,8 +5642,8 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     if (v && el.dataset.raw !== v) { el.dataset.raw = v; el.textContent = v; }
   }
   function setupBank() {
-    const np = $('#nqNp'), bank = $('#nqBank');
-    if (!np || !bank || np.dataset.acc || !$('#nqBal', bank)) return;
+    const np = $('#nqNp');
+    if (!np || np.dataset.acc) return;
     np.dataset.acc = '1';
     const val = $('.nqVal', np), img = $('img', np);
     np.innerHTML = '';
@@ -6770,8 +5705,7 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     }, true);
   }
 
-  const ACCT_KEYS = ['nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1',
-    'nq_np_last', 'nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1', 'nq_user_stub', 'nq_hud_username', 'nq_cd_v1', 'nq_cd_seen_v1', 'nq_ack_v1', 'nq_nc_last'];
+  const ACCT_KEYS = ['nq_np_last', 'nq_qr_data', 'nq_qr_data_lastFetch', 'nq_active_pet_img_v1', 'nq_user_stub', 'nq_hud_username', 'nq_cd_v1', 'nq_cd_seen_v1', 'nq_ack_v1', 'nq_nc_last'];
   const THEME_KEYS = ['nq_accent_v1', 'nq_color_main', 'nq_color_left', 'nq_color_head', 'nq_bg_main_v3', 'nq_bg_left_v3', 'nq_logo_white', 'nq_topbar_bg_v1'];
   const themeShared = () => LSget('nq_theme_shared') !== '0';
   const readTheme = () => { const t = {}; THEME_KEYS.forEach(k => { const v = LSget(k); if (v) t[k] = v; }); return t; };
@@ -7056,7 +5990,8 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
     }
 
     ['nq_frame_size_v1', 'nq_col_width_v1', 'nq_user_settings_v1', 'nq_qr_settings_v1', 'nq_side_layout_v1',
-      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1'].forEach(LSdel);
+      'nq_side_side_v1', 'nq_side_shift_v1', 'nq_side_x_v1', 'nq_col_offset_v1', 'nq_side_icon_size_v1',
+      'nq_bank_state_v2', 'nq_bank_daily_v1', 'nq_bank_history_v1', 'nq_bank_pin_v1', 'nq_bank_btn_settings_v1'].forEach(LSdel);
     try { Object.keys(localStorage).filter(k => k.startsWith('nq_hud_userlookup:')).forEach(LSdel); } catch {}
 
     ensureDefaults();
