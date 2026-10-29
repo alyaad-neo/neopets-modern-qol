@@ -85,7 +85,8 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 - Block list: localStorage nq_ap_block_v1 (lowercase). Blocked accounts are never collected (apCollect), listed (apOrdered) or auto-added (autoAccts/noteAccount). Footer shows Blocked: pills; click one to unblock. apBlocked/apSetBlock are function declarations because autoAccts/noteAccount (earlier in the file) call them.
 
 ## 1.3.19
-- All Pets trade pick mode: toolbar "Pick pets" (.apPickBtn, data-act=pick) switches to the UFT tab and adds data-pick checkboxes on UFT cards; apState.picked; the copy button (apTradeLbl) then copies only picked pets. Edit mode turns pick mode off.
+- All Pets header, top to bottom: title/search bar; `.apActs` = mode switch `.apMode` (Browse / Edit tags / Pick for trade, all `data-act=mode data-m=…`) plus the "Trade list" panel `.apShare` (summary `.apShareN`, Copy `.apTrade` + options `.apCopyOpt`, Petpage `.apPpBtn`); `.apRow` = tag tabs (underline, coloured per tag) plus `.apView` (Accounts, Sort). `apTradeLbl()` syncs the mode buttons, the summary text and the `apPicking`/`apHasPick`/`apShareEmpty` classes; it runs at the end of every apRender.
+- Pick for trade: clicking anywhere on a card toggles its data-pick checkbox; a sticky `.apPickBar` has Pick all shown / Clear / Done; unpicked cards dim once something is picked. In pick mode Copy uses only picked pets (none picked = toast); `NQ.ap.picked()` still returns null when none are picked, so Petpage falls back to UFT.
 - Since bundle 5.5.36 Quick Ref data gives colour/species/gender/level for every pet (`data.pets[]`), not just the active one.
 
 ## 1.3.34

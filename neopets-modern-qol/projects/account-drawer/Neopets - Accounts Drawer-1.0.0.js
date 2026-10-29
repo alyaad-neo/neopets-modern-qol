@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.35
+// @version      1.3.37
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -561,7 +561,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apInfo b, #nqAP .apInfo small, #nqAP .apInfo b *, #nqAP .apInfo small *, #nqAP .apInfo .apLk { font-family: 'CafeteriaBlack', Georgia, serif !important; font-weight: 400; }
 #nqAP .apName, #nqAP .apName .apLk, #nqAP .apCard .apName a { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 #nqAP .apInfo b { font-size: 14px; } #nqAP .apInfo small { font-size: 12px; }
-#nqAP .apCopyWrap { display: flex; gap: 4px; }
+#nqAP .apCopyWrap { display: flex; gap: 0; }
 #nqAP .apAct { box-shadow: 0 1px 4px rgba(0,0,0,.25); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1c8f55; background: #e3f7ec; border-radius: 4px; padding: 1px 6px; }
 #nqAP .apNote { margin: -4px 2px 0; font-size: 12px; line-height: 16px; color: var(--ap-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #nqAP .apChk { position: absolute; top: 8px; left: 8px; z-index: 4; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); border-radius: 6px; box-shadow: 0 0 0 1px var(--ap-line); cursor: pointer; }
@@ -589,8 +589,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apSp { flex: 1 1 0; }
 #nqAP .apGrid { padding-top: 14px; }
 #nqAP .apBulk + .apGrid, #nqAP .apBulk + .apHead { margin-top: 0; }
-#nqAP .apTop .apEditBtn.on { background: var(--ap-acc); border-color: transparent; color: #fff; }
-#nqAP .apTop .apEditBtn.on:hover { background: #6a49e0; }
 #nqAP .apNoImg { font-size: 48px; font-weight: 800; color: #a595d6; }
 #nqAP .sk .apPic { background: linear-gradient(110deg, #f1eafc 30%, #fff 50%, #f1eafc 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
 #nqAP .sk .apLine { height: 12px; border-radius: 6px; background: #ece7f7; }
@@ -614,24 +612,55 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apTop button:hover { box-shadow: none; }
 #nqAP .apTop .apIcon { width: 34px; padding: 0; color: var(--ap-mute); }
 #nqAP .apTop .apIcon:hover { color: var(--ap-text); }
-#nqAP .apTop .apRow { position: relative; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; padding: 0 20px 12px; }
-#nqAP .apTop .apSeg { padding: 3px; gap: 2px; border-radius: 10px; height: 38px; align-items: center; }
-#nqAP .apTop .apSeg button { height: 30px; border-radius: 7px; padding: 0 10px; gap: 7px; color: var(--ap-mute); }
-#nqAP .apTop .apSeg button.on { color: var(--ap-text); background: #fff; box-shadow: 0 0 0 1px var(--ap-line), 0 1px 2px rgba(70,52,110,.12); }
-#nqAP .apTop .apSeg button.on .apN { color: var(--ap-acc); }
-#nqAP .apN { font-weight: 500; font-size: 12px; color: var(--ap-mute); opacity: .9; }
+#nqAP .apTop .apRow { position: relative; flex-wrap: wrap-reverse; justify-content: space-between; align-items: flex-end; gap: 4px 16px; padding: 2px 20px 0; }
+#nqAP .apTop .apSeg { padding: 0; gap: 22px; border-radius: 0; height: 44px; align-items: stretch; background: none; }
+#nqAP .apTop .apSeg button { --t: var(--ap-acc); position: relative; height: 44px; border: 0; border-radius: 0; padding: 0 2px; gap: 7px; color: var(--ap-mute); background: none; font-weight: 600; }
+#nqAP .apTop .apSeg button[data-tab=uft] { --t: #f0a92e; } #nqAP .apTop .apSeg button[data-tab=perm] { --t: #3fb877; } #nqAP .apTop .apSeg button[data-tab=maybe] { --t: #4a9be8; }
+#nqAP .apTop .apSeg button::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--t); transform: scaleX(0); transition: transform .18s ease; }
+#nqAP .apTop .apSeg button:hover { color: var(--ap-text); background: none; box-shadow: none; }
+#nqAP .apTop .apSeg button.on { color: var(--ap-text); background: none; box-shadow: none; }
+#nqAP .apTop .apSeg button.on::after { transform: none; }
+#nqAP .apTop .apSeg button.on .apN { background: var(--t); color: #fff; }
+#nqAP .apN { min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--ap-soft); font-weight: 700; font-size: 11px; line-height: 18px; text-align: center; color: var(--ap-mute); transition: background .15s, color .15s; }
 #nqAP .apTd { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 #nqAP .apTd.uft { background: #f0a92e; } #nqAP .apTd.perm { background: #4cc784; } #nqAP .apTd.maybe { background: #4a9be8; }
-#nqAP .apTools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#nqAP .apView { display: flex; align-items: center; gap: 2px; align-self: center; padding: 5px 0; }
+#nqAP .apTop .apView button { border-color: transparent; background: transparent; padding: 0 10px; }
+#nqAP .apTop .apView button:hover, #nqAP .apTop .apView .apDd[aria-expanded=true] { background: var(--ap-soft); border-color: transparent; }
 #nqAP .apPopWrap { position: relative; }
 #nqAP .apTop .apDd { gap: 6px; }
 #nqAP .apDdl { color: var(--ap-mute); font-weight: 500; }
 #nqAP .apDd b { font-weight: 600; }
 #nqAP .apDd svg:last-child { width: 14px; height: 14px; color: var(--ap-mute); }
-#nqAP .apDd[aria-expanded=true] { border-color: var(--ap-acc); background: var(--ap-soft); }
-#nqAP .apTop .apTrade { color: var(--ap-text); }
-#nqAP .apTop .apTrade.hot { background: var(--ap-acc); border-color: transparent; color: #fff; }
-#nqAP .apTop .apTrade.hot:hover { background: #6a49e0; }
+#nqAP .apActs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 4px 20px 10px; }
+#nqAP .apMode { display: inline-flex; padding: 3px; gap: 2px; background: var(--ap-soft); border-radius: 11px; }
+#nqAP .apTop .apMode button { height: 32px; border: 0; border-radius: 8px; padding: 0 14px; background: transparent; color: var(--ap-mute); transition: background .15s, color .15s, box-shadow .15s; }
+#nqAP .apTop .apMode button:hover { background: rgba(255,255,255,.6); color: var(--ap-text); }
+#nqAP .apTop .apMode button.on { background: #fff; color: var(--ap-text); box-shadow: 0 1px 3px rgba(70,52,110,.2); }
+#nqAP .apMode svg { opacity: .7; }
+#nqAP .apMode button.on svg { color: var(--ap-acc); opacity: 1; }
+#nqAP .apShare { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 14px; background: #fff; border: 1px solid var(--ap-line); border-radius: 12px; }
+#nqAP .apShareTx { display: flex; flex-direction: column; margin-right: 6px; line-height: 15px; }
+#nqAP .apShareTx small { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ap-mute); }
+#nqAP .apShareTx b { font-size: 13px; font-weight: 600; color: var(--ap-text); white-space: nowrap; }
+#nqAP.apShareEmpty .apShareTx b { font-weight: 500; color: var(--ap-mute); }
+#nqAP .apTop .apShare button { height: 32px; }
+#nqAP .apTop .apShare .apTrade { padding: 0 14px; border-color: transparent; border-radius: 8px 0 0 8px; background: var(--ap-acc); color: #fff; }
+#nqAP .apTop .apShare .apCopyOpt { width: 28px; border-color: transparent; border-left: 1px solid rgba(255,255,255,.3); border-radius: 0 8px 8px 0; background: var(--ap-acc); color: #fff; }
+#nqAP .apTop .apShare .apCopyOpt svg:last-child { color: #fff; }
+#nqAP .apTop .apShare .apTrade:hover, #nqAP .apTop .apShare .apCopyOpt:hover, #nqAP .apTop .apShare .apCopyOpt[aria-expanded=true] { background: #6a49e0; border-color: transparent; border-left-color: rgba(255,255,255,.3); }
+#nqAP.apShareEmpty .apShare .apCopyWrap, #nqAP.apShareEmpty .apShare .apPpBtn { opacity: .5; }
+#nqAP .apTop .apShare .apPpBtn { background: transparent; }
+#nqAP .apBulk .apDone { background: var(--ap-acc); border-color: transparent; color: #fff; }
+#nqAP .apBulk .apDone:hover { background: #6a49e0; border-color: transparent; }
+#nqAP .apPickBar .apSelN { min-width: 0; color: var(--ap-acc); }
+#nqAP.apPicking .apOv { display: none; }
+#nqAP.apPicking .apCard { cursor: pointer; }
+#nqAP.apPicking .apCard:hover .apName { opacity: 1; }
+#nqAP.apPicking .apCard:hover .apImg { box-shadow: 0 0 0 2px #cbbaf2; }
+#nqAP.apPicking .apCard.sel .apImg { box-shadow: 0 0 0 3px var(--ap-acc), 0 8px 20px rgba(124,92,240,.25); }
+#nqAP.apHasPick .apCard:not(.sel) .apImg { opacity: .55; transition: opacity .15s, box-shadow .15s; }
+#nqAP.apHasPick .apCard:not(.sel):hover .apImg { opacity: .85; }
 #nqAP .apPop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; min-width: 220px; max-width: calc(100vw - 24px); max-height: 60vh; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 10px 30px rgba(70,52,110,.22); }
 #nqAP .apPop[hidden] { display: none; }
 #nqAP .apPopHead { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ap-mute); }
@@ -657,8 +686,10 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
   #nqAP .apTop .apSearch { order: 5; flex-basis: 100%; }
   #nqAP .apTop .apRow { padding: 0 12px 10px; }
   #nqAP .apTop .apSeg { width: 100%; }
-  #nqAP .apTools { width: 100%; }
-  #nqAP .apTools .apCopyWrap { margin-left: auto; }
+  #nqAP .apActs { padding: 2px 12px 10px; }
+  #nqAP .apMode, #nqAP .apShare { width: 100%; }
+  #nqAP .apTop .apMode button { flex: 1; padding: 0 6px; }
+  #nqAP .apShareTx { flex: 1; min-width: 0; }
   #nqAP .apPopWrap { position: static; }
   #nqAP .apPop { left: 12px; right: 12px; top: auto; margin-top: 6px; }
   #nqAP .apBody { padding: 0 12px 24px; }
@@ -678,7 +709,20 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apPrimary:hover, html[
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button { background: transparent; }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button:hover { background: rgba(255,255,255,.08); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { background: var(--ap-panel); color: var(--ap-acc); box-shadow: 0 0 0 1px var(--ap-line), 0 1px 4px rgba(0,0,0,.35); }
-html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { color: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { background: none; box-shadow: none; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button:hover { color: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on .apN { color: #1d1a2b; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apView button, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apMode button { background: transparent; border-color: transparent; box-shadow: none; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apView button:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apView .apDd[aria-expanded=true] { background: var(--ap-soft); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apMode button:hover { background: rgba(255,255,255,.08); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apMode button.on { background: var(--ap-panel); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apShare { background: var(--ap-panel); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apTrade, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBulk .apDone { background: var(--ap-acc); color: #1d1a2b; border-color: transparent; box-shadow: none; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt { border-left: 1px solid rgba(29,26,43,.25); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt svg:last-child { color: #1d1a2b; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apTrade:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt[aria-expanded=true], html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBulk .apDone:hover { background: #b8a2ff; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apPpBtn { background: transparent; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apPpBtn:hover { background: var(--ap-soft); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChip { background: transparent; }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChip.on { background: var(--ap-panel); border-color: rgba(165,139,255,.45); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBody { background: radial-gradient(circle, rgba(255,255,255,.08) 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
@@ -714,9 +758,14 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
   // Trade pick mode: checkboxes on every card; the copy button then copies only the picked pets, whatever their tag.
   function apTradeLbl() {
     if (!apEl) return;
-    const pb = $('.apPickBtn', apEl), tb = $('.apTrade span', apEl), n = apState.picked.size;
-    if (pb) { pb.classList.toggle('on', apState.pick); pb.setAttribute('aria-pressed', String(apState.pick)); $('span', pb).textContent = apState.pick ? 'Done picking' : 'Pick pets'; }
-    if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
+    const m = apState.pick ? 'pick' : apState.edit ? 'edit' : 'browse', n = apState.picked.size;
+    apEl.querySelectorAll('.apMode button').forEach(b => { const on = b.dataset.m === m; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    apEl.classList.toggle('apPicking', apState.pick); apEl.classList.toggle('apHasPick', apState.pick && n > 0);
+    let u = 0;
+    if (!apState.pick) { const c = apRead(), tags = apTags(), seen = new Set(); apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => { const k = p.name.toLowerCase(); if (!seen.has(k) && (tags[k] || {}).s === 'uft') { seen.add(k); u++; } })); }
+    $('.apShareN', apEl).textContent = apState.pick ? (n ? n + ' picked pet' + (n === 1 ? '' : 's') : 'Click pets to pick them') : u ? u + ' Up for trade pet' + (u === 1 ? '' : 's') : 'No pets tagged Up for trade';
+    apEl.classList.toggle('apShareEmpty', apState.pick ? !n : !u);
+    const pn = $('.apPickBar .apSelN', apEl); if (pn) pn.textContent = n + ' picked';
   }
   try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; apState.cpNote = !!pr.cpNote; apState.cpSp = pr.cpSp !== false; } } catch {}
   NQ.ap = { read: apRead, tags: apTags, ordered: apOrdered, of: apOf, user: curUser, prof: readProf, refreshProf: (u) => refreshProfile(u), main: mainAcct, picked: () => apState.pick && apState.picked.size ? new Set(apState.picked) : null };
@@ -735,7 +784,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (!apEl) {
       const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
       apEl = document.createElement('div'); apEl.id = 'nqAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
-      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy Up for Trade pets, or the picked pets, as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="Copy options" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copy with</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn apPpBtn" data-act="petpage" title="Build a petpage from Up for Trade or picked pets">' + AP_PAGE + '<span>Petpage</span></button></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
+      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apActs"><div class="apMode" role="radiogroup" aria-label="Mode"><button type="button" role="radio" data-act="mode" data-m="browse" title="Look around: hover a pet for its links">' + AP_I('<rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/>') + '<span>Browse</span></button><button type="button" role="radio" data-act="mode" data-m="edit" title="Set tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" role="radio" data-act="mode" data-m="pick" title="Hand-pick pets for the trade list">' + AP_ACTIVE + '<span>Pick for trade</span></button></div><div class="apShare"><div class="apShareTx"><small>Trade list</small><b class="apShareN"></b></div><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy the trade list as text">' + AP_COPY + '<span>Copy</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="What the copied text includes" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copied text includes</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apPpBtn" data-act="petpage" title="Build a petpage from the trade list">' + AP_PAGE + '<span>Petpage</span></button></div></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apView"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
       document.body.appendChild(apEl);
       apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
       $('.apClose', apEl).addEventListener('click', closeAllPets);
@@ -753,7 +802,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
       $('.apCpNote', apEl).addEventListener('change', (e) => { apState.cpNote = e.target.checked; apSavePrefs(); });
       $('.apCpSp', apEl).addEventListener('change', (e) => { apState.cpSp = e.target.checked; apSavePrefs(); });
       $('.apTrade', apEl).addEventListener('click', () => {
-        const c = apRead(), tags = apTags(), lines = [], done = new Set(), only = apState.pick && apState.picked.size ? apState.picked : null;
+        const c = apRead(), tags = apTags(), lines = [], done = new Set(), only = apState.pick ? apState.picked : null;
         apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => {
           const k = p.name.toLowerCase(), t = tags[k] || {};
           if (done.has(k) || (only ? !only.has(k) : t.s !== 'uft')) return;
@@ -786,6 +835,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
         const b = e.target.closest('button[data-act]');
         if (!b) {
           const cd = e.target.closest('.apCard');
+          if (cd && apState.pick && !e.target.closest('a, input, label')) { const cb = $('input[data-pick]', cd); if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); } return; }
           if (cd && !apState.edit && !e.target.closest('a, input')) { const on = !cd.classList.contains('tap'); apEl.querySelectorAll('.apCard.tap').forEach(x => x.classList.remove('tap')); cd.classList.toggle('tap', on); }
           return;
         }
@@ -799,11 +849,13 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
           gmSet(AP_TAGS, t); apToast('Updated ' + apState.sel.size + ' pet' + (apState.sel.size === 1 ? '' : 's')); apRender();
         } else if (b.dataset.act === 'selall') { apState.shown.forEach(k => apState.sel.add(k)); apRender(); }
         else if (b.dataset.act === 'selclr') { apState.sel.clear(); apRender(); }
-        else if (b.dataset.act === 'pick') {
-          apState.pick = !apState.pick;
-          if (apState.pick) { if (apState.edit) apSetEdit(false); } else apState.picked.clear();
-          apRender(); apTradeLbl();
+        else if (b.dataset.act === 'mode') {
+          const m = b.dataset.m;
+          if (m === 'edit') { if (!apState.edit) apSetEdit(true); }
+          else { if (apState.edit) apSetEdit(false); const was = apState.pick; apState.pick = m === 'pick'; if (!apState.pick) apState.picked.clear(); if (was !== apState.pick) apRender(); else apTradeLbl(); }
         }
+        else if (b.dataset.act === 'pickall') { apState.shown.forEach(k => apState.picked.add(k)); apRender(); }
+        else if (b.dataset.act === 'pickclr') { apState.picked.clear(); apRender(); }
         else if (b.dataset.act === 'wipe') {
           if (!confirm('Delete all saved All Pets data for every account, including tags and notes? This cannot be undone.')) return;
           gmSet(AP_KEY, {}); gmSet(AP_TAGS, {}); apState.sel.clear(); apRender(); apToast('All Pets data deleted');
@@ -822,9 +874,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
         } else if (b.dataset.act === 'unblock') {
           apSetBlock(acct, false); apRender(); apToast('Unblocked ' + acct + '. Log in to it once to add its pets.');
         }
-        else if (b.dataset.act === 'editmode') {
-          apSetEdit(!apState.edit);
-        } else if (b.dataset.act === 'active') {
+        else if (b.dataset.act === 'active') {
           const a = [...document.querySelectorAll('#qrDock .qrOverlay a')].find(x => /make active/i.test(x.textContent) && (x.getAttribute('href') || '').toLowerCase().includes(n.toLowerCase()));
           if (a) { b.disabled = true; a.click(); } else apStatus('Open your Quick Ref / pet menu on Neopets to make ' + n + ' active.');
         } else if (b.dataset.act === 'switch') {
@@ -844,7 +894,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     apState.edit = on; if (!on) apState.sel.clear();
     if (on && apState.pick) { apState.pick = false; apState.picked.clear(); apTradeLbl(); }
     apEl.classList.toggle('apEditing', on);
-    const b = $('.apEditBtn', apEl); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); $('span', b).textContent = on ? 'Done' : 'Edit tags';
+    apTradeLbl();
     apEl.querySelectorAll('.apPop').forEach(p => { p.hidden = true; });
     if (apEl.classList.contains('open')) apRender();
   }
@@ -869,7 +919,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     $('.apCount', apEl).textContent = cnt.all + ' pet' + (cnt.all === 1 ? '' : 's');
     $('.apAcctVal', apEl).textContent = apState.only.size ? apState.only.size + ' of ' + accts.length : 'All accounts';
     $('.apSortVal', apEl).textContent = { account: 'Account', name: 'Name', species: 'Species', tag: 'Tag' }[apState.sort] || 'Account';
-    $('.apTrade', apEl).classList.toggle('hot', apState.tab === 'uft');
     const mainA = mainAcct().toLowerCase();
     $('.apAcctList', apEl).innerHTML = accts.map(n => `<div class="apAcRow"><label class="apOpt"><input type="checkbox" data-n="${esc(n)}"${inAcct(n) ? ' checked' : ''}><span>${esc(n)}</span>${n.toLowerCase() === mainA ? '<em class="apMainS" title="Main account" aria-label="Main account">★</em>' : ''}</label><button type="button" class="apAcX" data-act="acdel" data-a="${esc(n)}" title="Delete ${esc(n)} and its pets" aria-label="Delete account ${esc(n)}">${AP_TRASH}</button><button type="button" class="apAcX" data-act="acblock" data-a="${esc(n)}" title="Block ${esc(n)} (delete and never track again)" aria-label="Block account ${esc(n)}">${AP_BLOCK_I}</button></div>`).join('');
     $('.apAcctList', apEl).onchange = (e) => { const n = e.target.dataset.n; if (!n) return; apState.only.has(n) ? apState.only.delete(n) : apState.only.add(n); apRender(); };
@@ -920,10 +969,12 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (html || unseen.length || blk.length) html += `<div class="apHead apFoot"><small>${unseen.length ? `Not seen yet: ${unseen.map(apUserLk).join(', ')}. Log in once to add their pets.` : 'Pets stay saved on this computer until you delete them.'}</small><button type="button" class="apWipe" data-act="wipe" title="Delete all saved All Pets data">Delete data</button></div>`
       + (blk.length ? `<div class="apHead apFoot"><small>Blocked:</small>${blk.map(n => `<button type="button" class="apUnblk" data-act="unblock" data-a="${esc(n)}" title="Unblock ${esc(n)}">${esc(n)} ×</button>`).join('')}</div>` : '');
     apState.shown = all.map(x => x[0].name.toLowerCase());
-    if (apState.edit && html) html = `<div class="apBulk"><span class="apSelN">${apState.sel.size} selected</span><span class="apBulkL">Set selected to:</span><div class="apBulkT">${APO.map(o => `<button type="button" class="apTg ${o[0]}" data-act="bulk" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><span class="apSp"></span><button type="button" data-act="selall">Select all shown</button><button type="button" data-act="selclr">Clear</button></div>` + html;
+    if (apState.edit && html) html = `<div class="apBulk"><span class="apSelN">${apState.sel.size} selected</span><span class="apBulkL">Set selected to:</span><div class="apBulkT">${APO.map(o => `<button type="button" class="apTg ${o[0]}" data-act="bulk" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><span class="apSp"></span><button type="button" data-act="selall">Select all shown</button><button type="button" data-act="selclr">Clear</button><button type="button" class="apDone" data-act="mode" data-m="browse">Done</button></div>` + html;
+    if (apState.pick && html) html = `<div class="apBulk apPickBar"><span class="apSelN">${apState.picked.size} picked</span><span class="apBulkL">Click pets to add them. Copy and Petpage use only the picked pets.</span><span class="apSp"></span><button type="button" data-act="pickall">Pick all shown</button><button type="button" data-act="pickclr">Clear</button><button type="button" class="apDone" data-act="mode" data-m="browse">Done</button></div>` + html;
     $('.apBody', apEl).innerHTML = html || '<div class="apEmpty"><div class="apFace" aria-hidden="true"><i></i><i></i><b></b></div><div>No pets here yet. Try another filter, or clear the search.</div></div>';
     if (apState.saved) { apFlash(apState.saved); apState.saved = ''; }
     try { apTone(apEl); } catch {}
+    apTradeLbl();
   }
 
   // Passive collection: local reads only (no network). Runs shortly after load and when the data changes.

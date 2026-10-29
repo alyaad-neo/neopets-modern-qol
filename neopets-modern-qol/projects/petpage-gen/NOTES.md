@@ -29,16 +29,14 @@ All Pets toolbar "Petpage" button opens #nqPP: a builder that turns the Up for T
 - Gradient workaround: rows of solid-colour table cells (title band, gframe borders, strips).
 - filter-test.html holds the test rows; rerun it before relying on anything new.
 
-## Design (1.1, editorial gallery, 2026-10-28)
+## Status (2026-10-28)
 
-- Hero: 2-column table. Left: accent bar, big title, intro, Looking for, accent Neomail pill + View lookup link. No art column (mosaic removed as redundant).
-- Background sources (P.bgSrc): Patterns (default) = Neopets tiled backgrounds, scraped from /backgrounds_tiled.phtml (141 seamless 200px GIFs on images.neopets.com/backgrounds/, cached in localStorage nq_pp_tiles_v1 for 7 days); output = fixed, repeating CSS background + rounded sheet (P.bgKind tile). Scenes = DTI search, stretched mode below. /backgrounds.phtml full-screen 1024x768 wallpapers exist but only as .zip downloads (JPG not hosted), so unusable without uploading.
-- Scene background (P.bgKind scene): Neopets backgrounds max out at 600x600 (DTI sizes 600/300/150; checked). No tiling: one <img> sized to the estimated page height (1700-3200px), centred with text-align:center + margin:0 -9999px, then <br>, then the sheet as an inline-block width:100% pulled up with a negative margin-top. Page colour beyond the image = average image colour (P.bgEdge from pickAccent). Stretching makes it soft; accepted as a backdrop.
-- Accent: pickAccent() samples the picked background on a 48px canvas (most saturated hue bin) -> P.bgAcc; otherwise seeded from the username; Shuffle accent overrides. Themes: light / warm / dark page tones only.
-- Grid: borderless cards, soft grey image tile, name + year pill, caps species, note in accent; list layout = hairline rows.
-- Rejected along the way: gradient frames/bands (Duo), frosted copies and frost tiles (no blur possible; uploads), stretched thumbnails (blocky).
+- Reverted to the 5.5.53 design (Duo theme, gradient title band, gradient frames/dividers) at Aly's request. The later editorial redesign, Neopets pattern/scene backgrounds, accent sampling and frosted-glass uploads (commit 2115b16) were removed from the code. Their filter findings stay above in Rules.
+- Old saved prefs from the later versions (theme light/warm/dark, etc.) fall back to defaults in loadPrefs.
 
 ## Data
+
+- Edit Pet Page (/editpage.phtml?pet_name=X, any pet): a "Build trade petpage" button (#nqPPEdit) is inserted above the largest textarea and opens the builder; floating bottom-right if no textarea is found. Generic selector on purpose (the page markup was never inspected).
 
 - Age: Quick Ref `age` per pet (25-hud parse) -> account-drawer apCollect stores `born` (timestamp). Pets get it after their account Quick Ref loads once.
 - Background search: NQ.dtiPage (modern-qol 45-colors). Only images.neopets.com / pets.neopets.com URLs (NEO_IMG).
@@ -47,9 +45,3 @@ All Pets toolbar "Petpage" button opens #nqPP: a builder that turns the Up for T
 - Stale tab warning: credit link title="nqpp <build ms>"; copy saves nq_pp_copy; checkStale banner.
 - Bundle header excludes preview_homepage.phtml and ~petpages.
 
-## Frosted glass (1.2)
-
-- Outside hosts: <img src> from other sites is rewritten to fansite.phtml and the save fails; CSS background-image url() from other sites survives (Neopets rewrites https to http; browsers auto-upgrade, image loads). Tested 2026-10-28.
-- makeGlass(): one 1920x2880 JPG. Top 1440 = background blurred (patterns tiled first, scenes cover-scaled) and slightly toned; bottom 1440 = same blur under a 74% white (or dark) layer = glass. Downloads; preview uses a local blob URL (never in the copied code).
-- User uploads to postimg, pastes the Direct link (P.glass, must end .jpg/.png; P.glassFor ties it to P.bg). Page: outer div background = image, fixed, center 0. Sheet: same image, fixed, center -1440px, so the glass half lines up with the backdrop.
-- Screens taller than 1440px show the glass half below the backdrop; wider than 1920 show P.bgEdge.

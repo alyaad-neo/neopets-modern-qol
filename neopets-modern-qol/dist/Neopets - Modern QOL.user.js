@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.62
+// @version      5.5.66
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -7030,7 +7030,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apInfo b, #nqAP .apInfo small, #nqAP .apInfo b *, #nqAP .apInfo small *, #nqAP .apInfo .apLk { font-family: 'CafeteriaBlack', Georgia, serif !important; font-weight: 400; }
 #nqAP .apName, #nqAP .apName .apLk, #nqAP .apCard .apName a { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 #nqAP .apInfo b { font-size: 14px; } #nqAP .apInfo small { font-size: 12px; }
-#nqAP .apCopyWrap { display: flex; gap: 4px; }
+#nqAP .apCopyWrap { display: flex; gap: 0; }
 #nqAP .apAct { box-shadow: 0 1px 4px rgba(0,0,0,.25); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #1c8f55; background: #e3f7ec; border-radius: 4px; padding: 1px 6px; }
 #nqAP .apNote { margin: -4px 2px 0; font-size: 12px; line-height: 16px; color: var(--ap-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #nqAP .apChk { position: absolute; top: 8px; left: 8px; z-index: 4; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); border-radius: 6px; box-shadow: 0 0 0 1px var(--ap-line); cursor: pointer; }
@@ -7058,8 +7058,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apSp { flex: 1 1 0; }
 #nqAP .apGrid { padding-top: 14px; }
 #nqAP .apBulk + .apGrid, #nqAP .apBulk + .apHead { margin-top: 0; }
-#nqAP .apTop .apEditBtn.on { background: var(--ap-acc); border-color: transparent; color: #fff; }
-#nqAP .apTop .apEditBtn.on:hover { background: #6a49e0; }
 #nqAP .apNoImg { font-size: 48px; font-weight: 800; color: #a595d6; }
 #nqAP .sk .apPic { background: linear-gradient(110deg, #f1eafc 30%, #fff 50%, #f1eafc 70%); background-size: 200% 100%; animation: apSk 1.6s linear infinite; }
 #nqAP .sk .apLine { height: 12px; border-radius: 6px; background: #ece7f7; }
@@ -7083,24 +7081,55 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apTop button:hover { box-shadow: none; }
 #nqAP .apTop .apIcon { width: 34px; padding: 0; color: var(--ap-mute); }
 #nqAP .apTop .apIcon:hover { color: var(--ap-text); }
-#nqAP .apTop .apRow { position: relative; flex-wrap: wrap; justify-content: space-between; gap: 8px 12px; padding: 0 20px 12px; }
-#nqAP .apTop .apSeg { padding: 3px; gap: 2px; border-radius: 10px; height: 38px; align-items: center; }
-#nqAP .apTop .apSeg button { height: 30px; border-radius: 7px; padding: 0 10px; gap: 7px; color: var(--ap-mute); }
-#nqAP .apTop .apSeg button.on { color: var(--ap-text); background: #fff; box-shadow: 0 0 0 1px var(--ap-line), 0 1px 2px rgba(70,52,110,.12); }
-#nqAP .apTop .apSeg button.on .apN { color: var(--ap-acc); }
-#nqAP .apN { font-weight: 500; font-size: 12px; color: var(--ap-mute); opacity: .9; }
+#nqAP .apTop .apRow { position: relative; flex-wrap: wrap-reverse; justify-content: space-between; align-items: flex-end; gap: 4px 16px; padding: 2px 20px 0; }
+#nqAP .apTop .apSeg { padding: 0; gap: 22px; border-radius: 0; height: 44px; align-items: stretch; background: none; }
+#nqAP .apTop .apSeg button { --t: var(--ap-acc); position: relative; height: 44px; border: 0; border-radius: 0; padding: 0 2px; gap: 7px; color: var(--ap-mute); background: none; font-weight: 600; }
+#nqAP .apTop .apSeg button[data-tab=uft] { --t: #f0a92e; } #nqAP .apTop .apSeg button[data-tab=perm] { --t: #3fb877; } #nqAP .apTop .apSeg button[data-tab=maybe] { --t: #4a9be8; }
+#nqAP .apTop .apSeg button::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--t); transform: scaleX(0); transition: transform .18s ease; }
+#nqAP .apTop .apSeg button:hover { color: var(--ap-text); background: none; box-shadow: none; }
+#nqAP .apTop .apSeg button.on { color: var(--ap-text); background: none; box-shadow: none; }
+#nqAP .apTop .apSeg button.on::after { transform: none; }
+#nqAP .apTop .apSeg button.on .apN { background: var(--t); color: #fff; }
+#nqAP .apN { min-width: 22px; padding: 0 6px; border-radius: 999px; background: var(--ap-soft); font-weight: 700; font-size: 11px; line-height: 18px; text-align: center; color: var(--ap-mute); transition: background .15s, color .15s; }
 #nqAP .apTd { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 #nqAP .apTd.uft { background: #f0a92e; } #nqAP .apTd.perm { background: #4cc784; } #nqAP .apTd.maybe { background: #4a9be8; }
-#nqAP .apTools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#nqAP .apView { display: flex; align-items: center; gap: 2px; align-self: center; padding: 5px 0; }
+#nqAP .apTop .apView button { border-color: transparent; background: transparent; padding: 0 10px; }
+#nqAP .apTop .apView button:hover, #nqAP .apTop .apView .apDd[aria-expanded=true] { background: var(--ap-soft); border-color: transparent; }
 #nqAP .apPopWrap { position: relative; }
 #nqAP .apTop .apDd { gap: 6px; }
 #nqAP .apDdl { color: var(--ap-mute); font-weight: 500; }
 #nqAP .apDd b { font-weight: 600; }
 #nqAP .apDd svg:last-child { width: 14px; height: 14px; color: var(--ap-mute); }
-#nqAP .apDd[aria-expanded=true] { border-color: var(--ap-acc); background: var(--ap-soft); }
-#nqAP .apTop .apTrade { color: var(--ap-text); }
-#nqAP .apTop .apTrade.hot { background: var(--ap-acc); border-color: transparent; color: #fff; }
-#nqAP .apTop .apTrade.hot:hover { background: #6a49e0; }
+#nqAP .apActs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 4px 20px 10px; }
+#nqAP .apMode { display: inline-flex; padding: 3px; gap: 2px; background: var(--ap-soft); border-radius: 11px; }
+#nqAP .apTop .apMode button { height: 32px; border: 0; border-radius: 8px; padding: 0 14px; background: transparent; color: var(--ap-mute); transition: background .15s, color .15s, box-shadow .15s; }
+#nqAP .apTop .apMode button:hover { background: rgba(255,255,255,.6); color: var(--ap-text); }
+#nqAP .apTop .apMode button.on { background: #fff; color: var(--ap-text); box-shadow: 0 1px 3px rgba(70,52,110,.2); }
+#nqAP .apMode svg { opacity: .7; }
+#nqAP .apMode button.on svg { color: var(--ap-acc); opacity: 1; }
+#nqAP .apShare { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 14px; background: #fff; border: 1px solid var(--ap-line); border-radius: 12px; }
+#nqAP .apShareTx { display: flex; flex-direction: column; margin-right: 6px; line-height: 15px; }
+#nqAP .apShareTx small { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ap-mute); }
+#nqAP .apShareTx b { font-size: 13px; font-weight: 600; color: var(--ap-text); white-space: nowrap; }
+#nqAP.apShareEmpty .apShareTx b { font-weight: 500; color: var(--ap-mute); }
+#nqAP .apTop .apShare button { height: 32px; }
+#nqAP .apTop .apShare .apTrade { padding: 0 14px; border-color: transparent; border-radius: 8px 0 0 8px; background: var(--ap-acc); color: #fff; }
+#nqAP .apTop .apShare .apCopyOpt { width: 28px; border-color: transparent; border-left: 1px solid rgba(255,255,255,.3); border-radius: 0 8px 8px 0; background: var(--ap-acc); color: #fff; }
+#nqAP .apTop .apShare .apCopyOpt svg:last-child { color: #fff; }
+#nqAP .apTop .apShare .apTrade:hover, #nqAP .apTop .apShare .apCopyOpt:hover, #nqAP .apTop .apShare .apCopyOpt[aria-expanded=true] { background: #6a49e0; border-color: transparent; border-left-color: rgba(255,255,255,.3); }
+#nqAP.apShareEmpty .apShare .apCopyWrap, #nqAP.apShareEmpty .apShare .apPpBtn { opacity: .5; }
+#nqAP .apTop .apShare .apPpBtn { background: transparent; }
+#nqAP .apBulk .apDone { background: var(--ap-acc); border-color: transparent; color: #fff; }
+#nqAP .apBulk .apDone:hover { background: #6a49e0; border-color: transparent; }
+#nqAP .apPickBar .apSelN { min-width: 0; color: var(--ap-acc); }
+#nqAP.apPicking .apOv { display: none; }
+#nqAP.apPicking .apCard { cursor: pointer; }
+#nqAP.apPicking .apCard:hover .apName { opacity: 1; }
+#nqAP.apPicking .apCard:hover .apImg { box-shadow: 0 0 0 2px #cbbaf2; }
+#nqAP.apPicking .apCard.sel .apImg { box-shadow: 0 0 0 3px var(--ap-acc), 0 8px 20px rgba(124,92,240,.25); }
+#nqAP.apHasPick .apCard:not(.sel) .apImg { opacity: .55; transition: opacity .15s, box-shadow .15s; }
+#nqAP.apHasPick .apCard:not(.sel):hover .apImg { opacity: .85; }
 #nqAP .apPop { position: absolute; top: calc(100% + 6px); right: 0; z-index: 10; min-width: 220px; max-width: calc(100vw - 24px); max-height: 60vh; overflow-y: auto; padding: 6px; background: #fff; border: 1px solid var(--ap-line); border-radius: 10px; box-shadow: 0 10px 30px rgba(70,52,110,.22); }
 #nqAP .apPop[hidden] { display: none; }
 #nqAP .apPopHead { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ap-mute); }
@@ -7126,8 +7155,10 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
   #nqAP .apTop .apSearch { order: 5; flex-basis: 100%; }
   #nqAP .apTop .apRow { padding: 0 12px 10px; }
   #nqAP .apTop .apSeg { width: 100%; }
-  #nqAP .apTools { width: 100%; }
-  #nqAP .apTools .apCopyWrap { margin-left: auto; }
+  #nqAP .apActs { padding: 2px 12px 10px; }
+  #nqAP .apMode, #nqAP .apShare { width: 100%; }
+  #nqAP .apTop .apMode button { flex: 1; padding: 0 6px; }
+  #nqAP .apShareTx { flex: 1; min-width: 0; }
   #nqAP .apPopWrap { position: static; }
   #nqAP .apPop { left: 12px; right: 12px; top: auto; margin-top: 6px; }
   #nqAP .apBody { padding: 0 12px 24px; }
@@ -7147,7 +7178,20 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apPrimary:hover, html[
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button { background: transparent; }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button:hover { background: rgba(255,255,255,.08); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSeg button.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { background: var(--ap-panel); color: var(--ap-acc); box-shadow: 0 0 0 1px var(--ap-line), 0 1px 4px rgba(0,0,0,.35); }
-html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { color: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on { background: none; box-shadow: none; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button:hover { color: var(--ap-text); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apSeg button.on .apN { color: #1d1a2b; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apView button, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apMode button { background: transparent; border-color: transparent; box-shadow: none; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apView button:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apView .apDd[aria-expanded=true] { background: var(--ap-soft); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apMode button:hover { background: rgba(255,255,255,.08); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apMode button.on { background: var(--ap-panel); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apShare { background: var(--ap-panel); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apTrade, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBulk .apDone { background: var(--ap-acc); color: #1d1a2b; border-color: transparent; box-shadow: none; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt { border-left: 1px solid rgba(29,26,43,.25); }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt svg:last-child { color: #1d1a2b; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apTrade:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt:hover, html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apCopyOpt[aria-expanded=true], html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBulk .apDone:hover { background: #b8a2ff; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apPpBtn { background: transparent; }
+html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apTop .apShare .apPpBtn:hover { background: var(--ap-soft); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChip { background: transparent; }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apChip.on { background: var(--ap-panel); border-color: rgba(165,139,255,.45); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apBody { background: radial-gradient(circle, rgba(255,255,255,.08) 1.2px, transparent 1.6px) 0 0 / 20px 20px; }
@@ -7183,9 +7227,14 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
   // Trade pick mode: checkboxes on every card; the copy button then copies only the picked pets, whatever their tag.
   function apTradeLbl() {
     if (!apEl) return;
-    const pb = $('.apPickBtn', apEl), tb = $('.apTrade span', apEl), n = apState.picked.size;
-    if (pb) { pb.classList.toggle('on', apState.pick); pb.setAttribute('aria-pressed', String(apState.pick)); $('span', pb).textContent = apState.pick ? 'Done picking' : 'Pick pets'; }
-    if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
+    const m = apState.pick ? 'pick' : apState.edit ? 'edit' : 'browse', n = apState.picked.size;
+    apEl.querySelectorAll('.apMode button').forEach(b => { const on = b.dataset.m === m; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    apEl.classList.toggle('apPicking', apState.pick); apEl.classList.toggle('apHasPick', apState.pick && n > 0);
+    let u = 0;
+    if (!apState.pick) { const c = apRead(), tags = apTags(), seen = new Set(); apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => { const k = p.name.toLowerCase(); if (!seen.has(k) && (tags[k] || {}).s === 'uft') { seen.add(k); u++; } })); }
+    $('.apShareN', apEl).textContent = apState.pick ? (n ? n + ' picked pet' + (n === 1 ? '' : 's') : 'Click pets to pick them') : u ? u + ' Up for trade pet' + (u === 1 ? '' : 's') : 'No pets tagged Up for trade';
+    apEl.classList.toggle('apShareEmpty', apState.pick ? !n : !u);
+    const pn = $('.apPickBar .apSelN', apEl); if (pn) pn.textContent = n + ' picked';
   }
   try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; apState.cpNote = !!pr.cpNote; apState.cpSp = pr.cpSp !== false; } } catch {}
   NQ.ap = { read: apRead, tags: apTags, ordered: apOrdered, of: apOf, user: curUser, prof: readProf, refreshProf: (u) => refreshProfile(u), main: mainAcct, picked: () => apState.pick && apState.picked.size ? new Set(apState.picked) : null };
@@ -7204,7 +7253,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (!apEl) {
       const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
       apEl = document.createElement('div'); apEl.id = 'nqAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
-      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy Up for Trade pets, or the picked pets, as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="Copy options" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copy with</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn apPpBtn" data-act="petpage" title="Build a petpage from Up for Trade or picked pets">' + AP_PAGE + '<span>Petpage</span></button></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
+      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apActs"><div class="apMode" role="radiogroup" aria-label="Mode"><button type="button" role="radio" data-act="mode" data-m="browse" title="Look around: hover a pet for its links">' + AP_I('<rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/>') + '<span>Browse</span></button><button type="button" role="radio" data-act="mode" data-m="edit" title="Set tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" role="radio" data-act="mode" data-m="pick" title="Hand-pick pets for the trade list">' + AP_ACTIVE + '<span>Pick for trade</span></button></div><div class="apShare"><div class="apShareTx"><small>Trade list</small><b class="apShareN"></b></div><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy the trade list as text">' + AP_COPY + '<span>Copy</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="What the copied text includes" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copied text includes</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apPpBtn" data-act="petpage" title="Build a petpage from the trade list">' + AP_PAGE + '<span>Petpage</span></button></div></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apView"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
       document.body.appendChild(apEl);
       apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
       $('.apClose', apEl).addEventListener('click', closeAllPets);
@@ -7222,7 +7271,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
       $('.apCpNote', apEl).addEventListener('change', (e) => { apState.cpNote = e.target.checked; apSavePrefs(); });
       $('.apCpSp', apEl).addEventListener('change', (e) => { apState.cpSp = e.target.checked; apSavePrefs(); });
       $('.apTrade', apEl).addEventListener('click', () => {
-        const c = apRead(), tags = apTags(), lines = [], done = new Set(), only = apState.pick && apState.picked.size ? apState.picked : null;
+        const c = apRead(), tags = apTags(), lines = [], done = new Set(), only = apState.pick ? apState.picked : null;
         apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => {
           const k = p.name.toLowerCase(), t = tags[k] || {};
           if (done.has(k) || (only ? !only.has(k) : t.s !== 'uft')) return;
@@ -7255,6 +7304,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
         const b = e.target.closest('button[data-act]');
         if (!b) {
           const cd = e.target.closest('.apCard');
+          if (cd && apState.pick && !e.target.closest('a, input, label')) { const cb = $('input[data-pick]', cd); if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change', { bubbles: true })); } return; }
           if (cd && !apState.edit && !e.target.closest('a, input')) { const on = !cd.classList.contains('tap'); apEl.querySelectorAll('.apCard.tap').forEach(x => x.classList.remove('tap')); cd.classList.toggle('tap', on); }
           return;
         }
@@ -7268,11 +7318,13 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
           gmSet(AP_TAGS, t); apToast('Updated ' + apState.sel.size + ' pet' + (apState.sel.size === 1 ? '' : 's')); apRender();
         } else if (b.dataset.act === 'selall') { apState.shown.forEach(k => apState.sel.add(k)); apRender(); }
         else if (b.dataset.act === 'selclr') { apState.sel.clear(); apRender(); }
-        else if (b.dataset.act === 'pick') {
-          apState.pick = !apState.pick;
-          if (apState.pick) { if (apState.edit) apSetEdit(false); } else apState.picked.clear();
-          apRender(); apTradeLbl();
+        else if (b.dataset.act === 'mode') {
+          const m = b.dataset.m;
+          if (m === 'edit') { if (!apState.edit) apSetEdit(true); }
+          else { if (apState.edit) apSetEdit(false); const was = apState.pick; apState.pick = m === 'pick'; if (!apState.pick) apState.picked.clear(); if (was !== apState.pick) apRender(); else apTradeLbl(); }
         }
+        else if (b.dataset.act === 'pickall') { apState.shown.forEach(k => apState.picked.add(k)); apRender(); }
+        else if (b.dataset.act === 'pickclr') { apState.picked.clear(); apRender(); }
         else if (b.dataset.act === 'wipe') {
           if (!confirm('Delete all saved All Pets data for every account, including tags and notes? This cannot be undone.')) return;
           gmSet(AP_KEY, {}); gmSet(AP_TAGS, {}); apState.sel.clear(); apRender(); apToast('All Pets data deleted');
@@ -7291,9 +7343,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
         } else if (b.dataset.act === 'unblock') {
           apSetBlock(acct, false); apRender(); apToast('Unblocked ' + acct + '. Log in to it once to add its pets.');
         }
-        else if (b.dataset.act === 'editmode') {
-          apSetEdit(!apState.edit);
-        } else if (b.dataset.act === 'active') {
+        else if (b.dataset.act === 'active') {
           const a = [...document.querySelectorAll('#qrDock .qrOverlay a')].find(x => /make active/i.test(x.textContent) && (x.getAttribute('href') || '').toLowerCase().includes(n.toLowerCase()));
           if (a) { b.disabled = true; a.click(); } else apStatus('Open your Quick Ref / pet menu on Neopets to make ' + n + ' active.');
         } else if (b.dataset.act === 'switch') {
@@ -7313,7 +7363,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     apState.edit = on; if (!on) apState.sel.clear();
     if (on && apState.pick) { apState.pick = false; apState.picked.clear(); apTradeLbl(); }
     apEl.classList.toggle('apEditing', on);
-    const b = $('.apEditBtn', apEl); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); $('span', b).textContent = on ? 'Done' : 'Edit tags';
+    apTradeLbl();
     apEl.querySelectorAll('.apPop').forEach(p => { p.hidden = true; });
     if (apEl.classList.contains('open')) apRender();
   }
@@ -7338,7 +7388,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     $('.apCount', apEl).textContent = cnt.all + ' pet' + (cnt.all === 1 ? '' : 's');
     $('.apAcctVal', apEl).textContent = apState.only.size ? apState.only.size + ' of ' + accts.length : 'All accounts';
     $('.apSortVal', apEl).textContent = { account: 'Account', name: 'Name', species: 'Species', tag: 'Tag' }[apState.sort] || 'Account';
-    $('.apTrade', apEl).classList.toggle('hot', apState.tab === 'uft');
     const mainA = mainAcct().toLowerCase();
     $('.apAcctList', apEl).innerHTML = accts.map(n => `<div class="apAcRow"><label class="apOpt"><input type="checkbox" data-n="${esc(n)}"${inAcct(n) ? ' checked' : ''}><span>${esc(n)}</span>${n.toLowerCase() === mainA ? '<em class="apMainS" title="Main account" aria-label="Main account">★</em>' : ''}</label><button type="button" class="apAcX" data-act="acdel" data-a="${esc(n)}" title="Delete ${esc(n)} and its pets" aria-label="Delete account ${esc(n)}">${AP_TRASH}</button><button type="button" class="apAcX" data-act="acblock" data-a="${esc(n)}" title="Block ${esc(n)} (delete and never track again)" aria-label="Block account ${esc(n)}">${AP_BLOCK_I}</button></div>`).join('');
     $('.apAcctList', apEl).onchange = (e) => { const n = e.target.dataset.n; if (!n) return; apState.only.has(n) ? apState.only.delete(n) : apState.only.add(n); apRender(); };
@@ -7389,10 +7438,12 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (html || unseen.length || blk.length) html += `<div class="apHead apFoot"><small>${unseen.length ? `Not seen yet: ${unseen.map(apUserLk).join(', ')}. Log in once to add their pets.` : 'Pets stay saved on this computer until you delete them.'}</small><button type="button" class="apWipe" data-act="wipe" title="Delete all saved All Pets data">Delete data</button></div>`
       + (blk.length ? `<div class="apHead apFoot"><small>Blocked:</small>${blk.map(n => `<button type="button" class="apUnblk" data-act="unblock" data-a="${esc(n)}" title="Unblock ${esc(n)}">${esc(n)} ×</button>`).join('')}</div>` : '');
     apState.shown = all.map(x => x[0].name.toLowerCase());
-    if (apState.edit && html) html = `<div class="apBulk"><span class="apSelN">${apState.sel.size} selected</span><span class="apBulkL">Set selected to:</span><div class="apBulkT">${APO.map(o => `<button type="button" class="apTg ${o[0]}" data-act="bulk" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><span class="apSp"></span><button type="button" data-act="selall">Select all shown</button><button type="button" data-act="selclr">Clear</button></div>` + html;
+    if (apState.edit && html) html = `<div class="apBulk"><span class="apSelN">${apState.sel.size} selected</span><span class="apBulkL">Set selected to:</span><div class="apBulkT">${APO.map(o => `<button type="button" class="apTg ${o[0]}" data-act="bulk" data-v="${o[0]}">${o[1]}</button>`).join('')}</div><span class="apSp"></span><button type="button" data-act="selall">Select all shown</button><button type="button" data-act="selclr">Clear</button><button type="button" class="apDone" data-act="mode" data-m="browse">Done</button></div>` + html;
+    if (apState.pick && html) html = `<div class="apBulk apPickBar"><span class="apSelN">${apState.picked.size} picked</span><span class="apBulkL">Click pets to add them. Copy and Petpage use only the picked pets.</span><span class="apSp"></span><button type="button" data-act="pickall">Pick all shown</button><button type="button" data-act="pickclr">Clear</button><button type="button" class="apDone" data-act="mode" data-m="browse">Done</button></div>` + html;
     $('.apBody', apEl).innerHTML = html || '<div class="apEmpty"><div class="apFace" aria-hidden="true"><i></i><i></i><b></b></div><div>No pets here yet. Try another filter, or clear the search.</div></div>';
     if (apState.saved) { apFlash(apState.saved); apState.saved = ''; }
     try { apTone(apEl); } catch {}
+    apTradeLbl();
   }
 
   // Passive collection: local reads only (no network). Runs shortly after load and when the data changes.
@@ -7810,23 +7861,21 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
   const hash = (s) => { let h = 2166136261; for (const ch of String(s).toLowerCase()) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
   const THEMES = {
-    light: (a) => ({ bg: '#ffffff', ink: '#16151a', mute: '#6e6c78', line: '#ececf0', tile: '#f4f4f6', acc: a }),
-    warm: (a) => ({ bg: '#faf8f4', ink: '#221f1a', mute: '#77706a', line: '#ebe6dd', tile: '#f1ede5', acc: a }),
-    dark: (a) => ({ bg: '#111114', ink: '#f4f3f7', mute: '#9b99a6', line: '#26252c', tile: '#1c1b21', acc: a })
+    duo: (h) => ({ bg: '#ffffff', card: '#ffffff', ink: '#141414', mute: '#7a7a7a', acc: hex(h, 85, 56), acc2: hex((h + 75) % 360, 85, 60), ac: '#141414', line: '#e7e7e7', tint: '#f4f4f4', tint2: '#f4f4f4', duo: true }),
+    yours: (h) => ({ bg: hex(h, 45, 97), card: '#ffffff', ink: hex(h, 32, 18), mute: hex(h, 12, 46), acc: hex(h, 62, 50), acc2: hex((h + 48) % 360, 70, 62), line: hex(h, 35, 89), tint: hex(h, 60, 94), tint2: hex((h + 48) % 360, 70, 93) }),
+    dusk: (h) => ({ bg: hex(h, 26, 11), card: hex(h, 22, 16), ink: hex(h, 30, 94), mute: hex(h, 14, 68), acc: hex(h, 80, 74), acc2: hex((h + 48) % 360, 80, 70), line: hex(h, 20, 25), tint: hex(h, 26, 21), tint2: hex((h + 48) % 360, 30, 24) }),
+    candy: (h) => ({ bg: hex((h + 24) % 360, 80, 96), card: '#ffffff', ink: hex(h, 40, 22), mute: hex(h, 18, 48), acc: hex((h + 330) % 360, 72, 58), acc2: hex((h + 60) % 360, 80, 64), line: hex((h + 24) % 360, 60, 88), tint: hex((h + 330) % 360, 90, 94), tint2: hex((h + 60) % 360, 90, 92) }),
+    paper: (h) => ({ bg: '#f6f1e7', card: '#fffdf8', ink: '#2e2a24', mute: '#7a7064', acc: hex(h, 45, 42), acc2: hex(h, 45, 42), line: '#e6ddcc', tint: '#f1eadc', tint2: '#f1eadc' }),
+    mono: () => ({ bg: '#ffffff', card: '#ffffff', ink: '#141414', mute: '#7a7a7a', acc: '#141414', acc2: '#141414', line: '#e7e7e7', tint: '#f4f4f4', tint2: '#f4f4f4' })
   };
-  const THEME_N = { light: 'Light', warm: 'Warm', dark: 'Dark' };
+  const THEME_N = { duo: 'Duo', yours: 'Yours', dusk: 'Dusk', candy: 'Candy', paper: 'Paper', mono: 'Mono' };
   const FONTS = { classic: 'Georgia,Cambria,serif', clean: 'Tahoma,Geneva,Verdana,sans-serif', book: 'Palatino,Cambria,Georgia,serif' };
-  const SIZES = { s: [196, 15], m: [232, 16], l: [300, 18] };
-  const DEF = { src: 'uft', theme: 'light', shift: 0, layout: 'cards', size: 'm', sp: false, note: true, font: 'classic', sort: 'list', title: '', intro: '', seek: '', contact: '', bg: '', bgName: '', bgThumb: '', bgAcc: '', bgEdge: '', bgKind: '', bgSrc: 'tiles', glass: '', glassFor: '' };
-  const GLASS_H = 1440;
-  const GLASS_RE = /^https:\/\/[^"'<>()\s?#]+\.(jpe?g|png)$/i;
-  const NEO_IMG = /^https:\/\/(images|pets)\.neopets\.com\/[^"'<>()\s?#]+\.(png|jpe?g|gif)$/i;
-  const cleanUrl = (u) => String(u || '').split(/[?#]/)[0];
-  const SAFE_IMG = /^https:\/\/[^"'<>()\s]+$/i;
+  const SIZES = { s: [196, 0, 14], m: [236, 0, 16], l: [286, 0, 18] };
+  const DEF = { src: 'uft', theme: 'duo', shift: 0, layout: 'cards', border: 'frame', size: 'm', sp: false, note: true, font: 'classic', sort: 'list', title: '', intro: '', seek: '', contact: '' };
 
   const prefKey = () => 'nq_pp_prefs:' + String(NQ.ap.user() || '').toLowerCase();
   let P = { ...DEF };
-  const loadPrefs = () => { P = { ...DEF }; try { Object.assign(P, JSON.parse(LSget(prefKey()) || '{}')); } catch {} };
+  const loadPrefs = () => { P = { ...DEF }; try { Object.assign(P, JSON.parse(LSget(prefKey()) || '{}')); } catch {} if (!THEMES[P.theme]) P.theme = DEF.theme; if (!FONTS[P.font]) P.font = DEF.font; if (!SIZES[P.size]) P.size = DEF.size; };
   const savePrefs = () => LSset(prefKey(), JSON.stringify(P));
 
   function gather(src) {
@@ -7843,91 +7892,89 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const nyear = (born) => born ? 'Y' + (new Date(born).getFullYear() - 1998) : '';
 
-  const mix = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - k) + parseInt(b.substr(i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
-  const lum = (c) => [1, 3, 5].reduce((s, i, j) => s + parseInt(c.substr(i, 2), 16) / 255 * [0.2126, 0.7152, 0.0722][j], 0);
-  const accentOf = () => {
-    const user = (P.contact || NQ.ap.user() || '').trim();
-    const seed = hex(((hash(user || 'neopets') % 360) + P.shift * 47) % 360, 58, 46);
-    return NEO_IMG.test(P.bg) && /^#[0-9a-f]{6}$/i.test(P.bgAcc || '') && !P.shift ? P.bgAcc : seed;
-  };
-
-  function build(pets, previewGlass) {
+  function build(pets) {
     const user = (P.contact || NQ.ap.user() || '').trim(), okUser = /^[A-Za-z0-9_]{3,20}$/.test(user);
-    const dark = P.theme === 'dark', base = accentOf();
-    const t = (THEMES[P.theme] || THEMES.light)(dark ? mix(base, '#ffffff', 0.3) : base);
-    const acc = t.acc, soft = mix(acc, t.bg, dark ? 0.8 : 0.9), onAcc = lum(acc) > 0.55 ? '#16151a' : '#ffffff';
-    const F = FONTS[P.font] || FONTS.classic, S = 'Verdana,Geneva,sans-serif';
-    const [cw, ns] = SIZES[P.size] || SIZES.m;
+    const t = THEMES[P.theme](((hash(user || 'neopets') % 360) + P.shift * 47) % 360), F = FONTS[P.font] || FONTS.classic;
+    const [cw, , ns] = SIZES[P.size] || SIZES.m;
     const list = pets.slice();
     if (P.sort === 'name') list.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
     else if (P.sort === 'age') list.sort((a, b) => (a.born || 9e15) - (b.born || 9e15));
+    const S = 'Verdana,Geneva,sans-serif', AC = t.ac || t.acc;
     const tx = (px, lh, w, c, fam) => `color:${c};font-family:${fam || F};font-size:${px}px;line-height:${lh}px;font-weight:${w || 'normal'}`;
     const cap = (px, ls, c, w) => `text-transform:uppercase;letter-spacing:${ls}px;${tx(px, px + 6, w || 'bold', c, S)}`;
+    const mix = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - k) + parseInt(b.substr(i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
     const look = (p) => 'https://www.neopets.com/petlookup.phtml?pet=' + encodeURIComponent(p.name);
     const img = (p, w) => `<img src="https://pets.neopets.com/cpn/${encodeURIComponent(p.name)}/1/7.png" width="${w}" height="${w}" alt="${esc(p.name)}" style="display:block;border:0">`;
-    const tile = (p, w, r, cls) => `<a href="${look(p)}" title="${esc(p.name)}" class="${cls}" style="display:block;width:${w}px;height:${w}px;border-radius:${r}px;background:${t.tile};overflow:hidden">${img(p, w)}</a>`;
+    const gf = P.border !== 'divider';
+    const strip = (n, h) => `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;border-spacing:0;font-size:0;line-height:0;background:${mix(t.acc, t.acc2, 0.5)}"><tr>${Array.from({ length: n }, (_, i) => `<td height="${h}" style="height:${h}px;background:${mix(t.acc, t.acc2, i / (n - 1))}"></td>`).join('')}</tr></table>`;
     const sp = (p) => P.sp ? [p.color, p.species].filter(Boolean).join(' ') : '';
-    const yb = (p) => p.born ? `<span style="display:inline-block;padding:3px 9px;border-radius:999px;background:${soft};${cap(10, 1, acc)}">${nyear(p.born)}</span>` : '';
-    const anyS = list.some(p => sp(p)), anyN = P.note && list.some(p => p.note);
+    const detail = (p) => [sp(p) && `<span style="${cap(9, 1, t.mute)}">${esc(sp(p))}</span>`, P.note && p.note && `<span style="${tx(12, 16, 'normal', AC)}">${esc(p.note)}</span>`].filter(Boolean).join(`<span style="color:${t.line}">&nbsp; | &nbsp;</span>`);
+    const anyD = list.some(p => detail(p));
+    const ring1 = mix(t.bg, t.ink, 0.05), ring2 = mix(t.bg, t.ink, 0.1), edge = mix(t.bg, t.ink, 0.16);
+    const gframe = (inner, r, extra) => {
+      const n = 12, bw = 3, col = (i) => mix(t.acc, t.acc2, i / (n - 1)), mid = col(Math.round((n - 1) / 2));
+      const edge = '<tr>' + Array.from({ length: n }, (_, i) => `<td height="${bw}" style="height:${bw}px;background:${col(i)}"></td>`).join('') + '</tr>';
+      return `<div style="${extra}border-radius:${r}px;overflow:hidden;background:${mid}"><table cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;border-spacing:0;font-size:0;line-height:0;background:${mid}">${edge}<tr><td width="${bw}" style="width:${bw}px;background:${col(0)}"></td><td colspan="${n - 2}" style="padding:0;background:${mid};font-size:14px;line-height:21px">${inner}</td><td width="${bw}" style="width:${bw}px;background:${col(n - 1)}"></td></tr>${edge}</table></div>`;
+    };
+    const lift = (inner, r, extra) => `<div style="${extra || ''}padding:0;border:1px solid ${ring1};border-radius:${r + 2}px"><div style="border:1px solid ${ring2};border-radius:${r + 1}px">${inner}</div></div>`;
+    const foil = (n, h, off) => `<table cellpadding="0" cellspacing="0" style="width:100%;height:${h}px;border-collapse:collapse;font-size:0;line-height:0;background:${t.acc}"><tr>${Array.from({ length: n }, (_, i) => { const k = ((i / (n - 1)) * 2 + off) % 2; return `<td style="height:${h}px;background:${k < 1 ? mix(t.acc, t.acc2, k) : mix(t.acc2, t.acc, k - 1)}"></td>`; }).join('')}</tr></table>`;
+    const yb = (p) => p.born ? `<span style="display:inline-block;padding:2px 7px;border:1px solid ${mix(AC, t.card, 0.55)};border-radius:999px;${cap(9, 1, AC)}">${nyear(p.born)}</span>` : '';
 
-    const card = (p) => `<div style="display:inline-block;vertical-align:top;width:${cw}px;margin:0 11px 38px;text-align:left">`
-      + tile(p, cw, 18, 'nqppA')
-      + `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin-top:14px;border-collapse:collapse"><tr>`
-      + `<td style="vertical-align:middle"><a href="${look(p)}" style="text-decoration:none;letter-spacing:-0.3px;${tx(ns + 3, ns + 8, 'bold', t.ink)}">${esc(p.name)}</a></td>`
-      + `<td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:8px">${yb(p)}</td></tr></table>`
-      + (anyS ? `<div style="margin-top:5px;${cap(10, 1, t.mute)}">${sp(p) ? esc(sp(p)) : '&nbsp;'}</div>` : '')
-      + (anyN ? `<div style="margin-top:6px;min-height:19px;${tx(13, 19, 'normal', acc, S)}">${P.note && p.note ? esc(p.note) : '&nbsp;'}</div>` : '')
-      + '</div>';
-    const row = (p) => `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;border-bottom:1px solid ${t.line}"><tr>`
-      + `<td style="width:112px;padding:16px 0;vertical-align:middle">${tile(p, 96, 14, 'nqppR')}</td>`
-      + `<td style="padding:16px 0 16px 8px;vertical-align:middle;text-align:left"><a href="${look(p)}" style="text-decoration:none;letter-spacing:-0.3px;${tx(20, 26, 'bold', t.ink)}">${esc(p.name)}</a>`
-      + (sp(p) ? `<div style="margin-top:4px;${cap(10, 1, t.mute)}">${esc(sp(p))}</div>` : '')
-      + (P.note && p.note ? `<div style="margin-top:5px;${tx(13, 19, 'normal', acc, S)}">${esc(p.note)}</div>` : '') + '</td>'
-      + `<td style="padding:16px 0;vertical-align:middle;text-align:right;white-space:nowrap">${yb(p)}</td></tr></table>`;
+    const card = (p, i) => {
+      const w = cw - 6, d = detail(p);
+      const inner = `<div style="width:${w}px;background:${t.card};${gf ? 'border-radius:7px' : `border:1px solid ${edge};border-radius:16px`};overflow:hidden;text-align:left">`
+        + `<a href="${look(p)}" title="${esc(p.name)}" class="nqppA" style="display:block;width:${w}px;height:${w}px;background:${t.tint};overflow:hidden">${img(p, w)}</a>`
+        + (gf ? '' : t.duo ? strip(24, 4) : foil(16, 3, (i * 0.37) % 2))
+        + `<div style="padding:12px 14px 14px">`
+        + `<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse"><tr>`
+        + `<td style="vertical-align:middle"><a href="${look(p)}" style="text-decoration:none;${tx(ns + 3, ns + 7, 'bold', t.ink)}">${esc(p.name)}</a></td>`
+        + `<td style="vertical-align:middle;text-align:right;white-space:nowrap;padding-left:6px">${yb(p)}</td></tr></table>`
+        + (anyD ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid ${t.line};min-height:32px;${tx(12, 16, 'normal', t.mute)}">${d || '&nbsp;'}</div>` : '')
+        + '</div></div>';
+      return gf ? gframe(inner, 10, 'display:inline-block;vertical-align:top;margin:10px;') : lift(inner, 16, 'display:inline-block;vertical-align:top;margin:10px;');
+    };
+    const row = (p, i) => {
+      const d = detail(p);
+      const inner = `<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;background:${t.card};border:1px solid ${edge};border-radius:14px"><tr>`
+        + `<td style="width:112px;padding:8px 0 8px 8px;vertical-align:middle"><a href="${look(p)}" title="${esc(p.name)}" class="nqppR" style="display:block;width:104px;height:104px;border-radius:10px;background:${t.tint};overflow:hidden">${img(p, 104)}</a></td>`
+        + `<td style="padding:10px 18px;vertical-align:middle;text-align:left"><a href="${look(p)}" style="text-decoration:none;${tx(20, 24, 'bold', t.ink)}">${esc(p.name)}</a>&nbsp; ${yb(p)}`
+        + (d ? `<div style="margin-top:6px">${d}</div>` : '') + '</td></tr></table>';
+      return gf ? gframe(inner.replace(`border:1px solid ${edge};border-radius:14px`, 'border-radius:8px'), 11, 'margin:0 0 12px;') : lift(inner, 14, 'margin:0 0 12px;');
+    };
 
     const prof = okUser && NQ.ap.prof ? NQ.ap.prof(user) : null;
-    const av = prof && NEO_IMG.test(prof.avatar || '') ? prof.avatar : '';
+    const av = prof && /^https:\/\/images\.neopets\.com\/[^"'<>()\s]+$/i.test(prof.avatar || '') ? prof.avatar : '';
     const title = P.title.trim() || 'Up for trade';
     const nm = okUser ? `https://www.neopets.com/neomessages.phtml?type=send&recipient=${encodeURIComponent(user)}` : '';
-    const bgOn = NEO_IMG.test(P.bg);
-    const words = `<div style="width:44px;height:4px;border-radius:4px;background:${acc}"></div>`
-      + `<div style="margin-top:22px;letter-spacing:-1px;${tx(54, 60, 'bold', t.ink)}">${esc(title)}</div>`
-      + (P.intro.trim() ? `<div style="max-width:460px;margin-top:18px;${tx(16, 26, 'normal', t.mute, S)}">${esc(P.intro.trim()).replace(/\n/g, '<br>')}</div>` : '')
-      + (P.seek.trim() ? `<div style="margin-top:20px;${tx(14, 22, 'normal', t.ink, S)}"><span style="${cap(10, 2, acc)}">Looking for</span>&nbsp;&nbsp; ${esc(P.seek.trim())}</div>` : '')
-      + (nm ? `<div style="margin-top:30px"><a href="${nm}" style="display:inline-block;padding:${av ? '6px 22px 6px 6px' : '13px 24px'};border-radius:999px;background:${acc};text-decoration:none;${tx(14, 18, 'bold', onAcc, S)}">`
-        + (av ? `<img src="${esc(av)}" width="32" height="32" alt="avatar" style="display:inline-block;width:32px;height:32px;border-radius:999px;vertical-align:middle">` : '')
-        + `<span style="vertical-align:middle;padding-left:${av ? 12 : 0}px">Neomail ${esc(user)}</span></a>`
-        + `<a href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(user)}" style="margin-left:22px;text-decoration:none;vertical-align:middle;${tx(14, 18, 'bold', t.ink, S)}">View lookup <span style="color:${acc}">&rarr;</span></a></div>` : '');
-    const hero = `<div style="padding:64px 0 48px">${words}</div>`;
+    const fade = (from, to) => Array.from({ length: 12 }, (_, i) => `<div style="height:4px;font-size:0;line-height:0;background:${mix(from, to, (i + 1) / 13)}"></div>`).join('');
+    const chars = [...title], side = 16, cols = side * 2 + chars.length, gc = (i) => mix(t.acc, t.acc2, i / (cols - 1));
+    const lum = (c) => [1, 3, 5].reduce((s, i, j) => s + parseInt(c.substr(i, 2), 16) / 255 * [0.2126, 0.7152, 0.0722][j], 0);
+    const ink = lum(mix(t.acc, t.acc2, 0.5)) > 0.6 ? '#1c1a24' : '#ffffff';
+    const bandRow = (h) => '<tr>' + Array.from({ length: cols }, (_, i) => `<td height="${h}" style="height:${h}px;background:${gc(i)}"></td>`).join('') + '</tr>';
+    const titleRow = '<tr>' + Array.from({ length: cols }, (_, i) => {
+      const c = i - side;
+      if (c < 0 || c >= chars.length) return `<td width="${Math.floor(50 / side)}%" style="background:${gc(i)}"></td>`;
+      return `<td style="padding:0;white-space:nowrap;vertical-align:middle;background:${gc(i)};${tx(50, 58, 'bold', ink)}">${chars[c] === ' ' ? '&nbsp;' : esc(chars[c])}</td>`;
+    }).join('') + '</tr>';
+    const band = `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;border-spacing:0;font-size:0;line-height:0;background:${gc(Math.round(cols / 2))}">${bandRow(46)}${titleRow}${bandRow(42)}</table>`;
+    const head = `<div style="padding:18px 20px 8px;text-align:center">`
+      + (P.intro.trim() ? `<div style="max-width:540px;margin:14px auto 0;${tx(15, 24, 'normal', t.mute, S)}">${esc(P.intro.trim()).replace(/\n/g, '<br>')}</div>` : '')
+      + (P.seek.trim() ? `<div style="margin:14px 0 0;${tx(13, 20, 'normal', t.ink, S)}"><span style="${cap(9, 2, AC)}">Looking for</span>&nbsp;&nbsp; ${esc(P.seek.trim())}</div>` : '')
+      + (nm ? `<div style="margin:22px 0 0">` + lift(`<a href="${nm}" style="display:inline-block;padding:${av ? '5px 20px 5px 5px' : '10px 22px'};background:${t.card};border:1px solid ${edge};border-radius:999px;text-decoration:none;${tx(13, 16, 'bold', t.ink, S)}">`
+        + (av ? `<img src="${esc(av)}" width="34" height="34" alt="avatar" style="display:inline-block;width:34px;height:34px;border-radius:999px;vertical-align:middle">` : '')
+        + `<span style="vertical-align:middle;padding-left:${av ? 12 : 0}px">Neomail ${esc(user)}</span><span style="vertical-align:middle;padding-left:10px;color:${AC}">&rarr;</span></a>`, 999, 'display:inline-block;') + '</div>' : '')
+      + '</div>';
     const body = P.layout === 'list'
-      ? `<div style="max-width:720px;margin:0 auto;border-top:1px solid ${t.line}">${list.map(row).join('')}</div>`
-      : `<div style="margin:0 -11px;text-align:center">${list.map(card).join('')}</div>`;
-    const cnt = `<table cellpadding="0" cellspacing="0" border="0" style="width:100%;margin:0 0 28px;border-collapse:collapse;border-top:1px solid ${t.line}"><tr><td style="padding-top:16px;${cap(11, 3, t.mute)}">${list.length} ${list.length === 1 ? 'pet' : 'pets'}</td>`
-      + `<td style="padding-top:16px;text-align:right;${cap(11, 3, t.mute)}">${{ list: 'As listed', name: 'By name', age: 'Oldest first' }[P.sort] || ''}</td></tr></table>`;
+      ? `<div style="max-width:640px;margin:0 auto;padding:26px 20px 8px">${list.map(row).join('')}</div>`
+      : `<div style="max-width:1060px;margin:0 auto;padding:24px 8px 8px;text-align:center">${list.map(card).join('')}</div>`;
+    const cr = mix(t.mute, '#ffffff', 0.45);
     stamp = Date.now();
-    const cr = mix(t.mute, t.bg, 0.4);
-    const credit = `<div style="padding:${bgOn ? 90 : 150}px 20px 34px;text-align:center"><a href="https://www.neopets.com/userlookup.phtml?user=alyaad" title="nqpp ${stamp}" style="text-decoration:none;${cap(9, 3, cr)}">CSS by alyaad</a></div>`;
-    const zA = Math.round(cw * 0.06), zR = 6, zM = 10;
-    const hover = `<style>\n.nqppA:hover img{width:${cw + zA * 2}px;height:${cw + zA * 2}px;margin-left:-${zA}px;margin-top:-${zA}px}\n.nqppR:hover img{width:${96 + zR * 2}px;height:${96 + zR * 2}px;margin-left:-${zR}px;margin-top:-${zR}px}\n.nqppM:hover img{width:${160 + zM * 2}px;height:${160 + zM * 2}px;margin-left:-${zM}px;margin-top:-${zM}px}\n.nqppA:hover,.nqppR:hover,.nqppM:hover{background:${soft}}\n</style>`;
-    const gUrl = bgOn && P.glassFor === P.bg ? (GLASS_RE.test(P.glass) ? P.glass : previewGlass || '') : '';
-    if (gUrl) {
-      const edge = /^#[0-9a-f]{6}$/i.test(P.bgEdge || '') ? P.bgEdge : t.tile;
-      return `${hover}<div style="background-color:${edge};background-image:url(${gUrl});background-repeat:no-repeat;background-position:center 0;background-attachment:fixed;padding:80px 20px;${tx(14, 21, 'normal', t.ink, S)}"><div style="max-width:1040px;margin:0 auto;padding:0 44px;background-color:${t.bg};background-image:url(${gUrl});background-repeat:no-repeat;background-position:center -${GLASS_H}px;background-attachment:fixed;border:1px solid ${dark ? '#3a3a44' : '#ffffff'};border-radius:30px">${hero}${cnt}${body}${credit}</div></div>`;
-    }
-    if (bgOn && P.bgKind === 'tile') {
-      const edge = /^#[0-9a-f]{6}$/i.test(P.bgEdge || '') ? P.bgEdge : t.tile;
-      return `${hover}<div style="background-color:${edge};background-image:url(${P.bg});background-repeat:repeat;background-attachment:fixed;padding:72px 20px;${tx(14, 21, 'normal', t.ink, S)}"><div style="max-width:1040px;margin:0 auto;padding:0 44px;background:${t.bg};border-radius:30px">${hero}${cnt}${body}${credit}</div></div>`;
-    }
-    if (bgOn) {
-      const rows = Math.ceil(list.length / 3), est = 560 + (P.layout === 'list' ? list.length * 130 : rows * (cw + 110)) + 260;
-      const size = Math.min(3200, Math.max(1700, est + 160)), edge = /^#[0-9a-f]{6}$/i.test(P.bgEdge || '') ? P.bgEdge : t.tile;
-      return `${hover}<div style="background:${edge};overflow:hidden;text-align:center;font-size:0;line-height:0">`
-        + `<img src="${esc(P.bg)}" width="${size}" height="${size}" alt="background" style="display:inline-block;vertical-align:top;border:0;margin:0 -9999px"><br>`
-        + `<div style="display:inline-block;vertical-align:top;width:100%;margin-top:-${size - 72}px;padding-bottom:72px;text-align:left;${tx(14, 21, 'normal', t.ink, S)}"><div style="padding:0 20px"><div style="max-width:1040px;margin:0 auto;padding:0 44px;background:${t.bg};border-radius:30px">${hero}${cnt}${body}${credit}</div></div></div></div>`;
-    }
-    return `${hover}<div style="background:${t.bg};${tx(14, 21, 'normal', t.ink, S)}"><div style="max-width:1040px;margin:0 auto;padding:0 28px">${hero}${cnt}${body}</div>${credit}</div>`;
+    const credit = `<div style="padding:180px 20px 28px;text-align:center;background:#ffffff"><a href="https://www.neopets.com/userlookup.phtml?user=alyaad" title="nqpp ${stamp}" style="text-decoration:none;${cap(9, 3, cr)}">CSS by alyaad</a></div>`;
+    const cw0 = cw - 6;
+    const zA = Math.round(cw0 * 0.08), zR = 8;
+    const hover = `<style>\n.nqppA:hover img{width:${cw0 + zA * 2}px;height:${cw0 + zA * 2}px;margin-left:-${zA}px;margin-top:-${zA}px}\n.nqppR:hover img{width:${104 + zR * 2}px;height:${104 + zR * 2}px;margin-left:-${zR}px;margin-top:-${zR}px}\n.nqppA:hover{background:${mix(t.tint, t.acc, 0.18)}}\n.nqppR:hover{background:${mix(t.tint, t.acc, 0.18)}}\n</style>`;
+    return `${hover}<div style="margin:0;${tx(14, 21, 'normal', t.ink)}"><div style="background:${t.bg}">${band}${head}${body}</div>${fade(t.bg, '#ffffff')}${credit}</div>`;
   }
-
 
   const CSS = `
 #nqPP { --pp-bg: #fbf7ee; --pp-card: #fff; --pp-line: #e6dcf5; --pp-text: #392d5c; --pp-mute: #6c6290; --pp-acc: #7c5cf0; --pp-soft: #efe8ff; position: fixed; inset: 0; z-index: 2147483100; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(30,22,52,.5); font-family: 'Outfit', system-ui, sans-serif; color: var(--pp-text); }
@@ -7949,7 +7996,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 #nqPP .ppSeg button:hover:not(:disabled) { color: var(--pp-text); background: var(--pp-soft); }
 #nqPP .ppSeg button.on { background: var(--pp-acc); color: #fff; }
 #nqPP .ppSeg button:disabled { opacity: .4; cursor: default; }
-#nqPP .ppThemes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 8px; }
+#nqPP .ppThemes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin: 0 0 8px; }
 #nqPP .ppTh { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: var(--pp-mute); font: 600 11px/1 'Outfit', system-ui, sans-serif; cursor: pointer; }
 #nqPP .ppTh i { display: block; width: 100%; aspect-ratio: 1; border-radius: 14px; box-shadow: 0 0 0 1px var(--pp-line); overflow: hidden; transition: box-shadow .15s, transform .15s; }
 #nqPP .ppTh i b { display: block; height: 50%; }
@@ -7977,19 +8024,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 #nqPP iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: #fff; }
 #nqPP .ppEmpty { position: absolute; inset: 60px 0 0; display: flex; align-items: center; justify-content: center; padding: 40px; text-align: center; color: var(--pp-mute); font-size: 15px; line-height: 1.5; background: #fff; }
 #nqPP .ppEmpty[hidden] { display: none; }
-#nqPP .ppBgCur { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; padding: 6px; border: 1px solid var(--pp-line); border-radius: 12px; background: var(--pp-card); font-size: 13px; }
-#nqPP .ppBgCur i { flex: none; width: 40px; height: 40px; border-radius: 8px; background: var(--pp-soft) center / cover no-repeat; }
-#nqPP .ppBgCur b { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#nqPP .ppBgGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-height: 172px; overflow: auto; margin: 0 0 4px; }
-#nqPP .ppBgGrid:empty { display: none; }
-#nqPP .ppBgGrid button { aspect-ratio: 1; padding: 0; border: 2px solid transparent; border-radius: 10px; background: var(--pp-soft) center / cover no-repeat; cursor: pointer; }
-#nqPP .ppBgGrid button:hover, #nqPP .ppBgGrid button.on { border-color: var(--pp-acc); }
-#nqPP .ppBgGrid small { grid-column: 1 / -1; color: var(--pp-mute); font-size: 12px; }
-#nqPP .ppGlass { margin-top: 12px; }
-#nqPP .ppGlass[hidden] { display: none; }
-#nqPP .ppBtn2 { width: 100%; height: 34px; margin: 0 0 8px; border: 1px solid var(--pp-acc); border-radius: 11px; background: var(--pp-card); color: var(--pp-acc); font: 700 13px/1 'Outfit', system-ui, sans-serif; cursor: pointer; }
-#nqPP .ppBtn2:hover { background: var(--pp-soft); }
-#nqPP .ppHint { display: block; font-size: 11.5px; line-height: 1.4; color: var(--pp-mute); }
 #nqPP .ppToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 18px; border-radius: 999px; background: #392d5c; color: #fff; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 3; }
 #nqPP .ppToast.on { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 820px) { #nqPP { padding: 0; } #nqPP .ppWin { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: 100%; border-radius: 0; border: 0; } #nqPP .ppSide { max-height: 52vh; border-right: 0; border-bottom: 1px solid var(--pp-line); } }
@@ -8012,10 +8046,8 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppToast { background: 
     el.innerHTML = '<div class="ppWin"><div class="ppSide"><div class="ppHead"><h2>Petpage</h2><p>Paste the code into Edit Pet Page. Images and links update by themselves.</p></div><div class="ppForm">'
       + '<div class="ppSec"><span class="ppLbl">Pets</span><div class="ppSrc"></div></div>'
       + '<div class="ppSec"><span class="ppLbl">Words</span><input type="text" data-f="title" maxlength="60" placeholder="Title: Up for trade"><textarea data-f="intro" rows="2" maxlength="400" placeholder="A line or two about you or your trades"></textarea><input type="text" data-f="seek" maxlength="140" placeholder="Looking for: e.g. UC Draiks, offers"><input type="text" data-f="contact" maxlength="20" placeholder="Neomail button username"></div>'
-      + '<div class="ppSec"><span class="ppLbl">Background</span><div class="ppBgCur"></div>' + seg('bgSrc', [['tiles', 'Patterns'], ['scenes', 'Scenes']]) + '<input type="text" class="ppBgQ" placeholder="Filter patterns…" aria-label="Search backgrounds"><div class="ppBgGrid"></div><div class="ppGlass"><span class="ppLbl">Frosted glass</span><button type="button" class="ppBtn2" data-act="mkglass">Make frosted backdrop</button><input type="text" data-f="glass" placeholder="Paste the uploaded image&#39;s Direct link"><small class="ppHint"></small></div>'
-      + '</div>'
-      + '<div class="ppSec"><span class="ppLbl">Page</span><div class="ppThemes"></div><button type="button" class="ppLink" data-act="shuffle">Shuffle accent</button> &nbsp; <button type="button" class="ppLink" data-act="unshuffle">Reset</button></div>'
-      + '<div class="ppSec"><span class="ppLbl">Layout</span>' + seg('layout', [['cards', 'Cards'], ['list', 'List']]) + seg('size', [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']]) + seg('font', [['classic', 'Classic'], ['book', 'Book'], ['clean', 'Clean']]) + '</div>'
+      + '<div class="ppSec"><span class="ppLbl">Colours</span><div class="ppThemes"></div><button type="button" class="ppLink" data-act="shuffle">Shuffle colours</button> &nbsp; <button type="button" class="ppLink" data-act="unshuffle">Reset</button></div>'
+      + '<div class="ppSec"><span class="ppLbl">Layout</span>' + seg('layout', [['cards', 'Cards'], ['list', 'List']]) + seg('border', [['frame', 'Gradient frame'], ['divider', 'Gradient divider']]) + seg('size', [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']]) + seg('font', [['classic', 'Classic'], ['book', 'Book'], ['clean', 'Clean']]) + '</div>'
       + '<div class="ppSec"><span class="ppLbl">Order</span>' + seg('sort', [['list', 'As listed'], ['name', 'Name'], ['age', 'Oldest']]) + '</div>'
       + '<div class="ppSec"><span class="ppLbl">Show</span>' + sw('note', 'Notes') + sw('sp', 'Colour / species') + '</div>'
       + '</div><div class="ppFoot"><small class="ppCount"></small><button type="button" class="ppBtn" data-act="copy">Copy code</button></div></div>'
@@ -8032,18 +8064,9 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppToast { background: 
       else if (act === 'shuffle') { P.shift = (P.shift + 1) % 360; savePrefs(); render(); }
       else if (act === 'unshuffle') { P.shift = 0; savePrefs(); render(); }
       else if (act === 'copy') copy();
-      else if (act === 'mkglass') makeGlass();
-      else if (act === 'bgnone') { P.bg = ''; P.bgName = ''; P.bgThumb = ''; P.bgAcc = ''; savePrefs(); render(); }
-      else if (act === 'bgside') {
-        const u = cleanUrl(LSget('nq_bg_main_v3'));
-        if (!NEO_IMG.test(u)) { toast(u ? 'Your sidebar wallpaper is not hosted on Neopets, so petpages cannot show it' : 'No sidebar wallpaper picked yet'); return; }
-        P.bg = u; P.bgName = 'Sidebar wallpaper'; P.bgThumb = u; P.bgKind = 'scene'; P.bgAcc = ''; P.bgEdge = ''; P.shift = 0; savePrefs(); render(); pickAccent(u).then(() => { savePrefs(); render(); });
-      }
-      else if (b.dataset.bg) { const it = bgItems[+b.dataset.bg]; if (it) { P.bg = it.url; P.bgName = it.name; P.bgThumb = it.thumb; P.bgKind = it.kind; P.bgAcc = ''; P.bgEdge = ''; P.shift = 0; savePrefs(); render(); pickAccent(it.url).then(() => { savePrefs(); render(); }); } }
     });
     el.addEventListener('change', (e) => { const k = e.target.dataset.sw; if (k) { P[k] = e.target.checked; savePrefs(); render(); } });
-    $('.ppBgQ', el).addEventListener('input', (e) => { clearTimeout(bgT); bgT = setTimeout(() => bgSearch(e.target.value.trim()), 350); });
-    el.addEventListener('input', (e) => { const k = e.target.dataset.f; if (!k) return; P[k] = e.target.value.trim() === '' ? '' : e.target.value; if (k === 'glass') { P.glass = P.glass.trim(); P.glassFor = P.bg; } savePrefs(); clearTimeout(rT); rT = setTimeout(render, 250); });
+    el.addEventListener('input', (e) => { const k = e.target.dataset.f; if (!k) return; P[k] = e.target.value; savePrefs(); clearTimeout(rT); rT = setTimeout(render, 250); });
     window.addEventListener('resize', () => { if (el.classList.contains('open')) { clearTimeout(rT); rT = setTimeout(render, 200); } });
     window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && el.classList.contains('open')) { e.stopImmediatePropagation(); e.preventDefault(); close(); } }, true);
   }
@@ -8053,134 +8076,20 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppToast { background: 
     if (P.src === 'picked' && !picked) P.src = 'uft';
     $('.ppSrc', el).innerHTML = seg('src', [['uft', 'Up for trade · ' + uft.length], ['picked', 'Picked · ' + (picked ? picked.size : 0), !picked]]);
     el.querySelectorAll('.ppSeg').forEach(s => s.querySelectorAll('button').forEach(b => b.classList.toggle('on', P[s.dataset.k] === b.dataset.v)));
-    const a0 = accentOf();
-    $('.ppThemes', el).innerHTML = Object.keys(THEMES).map(k => { const t = THEMES[k](a0); return `<button type="button" class="ppTh${P.theme === k ? ' on' : ''}" data-th="${k}" title="${THEME_N[k]}"><i style="background:${t.bg}"><b style="display:block;width:40%;height:22%;margin:39% auto 0;border-radius:99px;background:${t.acc}"></b></i>${THEME_N[k]}</button>`; }).join('');
+    const user = (P.contact || NQ.ap.user() || 'neopets').trim(), h = ((hash(user) % 360) + P.shift * 47) % 360;
+    $('.ppThemes', el).innerHTML = Object.keys(THEMES).map(k => { const t = THEMES[k](h); return `<button type="button" class="ppTh${P.theme === k ? ' on' : ''}" data-th="${k}" title="${THEME_N[k]}"><i style="background:${t.bg}"><b style="background:linear-gradient(135deg,${t.acc},${t.acc2})"></b></i>${THEME_N[k]}</button>`; }).join('');
     el.querySelectorAll('[data-sw]').forEach(c => { c.checked = !!P[c.dataset.sw]; });
     el.querySelectorAll('[data-f]').forEach(f => { if (document.activeElement !== f) f.value = P[f.dataset.f] || ''; });
-    const hasBg = NEO_IMG.test(P.bg);
-    if (bgSrcShown !== P.bgSrc) { bgSrcShown = P.bgSrc; const qi = $('.ppBgQ', el); qi.placeholder = P.bgSrc === 'scenes' ? 'Search scenes, e.g. forest…' : 'Filter patterns…'; bgSearch(qi.value.trim()); }
-    $('.ppBgCur', el).innerHTML = hasBg
-      ? `<i style="background-image:url(&quot;${esc(P.bgThumb || P.bg)}&quot;)"></i><b title="${esc(P.bgName)}">${esc(P.bgName || 'Background')}</b><button type="button" class="ppLink" data-act="bgnone">Remove</button>`
-      : `<b>None (plain page)</b><button type="button" class="ppLink" data-act="bgside">Use sidebar wallpaper</button>`;
-    $('.ppGlass', el).hidden = !hasBg;
-    const gOk = GLASS_RE.test(P.glass || ''), gMine = P.glassFor === P.bg;
-    $('.ppHint', el).textContent = !hasBg ? '' : P.glass && !gOk ? 'That link must start with https:// and end in .jpg or .png (use the Direct link on postimg).' : gOk && gMine ? 'Frosted glass is on.' : gOk && !gMine ? 'That image was made for a different background. Make a new one for this background.' : localGlass && localGlassFor === P.bg ? 'Previewing it now. Upload the downloaded image to postimg.cc and paste its Direct link; the copied code uses it after that.' : 'Makes one image: a blurred backdrop plus a glass layer for the page. Upload it once to postimg.cc and paste its Direct link.';
     $('[data-f=contact]', el).placeholder = 'Neomail button: ' + (NQ.ap.user() || 'username');
     const pets = P.src === 'picked' ? gather('picked') : uft, empty = $('.ppEmpty', el);
     empty.hidden = !!pets.length;
     empty.textContent = P.src === 'picked' ? 'Pick some pets in All Pets first.' : 'No Up for Trade pets yet. Tag some pets as Up for trade in All Pets (Edit tags), or use Pick pets.';
-    const prev = pets.length && localGlass && localGlassFor === P.bg && !(GLASS_RE.test(P.glass || '') && P.glassFor === P.bg) ? build(pets, localGlass) : '';
     html = pets.length ? build(pets) : '';
     const fr = $('iframe', el); let y = 0; try { y = fr.contentWindow.scrollY; } catch {}
     fr.onload = () => { try { fr.contentWindow.scrollTo(0, y); } catch {} };
-    fr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"></head><body style="margin:0;padding:8px 12px;background:#fff;zoom:' + Math.min(1, Math.max(0.3, (fr.clientWidth || 1100) / Math.max(800, window.innerWidth - 17))).toFixed(3) + '">' + (prev || html) + '</body></html>';
+    fr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"></head><body style="margin:0;padding:8px 12px;background:#fff;zoom:' + Math.min(1, Math.max(0.3, (fr.clientWidth || 1100) / Math.max(800, window.innerWidth - 17))).toFixed(3) + '">' + html + '</body></html>';
     const noAge = pets.filter(p => !p.born).length;
     $('.ppCount', el).textContent = pets.length ? fmtN(html.length) + ' characters' + (noAge ? ' · ' + noAge + ' without age yet (log in to that account once)' : '') : '';
-  }
-
-  let bgItems = [], bgT = 0, bgTok = 0, bgSrcShown = '';
-  const drawBgGrid = (grid, empty) => { grid.innerHTML = bgItems.length ? bgItems.map((b, i) => `<button type="button" data-bg="${i}" title="${esc(b.name)}" aria-label="${esc(b.name)}" class="${b.url === P.bg ? 'on' : ''}" style="background-image:url(&quot;${esc(b.thumb)}&quot;)"></button>`).join('') : `<small>${empty}</small>`; };
-  async function loadTiles() {
-    try { const c = JSON.parse(LSget('nq_pp_tiles_v1') || 'null'); if (c && c.list && c.list.length && Date.now() - c.t < 7 * 864e5) return c.list; } catch {}
-    const doc = new DOMParser().parseFromString(await (await fetch('/backgrounds_tiled.phtml', { credentials: 'include' })).text(), 'text/html');
-    const list = [...doc.querySelectorAll('img[src*="/backgrounds/tm_"]')].map(im => {
-      const a = im.closest('a'), td = im.closest('td'), url = a ? a.href : '', name = td && td.querySelector('b') ? td.querySelector('b').textContent.trim() : 'Pattern';
-      return NEO_IMG.test(url) ? { name, thumb: im.src, url, kind: 'tile' } : null;
-    }).filter(Boolean);
-    if (list.length) LSset('nq_pp_tiles_v1', JSON.stringify({ t: Date.now(), list }));
-    return list;
-  }
-  function bgSearch(q) {
-    const grid = $('.ppBgGrid', el);
-    if (P.bgSrc !== 'scenes') {
-      const tok = ++bgTok;
-      grid.innerHTML = '<small>Loading Neopets patterns…</small>';
-      loadTiles().then(list => {
-        if (tok !== bgTok) return;
-        const k = q.toLowerCase();
-        bgItems = list.filter(x => !k || x.name.toLowerCase().includes(k));
-        drawBgGrid(grid, 'No patterns match that.');
-      }).catch(() => { if (tok === bgTok) grid.innerHTML = '<small>Could not load the Neopets pattern list.</small>'; });
-      return;
-    }
-    if (!q) { grid.innerHTML = '<small>Type a word to search scenes, e.g. forest, beach, night.</small>'; return; }
-    if (!NQ.dtiPage) { grid.innerHTML = '<small>Background search needs the full Modern QOL bundle.</small>'; return; }
-    const tok = ++bgTok;
-    grid.innerHTML = '<small>Searching…</small>';
-    NQ.dtiPage(0, /background/i.test(q) ? q : q + ' background', 30).then(items => {
-      if (tok !== bgTok) return;
-      bgItems = items.map(it => { const l = (((it.appearanceOn || {}).layers) || []).find(x => /background/i.test((x.zone || {}).label || '')); const u = cleanUrl(l && l.imageUrl); return NEO_IMG.test(u) ? { name: it.name || 'Background', thumb: it.thumbnailUrl || u, url: u, kind: 'scene' } : null; }).filter(Boolean);
-      drawBgGrid(grid, 'No Neopets-hosted scenes for that. Try another word.');
-    }).catch(() => { if (tok === bgTok) grid.innerHTML = '<small>Search failed. Try again.</small>'; });
-  }
-
-  let localGlass = '', localGlassFor = '';
-  async function makeGlass() {
-    if (!NEO_IMG.test(P.bg)) { toast('Pick a background first'); return; }
-    toast('Making frosted backdrop…');
-    try {
-      const src = URL.createObjectURL(await getBlob(P.bg));
-      const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-      const W = 1920, H = GLASS_H, dark = P.theme === 'dark';
-      const base = document.createElement('canvas'); base.width = W; base.height = H;
-      const b = base.getContext('2d');
-      if (P.bgKind === 'tile') { b.fillStyle = b.createPattern(im, 'repeat'); b.fillRect(0, 0, W, H); }
-      else { const s = Math.max(W / im.width, H / im.height), dw = im.width * s, dh = im.height * s; b.drawImage(im, (W - dw) / 2, (H - dh) / 2, dw, dh); }
-      URL.revokeObjectURL(src);
-      const c = document.createElement('canvas'); c.width = W; c.height = H * 2;
-      const x = c.getContext('2d');
-      [0, H].forEach(y0 => {
-        x.save(); x.beginPath(); x.rect(0, y0, W, H); x.clip();
-        x.filter = `blur(${P.bgKind === 'tile' ? 22 : 30}px) saturate(1.3)`;
-        x.drawImage(base, -90, y0 - 90, W + 180, H + 180);
-        x.restore();
-      });
-      x.filter = 'none';
-      x.fillStyle = dark ? 'rgba(10,10,14,0.35)' : 'rgba(0,0,0,0.06)'; x.fillRect(0, 0, W, H);
-      x.fillStyle = dark ? 'rgba(20,20,26,0.74)' : 'rgba(255,255,255,0.74)'; x.fillRect(0, H, W, H);
-      const d = x.getImageData(0, 0, W, H * 2);
-      for (let i = 0; i < d.data.length; i += 4) { const g = (Math.random() - 0.5) * 6; d.data[i] += g; d.data[i + 1] += g; d.data[i + 2] += g; }
-      x.putImageData(d, 0, 0);
-      const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.9));
-      if (localGlass) URL.revokeObjectURL(localGlass);
-      localGlass = URL.createObjectURL(blob); localGlassFor = P.bg;
-      const a = document.createElement('a');
-      a.href = localGlass;
-      a.download = 'frosted-' + (P.bgName || 'background').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.jpg';
-      document.body.appendChild(a); a.click(); a.remove();
-      P.glassFor = P.bg; savePrefs(); render();
-      toast('Downloaded. The preview shows it now.');
-    } catch { toast('Could not make the backdrop'); }
-  }
-
-  const getBlob = (url) => typeof GM_xmlhttpRequest === 'function'
-    ? new Promise((res, rej) => GM_xmlhttpRequest({ method: 'GET', url, responseType: 'blob', timeout: 20000, onload: (r) => (r.status === 200 && r.response ? res(r.response) : rej(new Error('load'))), onerror: rej, ontimeout: rej }))
-    : fetch(url, { mode: 'cors' }).then(r => r.blob());
-  async function pickAccent(url) {
-    try {
-      const src = URL.createObjectURL(await getBlob(url));
-      const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-      const c = document.createElement('canvas'); c.width = c.height = 48;
-      const x = c.getContext('2d'); x.drawImage(im, 0, 0, 48, 48); URL.revokeObjectURL(src);
-      const d = x.getImageData(0, 0, 48, 48).data, bins = Array.from({ length: 24 }, () => ({ w: 0, r: 0, g: 0, b: 0 }));
-      for (let i = 0; i < d.length; i += 4) {
-        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, sat = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
-        if (d[i + 3] < 200 || sat < 0.25) continue;
-        let h = mx === mn ? 0 : mx === r ? ((g - b) / (mx - mn)) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4;
-        h = (h * 60 + 360) % 360;
-        const w = sat * (1 - Math.abs(l - 0.5) * 2), k = bins[Math.floor(h / 15)];
-        k.w += w; k.r += d[i] * w; k.g += d[i + 1] * w; k.b += d[i + 2] * w;
-      }
-      let ar = 0, ag = 0, ab = 0; for (let i = 0; i < d.length; i += 4) { ar += d[i]; ag += d[i + 1]; ab += d[i + 2]; }
-      const np = d.length / 4; P.bgEdge = '#' + [ar, ag, ab].map(v => Math.round(v / np).toString(16).padStart(2, '0')).join('');
-      const top = bins.reduce((a, k) => (k.w > a.w ? k : a), { w: 0 });
-      if (!top.w) { P.bgAcc = ''; return; }
-      const [r, g, b] = [top.r / top.w, top.g / top.w, top.b / top.w].map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-      let h = mx === mn ? 0 : mx === r ? ((g - b) / (mx - mn)) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4;
-      h = (h * 60 + 360) % 360;
-      const l = (mx + mn) / 2, sat = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
-      P.bgAcc = hex(Math.round(h), Math.round(Math.min(78, Math.max(45, sat * 100))), Math.round(Math.min(50, Math.max(38, l * 100))));
-    } catch { P.bgAcc = ''; }
   }
 
   async function copy() {
@@ -8225,6 +8134,24 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppToast { background: 
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') staleSoon(); });
   window.addEventListener('focus', staleSoon);
   window.addEventListener('storage', (e) => { if (e.key === 'nq_pp_copy') staleSoon(); });
+
+  if (/^\/editpage\.phtml$/i.test(location.pathname)) {
+    const addEditBtn = () => {
+      if (document.getElementById('nqPPEdit')) return true;
+      const tas = [...document.querySelectorAll('textarea')];
+      if (!tas.length && document.readyState !== 'complete') return false;
+      const ta = tas.sort((a, b) => (b.offsetWidth * b.offsetHeight) - (a.offsetWidth * a.offsetHeight))[0];
+      const b = document.createElement('button');
+      b.type = 'button'; b.id = 'nqPPEdit'; b.textContent = 'Build trade petpage';
+      b.style.cssText = 'display:block;margin:0 0 10px;padding:9px 18px;border:0;border-radius:999px;background:#7c5cf0;color:#fff;font:700 13px/1 system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(124,92,240,.35)';
+      b.addEventListener('click', (e) => { e.preventDefault(); open(); });
+      if (ta) ta.parentNode.insertBefore(b, ta);
+      else { b.style.cssText += ';position:fixed;right:20px;bottom:20px;z-index:2147483000;margin:0'; document.body.appendChild(b); }
+      return true;
+    };
+    const tryAdd = () => { if (!addEditBtn()) setTimeout(tryAdd, 400); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryAdd, { once: true }); else tryAdd();
+  }
 
   NQ.petpage = { open, build: (pets, prefs) => { const keep = P; P = { ...DEF, ...prefs }; try { return build(pets); } finally { P = keep; } } };
 })();
