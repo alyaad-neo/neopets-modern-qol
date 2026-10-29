@@ -66,7 +66,7 @@ html[data-nq-modern-interface] {
   #nqPetInfo { order: 2; position: relative; }
 
   #qrDockWrap { overflow-y: auto !important; overflow-x: hidden !important; }
-  #qrDockWrap.open { top: 62px !important; }
+  #qrDockWrap.open { opacity: 1; pointer-events: auto; top: 62px !important; }
   #qrDock { overflow-y: auto !important; overflow-x: hidden !important; min-height: 100% !important; height: auto !important; }
   .qrPet { min-height: 50px !important; flex: 1 1 50px !important; }
 
@@ -164,7 +164,7 @@ html[data-nq-modern-interface] {
   }
   #nqUser:hover, #nqNp:hover, #nqActivePet:hover { border-color: rgba(255,255,255,.26) !important; }
 
-  #nqHud { left: calc(var(--nq-hud-left, 14px) + 6px); width: calc(var(--nq-col-width, 240px) - 2 * (var(--nq-hud-left, 14px) + 6px)); }
+  #nqHud { z-index: var(--nq-z-hud, 1000); -webkit-font-smoothing: antialiased; pointer-events: none; isolation: isolate; left: calc(var(--nq-hud-left, 14px) + 6px); width: calc(var(--nq-col-width, 240px) - 2 * (var(--nq-hud-left, 14px) + 6px)); }
 
   #nqHud, #nqFoot { text-shadow: 0 1px 3px rgba(0,0,0,.8); }
 

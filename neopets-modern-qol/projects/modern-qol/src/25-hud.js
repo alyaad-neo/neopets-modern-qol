@@ -98,12 +98,6 @@
   }
   const now = () => Date.now();
   const HUD_CSS = `
-  #nqHud{
-    z-index:var(--nq-z-hud, 1000);
-    -webkit-font-smoothing:antialiased;
-    pointer-events:none;
-    isolation:isolate;
-  }
   #nqHud > *{ pointer-events:auto; }
   #nqHud *, #nqHud *::before, #nqHud *::after{ box-sizing:border-box; }
 
@@ -514,11 +508,6 @@
     transition:
       top .45s cubic-bezier(.22, 1, .36, 1),
       opacity .28s ease;
-  }
-  #qrDockWrap.open{
-    top: 2px;
-    opacity: 1;
-    pointer-events: auto;
   }
   #qrDock{
     display: flex;
