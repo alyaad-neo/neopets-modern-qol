@@ -85,5 +85,5 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 
 ## 1.3.19
 - All Pets trade pick mode: toolbar "Pick pets" (.apPickBtn, data-act=pick) switches to the UFT tab and adds data-pick checkboxes on UFT cards; apState.picked; the copy button (apTradeLbl) then copies only picked pets. Edit mode turns pick mode off.
-- 1.3.30: categories 4L/WN/RW/RN/MS. Tag field `c` in `nq_allpets_tags_v1` (`-` = none, absent = auto). Auto (`autoCat`): exactly 4 letters = 4L, letters only = WN, else none; RW/RN/MS are manual only (no word lists). Edit mode has a category row per card and a bulk Category row. Badge `.apCat` on the card. Search matches the category.
+- 1.3.30: categories 4L/WN/RW/RN/MS. Tag field `c` in `nq_allpets_tags_v1` (`-` = none, absent = auto). Auto (`autoCat`): exactly 4 letters = 4L, letters only = WN, else none; RW/RN/MS are manual only (Aly declined a bundled dictionary). With Category on, WN and uncategorized pets are copied unlabeled below the labeled ones after a blank line. Edit mode has a category row per card and a bulk Category row. Badge `.apCat` on the card. Search matches the category.
 - Since bundle 5.5.36 Quick Ref data gives colour/species/gender/level for every pet (`data.pets[]`), not just the active one.

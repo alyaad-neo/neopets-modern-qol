@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.39
+// @version      5.5.40
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -7234,16 +7234,17 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
       $('.apCpNote', apEl).addEventListener('change', (e) => { apState.cpNote = e.target.checked; apSavePrefs(); });
       $('.apCpSp', apEl).addEventListener('change', (e) => { apState.cpSp = e.target.checked; apSavePrefs(); });
       $('.apTrade', apEl).addEventListener('click', () => {
-        const c = apRead(), tags = apTags(), lines = [], done = new Set(), only = apState.pick && apState.picked.size ? apState.picked : null;
+        const c = apRead(), tags = apTags(), lines = [], rest = [], done = new Set(), only = apState.pick && apState.picked.size ? apState.picked : null;
         apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => {
           const k = p.name.toLowerCase(), t = tags[k] || {};
           if (done.has(k) || (only ? !only.has(k) : t.s !== 'uft')) return;
           done.add(k);
-          const cat = apState.cpCat ? catOf(p.name, t) : '';
-          lines.push([p.name + (cat ? ' (' + cat + ')' : ''), apState.cpSp ? [p.color, p.species].filter(Boolean).join(' ') || '?' : '', apState.cpNote ? t.n || '' : ''].filter(Boolean).join(' - '));
+          const cat = apState.cpCat ? catOf(p.name, t) : '', lbl = cat && cat !== 'WN';
+          (lbl || !apState.cpCat ? lines : rest).push([p.name + (lbl ? ' (' + cat + ')' : ''), apState.cpSp ? [p.color, p.species].filter(Boolean).join(' ') || '?' : '', apState.cpNote ? t.n || '' : ''].filter(Boolean).join(' - '));
         }));
-        if (!lines.length) { apToast(apState.pick ? 'Pick some pets first' : 'No Up for Trade pets yet'); return; }
-        apCopy(lines.join('\n'), 'Copied ' + lines.length + ' pet' + (lines.length === 1 ? '' : 's'));
+        const n = lines.length + rest.length;
+        if (!n) { apToast(apState.pick ? 'Pick some pets first' : 'No Up for Trade pets yet'); return; }
+        apCopy(lines.join('\n') + (lines.length && rest.length ? '\n\n' : '') + rest.join('\n'), 'Copied ' + n + ' pet' + (n === 1 ? '' : 's'));
       });
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && apEl.classList.contains('open')) { e.stopPropagation(); if (apEl.querySelector('.apPop:not([hidden])')) apClosePops(); else if (apState.edit) apSetEdit(false); else closeAllPets(); } }, true);
       const apSaveTag = (k, patch) => {
