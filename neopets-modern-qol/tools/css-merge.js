@@ -75,7 +75,7 @@ function neverMeet(selA, selB) {
   if (MARKUP && (idApart(selA, selB) || idApart(selB, selA))) return true;
   const xa = classesOf(lastCompound(selA)), xb = classesOf(lastCompound(selB));
   if (xa.some(a => xb.some(b => a !== b && structural(a) && structural(b) && !together(a, b)))) return true;
-  const tagOnly = (tag, cls) => tag && cls.some(c => structural(c) && !markup.tags.get(c).has(null) && !markup.tags.get(c).has(tag));
+  const tagOnly = (tag, cls) => tag && tag !== '*' && cls.some(c => structural(c) && !markup.tags.get(c).has(null) && !markup.tags.get(c).has(tag));
   return tagOnly(rightmost(selA).tag, xb) || tagOnly(rightmost(selB).tag, xa);
 }
 

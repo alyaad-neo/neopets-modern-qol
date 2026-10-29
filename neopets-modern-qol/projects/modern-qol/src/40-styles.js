@@ -159,7 +159,7 @@ html[data-nq-modern-interface] {
   #nqNp .nq-amount:hover, #nqNp .nq-nc:hover { background: rgba(255,255,255,.2) !important; border-color: rgba(255,255,255,.4); }
   #nqNp .nqVal, #nqNp .ncVal { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  #nqPetInfo .nqName { display: block; font-family: 'CafeteriaBlack', Georgia, serif; font-size: 22px; font-weight: 400; line-height: 1.1; letter-spacing: .02em; overflow-wrap: anywhere; padding: 0 24px; }
+  #nqPetInfo .nqName { display: block; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 22px; font-weight: 400; line-height: 1.1; letter-spacing: .02em; overflow-wrap: anywhere; padding: 0 24px; }
   #nqPetInfo .nqSub { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 500; line-height: 1.25; color: rgba(255,255,255,.82); }
   #nqPetInfo .nqTitle .nqCopy { position: absolute; top: 0; right: 0; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border-radius: 7px; transition: background .15s, color .15s, transform .1s; }
   #nqPetInfo .nqTitle .nqCopy svg { width: 14px; height: 14px; display: block; }
@@ -410,7 +410,7 @@ html[data-nq-modern-interface] {
   #nqHud #nqPinsMod .rList a:hover { background: rgba(255,255,255,.14) !important; }
   #nqHud #nqPinsMod .rList b { color: #fff; font-size: 12px !important; font-weight: 500; }
 
-  #nqHud #nqPetInfo .nqName { font: 400 24px/1.15 'CafeteriaBlack', Georgia, serif; letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; font-size: 26px; font-weight: 400; line-height: 1.15; }
+  #nqHud #nqPetInfo .nqName { font: 400 24px/1.15 'CafeteriaBlack', Georgia, serif !important; letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; font-size: 26px; font-weight: 400; line-height: 1.15; }
   #nqHud #nqNp .nq-top-row .nq-amounts { grid-template-columns: none; justify-content: center; } 
   &.nq-side-light #nqHud #nqPetInfo .nqChip, &.nq-side-light #nqHud #nqPetInfo .nqLinks a, &.nq-side-light #nqHud #nqPetInfo .nqLinks button { background: #fff; border-color: rgba(0,0,0,.10); color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqPetInfo .nqLinks a:hover, &.nq-side-light #nqHud #nqPetInfo .nqLinks button:hover { background: #f1eff7; }
@@ -537,7 +537,7 @@ html[data-nq-modern-interface] {
   #nqHud #nqActivePet #nqPetInfo .nqDetails { order: 4; }
   #nqHud #nqActivePet #nqPetInfo .nqTitle { position: absolute; left: 10px; right: 10px; top: var(--nq-img-h, 240px); transform: translateY(calc(-100% - 10px)); z-index: 3; display: flex !important; align-items: center; flex-wrap: nowrap; justify-content: flex-start; gap: 6px; margin: 0; max-width: calc(100% - 20px); text-align: left; }
   #nqHud #nqActivePet #nqPetInfo .nqTitle a { display: block !important; position: static !important; min-width: 0; text-align: left; }
-  #nqHud #nqActivePet #nqPetInfo .nqName { font-family: 'CafeteriaBlack', Georgia, serif; font-size: 26px; font-weight: 400; line-height: 1.05; letter-spacing: .02em; padding: 0; }
+  #nqHud #nqActivePet #nqPetInfo .nqName { font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 26px; font-weight: 400; line-height: 1.05; letter-spacing: .02em; padding: 0; }
   #nqHud #nqActivePet #nqPetInfo .nqSub, #nqHud #nqActivePet #nqPetInfo .nqTitle .nqCopy { opacity: 0 !important; transform: translateY(4px); transition: opacity .18s ease, transform .18s ease, background .15s !important; }
   #nqHud #nqActivePet #nqPetInfo .nqSub { position: absolute; left: 0; bottom: 100%; top: auto; margin: 0 0 4px; display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; box-sizing: border-box; width: max-content; max-width: 100%; overflow: hidden; white-space: normal; pointer-events: none; font: 600 11.5px/1.25 'Outfit', system-ui, sans-serif; padding: 4px 9px; border-radius: 999px; background: rgba(20,16,32,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fff; text-shadow: none !important; }
   #nqHud #nqActivePet #nqPetInfo .nqSub .nqG.gF { color: #ffb3d9; text-shadow: none !important; }

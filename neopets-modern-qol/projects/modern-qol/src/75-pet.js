@@ -77,7 +77,8 @@
     } catch { cb(null); }
   }
   const toneCache = new Map();
-  const TONE_KEY = 'nq_pet_tone_v1';
+  const TONE_KEY = 'nq_pet_tone_v2';
+  LSdel('nq_pet_tone_v1');
   function toneRead() { try { const o = JSON.parse(LSget(TONE_KEY) || '{}'); return o && typeof o === 'object' ? o : {}; } catch { return {}; } }
   function toneSave(src, dark) {
     try {
@@ -98,14 +99,11 @@
           const W0 = 48, cv = document.createElement('canvas'); cv.width = cv.height = W0;
           const cx = cv.getContext('2d', { willReadFrequently: true });
           cx.fillStyle = '#fff'; cx.fillRect(0, 0, W0, W0); cx.drawImage(im, 0, 0, W0, W0);
-          const p = 6, q = Math.round(W0 * 0.25), regs = [[0, 0], [W0 - p, 0], [0, W0 - p], [W0 - p, W0 - p], [0, W0 - q, p * 2, p * 2]];
-          let white = true;
-          for (const g of regs) {
-            const d = cx.getImageData(g[0], g[1], g[2] || p, g[3] || p).data; let rs = 0, gs = 0, bs = 0, n = 0;
-            for (let i = 0; i < d.length; i += 4) { rs += d[i]; gs += d[i + 1]; bs += d[i + 2]; n++; }
-            if (!n || rs / n < 240 || gs / n < 240 || bs / n < 240) { white = false; break; }
-          }
-          done(white, true);
+          const q = Math.round(W0 * 0.25), d = cx.getImageData(0, W0 - q, W0, q).data;
+          const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+          let L = 0, n = 0;
+          for (let i = 0; i < d.length; i += 4) { L += 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]); n++; }
+          done(n > 0 && L / n > 0.38, true);
         } catch { done(false, false); }
       };
       loadBlob(src, (u) => { if (!u) return done(false, false); burl = u; im.src = u; });

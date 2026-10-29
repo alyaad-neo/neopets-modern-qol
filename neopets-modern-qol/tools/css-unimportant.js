@@ -147,7 +147,7 @@ function foreignAttr(c) {
   return false;
 }
 function foreignAlt(c) {
-  if (foreignAttr(c)) return true;
+  if (foreignAttr(c.replace(/:not\((?:[^()]|\([^()]*\))*\)/g, ''))) return true;
   c = c.replace(/:not\((?:[^()]|\([^()]*\))*\)/g, '').replace(/\[[^\]]*\]/g, '').replace(/::?[\w-]+(\((?:[^()]|\([^()]*\))*\))?/g, m => /^:(where|is)\(/.test(m) ? m : '');
   const tag = /^[a-z][\w-]*/i.exec(c);
   if (tag && /^(html|body)$/i.test(tag[0])) return false;
