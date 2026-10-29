@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.44
+// @version      5.5.45
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -7816,7 +7816,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
   const THEME_N = { yours: 'Yours', dusk: 'Dusk', candy: 'Candy', paper: 'Paper', mono: 'Mono' };
   const FONTS = { clean: "'Trebuchet MS',Verdana,sans-serif", classic: "Georgia,'Times New Roman',serif", round: "'Varela Round','Nunito','Arial Rounded MT Bold',Verdana,sans-serif" };
   const SIZES = { s: [148, 112, 14], m: [180, 144, 16], l: [224, 188, 19] };
-  const DEF = { src: 'uft', theme: 'yours', shift: 0, layout: 'cards', size: 'm', age: 'years', sp: false, note: true, font: 'clean', sort: 'list', title: '', intro: '', seek: '', contact: '' };
+  const DEF = { src: 'uft', theme: 'yours', shift: 0, layout: 'cards', size: 'm', sp: false, note: true, font: 'clean', sort: 'list', title: '', intro: '', seek: '', contact: '' };
 
   const prefKey = () => 'nq_pp_prefs:' + String(NQ.ap.user() || '').toLowerCase();
   let P = { ...DEF };
@@ -7835,16 +7835,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 
   const fmtN = (n) => n.toLocaleString('en-US');
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  function ageText(born, mode) {
-    if (!born || mode === 'off') return '';
-    const d = Math.max(0, Math.floor((Date.now() - born) / 864e5));
-    if (mode === 'days') return d < 1 ? 'Brand new' : fmtN(d) + (d === 1 ? ' day' : ' days');
-    if (mode === 'born') { const b = new Date(born); return 'Born ' + b.getDate() + ' ' + MON[b.getMonth()] + ' ' + b.getFullYear(); }
-    if (d < 1) return 'Brand new';
-    if (d < 60) return d + (d === 1 ? ' day old' : ' days old');
-    if (d < 365) { const m = Math.floor(d / 30.44); return m + ' months old'; }
-    const y = Math.floor(d / 365.25); return y + (y === 1 ? ' year old' : ' years old');
-  }
+  const nyear = (born) => born ? 'Y' + (new Date(born).getFullYear() - 1998) : '';
 
   function build(pets) {
     const user = (P.contact || NQ.ap.user() || '').trim(), okUser = /^[A-Za-z0-9_]{3,20}$/.test(user);
@@ -7859,25 +7850,25 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     const sp = (p) => P.sp ? [p.color, p.species].filter(Boolean).join(' ') : '';
     const chip = (s) => `<span style="display:inline-block;margin-top:8px;padding:3px 10px;border-radius:999px;background:${t.tint};color:${t.acc};font:bold 11px/1.4 ${F}">${esc(s)}</span>`;
 
-    const anyA = list.some(p => ageText(p.born, P.age)), anyS = list.some(p => sp(p)), anyN = P.note && list.some(p => p.note);
+    const yr = (p, px) => p.born ? ` <span style="color:${t.mute};font-weight:normal;font-size:${px}px">(${nyear(p.born)})</span>` : '';
+    const anyS = list.some(p => sp(p)), anyN = P.note && list.some(p => p.note);
     const card = (p) => {
-      const a = ageText(p.born, P.age) || (anyA ? '&nbsp;' : ''), s = sp(p) ? esc(sp(p)) : anyS ? '&nbsp;' : '';
+      const s = sp(p) ? esc(sp(p)) : anyS ? '&nbsp;' : '';
       return `<div style="display:inline-block;vertical-align:top;width:${cw}px;margin:9px;padding:${Math.round(iw / 10)}px ${Math.round(iw / 12)}px ${Math.round(iw / 9)}px;background:${t.card};border:1px solid ${t.line};border-radius:22px;text-align:center;box-shadow:0 6px 18px -12px ${t.mute}">`
         + `<a href="${pet(p)}" title="${esc(p.name)}" style="display:block;width:${iw}px;height:${iw}px;margin:0 auto 12px;border-radius:18px;background:${t.tint};background:linear-gradient(160deg,${t.tint},${t.tint2});overflow:hidden">${img(p, iw)}</a>`
-        + `<a href="${look(p)}" style="display:block;color:${t.ink};text-decoration:none;font:bold ${ns}px/1.2 ${F};letter-spacing:.2px;word-wrap:break-word">${esc(p.name)}</a>`
-        + (a ? `<div style="margin-top:5px;color:${t.mute};font:${Math.max(11, ns - 4)}px/1.3 ${F}">${a}</div>` : '')
+        + `<div style="font:bold ${ns}px/1.2 ${F};word-wrap:break-word"><a href="${look(p)}" style="color:${t.ink};text-decoration:none;font:bold ${ns}px/1.2 ${F};letter-spacing:.2px;word-wrap:break-word">${esc(p.name)}</a>${yr(p, ns - 3)}</div>`
         + (s ? `<div style="margin-top:2px;color:${t.mute};font:11px/1.3 ${F}">${s}</div>` : '')
         + (P.note && p.note ? chip(p.note) : anyN ? `<span style="display:inline-block;margin-top:8px;font:bold 11px/1.4 ${F};padding:3px 0">&nbsp;</span>` : '')
         + '</div>';
     };
     const row = (p) => {
-      const a = ageText(p.born, P.age), s = sp(p);
+      const s = sp(p);
       return `<table cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 10px;border-collapse:separate;background:${t.card};border:1px solid ${t.line};border-radius:18px"><tr>`
         + `<td style="width:84px;padding:10px 0 10px 12px;vertical-align:middle"><a href="${pet(p)}" style="display:block;width:72px;height:72px;border-radius:14px;background:${t.tint};background:linear-gradient(160deg,${t.tint},${t.tint2});overflow:hidden">${img(p, 72)}</a></td>`
-        + `<td style="padding:10px 16px;vertical-align:middle;text-align:left"><a href="${look(p)}" style="color:${t.ink};text-decoration:none;font:bold 17px/1.2 ${F}">${esc(p.name)}</a>`
+        + `<td style="padding:10px 16px;vertical-align:middle;text-align:left"><a href="${look(p)}" style="color:${t.ink};text-decoration:none;font:bold 17px/1.2 ${F}">${esc(p.name)}</a>${yr(p, 14)}`
         + (s ? `<div style="margin-top:3px;color:${t.mute};font:12px/1.3 ${F}">${esc(s)}</div>` : '')
         + (P.note && p.note ? `<div style="margin-top:3px;color:${t.acc};font:bold 12px/1.3 ${F}">${esc(p.note)}</div>` : '') + '</td>'
-        + `<td style="padding:10px 18px 10px 0;vertical-align:middle;text-align:right;white-space:nowrap;color:${t.mute};font:13px/1.3 ${F}">${a}</td></tr></table>`;
+        + '</tr></table>';
     };
 
     const prof = okUser && NQ.ap.prof ? NQ.ap.prof(user) : null;
@@ -7899,7 +7890,8 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     const body = P.layout === 'list'
       ? `<div style="max-width:620px;margin:0 auto;padding:22px 20px 8px">${list.map(row).join('')}</div>`
       : `<div style="padding:22px 12px 8px;text-align:center">${list.map(card).join('')}</div>`;
-    const foot = `<div style="padding:18px 24px 30px;text-align:center;color:${t.mute};font:11px/1.4 ${F};letter-spacing:1px">UPDATED ${d.getDate()} ${MON[d.getMonth()].toUpperCase()} ${d.getFullYear()}${okUser ? ` &middot; <a href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(user)}" style="color:${t.mute}">${esc(user)}</a>` : ''}</div>`;
+    const me = String(NQ.ap.user() || '').trim();
+    const foot = `<div style="padding:18px 24px 30px;text-align:center;color:${t.mute};font:11px/1.4 ${F};letter-spacing:1px">UPDATED ${d.getDate()} ${MON[d.getMonth()].toUpperCase()} ${d.getFullYear()}${me ? ` &middot; <a href="https://www.neopets.com/userlookup.phtml?user=${encodeURIComponent(me)}" style="color:${t.mute}">${esc(me)}</a>` : ''} &middot; CSS BY <a href="https://www.neopets.com/userlookup.phtml?user=alyaad" style="color:${t.mute}">ALYAAD</a></div>`;
     return `<div style="max-width:980px;margin:24px auto;background:${t.bg};border:1px solid ${t.line};border-radius:28px;overflow:hidden;color:${t.ink};font:14px/1.5 ${F}">${head}${body}${foot}</div>`;
   }
 
@@ -7907,7 +7899,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 #nqPP { --pp-bg: #fbf7ee; --pp-card: #fff; --pp-line: #e6dcf5; --pp-text: #392d5c; --pp-mute: #6c6290; --pp-acc: #7c5cf0; --pp-soft: #efe8ff; position: fixed; inset: 0; z-index: 2147483100; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(30,22,52,.5); font-family: 'Outfit', system-ui, sans-serif; color: var(--pp-text); }
 #nqPP.open { display: flex; }
 #nqPP * { box-sizing: border-box; }
-#nqPP .ppWin { position: relative; display: grid; grid-template-columns: 320px 1fr; width: min(1280px, 100%); height: min(860px, 100%); border: 3px solid #fff; border-radius: 26px; background: var(--pp-bg); box-shadow: 0 30px 80px rgba(40,28,80,.45); overflow: hidden; }
+#nqPP .ppWin { position: relative; display: grid; grid-template-columns: 320px 1fr; grid-template-rows: minmax(0, 1fr); width: min(1280px, 100%); height: min(860px, 100%); border: 3px solid #fff; border-radius: 26px; background: var(--pp-bg); box-shadow: 0 30px 80px rgba(40,28,80,.45); overflow: hidden; overflow: clip; }
 #nqPP .ppSide { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--pp-line); }
 #nqPP .ppHead { padding: 18px 20px 12px; }
 #nqPP .ppHead h2 { margin: 0; font: 800 24px/1.1 'Outfit', system-ui, sans-serif; letter-spacing: -.02em; color: var(--pp-text); }
@@ -7943,7 +7935,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 #nqPP .ppFoot small { flex: 1; font-size: 12px; color: var(--pp-mute); line-height: 1.35; }
 #nqPP .ppBtn { height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--pp-acc); color: #fff; font: 700 14px/1 'Outfit', system-ui, sans-serif; cursor: pointer; white-space: nowrap; }
 #nqPP .ppBtn:hover { background: #6a49e0; }
-#nqPP .ppMain { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #fff; }
+#nqPP .ppMain { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; background: #fff; }
 #nqPP .ppBar { display: flex; align-items: center; gap: 10px; padding: 12px 14px 12px 18px; border-bottom: 1px solid var(--pp-line); background: var(--pp-bg); }
 #nqPP .ppBar b { flex: 1; font-size: 13px; font-weight: 600; color: var(--pp-mute); }
 #nqPP .ppX { width: 34px; height: 34px; padding: 0; border: 1px solid var(--pp-line); border-radius: 999px; background: var(--pp-card); color: var(--pp-text); font: 700 20px/1 'Outfit', system-ui, sans-serif; cursor: pointer; }
@@ -7953,7 +7945,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 #nqPP .ppEmpty[hidden] { display: none; }
 #nqPP .ppToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 18px; border-radius: 999px; background: #392d5c; color: #fff; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 3; }
 #nqPP .ppToast.on { opacity: 1; transform: translate(-50%, 0); }
-@media (max-width: 820px) { #nqPP { padding: 0; } #nqPP .ppWin { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: 100%; border-radius: 0; border: 0; } #nqPP .ppSide { max-height: 52vh; border-right: 0; border-bottom: 1px solid var(--pp-line); } }
+@media (max-width: 820px) { #nqPP { padding: 0; } #nqPP .ppWin { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: 100%; border-radius: 0; border: 0; } #nqPP .ppSide { max-height: 52vh; border-right: 0; border-bottom: 1px solid var(--pp-line); } }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqPP { --pp-bg: #1f1b2e; --pp-card: #2a2540; --pp-line: rgba(255,255,255,.1); --pp-text: #f1ecff; --pp-mute: #b3a9d4; --pp-acc: #a58bff; --pp-soft: rgba(165,139,255,.18); }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppWin { border-color: #2a2540; }
 html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppSeg button.on, html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppBtn { color: #1d1a2b; }
@@ -7975,7 +7967,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppToast { background: 
       + '<div class="ppSec"><span class="ppLbl">Words</span><input type="text" data-f="title" maxlength="60" placeholder="Title: Up for trade"><textarea data-f="intro" rows="2" maxlength="400" placeholder="A line or two about you or your trades"></textarea><input type="text" data-f="seek" maxlength="140" placeholder="Looking for: e.g. UC Draiks, offers"><input type="text" data-f="contact" maxlength="20" placeholder="Neomail button username"></div>'
       + '<div class="ppSec"><span class="ppLbl">Colours</span><div class="ppThemes"></div><button type="button" class="ppLink" data-act="shuffle">Shuffle colours</button> &nbsp; <button type="button" class="ppLink" data-act="unshuffle">Reset</button></div>'
       + '<div class="ppSec"><span class="ppLbl">Layout</span>' + seg('layout', [['cards', 'Cards'], ['list', 'List']]) + seg('size', [['s', 'Small'], ['m', 'Medium'], ['l', 'Large']]) + seg('font', [['clean', 'Clean'], ['round', 'Round'], ['classic', 'Classic']]) + '</div>'
-      + '<div class="ppSec"><span class="ppLbl">Age</span>' + seg('age', [['years', 'Years'], ['days', 'Days'], ['born', 'Birthday'], ['off', 'Hide']]) + '</div>'
       + '<div class="ppSec"><span class="ppLbl">Order</span>' + seg('sort', [['list', 'As listed'], ['name', 'Name'], ['age', 'Oldest']]) + '</div>'
       + '<div class="ppSec"><span class="ppLbl">Show</span>' + sw('note', 'Notes') + sw('sp', 'Colour / species') + '</div>'
       + '</div><div class="ppFoot"><small class="ppCount"></small><button type="button" class="ppBtn" data-act="copy">Copy code</button></div></div>'
@@ -8016,7 +8007,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqPP .ppToast { background: 
     fr.onload = () => { try { fr.contentWindow.scrollTo(0, y); } catch {} };
     fr.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><base target="_blank"></head><body style="margin:0;padding:8px 12px;background:#fff">' + html + '</body></html>';
     const noAge = pets.filter(p => !p.born).length;
-    $('.ppCount', el).textContent = pets.length ? fmtN(html.length) + ' characters' + (noAge && P.age !== 'off' ? ' · ' + noAge + ' without age yet (log in to that account once)' : '') : '';
+    $('.ppCount', el).textContent = pets.length ? fmtN(html.length) + ' characters' + (noAge ? ' · ' + noAge + ' without age yet (log in to that account once)' : '') : '';
   }
 
   async function copy() {
