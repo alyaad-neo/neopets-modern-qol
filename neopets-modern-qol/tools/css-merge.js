@@ -27,7 +27,9 @@ if (MARKUP) {
     for (const c of cls) { if (!markup.tags.has(c)) markup.tags.set(c, new Set()); markup.tags.get(c).add(tag); }
   };
   for (const m of text.matchAll(/<([a-z][a-z0-9]*)[^<>]*?class=\\?["']([^"'\\]*)/g)) add(m[1], m[2]);
-  for (const m of text.matchAll(/className\s*=\s*['"]([^'"]*)['"]/g)) add(null, m[1]);
+  const made = new Map();
+  for (const m of text.matchAll(/(\w+)\s*=\s*document\.createElement\(['"](\w+)['"]\)/g)) made.set(m[1], made.has(m[1]) && made.get(m[1]) !== m[2] ? null : m[2]);
+  for (const m of text.matchAll(/(\w+)?\.?className\s*=\s*['"]([^'"]*)['"]/g)) add((m[1] && made.get(m[1])) || null, m[2]);
   for (const m of text.matchAll(/classList\.(?:add|toggle|remove)\(([^)]*)\)/g)) for (const q of m[1].matchAll(/['"]([\w-]+)['"]/g)) markup.dynamic.add(q[1]);
 }
 const structural = (c) => markup.tags.has(c) && !markup.dynamic.has(c);
