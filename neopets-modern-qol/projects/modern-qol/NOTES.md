@@ -57,3 +57,4 @@ All of neopets.com and ncmall.neopets.com (bundle `@match`). `items.jellyneo.net
 ## Lessons learned
 
 - Old per-project notes and the patcher HANDOFF.md: git history, commit `de59c3b`, under `projects/modern-qol/original/`.
+- `nq_qr_data.data.pets[]` carries `species`/`colour`/`gender`/`level` for every pet (parsed from each `#<Name>_details` block on quickref.phtml). The drawer's All Pets and its trade list read them; before 5.5.36 only the home carousel supplied them, so accounts that skipped the home page copied `Name - ?`.

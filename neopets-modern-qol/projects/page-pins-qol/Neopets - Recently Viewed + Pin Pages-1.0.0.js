@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Recently Viewed + Pin Pages
 // @namespace    neopets-qol-patcher
-// @version      1.0.8
+// @version      1.0.9
 // @description  Neopets recent-pages history and pins. Works standalone (floating panel) or alongside the Modern Interface patcher (sidebar cards).
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -302,7 +302,6 @@
       foot.id = 'nqRecentFoot';
       document.body.appendChild(foot);
     }
-    const clock = $('#nqBottom', foot);
     let wrap = $('#nqPinsMod');
     if (!wrap) {
       wrap = document.createElement('div');
@@ -318,7 +317,7 @@
     }
     if (pinned.parentNode !== wrap) wrap.appendChild(pinned);
     if (card.parentNode !== wrap) wrap.appendChild(card);
-    if (wrap.parentNode !== foot) foot.insertBefore(wrap, clock || null);
+    if (wrap.parentNode !== foot) foot.appendChild(wrap);
     const tmp = $('#nqRecentFoot'); if (tmp && tmp !== foot && !tmp.children.length) tmp.remove();
     refreshCards();
     if (!wrap._init) { wrap._init = 1; wrap.dataset.tab = pinned.hidden ? 'recent' : 'pinned'; if (wrap._sync) wrap._sync(); }

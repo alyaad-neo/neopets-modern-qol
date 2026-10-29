@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Modern Interface PATCHER
 // @namespace    neopets-qol-patcher
-// @version      5.5.36
+// @version      5.5.37
 // @description  Based on "Neopets - Modern Interface" by marius@clraik, MIT License. Modern Interface skin and patches plus the dailies tracker, accounts drawer and recent/pinned pages, bundled into one script.
 // @match        *://*.neopets.com/*
 // @match        *://ncmall.neopets.com/*
@@ -1578,7 +1578,7 @@ if (NQ.base) startLayout();
   #nqUser .name{
     display:block;
     width:100%;
-    text-decoration:none !important; color:#fff !important;
+    text-decoration:none; color:#fff !important;
     font-size:14px; font-weight:700;
     cursor:pointer;
     pointer-events:auto;
@@ -1586,8 +1586,8 @@ if (NQ.base) startLayout();
     z-index:1;
   }
   #nqUser .name:hover{
-    text-decoration:underline !important;
-    text-decoration-color:var(--nq-accent, #dcb8ff) !important;
+    text-decoration:underline;
+    text-decoration-color:var(--nq-accent, #dcb8ff);
     text-underline-offset:3px;
   }
 
@@ -2457,7 +2457,7 @@ function startHud() {
         top:50%;
         display:flex !important;
         flex-direction:column;
-        align-items:center !important;
+        align-items:center;
         gap:14px;
         pointer-events:none;
         flex-wrap:wrap;
@@ -2468,7 +2468,7 @@ function startHud() {
       #btnOverlay .col .iconBtn{ pointer-events:auto; }
       #btnOverlay .col.left{ left: var(--frame-left); }
 
-      #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none !important; background:transparent !important; border:none !important; box-shadow:none; padding:0; margin:0 !important; line-height:0; -webkit-tap-highlight-color:transparent; opacity:1; visibility:visible; }
+      #btnOverlay .iconBtn{ display:inline-block !important; text-decoration:none; background:transparent !important; border:none; box-shadow:none; padding:0; margin:0 !important; line-height:0; -webkit-tap-highlight-color:transparent; opacity:1; visibility:visible; }
       #btnOverlay .iconBtn img{ width:36px !important; height:36px !important; max-width:none !important; display:block !important; transform:scale(1); transition:transform .12s ease; will-change:transform; transform-origin:center center; filter:drop-shadow(0 1px 4px rgba(0,0,0,.45)); opacity:1 !important; visibility:visible !important; }
       #btnOverlay .iconBtn:hover img{ transform:scale(1.08) !important; }
       #btnOverlay .iconBtn:active img{ transform:scale(1.02) !important; }
@@ -3720,7 +3720,6 @@ html[data-nq-modern-interface] {
   #nqBell > img { width: calc(var(--nq-ic, 44px) * .85); height: calc(var(--nq-ic, 44px) * .85); object-fit: contain; filter: var(--nq-ico-shadow); }
   #nqBell .nqBellDot { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
 
-  #nqBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
 
   #nqLeftBarBg { background-image: none; overflow: hidden; }
   &[data-nq-bar="none"] #nqLeftBarBg::after { top: 0; }
@@ -3803,7 +3802,7 @@ html[data-nq-modern-interface] {
   #nqIcons .nqIcHead { display: none; }
   #nqIcons .nqIcBody, #nqIcons.nqShut .nqIcBody { display: block; padding: 0; }
   #nqIcons #btnOverlay { position: static; inset: auto; width: auto; height: auto; transform: none; z-index: auto; pointer-events: auto !important; opacity: 1 !important; overflow: visible; }
-  #nqIcons #btnOverlay .col { position: static !important; inset: auto; transform: none !important; width: auto; height: auto; margin: 0 !important; display: flex !important; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center !important; gap: 10px; row-gap: 10px; }
+  #nqIcons #btnOverlay .col { position: static !important; inset: auto; transform: none !important; width: auto; height: auto; margin: 0 !important; display: flex !important; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; row-gap: 10px; }
   #nqIcons #btnOverlay .col:empty { display: none !important; }
   #nqIcons #btnOverlay .col > * { flex: 0 0 auto !important; position: relative; }
   #nqIcons #btnOverlay .col img { max-width: 40px; max-height: 40px; }
@@ -3888,7 +3887,7 @@ html[data-nq-modern-interface] {
   #nqHud #nqPinsMod .rList a:hover { background: rgba(255,255,255,.14) !important; }
   #nqHud #nqPinsMod .rList b { color: #fff; font-size: 12px !important; font-weight: 500; }
 
-  #nqHud #nqPetInfo .nqName { font: 400 24px/1.15 'CafeteriaBlack', Georgia, serif !important; letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; font-size: 26px; font-weight: 400; line-height: 1.15; }
+  #nqHud #nqPetInfo .nqName { letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
   #nqHud #nqNp .nq-top-row .nq-amounts { grid-template-columns: none; justify-content: center; } 
   &.nq-side-light #nqHud #nqPetInfo .nqChip, &.nq-side-light #nqHud #nqPetInfo .nqLinks a, &.nq-side-light #nqHud #nqPetInfo .nqLinks button { background: #fff; border-color: rgba(0,0,0,.10); color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqPetInfo .nqLinks a:hover, &.nq-side-light #nqHud #nqPetInfo .nqLinks button:hover { background: #f1eff7; }
@@ -3909,7 +3908,7 @@ html[data-nq-modern-interface] {
   &.nq-side-light #nqHud #nqPinsMod .rList b { color: #1c1830; } &.nq-side-light #nqHud #nqPinsMod .rList:empty::before { color: rgba(28,24,48,.5); }
   &.nq-side-light #nqHud #nqPinsMod li.isPinned .rPin { color: #d89a00; }
   #nqIcons #nqNestPop::before { content: ""; position: absolute; left: -6px; right: -6px; top: 100%; height: 16px; background: none !important; }
-  #nqIcons #nqNestPop .col, #nqIcons #nqNestPop .col > *, #nqIcons #nqNestPop .col > * * { border: 0 !important; }
+  #nqIcons #nqNestPop .col, #nqIcons #nqNestPop .col > *, #nqIcons #nqNestPop .col > * * { border: 0; }
   #nqColors .nqSideRow .nqLogoDot { display: none; }
 
   #nqHud #nqIcons #btnOverlay .col { justify-content: space-evenly; flex-wrap: nowrap; gap: 8px; }
@@ -8072,7 +8071,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
       foot.id = 'nqRecentFoot';
       document.body.appendChild(foot);
     }
-    const clock = $('#nqBottom', foot);
     let wrap = $('#nqPinsMod');
     if (!wrap) {
       wrap = document.createElement('div');
@@ -8088,7 +8086,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     }
     if (pinned.parentNode !== wrap) wrap.appendChild(pinned);
     if (card.parentNode !== wrap) wrap.appendChild(card);
-    if (wrap.parentNode !== foot) foot.insertBefore(wrap, clock || null);
+    if (wrap.parentNode !== foot) foot.appendChild(wrap);
     const tmp = $('#nqRecentFoot'); if (tmp && tmp !== foot && !tmp.children.length) tmp.remove();
     refreshCards();
     if (!wrap._init) { wrap._init = 1; wrap.dataset.tab = pinned.hidden ? 'recent' : 'pinned'; if (wrap._sync) wrap._sync(); }

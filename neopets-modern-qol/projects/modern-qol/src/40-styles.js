@@ -244,7 +244,6 @@ html[data-nq-modern-interface] {
   #nqBell > img { width: calc(var(--nq-ic, 44px) * .85); height: calc(var(--nq-ic, 44px) * .85); object-fit: contain; filter: var(--nq-ico-shadow); }
   #nqBell .nqBellDot { position: absolute; top: 2px; right: 2px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b3b; box-shadow: 0 0 0 2px rgba(255,255,255,.92); }
 
-  #nqBottom { display: flex; align-items: center; justify-content: center; min-height: 30px; }
 
   #nqLeftBarBg { background-image: none; overflow: hidden; }
   &[data-nq-bar="none"] #nqLeftBarBg::after { top: 0; }
@@ -327,7 +326,7 @@ html[data-nq-modern-interface] {
   #nqIcons .nqIcHead { display: none; }
   #nqIcons .nqIcBody, #nqIcons.nqShut .nqIcBody { display: block; padding: 0; }
   #nqIcons #btnOverlay { position: static; inset: auto; width: auto; height: auto; transform: none; z-index: auto; pointer-events: auto !important; opacity: 1 !important; overflow: visible; }
-  #nqIcons #btnOverlay .col { position: static !important; inset: auto; transform: none !important; width: auto; height: auto; margin: 0 !important; display: flex !important; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center !important; gap: 10px; row-gap: 10px; }
+  #nqIcons #btnOverlay .col { position: static !important; inset: auto; transform: none !important; width: auto; height: auto; margin: 0 !important; display: flex !important; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; row-gap: 10px; }
   #nqIcons #btnOverlay .col:empty { display: none !important; }
   #nqIcons #btnOverlay .col > * { flex: 0 0 auto !important; position: relative; }
   #nqIcons #btnOverlay .col img { max-width: 40px; max-height: 40px; }
@@ -412,7 +411,7 @@ html[data-nq-modern-interface] {
   #nqHud #nqPinsMod .rList a:hover { background: rgba(255,255,255,.14) !important; }
   #nqHud #nqPinsMod .rList b { color: #fff; font-size: 12px !important; font-weight: 500; }
 
-  #nqHud #nqPetInfo .nqName { font: 400 24px/1.15 'CafeteriaBlack', Georgia, serif !important; letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; font-size: 26px; font-weight: 400; line-height: 1.15; }
+  #nqHud #nqPetInfo .nqName { letter-spacing: 0; padding: 0 28px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; overflow-wrap: normal; }
   #nqHud #nqNp .nq-top-row .nq-amounts { grid-template-columns: none; justify-content: center; } 
   &.nq-side-light #nqHud #nqPetInfo .nqChip, &.nq-side-light #nqHud #nqPetInfo .nqLinks a, &.nq-side-light #nqHud #nqPetInfo .nqLinks button { background: #fff; border-color: rgba(0,0,0,.10); color: #1c1830 !important; }
   &.nq-side-light #nqHud #nqPetInfo .nqLinks a:hover, &.nq-side-light #nqHud #nqPetInfo .nqLinks button:hover { background: #f1eff7; }
@@ -433,7 +432,7 @@ html[data-nq-modern-interface] {
   &.nq-side-light #nqHud #nqPinsMod .rList b { color: #1c1830; } &.nq-side-light #nqHud #nqPinsMod .rList:empty::before { color: rgba(28,24,48,.5); }
   &.nq-side-light #nqHud #nqPinsMod li.isPinned .rPin { color: #d89a00; }
   #nqIcons #nqNestPop::before { content: ""; position: absolute; left: -6px; right: -6px; top: 100%; height: 16px; background: none !important; }
-  #nqIcons #nqNestPop .col, #nqIcons #nqNestPop .col > *, #nqIcons #nqNestPop .col > * * { border: 0 !important; }
+  #nqIcons #nqNestPop .col, #nqIcons #nqNestPop .col > *, #nqIcons #nqNestPop .col > * * { border: 0; }
   #nqColors .nqSideRow .nqLogoDot { display: none; }
 
   #nqHud #nqIcons #btnOverlay .col { justify-content: space-evenly; flex-wrap: nowrap; gap: 8px; }
