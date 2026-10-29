@@ -136,7 +136,7 @@
         if (saving) commit();
         else if (accentPick) {
           try { ownAccent = true; NQ.applyAccent(accentBase || NP_ORANGE); } catch {} finally { ownAccent = false; }
-          applyAccentContrast(accentBase || NP_ORANGE); applySearchContrast();
+          applyAccentContrast(accentBase || NP_ORANGE);
         }
         accentPick = null;
         draft = saved(); saving = false; pendingImg = { main: null, left: null };

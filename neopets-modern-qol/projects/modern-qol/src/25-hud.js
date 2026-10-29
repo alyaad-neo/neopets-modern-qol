@@ -178,7 +178,7 @@
     backdrop-filter: blur(var(--nq-blur, 8px));
     overflow: hidden;
   }
-  .qrPet{
+  #qrDock .qrPet{
     width: 100%;
     position: relative;
     overflow: hidden;
@@ -193,7 +193,7 @@
       flex-grow .45s cubic-bezier(.22, 1, .36, 1),
       opacity .3s ease;
   }
-  .qrPet.active{
+  #qrDock .qrPet.active{
     flex-grow: 1;
     opacity: 1;
     box-shadow: inset 0 0 0 2px var(--nq-accent, #dcb8ff);
@@ -202,9 +202,9 @@
     flex-grow: 1;
     opacity: 1;
   }
-  .qrPet + .qrPet{ border-top: 2px solid #000; }
-  .qrPet:hover{ filter: brightness(1.10); }
-  .qrOverlay{
+  #qrDock .qrPet + .qrPet{ border-top: 2px solid #000; }
+  #qrDock .qrPet:hover{ filter: brightness(1.10); }
+  #qrDock .qrOverlay{
     position:absolute; inset:0;
     padding: 8px;
     display:flex; flex-direction:column; gap:6px;
@@ -213,8 +213,7 @@
     opacity:0; pointer-events:none;
     transition: opacity .14s linear;
   }
-  .qrPet:hover .qrOverlay{ opacity:1; pointer-events:auto; }
-  .qrOverlay a{
+  #qrDock .qrOverlay a{
     min-height:32px; display:flex; align-items:center; justify-content:center; text-align:center;
     padding:6px 8px; border-radius:var(--nq-radius-sm, 10px);
     text-decoration:none !important; color:#fff !important;
@@ -223,9 +222,9 @@
     border:1px solid var(--nq-line, rgba(255,255,255,.16));
     transition:background .12s ease, transform .08s ease;
   }
-  .qrOverlay a:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
-  .qrOverlay a:active{ transform:translateY(1px); }
-  .qrPetName{
+  #qrDock .qrOverlay a:hover{ background:var(--nq-btn-hover, rgba(255,255,255,.10)); }
+  #qrDock .qrOverlay a:active{ transform:translateY(1px); }
+  #qrDock .qrPetName{
     font-family: 'CafeteriaBlack', var(--nq-font, system-ui), sans-serif;
     font-size: 20px; font-weight: 400; color: #fff;
     text-align: center; padding: 0 4px;
@@ -262,13 +261,6 @@
   }
   #nqActivePet img.loaded{ opacity:1; }
 
-  @media (hover: none){
-    .qrOverlay{
-      opacity:1;
-      pointer-events:auto;
-      background:rgba(0,0,0,.30);
-    }
-  }
   #nqHud > #nqUser,
   #nqHud > #nqNp{
     flex: 0 0 auto;

@@ -194,7 +194,7 @@
     if (isNc) root.classList.remove('nq-recolor-site'); else root.classList.toggle('nq-recolor-site', LSget('nq_recolor_site_v1') === '1');
     try { if (!rs.getPropertyValue('--nq-accent-l60') ) NQ.applyAccent(NQ.getAccent() || '#ffffff'); } catch {}
     applyAccentContrast();
-    NQ.onAccent((hex) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(hex); applySearchContrast(); });
+    NQ.onAccent((hex) => { if (!ownAccent && !saving) accentPick = null; applyAccentContrast(hex); });
     paintAll(saved());
     applySynced();
     document.addEventListener('DOMContentLoaded', () => { paintAll(saved()); setTimeout(() => paintAll(saved()), 800); }, { once: true });

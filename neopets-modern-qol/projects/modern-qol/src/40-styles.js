@@ -11,7 +11,7 @@ html[data-nq-modern-interface] {
   --nq-ico-shadow: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 
   body, body *:not(:where(i, .fa, .fas, .far, .fab, .fal, .fad, [class*="fa-"], [class*="glyphicon"], [class*="icon-"], [class*="-icon"], [class*="material-icons"], [class*="mdi"], .bi, [class^="bi-"], .dashicons, [class*="ico-"])) { font-family: 'Outfit', system-ui, sans-serif !important; }
-  .qrOverlay a, .qrPetName, #nqUserTitle { font-family: 'CafeteriaBlack', Georgia, serif !important; }
+  #qrDock .qrOverlay a, #qrDock .qrPetName, #nqUserTitle { font-family: 'CafeteriaBlack', Georgia, serif !important; }
 
   .searchForm { margin: 0 !important; }
   div#boardTopic { border: 0 !important; }
@@ -60,7 +60,6 @@ html[data-nq-modern-interface] {
   #qrDockWrap { overflow-y: auto; overflow-x: hidden; }
   #qrDockWrap.open { opacity: 1; pointer-events: auto; top: 62px; }
   #qrDock { overflow-y: auto; overflow-x: hidden; min-height: 100% !important; height: auto; }
-  .qrPet { min-height: 50px !important; flex: 1 1 50px !important; }
 
   #nqFoot { position: fixed; left: 0; bottom: 0; width: var(--nq-col-width); box-sizing: border-box; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; padding-left: calc(var(--nq-hud-left, 14px) + 6px); padding-right: calc(var(--nq-hud-left, 14px) + 6px); }
 
@@ -78,9 +77,6 @@ html[data-nq-modern-interface] {
   #nqBgSidebar .nqThemeSelect { height: 36px; font-size: 13px; background-color: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #fff; }
   #nqBgSidebar .nqThemeSelect:hover { background-color: rgba(255,255,255,.16); }
   #nqBgSidebar .nqRecolorBtn:not(.isOn) { color: #fff; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); }
-  #nqBgSidebar .nqOptRow { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.22); }
-  #nqBgSidebar .nqOptText { color: #fff; font-size: 12.5px; }
-  #nqBgSidebar .nqOptText small { color: rgba(255,255,255,.74); font-size: 11px; }
   #nqColors .nqRow { color: rgba(255,255,255,.95); display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 12px; font-size: 13px; font-weight: 600; text-align: left; }
   #nqColors button:hover { background: rgba(255,255,255,.22); }
   #nqBgSidebar .nqBgSearch input { height: 32px; font-size: 13px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); }
@@ -190,11 +186,6 @@ html[data-nq-modern-interface] {
   #nqPetInfo .nqDetails .nqStat b.gM { color: #8cc4ff !important; }
 
   #nqPetInfo .nqStats { margin-top: 8px; }
-  #nqPetInfo .nqStatsHead { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; border: 1px solid rgba(255,255,255,.22); border-radius: 9px; background: rgba(255,255,255,.12); color: #fff; cursor: pointer; text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6); transition: background .15s; }
-  #nqPetInfo .nqStatsHead:hover { background: rgba(255,255,255,.2); }
-  #nqPetInfo .nqStatsHead span { font: 600 12.5px/1.2 'Outfit', system-ui, sans-serif !important; color: #fff !important; }
-  #nqPetInfo .nqStatsHead svg { width: 12px; height: 12px; flex: none; transition: transform .25s cubic-bezier(.22, 1, .36, 1); }
-  #nqPetInfo .nqStats.open .nqStatsHead svg { transform: rotate(180deg); }
   #nqPetInfo .nqStatsBody { max-height: 0; opacity: 0; margin-top: 0; overflow: hidden; transition: max-height .3s cubic-bezier(.22, 1, .36, 1), opacity .2s ease, margin-top .3s ease; }
   #nqPetInfo .nqStats.open .nqStatsBody { max-height: 240px; opacity: 1; margin-top: 6px; }
   #nqPetInfo .nqStatsBody .nqDetails { margin-top: 0 !important; }
@@ -220,8 +211,6 @@ html[data-nq-modern-interface] {
 
   #btnOverlay .iconBtn { padding: 6px !important; margin: -6px !important; }
   #nqTools .nqSearch button { min-width: 36px; min-height: 36px; position: absolute; z-index: 2; left: 0; top: 0; width: var(--nq-ic, 44px); height: var(--nq-ic, 44px); padding: 0; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; cursor: pointer; transition: width .25s ease, height .25s ease; }
-  .nqGrpHead { margin: 6px 4px 2px; font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.6); }
-  .nqGrpHead:first-child { margin-top: 0; }
   #nqTop { position: fixed; right: 24px; bottom: 20px; z-index: 2150; width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,.3); background: var(--nq-card, rgba(20,18,28,.7)); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .2s ease, background .15s; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
   #nqTop.on { opacity: 1; pointer-events: auto; }
   #nqTop:hover { background: var(--nq-accent, #fff); color: var(--nq-accent-fg, #1a1330); }
@@ -290,13 +279,6 @@ html[data-nq-modern-interface] {
   &.nq-popup body { background: #fff !important; }
   &.nq-popup body :where(#container__2020,#content,#pageContent,#contentContainer,#main,main,.inner-body,.content,#np-content,#alpha-inner) {
     width: auto !important; max-width: none !important; min-height: 0 !important; margin: 0 !important; padding: 8px !important; border: 0 !important; border-radius: 0 !important;
-  }
-  html[data-nq-modern-interface] .tp-border-frame a[href*="criteria=id"] {
-    position: relative !important;
-    z-index: 1 !important;
-    display: block !important;
-    margin: 10px 0 14px !important;
-    clear: both !important;
   }
 }
 
@@ -601,38 +583,14 @@ html[data-nq-modern-interface] {
     rs.setProperty('--nq-accent-fg', white ? '#ffffff' : '#1a1330');
     rs.setProperty('--nq-accent-fg-shadow', white ? '0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)' : 'none');
   }
-  function applySearchContrast() {
-    const style = root.dataset.nqBar || 'blur';
-    let hex = '';
-    try {
-      if (style === 'none') hex = NQ.getAccent() || LSget('nq_accent_v1');
-      else hex = LSget('nq_color_head') || DEF.head;
-    } catch {}
-    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
-    let white = true;
-    if (m) {
-      const n = parseInt(m[1], 16), k = style === 'none' ? 0.34 : 0.28;
-      const lt = (v) => v * (1 - k) + 255 * k;
-      const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-      const L = 0.2126 * lin(lt((n >> 16) & 255)) + 0.7152 * lin(lt((n >> 8) & 255)) + 0.0722 * lin(lt(n & 255));
-      white = L <= 0.38;
-    }
-    rs.setProperty('--nq-search-fg-auto', white ? '#ffffff' : '#000000');
-    rs.setProperty('--nq-search-ts-auto', white ? '0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)' : 'none');
-    rs.setProperty('--nq-search-icon-filter', white ? 'drop-shadow(0 1px 2px rgba(0,0,0,.8))' : 'none');
-  }
   function applyLogo() { rs.setProperty('--nq-logo-filter', LSget('nq_logo_white') === '1' ? 'brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0,0,0,.35))' : 'none'); }
-  const applyBarStyle = (v) => { root.dataset.nqBar = BAR_STYLES.includes(v) ? v : 'blur'; applySearchContrast(); try { applyNavContrast(); } catch {} };
+  const applyBarStyle = (v) => { root.dataset.nqBar = BAR_STYLES.includes(v) ? v : 'blur'; try { applyNavContrast(); } catch {} };
   const BAR_CSS = `
 html[data-nq-modern-interface][data-nq-bar="none"] {
   --nq-bar-bg: transparent !important; --nq-bar-backdrop: none !important; --nq-bar-line: transparent !important; --nq-bar-shadow: none !important;
   --nq-nav-shadow: 0 1px 2px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.45);
   --nq-nav-stroke: 3.5px rgba(46,34,62,.92);
   --nq-nav-icon-filter: drop-shadow(0 0 1.5px rgba(46,34,62,.9)) drop-shadow(0 2px 4px rgba(0,0,0,.35));
-  --nq-search-bg: color-mix(in srgb, var(--nq-accent, #fff) 66%, #fff); --nq-search-bg-h: color-mix(in srgb, var(--nq-accent, #fff) 56%, #fff); --nq-search-bg-f: color-mix(in srgb, var(--nq-accent, #fff) 50%, #fff);
-  --nq-search-line: color-mix(in srgb, var(--nq-accent, #fff) 58%, #000); --nq-search-line-h: color-mix(in srgb, var(--nq-accent, #fff) 50%, #000); --nq-search-line-f: color-mix(in srgb, var(--nq-accent, #fff) 45%, #000);
-  --nq-search-ring: color-mix(in srgb, var(--nq-accent, #fff) 55%, transparent);
-  --nq-search-shadow: inset 0 1px 2px rgba(0,0,0,.14), 0 1px 0 rgba(255,255,255,.45);
   --nq-menu-lift: -2px; --nq-menu-caret: block; --nq-menu-radius: 16px;
 }
 html[data-nq-modern-interface][data-nq-bar="tint"] {
@@ -657,16 +615,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
 .menuHead { position: sticky; top: -8px; z-index: 1; margin: 0 -8px; padding: 9px 20px 4px; background: rgba(14,12,22,.55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font: 700 10px/1 'Outfit', system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.5); }
 #menu-premium::-webkit-scrollbar { width: 8px; }
 #menu-premium::-webkit-scrollbar-thumb { background: rgba(255,255,255,.3); border-radius: 4px; }
-.nq-search { position: absolute; right: 60px; top: 50%; transform: translateY(-50%); z-index: 2; width: 34px; height: 34px; margin: 0; pointer-events: auto; transition: width .45s cubic-bezier(.22, 1, .36, 1); }
-.nq-search:hover, .nq-search:focus-within { width: 232px; }
-.nq-search input { box-sizing: border-box; width: 100%; height: 34px; padding: 0 16px 0 40px; border: 1px solid transparent; border-radius: 999px; background: transparent; box-shadow: none; color: var(--nq-search-fg-auto, #fff); font: 400 17px 'CafeteriaBlack', Georgia, serif !important; letter-spacing: .02em; text-shadow: var(--nq-search-ts-auto, 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)); outline: 0; cursor: pointer; text-overflow: clip; transition: background .3s, border-color .3s, box-shadow .3s; }
-.nq-search:hover input, .nq-search:focus-within input { cursor: text; border-color: var(--nq-search-line, rgba(0,0,0,.3)); background: var(--nq-search-bg, rgba(255,255,255,.28)); box-shadow: var(--nq-search-shadow, inset 0 1px 2px rgba(0,0,0,.16), 0 1px 0 rgba(255,255,255,.3)); }
-.nq-search input:focus { background: var(--nq-search-bg-f, rgba(255,255,255,.42)); border-color: var(--nq-search-line-f, rgba(0,0,0,.42)); box-shadow: inset 0 1px 2px rgba(0,0,0,.14), 0 0 0 3px var(--nq-search-ring, rgba(255,255,255,.35)), 0 4px 14px rgba(0,0,0,.18); }
-.nq-search input::placeholder { color: var(--nq-search-fg-auto, #fff); text-shadow: var(--nq-search-ts-auto, 0 1px 3px rgba(0,0,0,.8), 0 1px 1px rgba(0,0,0,.6)); opacity: 0; transition: opacity .12s; }
-.nq-search:hover input::placeholder, .nq-search:focus-within input::placeholder { opacity: 1; transition: opacity .3s .2s; }
-.nq-search button { position: absolute; z-index: 1; left: 2px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
-.nq-search button img { width: 30px; height: 30px; display: block; filter: var(--nq-nav-icon-filter, drop-shadow(0 1px 2px rgba(0,0,0,.3))); transition: transform .35s cubic-bezier(.22, 1, .36, 1); }
-.nq-search:hover button img, .nq-search:focus-within button img { transform: scale(.82); }
 .nq-premcaret { display: none; position: absolute; z-index: 6; width: 12px; height: 12px; transform: rotate(45deg); background: rgba(40,36,52,.92); border-left: 1px solid rgba(255,255,255,.2); border-top: 1px solid rgba(255,255,255,.2); pointer-events: none; }
 #menu-premium::before { content: none; }
 .nq-prembg { display: none; position: absolute; overflow: hidden; box-sizing: border-box; border-radius: var(--nq-menu-radius, 0 0 16px 16px); pointer-events: none; }
@@ -688,9 +636,6 @@ html[data-nq-modern-interface][data-nq-bar="solid"] {
 .nqSnowBadge { margin-left: auto; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.16); color: #fff; font: normal 700 11px/1.3 'Outfit', system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .nqSnowBadge.asleep { background: #22b45a; }
 .nqSnowBadge.ready { background: #f0a020; color: #2a1a00; }
-.nqMainHint { padding: 2px 12px 4px; font: 500 11px/1.35 'Outfit', system-ui, sans-serif; color: rgba(255,255,255,.62); }
-.menu a.nqMainRow { cursor: pointer; }
-.menu a.nqMainRow span { font-size: 15px !important; }
 .nqAlertRow svg { color: #ffd27a !important; }
 .btn.nq-alert-on::after { content: ""; position: absolute; top: 6px; left: 37px; width: 9px; height: 9px; border-radius: 50%; background: #2fd873; box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 1px 3px rgba(0,0,0,.35); pointer-events: none; z-index: 1; }
 @media (max-width: 1500px) { .btn.nq-alert-on::after { left: 29px; } }

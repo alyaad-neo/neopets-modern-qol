@@ -20,7 +20,6 @@
     const h = c || DEF.head, d = darken(h, .72);
     rs.setProperty('--nq-head-a', h + HEAD_ALPHA);
     rs.setProperty('--nq-head-b', d + HEAD_ALPHA);
-    try { applySearchContrast(); } catch {}
     lastHeadHex = h; try { applyNavContrast(); } catch {}
     [['solid', 'ff'], ['tint', 'b3'], ['blur', '8c']].forEach(([k, a]) => {
       rs.setProperty('--nq-head-a-' + k, h + a);
@@ -53,7 +52,7 @@
     if (accentPick) {
       LSset('nq_accent_v1', accentPick);
       try { ownAccent = true; NQ.applyAccent(accentPick); } catch {} finally { ownAccent = false; }
-      applyAccentContrast(accentPick); applySearchContrast();
+      applyAccentContrast(accentPick);
     }
   }
 
@@ -82,7 +81,7 @@
       if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
       try { ownAccent = true; NQ.applyAccent(hex); } catch {} finally { ownAccent = false; }
       accentPick = hex;
-      applyAccentContrast(hex); applySearchContrast();
+      applyAccentContrast(hex);
       sync();
     };
     const sync = () => {

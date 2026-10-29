@@ -19,11 +19,12 @@ const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser'
   nqIcons: 'nqIcons', btnOverlay: 'nqIcons', nqNestPop: 'nqIcons', nqLeftBar: 'leftbar', nqLeftBarBg: 'leftbar', nqLeftBarShade: 'leftbar', qrDockWrap: 'dock', qrDock: 'dock',
   nqTools: 'tools', nqNestMenu: 'nestmenu', nqScrollTrack: 'scroll', nqScrollThumb: 'scroll', nqAcctDrawer: 'drawer', nqNst: 'barshadow',
   nqHud: 'hud', nqNavMod: 'nqNavMod', nqBgHandle: 'bghandle', nqTop: 'top', nqBell: 'bell', nqAP: 'ap' };
-const CLASS_OF = { qrPet: 'dock', qrOverlay: 'dock', qrPetName: 'dock' };
+const CLASS_OF = { qrPet: 'dock', qrOverlay: 'dock', qrPetName: 'dock', nqBigPrice: 'shop' };
+const SECTION_OF = { nqTitle: 'title', nqName: 'title', nqSub: 'title', nqG: 'title', nqCopy: 'title', nqLinks: 'links', nqStatsBtn: 'links', nqChips: 'chips', nqChip: 'chips', nqStats: 'stats', nqStatsBody: 'stats', nqDetails: 'stats', nqStat: 'stats' };
 const PARENT = { nqUser: 'nqHud', nqNp: 'nqHud', nqActivePet: 'nqHud', nqDaily: 'nqHud', nqFoot: 'nqHud', nqIcons: 'nqHud', nqNavMod: 'nqHud', btnOverlay: 'nqIcons', nqNestPop: 'btnOverlay', qrDock: 'qrDockWrap',
   nqHud: '', qrDockWrap: '', nqBgHandle: '', nqBgSidebar: '', nqTop: '', nqBell: '', nqAP: '', nqQas: '', nqDrawerClose: '', nqMenuBtn: '', nqScrim: '', nqNestMenu: '' };
 const HUD_CARDS = new Set(['nqUser', 'nqNp', 'nqActivePet', 'nqListsMod', 'nqFoot', 'nqDaily', 'nqIcons', 'nqNavMod']);
-const markup = { sets: [], dynamic: new Set(), tags: new Map() };
+const markup = { sets: [], dynamic: new Set(), tags: new Map(), ids: new Map() };
 if (MARKUP) {
   const proj = path.join(__dirname, '..', 'projects');
   const dirs = [path.join(proj, 'modern-qol', 'src'), ...['dailies-qol', 'account-drawer', 'page-pins-qol'].map(p => path.join(proj, p))];
@@ -38,6 +39,19 @@ if (MARKUP) {
   for (const m of text.matchAll(/(\w+)\s*=\s*document\.createElement\(['"](\w+)['"]\)/g)) made.set(m[1], made.has(m[1]) && made.get(m[1]) !== m[2] ? null : m[2]);
   for (const m of text.matchAll(/(\w+)?\.?className\s*=\s*['"]([^'"]*)['"]/g)) add((m[1] && made.get(m[1])) || null, m[2]);
   for (const m of text.matchAll(/classList\.(?:add|toggle|remove)\(([^)]*)\)/g)) for (const q of m[1].matchAll(/['"]([\w-]+)['"]/g)) markup.dynamic.add(q[1]);
+  const idInfo = (id, info) => markup.ids.set(id, markup.ids.has(id) ? null : info);
+  for (const m of text.matchAll(/<([a-z][a-z0-9]*)((?:\s[^<>]*?)?)\sid=\\?["']([\w-]+)\\?["']([^<>]*)>/g)) {
+    const attrs = m[2] + m[4], c = /class=\\?["']([^"'\\]*)/.exec(attrs);
+    idInfo(m[3], attrs.includes('${') ? null : { tag: m[1], cls: new Set(c ? c[1].split(/\s+/) : []) });
+  }
+  for (const m of text.matchAll(/(\w+)\.id\s*=\s*['"]([\w-]+)['"]/g)) {
+    const v = m[1], tag = made.get(v), cls = new Set();
+    let known = !!tag && !new RegExp('[^\\w.]' + v + '\\.(setAttribute\\([\'"]class|className\\s*\\+=)').test(text);
+    for (const k of text.matchAll(new RegExp('[^\\w.]' + v + '\\.className\\s*=\\s*([\'"]([^\'"]*)[\'"])?', 'g'))) {
+      if (k[1] === undefined) known = false; else k[2].split(/\s+/).forEach(x => cls.add(x));
+    }
+    idInfo(m[2], known ? { tag, cls } : null);
+  }
 }
 const structural = (c) => markup.tags.has(c) && !markup.dynamic.has(c);
 const together = (a, b) => markup.sets.some(s => s.includes(a) && s.includes(b));
@@ -49,15 +63,29 @@ const cardsOf = (sel) => {
 };
 const groupsMeet = (ca, cb) => [...ca].some(c => cb.has(c) || (c === 'hud' && [...cb].some(g => HUD_CARDS.has(g))) || (cb.has('hud') && HUD_CARDS.has(c)));
 
+const sectionsOf = (sel) => new Set([...sel.replace(/:(not|is|where|has)\((?:[^()]|\([^()]*\))*\)/g, '').matchAll(/\.([\w-]+)/g)].map(m => SECTION_OF[m[1]]).filter(Boolean));
+
 function neverMeet(selA, selB) {
   const ca = cardsOf(selA), cb = cardsOf(selB);
   if (ca.size && cb.size && !groupsMeet(ca, cb)) return true;
+  const sa = sectionsOf(selA), sb = sectionsOf(selB);
+  if (MARKUP && sa.size && sb.size && ![...sa].some(x => sb.has(x))) return true;
   if (MARKUP && (selfInside(selA, selB) || selfInside(selB, selA))) return true;
   if (MARKUP && (outsideTree(selA, selB) || outsideTree(selB, selA))) return true;
+  if (MARKUP && (idApart(selA, selB) || idApart(selB, selA))) return true;
   const xa = classesOf(lastCompound(selA)), xb = classesOf(lastCompound(selB));
   if (xa.some(a => xb.some(b => a !== b && structural(a) && structural(b) && !together(a, b)))) return true;
   const tagOnly = (tag, cls) => tag && cls.some(c => structural(c) && !markup.tags.get(c).has(null) && !markup.tags.get(c).has(tag));
   return tagOnly(rightmost(selA).tag, xb) || tagOnly(rightmost(selB).tag, xa);
+}
+
+function idApart(selA, selB) {
+  const id = /#([\w-]+)/.exec(lastCompound(selA).replace(/:(not|is|where|has)\((?:[^()]|\([^()]*\))*\)/g, ''));
+  const info = id && markup.ids.get(id[1]);
+  if (!info) return false;
+  const t = rightmost(selB).tag;
+  if (t && t !== '*' && t !== info.tag) return true;
+  return classesOf(lastCompound(selB)).some(c => structural(c) && !info.cls.has(c));
 }
 
 function selfInside(selA, selB) {

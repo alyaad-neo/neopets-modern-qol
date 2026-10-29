@@ -602,7 +602,6 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAcctDrawer .nqAcctAddOk { 
 #nqAP .apFace b { position: absolute; left: 50%; top: 50px; width: 16px; height: 8px; margin-left: -8px; border-bottom: 3px solid #392d5c; border-radius: 0 0 16px 16px; }
 #nqAP .apToast { position: absolute; left: 50%; bottom: 24px; transform: translate(-50%, 8px); padding: 8px 18px; border-radius: 999px; background: #392d5c; color: #fff; font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 9; }
 #nqAP .apToast.on { opacity: 1; transform: translate(-50%, 0); }
-.nqAcctAllPets { width: 100%; margin: 8px 0 0; }
 #nqAP .apTop .apBar { flex-wrap: nowrap; gap: 10px; padding: 16px 20px 10px; }
 #nqAP .apTop .apBar h2 { display: flex; align-items: baseline; gap: 10px; margin: 0 6px 0 0; font-family: 'CafeteriaBlack', Georgia, serif !important; font-size: 30px; line-height: 1.1; font-weight: 400; white-space: nowrap; }
 #nqAP .apBar h2 .apCount { font-family: inherit; }
