@@ -1,7 +1,9 @@
 // Merges rules with the same selector (same @media context) inside one CSS template literal.
 // A later rule's declarations move into the first rule only when no rule in between could
 // compete for the same property on the same element at equal specificity and importance.
-// Usage: node tools/css-merge.js <file> <literal head, e.g. "const PAGE_CSS = `"> [--apply]
+// Usage: node tools/css-merge.js <file> <literal head, e.g. "const PAGE_CSS = `"> [--markup] [--apply]
+// --markup: two rules never meet when their elements carry classes that no markup string in the
+// bundle projects writes together, or sit in different sidebar cards (CARD_OF below).
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -10,6 +12,47 @@ eval(tool.slice(tool.indexOf('function parseBlock'), tool.indexOf('// tokenize a
 
 const [file, head] = process.argv.slice(2, 4);
 const APPLY = process.argv.includes('--apply');
+const MARKUP = process.argv.includes('--markup');
+
+const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser', nqSwapBtn: 'nqUser', nqNp: 'nqNp', nqActivePet: 'nqActivePet', nqPetInfo: 'nqActivePet', nqListsMod: 'nqListsMod', nqFoot: 'nqFoot', nqPinsMod: 'nqFoot', nqDaily: 'nqDaily' };
+const markup = { sets: [], dynamic: new Set(), tags: new Map() };
+if (MARKUP) {
+  const proj = path.join(__dirname, '..', 'projects');
+  const dirs = [path.join(proj, 'modern-qol', 'src'), ...['dailies-qol', 'account-drawer', 'page-pins-qol'].map(p => path.join(proj, p))];
+  const text = dirs.flatMap(d => fs.readdirSync(d).filter(f => f.endsWith('.js')).map(f => fs.readFileSync(path.join(d, f), 'utf8'))).join('\n');
+  const add = (tag, str) => {
+    const cls = str.split(/\s+/).filter(c => /^[\w-]+$/.test(c));
+    markup.sets.push(cls);
+    for (const c of cls) { if (!markup.tags.has(c)) markup.tags.set(c, new Set()); markup.tags.get(c).add(tag); }
+  };
+  for (const m of text.matchAll(/<([a-z][a-z0-9]*)[^<>]*?class=\\?["']([^"'\\]*)/g)) add(m[1], m[2]);
+  for (const m of text.matchAll(/className\s*=\s*['"]([^'"]*)['"]/g)) add(null, m[1]);
+  for (const m of text.matchAll(/classList\.(?:add|toggle|remove)\(([^)]*)\)/g)) for (const q of m[1].matchAll(/['"]([\w-]+)['"]/g)) markup.dynamic.add(q[1]);
+}
+const structural = (c) => markup.tags.has(c) && !markup.dynamic.has(c);
+const together = (a, b) => markup.sets.some(s => s.includes(a) && s.includes(b));
+const classesOf = (compound) => [...compound.replace(/:(not|is|where|has)\([^)]*\)/g, '').matchAll(/\.([\w-]+)/g)].map(m => m[1]);
+const cardsOf = (sel) => new Set([...sel.matchAll(/#([\w-]+)/g)].map(m => CARD_OF[m[1]]).filter(Boolean));
+
+function neverMeet(selA, selB) {
+  const ca = cardsOf(selA), cb = cardsOf(selB);
+  if (ca.size && cb.size && ![...ca].some(c => cb.has(c))) return true;
+  const xa = classesOf(lastCompound(selA)), xb = classesOf(lastCompound(selB));
+  if (xa.some(a => xb.some(b => a !== b && structural(a) && structural(b) && !together(a, b)))) return true;
+  const tagOnly = (tag, cls) => tag && cls.some(c => structural(c) && !markup.tags.get(c).has(null) && !markup.tags.get(c).has(tag));
+  return tagOnly(rightmost(selA).tag, xb) || tagOnly(rightmost(selB).tag, xa);
+}
+
+function lastCompound(sel) {
+  let d = 0, cut = 0;
+  for (let i = 0; i < sel.length; i++) {
+    const ch = sel[i];
+    if (ch === '(' || ch === '[') d++;
+    else if (ch === ')' || ch === ']') d--;
+    else if (!d && (ch === ' ' || ch === '>' || ch === '+' || ch === '~')) cut = i + 1;
+  }
+  return sel.slice(cut);
+}
 
 function literalEnd(src, i) {
   let d = 0;
@@ -68,6 +111,7 @@ function mayCompete(selA, selB) {
   if (x.pe !== y.pe) return false;
   if (x.id && y.id && x.id !== y.id) return false;
   if (x.tag && y.tag && x.tag !== y.tag && x.tag !== '*' && y.tag !== '*') return false;
+  if (MARKUP && neverMeet(selA, selB)) return false;
   const sa = specificity(selA), sb = specificity(selB);
   if (sa === null || sb === null) return true;
   return sa === sb;
