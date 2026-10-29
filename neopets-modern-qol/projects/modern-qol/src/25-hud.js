@@ -151,21 +151,6 @@
     font-display: swap;
   }
 
-  #qrDockWrap{
-    position: fixed;
-    left: 2px;
-    width: calc(var(--nq-col-width, 330px) - 4px);
-    bottom: 2px;
-    --collapsed-h: calc(var(--nq-col-width, 330px) - 2 * var(--nq-hud-left, 20px));
-    top: calc(100vh - var(--collapsed-h) - 2px);
-    z-index: calc(var(--nq-z-hud, 1000) + 1);
-    pointer-events: none;
-    opacity: 0;
-    overflow: hidden;
-    transition:
-      top .45s cubic-bezier(.22, 1, .36, 1),
-      opacity .28s ease;
-  }
   #qrDock .qrPet{
     width: 100%;
     cursor: pointer;

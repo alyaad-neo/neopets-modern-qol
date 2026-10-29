@@ -13,6 +13,9 @@ eval(dedupe.slice(dedupe.indexOf('function parseBlock'), dedupe.indexOf('// toke
 const merge = fs.readFileSync(path.join(__dirname, 'css-merge.js'), 'utf8');
 eval(merge.slice(merge.indexOf('function literalEnd'), merge.indexOf('function blockers')).replace(/^function (\w+)/gm, 'global.$1 = function $1'));
 
+const neverMeet = new Function('fs', 'path', '__dirname', 'rightmost', 'const MARKUP = true;\n' +
+  merge.slice(merge.indexOf('const CARD_OF'), merge.indexOf('function literalEnd')) + '\nreturn neverMeet;')(fs, path, __dirname, rightmost);
+
 const SRC = path.join(__dirname, '..', 'projects', 'modern-qol', 'src');
 const BAR = process.argv.includes('--bar');
 const FROM = BAR ? ['20-layout.js', 'barStyle.textContent = `'] : ['25-hud.js', 'const HUD_CSS = `'];
@@ -74,6 +77,7 @@ function build() {
 const PREFIX = 'html[data-nq-modern-interface] ';
 
 function sameElement(x, y) {
+  if (neverMeet(x, y)) return false;
   const a = rightmost(x), b = rightmost(y);
   if (a.pe !== b.pe) return false;
   if (a.id && b.id && a.id !== b.id) return false;

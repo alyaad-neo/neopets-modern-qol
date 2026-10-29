@@ -1603,21 +1603,6 @@ if (NQ.base) startLayout();
     font-display: swap;
   }
 
-  #qrDockWrap{
-    position: fixed;
-    left: 2px;
-    width: calc(var(--nq-col-width, 330px) - 4px);
-    bottom: 2px;
-    --collapsed-h: calc(var(--nq-col-width, 330px) - 2 * var(--nq-hud-left, 20px));
-    top: calc(100vh - var(--collapsed-h) - 2px);
-    z-index: calc(var(--nq-z-hud, 1000) + 1);
-    pointer-events: none;
-    opacity: 0;
-    overflow: hidden;
-    transition:
-      top .45s cubic-bezier(.22, 1, .36, 1),
-      opacity .28s ease;
-  }
   #qrDock .qrPet{
     width: 100%;
     cursor: pointer;
@@ -3548,7 +3533,9 @@ html[data-nq-modern-interface] {
   #nqPetInfo .nqDetails b.gM { color: #6db3ff; }
   #nqPetInfo { order: 2; position: relative; }
 
-  #qrDockWrap { overflow-y: auto; overflow-x: hidden; }
+  #qrDockWrap { position: fixed; left: 2px; width: calc(var(--nq-col-width, 330px) - 4px); bottom: 2px; --collapsed-h: calc(var(--nq-col-width, 330px) - 2 * var(--nq-hud-left, 20px)); top: calc(100vh - var(--collapsed-h) - 2px); z-index: calc(var(--nq-z-hud, 1000) + 1); pointer-events: none; opacity: 0; overflow: hidden; transition:
+      top .45s cubic-bezier(.22, 1, .36, 1),
+      opacity .28s ease; overflow-y: auto; overflow-x: hidden; }
   #qrDockWrap.open { opacity: 1; pointer-events: auto; top: 62px; }
   #qrDock { display: flex; flex-direction: column; width: 100%; margin: 0; padding: 0; gap: 0; list-style: none; background: rgba(20, 14, 32, 0.95); -webkit-backdrop-filter: blur(var(--nq-blur, 8px)); backdrop-filter: blur(var(--nq-blur, 8px)); overflow-y: auto; overflow-x: hidden; min-height: 100%; height: auto; }
 
