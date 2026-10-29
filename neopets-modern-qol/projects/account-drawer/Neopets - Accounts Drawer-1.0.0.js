@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Neopets - Accounts Drawer
 // @namespace    neopets-qol-patcher
-// @version      1.3.30
+// @version      1.3.31
 // @description  Neopets account switcher: list your accounts, pick a main, sync from NeoPass, swap session. Works standalone or alongside the Modern Interface patcher.
 // @match        *://*.neopets.com/*
 // @run-at       document-start
@@ -717,7 +717,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
 `;
 
   let apEl = null, apToastT = null;
-  const apState = { q: '', sort: 'account', group: false, tab: 'all', only: new Set(), edit: false, sel: new Set(), saved: '', shown: [], pick: false, picked: new Set(), cpCat: false, cpNote: false };
+  const apState = { q: '', sort: 'account', group: false, tab: 'all', only: new Set(), edit: false, sel: new Set(), saved: '', shown: [], pick: false, picked: new Set(), cpCat: false, cpNote: false, cpSp: true };
   // Trade pick mode: checkboxes on every card; the copy button then copies only the picked pets, whatever their tag.
   function apTradeLbl() {
     if (!apEl) return;
@@ -725,8 +725,8 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (pb) { pb.classList.toggle('on', apState.pick); pb.setAttribute('aria-pressed', String(apState.pick)); $('span', pb).textContent = apState.pick ? 'Done picking' : 'Pick pets'; }
     if (tb) tb.textContent = apState.pick && n ? 'Copy ' + n + ' picked' : 'Copy trade list';
   }
-  try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; apState.cpCat = !!pr.cpCat; apState.cpNote = !!pr.cpNote; } } catch {}
-  const apSavePrefs = () => { try { LSset('nq_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group, cpCat: apState.cpCat, cpNote: apState.cpNote })); } catch {} };
+  try { const pr = JSON.parse(LSget('nq_ap_prefs') || 'null'); if (pr) { if (['account', 'name', 'species', 'tag'].includes(pr.sort)) apState.sort = pr.sort; apState.group = !!pr.group; apState.cpCat = !!pr.cpCat; apState.cpNote = !!pr.cpNote; apState.cpSp = pr.cpSp !== false; } } catch {}
+  const apSavePrefs = () => { try { LSset('nq_ap_prefs', JSON.stringify({ sort: apState.sort, group: apState.group, cpCat: apState.cpCat, cpNote: apState.cpNote, cpSp: apState.cpSp })); } catch {} };
   const fmtAgo = (t) => { if (!t) return 'never'; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' h ago' : Math.round(m / 1440) + ' d ago'; };
   const apToast = (m) => { if (!apEl) return; const t = $('.apToast', apEl); t.textContent = m; t.classList.add('on'); clearTimeout(apToastT); apToastT = setTimeout(() => t.classList.remove('on'), 1800); };
   const apStatus = (m) => { if (apEl) $('.apStatus', apEl).textContent = m || ''; };
@@ -741,7 +741,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
     if (!apEl) {
       const st = document.createElement('style'); st.textContent = AP_CSS; (document.head || root).appendChild(st);
       apEl = document.createElement('div'); apEl.id = 'nqAP'; apEl.setAttribute('role', 'dialog'); apEl.setAttribute('aria-label', 'My pets');
-      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy Up for Trade pets, or the picked pets, as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="Copy options" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copy with</span></div><label class="apOpt apSw"><span>Category</span><input type="checkbox" class="apCpCat" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
+      apEl.innerHTML = '<div class="apWin"><div class="apTop"><div class="apBar"><h2>All Pets<small class="apCount"></small></h2><input class="apSearch" type="search" placeholder="Search name, species, colour, note…" aria-label="Search pets"><button type="button" class="apRefresh apIcon" title="Refresh this account" aria-label="Refresh this account">' + AP_I('<path d="M13.5 8a5.5 5.5 0 1 1-1.8-4.1M13.5 2.5v3h-3"/>') + '</button><button type="button" class="apClose apIcon" aria-label="Close" title="Close (Esc)">' + AP_I('<path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/>') + '</button></div><div class="apRow"><div class="apSeg apTabs" role="tablist"></div><div class="apTools"><div class="apPopWrap"><button type="button" class="apDd apAcctBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Accounts</span><b class="apAcctVal">All accounts</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apAcctPop" hidden><div class="apPopHead"><span>Accounts</span><button type="button" class="apLink" data-all="1">Show all</button></div><div class="apAcctList"></div></div></div><div class="apPopWrap"><button type="button" class="apDd apSortBtn" aria-haspopup="true" aria-expanded="false"><span class="apDdl">Sort</span><b class="apSortVal">Account</b>' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apSortPop" hidden><div class="apPopHead"><span>Sort by</span></div><label class="apOpt"><input type="radio" name="apSortR" value="account"><span>Account</span></label><label class="apOpt"><input type="radio" name="apSortR" value="name"><span>Name</span></label><label class="apOpt"><input type="radio" name="apSortR" value="species"><span>Species</span></label><label class="apOpt"><input type="radio" name="apSortR" value="tag"><span>Tag</span></label><div class="apSep"></div><label class="apOpt apSw"><span>Group by account</span><input type="checkbox" class="apGroupCb" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div><button type="button" class="apEditBtn" data-act="editmode" aria-pressed="false" title="Edit tags and notes">' + AP_PENCIL + '<span>Edit tags</span></button><button type="button" class="apEditBtn apPickBtn" data-act="pick" aria-pressed="false" title="Pick which pets go in the copied list">' + AP_ACTIVE + '<span>Pick pets</span></button><div class="apPopWrap apCopyWrap"><button type="button" class="apTrade" title="Copy Up for Trade pets, or the picked pets, as text">' + AP_COPY + '<span>Copy trade list</span></button><button type="button" class="apDd apIcon apCopyOpt" aria-haspopup="true" aria-expanded="false" title="Copy options" aria-label="Copy options">' + AP_I('<path d="M4 6l4 4 4-4"/>') + '</button><div class="apPop apCopyPop" hidden><div class="apPopHead"><span>Copy with</span></div><label class="apOpt apSw"><span>Colour / species</span><input type="checkbox" class="apCpSp" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Category</span><input type="checkbox" class="apCpCat" role="switch"><i class="apTrack" aria-hidden="true"></i></label><label class="apOpt apSw"><span>Note</span><input type="checkbox" class="apCpNote" role="switch"><i class="apTrack" aria-hidden="true"></i></label></div></div></div></div></div><div class="apStatus" aria-live="polite"></div><div class="apBody"></div><div class="apToast" role="status"></div></div>';
       document.body.appendChild(apEl);
       apEl.addEventListener('mousedown', (e) => { if (e.target === apEl) closeAllPets(); });
       $('.apClose', apEl).addEventListener('click', closeAllPets);
@@ -758,6 +758,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
       $('.apRefresh', apEl).addEventListener('click', () => { apCollect(true); apRender(); apStatus('Updated ' + (curUser() || 'this account') + '.'); });
       $('.apCpCat', apEl).addEventListener('change', (e) => { apState.cpCat = e.target.checked; apSavePrefs(); });
       $('.apCpNote', apEl).addEventListener('change', (e) => { apState.cpNote = e.target.checked; apSavePrefs(); });
+      $('.apCpSp', apEl).addEventListener('change', (e) => { apState.cpSp = e.target.checked; apSavePrefs(); });
       $('.apTrade', apEl).addEventListener('click', () => {
         const c = apRead(), tags = apTags(), lines = [], done = new Set(), only = apState.pick && apState.picked.size ? apState.picked : null;
         apOrdered().forEach(a => ((apOf(c, a) || {}).pets || []).forEach(p => {
@@ -765,7 +766,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
           if (done.has(k) || (only ? !only.has(k) : t.s !== 'uft')) return;
           done.add(k);
           const cat = apState.cpCat ? catOf(p.name, t) : '';
-          lines.push([p.name + (cat ? ' (' + cat + ')' : ''), [p.color, p.species].filter(Boolean).join(' ') || '?', apState.cpNote ? t.n || '' : ''].filter(Boolean).join(' - '));
+          lines.push([p.name + (cat ? ' (' + cat + ')' : ''), apState.cpSp ? [p.color, p.species].filter(Boolean).join(' ') || '?' : '', apState.cpNote ? t.n || '' : ''].filter(Boolean).join(' - '));
         }));
         if (!lines.length) { apToast(apState.pick ? 'Pick some pets first' : 'No Up for Trade pets yet'); return; }
         apCopy(lines.join('\n'), 'Copied ' + lines.length + ' pet' + (lines.length === 1 ? '' : 's'));
@@ -840,7 +841,7 @@ html[data-nq-modern-interface]:not(.nq-side-light) #nqAP .apSw input:checked ~ .
         }
       });
     }
-    apEl.querySelectorAll('input[name=apSortR]').forEach(r => { r.checked = r.value === apState.sort; }); $('.apGroupCb', apEl).checked = apState.group; $('.apCpCat', apEl).checked = apState.cpCat; $('.apCpNote', apEl).checked = apState.cpNote;
+    apEl.querySelectorAll('input[name=apSortR]').forEach(r => { r.checked = r.value === apState.sort; }); $('.apGroupCb', apEl).checked = apState.group; $('.apCpCat', apEl).checked = apState.cpCat; $('.apCpNote', apEl).checked = apState.cpNote; $('.apCpSp', apEl).checked = apState.cpSp;
     document.dispatchEvent(new CustomEvent('nq:drawer', { detail: 'allpets' }));
     apEl.classList.add('open');
     apStatus('');
