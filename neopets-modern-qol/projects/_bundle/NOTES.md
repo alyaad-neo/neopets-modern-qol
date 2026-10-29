@@ -1,10 +1,10 @@
 # NOTES: _bundle
 
-Build-only project. The four feature projects are the source of truth.
+Build-only project. The feature projects are the source of truth.
 
 ## What it does
 
-Combines `modern-qol`, `dailies-qol`, `account-drawer`, and `page-pins-qol` into one upload file: `dist/Neopets - Modern QOL.user.js`.
+Combines `modern-qol`, `dailies-qol`, `account-drawer`, `petpage-gen` and `page-pins-qol` into one upload file: `dist/Neopets - Modern QOL.user.js`.
 
 ## Type
 
@@ -16,15 +16,16 @@ Combines `modern-qol`, `dailies-qol`, `account-drawer`, and `page-pins-qol` into
 1. Edit the feature in its own project (`modern-qol`: edit `src/`; `bundle.js` runs `build.js` for it).
 2. Bump `@version` in `00-header.js`.
 3. Run `node bundle.js`.
-4. Upload `dist/Neopets - Modern QOL.user.js`; disable or remove any separate scripts, including the Greasy Fork Modern Interface.
+4. Upload `dist/Neopets - Modern QOL.user.js`; disable or remove any separate scripts, including the Greasy Fork Modern Interface. Never add `@downloadURL`/`@updateURL`, and keep the MIT credit line in the header.
 
 ## Order
 
 0. `const NQ = {}` and `10-migrate.js`: one-time copy of every old `npqol_*`/`npp_*` localStorage key (and GM keys `npp_sync`, `npp_nc_cd`, `npp_allpets_v1`, `npp_allpets_tags_v1`) to `nq_*`, flagged by `nq_migrated`. Old keys are kept so an older bundle still works. All projects use `nq_*` keys only.
 1. `modern-qol` (sets `NQ.base`, defines `NQ.boot`)
 2. `dailies-qol`, then `NQ.boot()` (so `NQ.dailies` exists when modern-qol boots)
-3. `account-drawer`
-4. `page-pins-qol`
+3. `account-drawer` (sets `NQ.ap`)
+4. `petpage-gen` (needs `NQ.ap`)
+5. `page-pins-qol`
 
 Each source keeps its own IIFE, so function names do not collide.
 

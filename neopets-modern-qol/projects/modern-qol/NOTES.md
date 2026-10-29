@@ -4,7 +4,7 @@ Keep this file short. It is the map the agent reads before every task.
 
 ## What it does
 
-The Modern Interface skin (based on "Neopets - Modern Interface" by marius@clraik, MIT) merged with Aly's patcher: top bar, left sidebar (HUD), backgrounds and colours, Premium menu, tools column, pet card, account swap handling and page tweaks. It is one of the four projects in the Modern QOL bundle.
+The Modern Interface skin (based on "Neopets - Modern Interface" by marius@clraik, MIT) merged with Aly's patcher: top bar, left sidebar (HUD), backgrounds and colours, Premium menu, tools column, pet card, account swap handling and page tweaks. It is the first project in the Modern QOL bundle.
 
 ## Type
 
@@ -58,5 +58,17 @@ Every file only declares (constants, functions). Nothing runs at file level exce
 
 ## Lessons learned
 
-- Old per-project notes and the patcher HANDOFF.md: git history, commit `de59c3b`, under `projects/modern-qol/original/`.
+- History of the merge (stages, every removal, why): `HANDOFF-merge.md` in git history (last in commit `693d81f`). Old per-project notes and the patcher HANDOFF.md: commit `de59c3b`, under `projects/modern-qol/original/`.
+- Before deleting base markup, grep for code that MOVES it (the Quest Log link was lost once that way).
+- `pound-qol` (separate script) still reads the removed `unsafeWindow.__npBtnIconUrl`/`__npGetBtnTheme`, so its search icon uses its fallback.
+
+## CSS tools (`tools/`, run from the repo root)
+
+- `node tools/css-merge.js <file> "<literal head>" [--markup] [--apply]`: merge rules with the same selector in one sheet when nothing in between competes. `--markup` reads our class/id strings to prove elements apart (facts `CARD_OF`, `CLASS_OF`, `SECTION_OF`, `PARENT` at the top; check the code that appends an element before adding a fact).
+- `node tools/css-cross-merge.js [--bar] [--all] [--apply]`: move HUD_CSS rules into PAGE_CSS where that can't flip a winner.
+- `node tools/css-dedupe.js ... --loose [--apply]`: delete declarations that always lose.
+- `node tools/css-unimportant.js <doc|bar|editor> [--why] [--reasons] [--blockers] [--apply]`: drop `!important`s that still win without it. `PINNED` keeps flags that broke on the page. Its `INLINE` table lists properties JS writes inline.
+- `tools/style-snapshot.js`: paste in the console before and after a CSS change (reload between); it diffs computed styles on every element in our trees. Give Aly the steps with each CSS test list.
+- `node tools/lift-decls.js projects/modern-qol/src [--apply]`: move pure declarations out of the `start*` functions.
+- These tools can't see Neopets' own CSS; page-wide Neopets rules have broken stripped flags before (pet name font, All Pets tiles).
 - `nq_qr_data.data.pets[]` carries `species`/`colour`/`gender`/`level` for every pet (parsed from each `#<Name>_details` block on quickref.phtml). The drawer's All Pets and its trade list read them; before 5.5.36 only the home carousel supplied them, so accounts that skipped the home page copied `Name - ?`.

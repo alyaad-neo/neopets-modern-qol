@@ -25,10 +25,10 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 | Qasalan Expellibox panel overlay | Lines 145-241 | `qasalanPanel`, `qasalanVerdict`, `parseGiveaway`, `QAS_CSS` |
 | "Done" detection on daily pages | Lines 243-316 | `watchDaily`, `SUCCESS_RE`, `ALREADY_RE`, `DAILY_PATHS` |
 | Premium menu decoration (CD badges, alerts) | Lines 318-382 | `decoratePremium`, `undecoratePremium`, `refreshCd`, `syncAlerts`, `updateSnow` |
-| Sidebar card (Modern Interface mode) | Lines 528-566 | `sidebarDailyCard`, `dailyModel`, `hero` |
+| Sidebar card (modern-qol mode, `NQ.base`) | Lines 528-566 | `sidebarDailyCard`, `dailyModel`, `hero` |
 | Standalone floating dailies panel | Lines 490-526 | `mountStandalonePanel`, `nqDailiesRoot`, `nqDailiesToggle` |
 | NC Mall cooldown sync | Lines 147-164 | `ncShare`, `ncPull` |
-| Public API for core | Lines 577-585 | `__nppDailies` |
+| API for modern-qol | search `NQ.dailies =` | `NQ.dailies`, `onCard` |
 
 ## Depends on
 
@@ -41,8 +41,9 @@ Tracks cooldowns for Neopets premium daily activities (Wheels, Kiosks, etc.), mo
 
 - `onMain()` gates mount, the observer, `decoratePremium` and `updateSnow`: only the main account (`nq_main_account`) gets dailies. Side accounts see nothing and record no cooldowns. Mount waits for `appInsightsUserName` via `whenUser()`; until then `onMain()` is false.
 
-- `isModernInterface()` checks `root.dataset.nqModernInterface === '1'` — do not change this detection.
-- `W.__nppDailies` is a public API consumed by the core. Keep it in sync if adding features.
+- modern-qol mode is `NQ.base` (set by modern-qol before this script runs).
+- `NQ.dailies` is read by modern-qol (Premium menu, daily card fold via `onCard`). Keep it in sync if adding features.
+- The `nq-dailies-css` `<style>` is appended at load, between modern-qol's base sheets and its `#nq-css`; the bundle order depends on that.
 - Popup detection (`isPopup`) skips modals/iframes — do not remove.
 
 ## Lessons learned

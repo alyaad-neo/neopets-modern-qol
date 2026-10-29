@@ -13,7 +13,7 @@ Read this whole file before every task. Follow it exactly.
 ```
 AGENTS.md            this file
 build.js             combines split projects into one file
-bundle.js            builds the final combined upload from four projects
+bundle.js            builds the final combined upload (see "Final bundle")
 projects/<name>/     one folder per script project
   NOTES.md           the map of that project. READ IT FIRST.
   <name>.user.js     single-file project: the script itself
@@ -84,7 +84,7 @@ vendor/              pristine copies of other people's scripts. READ ONLY. NEVER
 
 ## Final bundle
 
-`modern-qol` (split), `dailies-qol`, `account-drawer`, and `page-pins-qol` stay as separate projects for editing, bundled in that order. `bundle.js` builds `modern-qol` with `build.js` first, and calls `NQ.boot()` right after `dailies-qol` so `NQ.dailies` exists when the header and sidebar boot. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the four projects; never edit the bundle output. After any change to one of the four, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the separate scripts, including the Greasy Fork "Neopets - Modern Interface", must be disabled. The bundle header and `projects/modern-qol/src/05-utils.js` must keep the MIT credit line `Based on "Neopets - Modern Interface" by marius@clraik, MIT License.` Never add `@downloadURL`/`@updateURL`. The projects share state through `NQ` (declared by bundle.js, invisible to the page); never expose functions on `unsafeWindow` for another project.
+`modern-qol` (split), `dailies-qol`, `account-drawer`, `petpage-gen` and `page-pins-qol` stay as separate projects for editing, bundled in that order (the list is `sources` in `bundle.js`). `bundle.js` builds `modern-qol` with `build.js` first, and calls `NQ.boot()` right after `dailies-qol` so `NQ.dailies` exists when the header and sidebar boot. The final upload is built by `node bundle.js` into `dist/Neopets - Modern QOL.user.js`. Edit the projects; never edit the bundle output. After any change to a bundled project, bump `@version` in `projects/_bundle/00-header.js` and rebuild. Aly uploads only the bundle; the separate scripts, including the Greasy Fork "Neopets - Modern Interface", must be disabled. The bundle header and `projects/modern-qol/src/05-utils.js` must keep the MIT credit line `Based on "Neopets - Modern Interface" by marius@clraik, MIT License.` Never add `@downloadURL`/`@updateURL`. The projects share state through `NQ` (declared by bundle.js, invisible to the page); never expose functions on `unsafeWindow` for another project.
 
 ## Splitting a project
 
@@ -120,24 +120,25 @@ These are the folders in `projects/`. Each project's NOTES.md has the details. I
 
 - `_bundle` - build-only: final combined header and NOTES. Not a feature project.
 - `account-drawer`
-- `modern-qol` — split project: the base skin "Neopets - Modern Interface" 4.2.0 (MIT, marius@clraik) merged with Aly's patcher. The pristine original stays in `vendor/` (never edit that). Being rewritten: see `HANDOFF-merge.md` stage 3.
+- `modern-qol` — split project: the base skin "Neopets - Modern Interface" 4.2.0 (MIT, marius@clraik) merged with Aly's patcher and rewritten as one codebase. The pristine original stays in `vendor/` (never edit that).
 - `neoboards-qol`
 - `page-pins-qol` — recently viewed pages and pinned pages.
+- `petpage-gen` — All Pets "Petpage" builder (bundle only, needs `NQ.ap` from account-drawer).
 - `pet-trading-qol` — Pet Trading boards helper: a tradelist of UFT (Up For Trade) pets, plus Pet Auction House listing and bidding helpers. Never auto-bid or auto-submit.
 - `pound-qol`
 
 ## Lessons learned (save tokens, avoid rework)
 
-Aly's priorities: 1) account safety, 2) minimal tokens. Read `HANDOFF-merge.md` (while it exists) and `projects/modern-qol/NOTES.md` for the current state.
+Aly's priorities: 1) account safety, 2) minimal tokens. Read `projects/modern-qol/NOTES.md` for the current state of the skin.
 
 **You can't see the page. Don't guess.**
 - Before changing behaviour that depends on Neopets or vendor markup, give Aly ONE console snippet that returns the exact HTML or data needed (outerHTML sliced to about 1500 chars, or JSON.stringify of a storage key). Guessing cost many rounds this session (Quick Ref data shape, home carousel, pound page confusion).
 - For CSS that "doesn't apply", ask for `getComputedStyle(el).<prop>` plus the winning rule from DevTools before editing.
 - If Aly reports text that isn't in the code (`grep -r` on `projects` and `dist`), she's running an OLD script. Tell her to check the Tampermonkey version and disable duplicates.
 
-**CSS in the patcher is layered.**
-- Many sidebar rules exist 3–5 times (original, then a redesign override, then another override), plus vendor inline `!important` styles (e.g. the `PET_IMG_STYLE` constant). A new rule silently loses.
-- Before styling an element, grep EVERY rule for its selector and edit or delete the existing ones instead of appending another override block.
+**CSS in modern-qol is still layered.**
+- One element can still have rules in several sheets (HUD_CSS in 25-hud, PAGE/LAYOUT_CSS in 40-styles, plus the drawer/dailies/page-pins sheets) and some `!important`s, plus inline styles written by JS (e.g. `PET_IMG_STYLE`). A new rule can silently lose.
+- Before styling an element, grep EVERY rule for its selector and edit the existing ones instead of appending another override block. The CSS tools in `tools/` are listed in modern-qol NOTES.
 
 **Design work.**
 - Ask Aly to pick a direction first (AskUserQuestion with 2–3 concrete options) before any redesign. Several blind full redesigns were rejected.
@@ -146,11 +147,12 @@ Aly's priorities: 1) account safety, 2) minimal tokens. Read `HANDOFF-merge.md` 
 
 **Shell and editing on this Windows machine (Git Bash).**
 - `sed -i` converts CRLF to LF. Never use it.
+- In a node edit script, `$` in a replacement string is special (`` $` `` pastes everything before the match). Use `s.replace(a, () => b)`.
 - Backslashes and apostrophes inside shell-quoted JS get mangled; a heredoc `\\b` arrived as `\b`. Use the Edit tool, or a node script that reads its replacement text from a file. Prefer regexes without backslashes (e.g. `[^A-Za-z0-9_]` instead of `\b`).
-- account-drawer and dailies use CRLF; page-pins-qol and most of modern-qol/src are LF (20-layout, 25-hud, 40-styles are CRLF). Check with node after editing: count `\n` vs `\r\n`.
+- account-drawer and dailies use CRLF; page-pins-qol and most of modern-qol/src are LF (20-layout, 25-hud, 30-backgrounds, 40-styles are CRLF). Check with node after editing: count `\n` vs `\r\n`.
 
 **Token budget (measured 2026-10-27).** One long session cost ~$9 and hit the 5-hour limit: 15.7M cache-read tokens (the main chat re-reading its own long history every turn) vs subagents ~30%. Each subagent costs 55-90k tokens just to start cold and find its place. So:
-- **Keep chats short.** The biggest cost is a long main chat. After ~10-15 rounds, or when a feature is done, update HANDOFF.md and tell Aly to start a new chat.
+- **Keep chats short.** The biggest cost is a long main chat. After ~10-15 rounds, or when a feature is done, note progress in the project's NOTES.md and tell Aly to start a new chat.
 - **Do small edits inline, no agent.** A one-rule CSS change, a label rename, a version bump: grep the line, edit it, build. Cheaper than any agent.
 - **Use an agent only for multi-step work in a file you haven't read** (roughly >5 edits or real investigation). Default model `haiku` for mechanical edits with exact line numbers/selectors given; `sonnet` only when it must investigate or design. Never opus for subagents.
 - **Brief = pointers, not prose.** Give the file, line numbers or grep terms, the exact CSS/values wanted, "don't read whole files", and a reply limit (<=60 words). Batch everything for one file into ONE agent per round; queue late additions with SendMessage instead of a new agent.
@@ -158,4 +160,4 @@ Aly's priorities: 1) account safety, 2) minimal tokens. Read `HANDOFF-merge.md` 
 - **Ask for a screenshot + DevTools computed style before a third blind CSS attempt** on the same element. Blind rounds were the biggest waste (strips under username and pet image took 3 rounds).
 - Resuming an agent re-reads its whole history (100-160k tokens); prefer a fresh short brief.
 
-**Load order.** Elements appear late (the vendor builds `#npHud` after boot). Any mount or move code must wait or observe, never run-once-and-give-up. Two bugs this session came from that.
+**Load order.** Elements appear late (`#nqHud` and the Neopets markup exist only after `<body>` appears). Any mount or move code must wait or observe, never run-once-and-give-up. Two bugs this session came from that.

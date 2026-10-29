@@ -38,12 +38,13 @@ Neopets account switcher: lists your accounts in a draggable drawer, lets you pi
 - `unsafeWindow` — access to Neopets globals (`appInsightsUserName`)
 - `GM_xmlhttpRequest` + `@connect account.neopets.com` — NeoPass sync
 - `localStorage` — all state (accounts, main account, profile cache)
-- Modern Interface patcher's `#nqUser` card (for modern mode); falls back to standalone
+- modern-qol's `#nqUser` card (for modern mode) and `NQ.tone` (pet name colour); falls back to standalone
+- Exports `NQ.ap` (All Pets data) for petpage-gen
 
 ## All Pets (passive, zero network)
 
 - "All Pets" button in the drawer opens a full-screen overlay (#nqAP): tabs All/UFT/Permanent/Maybe/Untagged, account chips, search, sort, copy name, status + note per pet, "Copy trade list": `Name - Colour Species - note` (colour/species on by default, note off; switches in the caret menu next to it, saved in `nq_ap_prefs`). Copies UFT pets, or in Pick mode the picked pets of any tag.
-- Data: no requests. `apCollect` reads the patcher's `localStorage nq_qr_data` (tolerant walk for objects with name + species/colour/level) and the `.qrPet` dock DOM, on load (2.5s, 9s), every 30s, and on open. Only the logged-in account is collected; others show "Log in to this account once".
+- Data: no requests. `apCollect` reads modern-qol's `localStorage nq_qr_data` (tolerant walk for objects with name + species/colour/level) and the `.qrPet` dock DOM, on load (2.5s, 9s), every 30s, and on open. Only the logged-in account is collected; others show "Log in to this account once".
 - Storage (GM): `nq_allpets_v1` = {account: {t, pets:[{name,img,species,color,level,active}]}}; `nq_allpets_tags_v1` = {lowercasePetName: {s:"uft"|"perm"|"maybe", n:note}}.
 - pet-trading-qol keeps its tradelist in GM storage (per-script), so UFT cannot be pre-filled from it.
 - Swap Active clicks the dock's own Make Active link (`#qrDock .qrOverlay a`); other accounts use `swapAccount`. No auto-chaining.

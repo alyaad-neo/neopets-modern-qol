@@ -4,7 +4,7 @@ Keep this file short. It is the map the agent reads before every task.
 
 ## What it does
 
-Tracks recently viewed pages and lets the user pin pages. Works alongside the Modern Interface patcher (sidebar cards in the footer) or standalone (floating "Recent" button with panel).
+Tracks recently viewed pages and lets the user pin pages. Works inside modern-qol (sidebar cards in the footer) or standalone (floating "Recent" button with panel).
 
 ## Type
 
@@ -32,7 +32,7 @@ Tracks recently viewed pages and lets the user pin pages. Works alongside the Mo
 
 - `localStorage` keys: `nq_recent_v3` (history), `nq_recent_pins_v1:<user>` (per-account pins), `nq_board_names_v1` (neoboard labels)
 - `unsafeWindow` — exposes `neopetsResetPins` console helper
-- `#nqFoot` (Modern Interface core footer) or `#nqLeftBar` sidebar for sidebar mode
+- `#nqFoot` (modern-qol sidebar footer) or `#nqLeftBar` sidebar for sidebar mode
 - `nq:main` event from account-drawer to refresh cards on account switch
 
 ## Don't touch
