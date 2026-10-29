@@ -14,7 +14,8 @@ const [file, head] = process.argv.slice(2, 4);
 const APPLY = process.argv.includes('--apply');
 const MARKUP = process.argv.includes('--markup');
 
-const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser', nqSwapBtn: 'nqUser', nqNp: 'nqNp', nqActivePet: 'nqActivePet', nqPetInfo: 'nqActivePet', nqListsMod: 'nqListsMod', nqFoot: 'nqFoot', nqPinsMod: 'nqFoot', nqDaily: 'nqDaily' };
+const CARD_OF = { nqUser: 'nqUser', nqUserTitle: 'nqUser', nqLogoutBtn: 'nqUser', nqSwapBtn: 'nqUser', nqNp: 'nqNp', nqActivePet: 'nqActivePet', nqPetInfo: 'nqActivePet', nqListsMod: 'nqListsMod', nqFoot: 'nqFoot', nqPinsMod: 'nqFoot', nqDaily: 'nqDaily', nqPetDockBtn: 'nqActivePet',
+  nqBgSidebar: 'bg', nqBgBody: 'bg', nqColors: 'bg', nqShuffle: 'bg', nqDiscBar: 'bg', nqDiscMsg: 'bg', nqBgList: 'bg', nqBgFooter: 'bg', nqRecolorSite: 'bg' };
 const markup = { sets: [], dynamic: new Set(), tags: new Map() };
 if (MARKUP) {
   const proj = path.join(__dirname, '..', 'projects');
@@ -37,10 +38,18 @@ const cardsOf = (sel) => new Set([...sel.matchAll(/#([\w-]+)/g)].map(m => CARD_O
 function neverMeet(selA, selB) {
   const ca = cardsOf(selA), cb = cardsOf(selB);
   if (ca.size && cb.size && ![...ca].some(c => cb.has(c))) return true;
+  if (MARKUP && (selfInside(selA, selB) || selfInside(selB, selA))) return true;
   const xa = classesOf(lastCompound(selA)), xb = classesOf(lastCompound(selB));
   if (xa.some(a => xb.some(b => a !== b && structural(a) && structural(b) && !together(a, b)))) return true;
   const tagOnly = (tag, cls) => tag && cls.some(c => structural(c) && !markup.tags.get(c).has(null) && !markup.tags.get(c).has(tag));
   return tagOnly(rightmost(selA).tag, xb) || tagOnly(rightmost(selB).tag, xa);
+}
+
+function selfInside(selA, selB) {
+  const id = /^#([\w-]+)$/.exec(lastCompound(selA).replace(/^html\[data-nq-modern-interface\]\s*/, ''));
+  if (!id) return false;
+  const lastB = lastCompound(selB);
+  return new RegExp('#' + id[1] + '(?![A-Za-z0-9_-])').test(selB.slice(0, selB.length - lastB.length)) && !/#[\w-]+/.test(lastB);
 }
 
 function lastCompound(sel) {
@@ -138,7 +147,7 @@ function analyse(src, s, e) {
 function blockers(rules, a, b) {
   const out = [];
   const moving = new Map();
-  for (const d of [...rules[a].decls, ...rules[b].decls]) for (const f of family(d.prop)) { if (!moving.has(f)) moving.set(f, new Set()); moving.get(f).add(d.imp); }
+  for (const d of rules[b].decls) for (const f of family(d.prop)) { if (!moving.has(f)) moving.set(f, new Set()); moving.get(f).add(d.imp); }
   for (let k = 0; k < rules.length; k++) {
     if (k === a || k === b) continue;
     const r = rules[k];
