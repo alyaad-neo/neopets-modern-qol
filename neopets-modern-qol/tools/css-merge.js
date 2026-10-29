@@ -160,7 +160,23 @@ function rightmost(sel) {
 }
 
 function specificity(sel) {
-  if (/:(is|where|not|has|matches)\(/.test(sel)) return null;
+  const fn = /:(is|where|not|has|matches)\(/.exec(sel);
+  if (fn) {
+    let d = 0, i = fn.index + fn[0].length, start = i, parts = [];
+    for (; i < sel.length; i++) {
+      const ch = sel[i];
+      if (ch === '(' || ch === '[') d++;
+      else if (ch === ']') d--;
+      else if (ch === ')') { if (!d) break; d--; }
+      else if (ch === ',' && !d) { parts.push(sel.slice(start, i)); start = i + 1; }
+    }
+    if (i >= sel.length) return null;
+    parts.push(sel.slice(start, i));
+    let inner = 0;
+    if (fn[1] !== 'where') for (const p of parts) { const v = specificity(p.trim()); if (v === null) return null; inner = Math.max(inner, v); }
+    const rest = specificity(sel.slice(0, fn.index) + sel.slice(i + 1));
+    return rest === null ? null : rest + inner;
+  }
   const s = sel.replace(/\[[^\]]*\]/g, ' [] ').replace(/\([^)]*\)/g, '');
   const a = (s.match(/#[\w-]+/g) || []).length;
   const pe = (s.match(/::[\w-]+|:(before|after|first-line|first-letter)/g) || []).length;

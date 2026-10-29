@@ -2,7 +2,8 @@
 // Page CSS can't reach into a shadow root, so only that root's own sheets and our inline styles compete.
 // A flag goes only when: the selector has no :host, no src file writes that property inline, every rule in the
 // root that may hit the same element with an overlapping property is not !important, and this one beats it
-// on specificity (or ties and comes later). Selectors with :is/:where/:not/:has always keep their flag.
+// on specificity (or ties and comes later). :is/:not/:has count as their most specific argument, :where as 0;
+// neverMeet sees selectors with those conditions removed (a wider selector, so "never meet" stays true).
 // Usage: node tools/css-unimportant.js <bar|editor> [--apply]
 'use strict';
 const fs = require('fs');
@@ -64,8 +65,8 @@ const INLINE = {
     [/\.nqSmall(?![\w-])/, ['margin-bottom']],
     [/\.col(?![\w-])/, ['display']],
     [/\.iconBtn(?![\w-])/, ['position', 'display', '--i']],
-    [/\.nq-amount(?![\w-])|\.nq-nc(?![\w-])/, ['flex-grow']],
-    [/\.nqVal(?![\w-])|\.ncVal(?![\w-])/, ['font-size']],
+    [/\.nq-amount(?![\w-])|\.nq-nc(?![\w-])/, ['flex-grow'], '#nqNp .nq-amount'],
+    [/\.nqVal(?![\w-])|\.ncVal(?![\w-])/, ['font-size'], '#nqNp .nqVal'],
     [/^img|[^\w-]img/, ['display', 'object-position', 'object-fit', 'width', 'height', 'aspect-ratio', 'max-width', 'max-height', 'transform', 'background', 'border-radius', 'opacity', 'margin', 'box-shadow']],
     [/^a|[^\w-]a/, ['display']],
   ],
@@ -80,7 +81,15 @@ function owned(sel) {
 function inlineWritten(sel, p) {
   const last = sel.trim().split(/[\s>+~]+/).pop().replace(/::?[\w-]+(\([^)]*\))?/g, '');
   const vague = !/[.#]/.test(last);
-  return INLINE[which].some(([re, props]) => (vague || re.test(last)) && props.some(q => overlap(p, q)));
+  const may = (re, ctx) => vague ? !(ctx && (neverMeet(widen(sel), ctx) || deeper(widen(sel), ctx))) : re.test(last);
+  return INLINE[which].some(([re, props, ctx]) => may(re, ctx) && props.some(q => overlap(p, q)));
+}
+
+function deeper(a, b) {
+  const m = /#([\w-]+)\s*>\s*[^\s>+~]+$/.exec(a.trim());
+  if (!m || /[+~]/.test(b)) return false;
+  const parts = b.trim().split(/\s*[\s>]\s*/);
+  return parts.slice(0, -1).some(c => [...c.matchAll(/#([\w-]+)/g)].some(x => PARENT[x[1]] === m[1]));
 }
 
 function killText() {
@@ -117,8 +126,8 @@ for (const sh of sheets) {
   walk(sh.items, ['']);
 }
 
-const neverMeet = new Function('fs', 'path', '__dirname', 'rightmost', 'const MARKUP = true;\n' +
-  merge.slice(merge.indexOf('const CARD_OF'), merge.indexOf('function literalEnd')) + '\nreturn neverMeet;')(fs, path, __dirname, rightmost);
+const { neverMeet, PARENT } = new Function('fs', 'path', '__dirname', 'rightmost', 'const MARKUP = true;\n' +
+  merge.slice(merge.indexOf('const CARD_OF'), merge.indexOf('function literalEnd')) + '\nreturn { neverMeet, PARENT };')(fs, path, __dirname, rightmost);
 const markup = new Function('fs', 'path', '__dirname', 'const MARKUP = true;\n' +
   merge.slice(merge.indexOf('const markup'), merge.indexOf('const structural')) + '\nreturn markup;')(fs, path, __dirname);
 const OUR_TAGS = new Set(['html', 'body']);
@@ -186,16 +195,27 @@ function mayHit(a, b) {
   if (x.pe !== y.pe) return false;
   if (x.id && y.id && x.id !== y.id) return false;
   if (x.tag && y.tag && x.tag !== y.tag && x.tag !== '*' && y.tag !== '*') return false;
-  return !neverMeet(a, b);
+  return !neverMeet(widen(a), widen(b));
+}
+function widen(sel) {
+  for (let m; (m = /:(is|where|not|has|matches)\(/.exec(sel));) {
+    let d = 0, i = m.index + m[0].length;
+    for (; i < sel.length; i++) { if (sel[i] === '(') d++; else if (sel[i] === ')') { if (!d) break; d--; } }
+    sel = sel.slice(0, m.index) + (m.index === 0 || /[\s>+~]/.test(sel[m.index - 1]) ? '*' : '') + sel.slice(i + 1);
+  }
+  return sel.trim();
 }
 
 const kept = {};
-const keep = (D, why) => { kept[why] = (kept[why] || 0) + 1; };
+const keep = (D, why) => {
+  kept[why] = (kept[why] || 0) + 1;
+  if (process.argv.includes('--reasons')) console.log('KEEP [' + why + '] ' + (D.sh.file || 'KILL').split('/').pop() + '  ' + D.sels.join(', ').slice(0, 100) + ' { ' + D.d.prop + ' }');
+};
 const S = new Set();
 for (const D of decls) {
   if (!D.d.imp) continue;
   if (D.sels.some(s => s.includes(':host'))) { keep(D, ':host'); continue; }
-  if (D.sels.some(s => specificity(s) === null)) { keep(D, ':is/:where/:not/:has'); continue; }
+  if (D.sels.some(s => specificity(s) === null)) { keep(D, 'unparsable selector'); continue; }
   if (D.sels.some(s => inlineWritten(s, D.d.prop))) { keep(D, 'property written inline by JS'); continue; }
   if (DOC && (!(D.sh.file || '').startsWith(MQ) || !D.sels.every(owned))) {
     if (process.argv.includes('--notours')) console.log('NOTOURS ' + (D.sh.file || 'KILL').split('/').pop() + '  ' + D.sels.filter(s => !owned(s)).join(', ').slice(0, 120));
@@ -204,9 +224,11 @@ for (const D of decls) {
   if (DOC && D.sels.some(s => PINNED.test(s))) { keep(D, 'pinned: broke on the page'); continue; }
   S.add(D);
 }
+const sameValue = (a, b) => String(a).replace(/\s+/g, ' ').trim().toLowerCase() === String(b).replace(/\s+/g, ' ').trim().toLowerCase();
 function blocker(D) {
   for (const C of decls) {
     if (C === D || !overlap(D.d.prop, C.d.prop)) continue;
+    if (C.d.prop === D.d.prop && sameValue(C.d.value, D.d.value)) continue;
     for (const a of D.sels) for (const b of C.sels) {
       if (!mayHit(a, b)) continue;
       if (C.d.imp) {
@@ -216,7 +238,7 @@ function blocker(D) {
       }
       const sa = specificity(a), sb = specificity(b);
       if (sb === null || sa < sb || (sa === sb && C.order > D.order)) {
-        if (process.argv.includes('--why')) console.log('  keep ' + a + ' { ' + D.d.prop + ' }  <-  ' + b + ' { ' + C.d.prop + ' }');
+        if (process.argv.includes('--why')) console.log('  keep ' + a + ' { ' + D.d.prop + ': ' + D.d.value + ' }  <-  ' + (C.sh.file || 'KILL').split('/').pop() + ' ' + b + ' { ' + C.d.prop + ': ' + C.d.value + ' }');
         return 'would lose to a normal rule';
       }
     }
